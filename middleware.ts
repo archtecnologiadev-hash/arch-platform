@@ -61,6 +61,7 @@ export async function middleware(request: NextRequest) {
   const isAdminPath    = pathname === '/admin' || pathname.startsWith('/admin/')
   const isProtected    = PROTECTED_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
   const isAuthPage     = pathname === '/login' || pathname === '/cadastro'
+  const isPasswordReset = pathname === '/nova-senha' || pathname === '/recuperar-senha'
 
   // ── 1. No session: block protected routes ─────────────────────────────────
   if (!session) {
@@ -72,6 +73,9 @@ export async function middleware(request: NextRequest) {
 
   // ── 2. Has session: check role FIRST from public.users (service role) ─────
   const role = await getRoleFromDB(session.user.id)
+
+  // Password reset pages: always allow, never redirect away
+  if (isPasswordReset) return response
 
   if (role === 'admin') {
     // Admin accessing /admin → allow

@@ -84,7 +84,7 @@ export default function LoginPage() {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
             <label style={{ fontSize: 12, color: '#666', letterSpacing: '0.08em' }}>SENHA</label>
-            <Link href="#" style={{ fontSize: 11, color: '#c8a96e', textDecoration: 'none' }}>
+            <Link href="/recuperar-senha" style={{ fontSize: 11, color: '#c8a96e', textDecoration: 'none' }}>
               Esqueceu a senha?
             </Link>
           </div>
