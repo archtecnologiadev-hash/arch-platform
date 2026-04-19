@@ -47,7 +47,7 @@ export default function CadastroPage() {
 
     const supabase = createClient()
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -61,20 +61,7 @@ export default function CadastroPage() {
       return
     }
 
-    if (data.user) {
-      const { error: insertError } = await supabase.from('users').insert({
-        id: data.user.id,
-        email,
-        nome,
-        tipo,
-      })
-
-      if (insertError && insertError.code !== '23505') {
-        setError('Conta criada, mas houve um erro ao salvar o perfil.')
-        setLoading(false)
-        return
-      }
-    }
+    // Profile is created automatically via database trigger on auth.users insert
 
     router.push(`/${tipo}/dashboard`)
     router.refresh()
