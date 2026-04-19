@@ -12,6 +12,14 @@ const inp: React.CSSProperties = {
   outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s',
 }
 
+function parseHash(hash: string): Record<string, string> {
+  return hash.replace(/^#/, '').split('&').reduce<Record<string, string>>((acc, pair) => {
+    const [k, v] = pair.split('=')
+    if (k) acc[k] = decodeURIComponent(v ?? '')
+    return acc
+  }, {})
+}
+
 export default function NovaSenhaPage() {
   const router = useRouter()
   const [password, setPassword] = useState('')
@@ -25,38 +33,35 @@ export default function NovaSenhaPage() {
   const [invalidLink, setInvalidLink] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
-    // Supabase processes the hash and fires PASSWORD_RECOVERY
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setReady(true)
+    async function init() {
+      const hash = parseHash(window.location.hash)
+      const accessToken = hash['access_token']
+      const refreshToken = hash['refresh_token']
+      const type = hash['type']
+
+      if (!accessToken || !refreshToken || type !== 'recovery') {
+        setInvalidLink(true)
+        return
       }
-    })
 
-    // Also check if already in a recovery session (e.g. page refresh)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setReady(true)
-    })
-
-    // If no event fires within 4 seconds, the link is invalid or expired
-    const timer = setTimeout(() => {
-      setInvalidLink(prev => {
-        if (!ready) return true
-        return prev
+      const supabase = createClient()
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
       })
-    }, 4000)
 
-    return () => {
-      subscription.unsubscribe()
-      clearTimeout(timer)
+      if (sessionError) {
+        setInvalidLink(true)
+        return
+      }
+
+      // Clear the hash so tokens aren't stored in browser history
+      window.history.replaceState(null, '', window.location.pathname)
+      setReady(true)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
-  // Once ready, cancel the invalid-link timer
-  useEffect(() => {
-    if (ready) setInvalidLink(false)
-  }, [ready])
+    init()
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -76,11 +81,12 @@ export default function NovaSenhaPage() {
     const { error: updateError } = await supabase.auth.updateUser({ password })
 
     if (updateError) {
-      setError('Não foi possível atualizar a senha. O link pode ter expirado.')
+      setError('Não foi possível atualizar a senha. Tente solicitar um novo link.')
       setLoading(false)
       return
     }
 
+    await supabase.auth.signOut()
     setDone(true)
     setLoading(false)
     setTimeout(() => router.push('/login'), 3000)
@@ -103,9 +109,7 @@ export default function NovaSenhaPage() {
           Sua senha foi alterada com sucesso.<br />
           Redirecionando para o login...
         </p>
-        <Link href="/login" style={{
-          fontSize: 13, color: '#c8a96e', textDecoration: 'none', fontWeight: 600,
-        }}>
+        <Link href="/login" style={{ fontSize: 13, color: '#c8a96e', textDecoration: 'none', fontWeight: 600 }}>
           Ir para o login agora
         </Link>
       </div>
@@ -127,7 +131,7 @@ export default function NovaSenhaPage() {
         </h2>
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 28 }}>
           O link de recuperação expirou ou já foi utilizado.<br />
-          Solicite um novo link.
+          Solicite um novo link para continuar.
         </p>
         <Link href="/recuperar-senha" style={{
           display: 'inline-block', padding: '11px 24px',
@@ -212,11 +216,10 @@ export default function NovaSenhaPage() {
               {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
+          {confirm && password !== confirm && (
+            <p style={{ fontSize: 12, color: '#ef4444', marginTop: 6 }}>As senhas não coincidem.</p>
+          )}
         </div>
-
-        {confirm && password !== confirm && (
-          <p style={{ fontSize: 12, color: '#ef4444', margin: 0 }}>As senhas não coincidem.</p>
-        )}
 
         {error && (
           <p style={{ fontSize: 13, color: '#ef4444', margin: 0, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
