@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const PROTECTED_PATHS = [
@@ -12,6 +13,28 @@ const PROTECTED_PATHS = [
   '/fornecedor/pedidos',
 ]
 
+// Service role client bypasses RLS — used only for admin role check
+function serviceClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
+
+async function getUserRole(userId: string): Promise<string | null> {
+  try {
+    const { data } = await serviceClient()
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single()
+    return data?.role ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: { headers: request.headers },
@@ -22,9 +45,7 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name) {
-          return request.cookies.get(name)?.value
-        },
+        get(name) { return request.cookies.get(name)?.value },
         set(name, value, options) {
           request.cookies.set({ name, value, ...options })
           response = NextResponse.next({ request: { headers: request.headers } })
@@ -42,17 +63,13 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
   const pathname = request.nextUrl.pathname
 
-  // ── Admin route guard ──────────────────────────────────────────────────────
+  // ── Admin route guard (service role — bypasses RLS) ────────────────────────
   if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     if (!session) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', session.user.id)
-      .single()
-    if (!userData || userData.role !== 'admin') {
+    const role = await getUserRole(session.user.id)
+    if (role !== 'admin') {
       return NextResponse.redirect(new URL('/login', request.url))
     }
     return response
@@ -67,7 +84,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  // ── Redirect logged-in users away from auth pages ─────────────────────────
   if ((pathname === '/login' || pathname === '/cadastro') && session) {
+    const role = await getUserRole(session.user.id)
+    if (role === 'admin') {
+      return NextResponse.redirect(new URL('/admin', request.url))
+    }
     const tipo = session.user.user_metadata?.tipo ?? 'cliente'
     return NextResponse.redirect(new URL(`/${tipo}/dashboard`, request.url))
   }
