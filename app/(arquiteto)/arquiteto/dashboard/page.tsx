@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   Bell,
   ChevronDown,
@@ -304,10 +305,16 @@ const TIPO_LABEL: Record<string, string> = {
 }
 
 export default function ArquitetoDashboardPage() {
+  const router = useRouter()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
+
+  // User info
+  const [userName, setUserName] = useState('Arquiteto')
+  const [userEmail, setUserEmail] = useState('')
+  const [userInitials, setUserInitials] = useState('A')
 
   // Real projects from Supabase
   const [realProjects, setRealProjects] = useState<Project[]>([])
@@ -324,6 +331,11 @@ export default function ArquitetoDashboardPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoadingProjects(false); return }
+
+      const nome = user.user_metadata?.nome ?? user.email ?? 'Arquiteto'
+      setUserName(nome)
+      setUserEmail(user.email ?? '')
+      setUserInitials(nome.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase())
 
       const { data: escritorio } = await supabase
         .from('escritorios').select('id').eq('user_id', user.id).single()
@@ -351,6 +363,13 @@ export default function ArquitetoDashboardPage() {
     }
     loadProjects()
   }, [])
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   async function handleCriarProjeto(e: React.FormEvent) {
     e.preventDefault()
@@ -583,29 +602,21 @@ export default function ArquitetoDashboardPage() {
                 }}
               >
                 <div style={{ padding: '13px 15px', borderBottom: '1px solid #1c1c1c' }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#e0e0e0' }}>
-                    Arq. Serafim Figueiredo
-                  </div>
-                  <div style={{ fontSize: 11, color: '#444', marginTop: 2 }}>serafim@arch.com</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#e0e0e0' }}>{userName}</div>
+                  <div style={{ fontSize: 11, color: '#444', marginTop: 2 }}>{userEmail}</div>
                 </div>
                 {[
-                  { label: 'Meu Perfil', icon: User },
-                  { label: 'Configurações', icon: Settings },
-                ].map(({ label, icon: Icon }) => (
-                  <button
+                  { label: 'Meu Perfil', icon: User, href: '/arquiteto/perfil' },
+                  { label: 'Configurações', icon: Settings, href: '/arquiteto/perfil' },
+                ].map(({ label, icon: Icon, href }) => (
+                  <Link
                     key={label}
+                    href={href}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 9,
-                      width: '100%',
-                      padding: '10px 15px',
-                      background: 'transparent',
-                      border: 'none',
-                      textAlign: 'left',
-                      fontSize: 13,
-                      color: '#999',
-                      cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 9,
+                      width: '100%', padding: '10px 15px',
+                      background: 'transparent', textDecoration: 'none',
+                      fontSize: 13, color: '#999',
                       transition: 'background 0.1s, color 0.1s',
                     }}
                     onMouseEnter={(e) => {
@@ -619,22 +630,16 @@ export default function ArquitetoDashboardPage() {
                   >
                     <Icon size={14} />
                     {label}
-                  </button>
+                  </Link>
                 ))}
                 <div style={{ height: 1, background: '#1c1c1c', margin: '3px 0' }} />
                 <button
+                  onClick={handleLogout}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 9,
-                    width: '100%',
-                    padding: '10px 15px',
-                    background: 'transparent',
-                    border: 'none',
-                    textAlign: 'left',
-                    fontSize: 13,
-                    color: '#ef4444',
-                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 9,
+                    width: '100%', padding: '10px 15px',
+                    background: 'transparent', border: 'none',
+                    textAlign: 'left', fontSize: 13, color: '#ef4444', cursor: 'pointer',
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
@@ -801,7 +806,7 @@ export default function ArquitetoDashboardPage() {
                     const currentStage = PIPELINE_STAGES[project.stageIndex]
 
                     return (
-                      <div key={project.id} className="proj-card">
+                      <Link key={project.id} href={`/arquiteto/projetos/${project.id}`} className="proj-card" style={{ textDecoration: 'none', display: 'block', cursor: 'pointer' }}>
 
                         {/* Image area — ~60% of card height */}
                         <div style={{ position: 'relative', height: 190, overflow: 'hidden' }}>
@@ -944,33 +949,12 @@ export default function ArquitetoDashboardPage() {
                             </div>
                           </div>
 
-                          {/* Action icon */}
-                          <Link
-                            href={`/arquiteto/projetos/${project.id}`}
-                            style={{
-                              width: 26,
-                              height: 26,
-                              borderRadius: 6,
-                              background: 'rgba(200,169,110,0.07)',
-                              border: '1px solid rgba(200,169,110,0.18)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              flexShrink: 0,
-                              textDecoration: 'none',
-                              transition: 'background 0.15s',
-                            }}
-                            onMouseEnter={(e) =>
-                              (e.currentTarget.style.background = 'rgba(200,169,110,0.18)')
-                            }
-                            onMouseLeave={(e) =>
-                              (e.currentTarget.style.background = 'rgba(200,169,110,0.07)')
-                            }
-                          >
-                            <ArrowRight size={12} color="#c8a96e" />
-                          </Link>
+                          {/* Arrow indicator */}
+                          <div style={{ flexShrink: 0, color: '#c8a96e', opacity: 0.6 }}>
+                            <ArrowRight size={12} />
+                          </div>
                         </div>
-                      </div>
+                      </Link>
                     )
                   })}
                 </div>

@@ -25,6 +25,7 @@ import {
   X,
   CheckCircle2,
   MapPin,
+  Loader2,
 } from 'lucide-react'
 import CalendarioObra, { CalendarioEvent, EVENT_META, EventType } from '@/components/shared/CalendarioObra'
 import { createClient } from '@/lib/supabase'
@@ -313,16 +314,21 @@ export default function ProjetoDetailPage() {
   const [notes, setNotes] = useState<Note[]>(project.notes)
   const isRealProject = !/^\d+$/.test(projectId)
   const [calEvents, setCalEvents] = useState<CalendarioEvent[]>(project.events ?? [])
+  const [stageIndex, setStageIndex] = useState(project.stageIndex)
+  const [advancingStage, setAdvancingStage] = useState(false)
+  const [stageAdvanced, setStageAdvanced] = useState(false)
 
-  // Load events from Supabase for real (UUID) projects
+  // Load events + stage from Supabase for real (UUID) projects
   useEffect(() => {
     if (!isRealProject) return
-    async function loadEvents() {
+    async function loadData() {
       const supabase = createClient()
-      const { data } = await supabase
-        .from('eventos').select('*').eq('projeto_id', projectId).order('data_inicio')
-      if (data) {
-        setCalEvents(data.map(e => ({
+      const [{ data: evs }, { data: proj }] = await Promise.all([
+        supabase.from('eventos').select('*').eq('projeto_id', projectId).order('data_inicio'),
+        supabase.from('projetos').select('etapa_atual').eq('id', projectId).single(),
+      ])
+      if (evs) {
+        setCalEvents(evs.map(e => ({
           id: e.id,
           type: e.tipo as EventType,
           title: e.titulo,
@@ -334,9 +340,27 @@ export default function ProjetoDetailPage() {
           note: e.observacao ?? undefined,
         })))
       }
+      if (proj?.etapa_atual) {
+        const idx = STAGES.findIndex(s => s.toLowerCase() === proj.etapa_atual.toLowerCase())
+        if (idx >= 0) setStageIndex(idx)
+      }
     }
-    loadEvents()
+    loadData()
   }, [projectId, isRealProject])
+
+  async function handleAdvanceStage() {
+    if (stageIndex >= STAGES.length - 1) return
+    setAdvancingStage(true)
+    const nextIndex = stageIndex + 1
+    if (isRealProject) {
+      const supabase = createClient()
+      await supabase.from('projetos').update({ etapa_atual: STAGES[nextIndex] }).eq('id', projectId)
+    }
+    setStageIndex(nextIndex)
+    setAdvancingStage(false)
+    setStageAdvanced(true)
+    setTimeout(() => setStageAdvanced(false), 2500)
+  }
   const [dirFilter, setDirFilter] = useState<string>('Todos')
   const [dirQuoteTarget, setDirQuoteTarget] = useState<DirSupplier | null>(null)
   const [dirQuoteForm, setDirQuoteForm] = useState({ descricao: '', data: '' })
@@ -372,7 +396,7 @@ export default function ProjetoDetailPage() {
     setNoteText('')
   }
 
-  const progress = Math.round(((project.stageIndex + 1) / STAGES.length) * 100)
+  const progress = Math.round(((stageIndex + 1) / STAGES.length) * 100)
   const budgetPercent = Math.round((project.budget.spent / project.budget.total) * 100)
 
   return (
@@ -533,7 +557,7 @@ export default function ProjetoDetailPage() {
               flexShrink: 0,
             }}
           >
-            {STAGES[project.stageIndex]}
+            {STAGES[stageIndex]}
           </div>
         </div>
       </div>
@@ -558,8 +582,8 @@ export default function ProjetoDetailPage() {
           }}
         >
           {STAGES.map((stage, i) => {
-            const done = i < project.stageIndex
-            const current = i === project.stageIndex
+            const done = i < stageIndex
+            const current = i === stageIndex
 
             return (
               <div
@@ -1342,7 +1366,7 @@ export default function ProjetoDetailPage() {
             {[
               { label: 'Progresso', value: `${progress}%` },
               { label: 'Área total', value: project.area },
-              { label: 'Etapa atual', value: STAGES[project.stageIndex] },
+              { label: 'Etapa atual', value: STAGES[stageIndex] },
               { label: 'Orçamento exec.', value: `${budgetPercent}%` },
             ].map((stat) => (
               <div
@@ -1356,6 +1380,37 @@ export default function ProjetoDetailPage() {
               </div>
             ))}
           </div>
+
+          {/* Avançar etapa */}
+          {stageIndex < STAGES.length - 1 && (
+            <button
+              onClick={handleAdvanceStage}
+              disabled={advancingStage}
+              style={{
+                width: '100%', padding: '12px', borderRadius: 9,
+                background: stageAdvanced ? 'rgba(52,211,153,0.12)' : advancingStage ? '#111' : 'rgba(200,169,110,0.1)',
+                border: stageAdvanced ? '1px solid rgba(52,211,153,0.35)' : '1px solid rgba(200,169,110,0.28)',
+                color: stageAdvanced ? '#34d399' : advancingStage ? '#555' : '#c8a96e',
+                fontSize: 12.5, fontWeight: 700, cursor: advancingStage ? 'not-allowed' : 'pointer',
+                letterSpacing: '0.04em', transition: 'all 0.2s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              {stageAdvanced ? (
+                <><CheckCircle2 size={14} /> ETAPA AVANÇADA</>
+              ) : advancingStage ? (
+                <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> SALVANDO...</>
+              ) : (
+                <>→ Avançar para {STAGES[stageIndex + 1]}</>
+              )}
+            </button>
+          )}
+          {stageIndex === STAGES.length - 1 && (
+            <div style={{ textAlign: 'center', padding: '10px', fontSize: 12, color: '#34d399', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 9, background: 'rgba(52,211,153,0.06)' }}>
+              <CheckCircle2 size={14} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
+              Projeto concluído
+            </div>
+          )}
 
           {/* Calendário da semana */}
           <div style={panel}>
