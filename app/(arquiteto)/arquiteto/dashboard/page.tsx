@@ -17,14 +17,17 @@ import {
   Settings,
   User,
   ArrowRight,
+  Plus,
+  X,
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type AgendaType = 'meeting' | 'call' | 'presentation' | 'visit'
 
 interface Project {
-  id: number
+  id: string
   name: string
   client: string
   initials: string
@@ -65,9 +68,9 @@ const PIPELINE_STAGES = [
   'Execução',
 ]
 
-const projects: Project[] = [
+const MOCK_PROJECTS: Project[] = [
   {
-    id: 1,
+    id: '1',
     name: 'Residência Costa',
     client: 'Marina Fernandes',
     initials: 'MF',
@@ -77,7 +80,7 @@ const projects: Project[] = [
     image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80',
   },
   {
-    id: 2,
+    id: '2',
     name: 'Escritório Zen',
     client: 'Rafael Monteiro',
     initials: 'RM',
@@ -87,7 +90,7 @@ const projects: Project[] = [
     image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80',
   },
   {
-    id: 3,
+    id: '3',
     name: 'Cobertura Moderna',
     client: 'Juliana Carvalho',
     initials: 'JC',
@@ -97,7 +100,7 @@ const projects: Project[] = [
     image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80',
   },
   {
-    id: 4,
+    id: '4',
     name: 'Vila Contemporânea',
     client: 'Eduardo Santos',
     initials: 'ES',
@@ -284,11 +287,96 @@ const goldButton = {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+const FALLBACK_IMAGES = [
+  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80',
+  'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80',
+  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80',
+  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80',
+]
+
+const ETAPA_TO_STAGE: Record<string, number> = {
+  atendimento: 0, reuniao: 1, briefing: 2,
+  '3d': 3, alt_3d: 4, detalhamento: 5, orcamento: 6, execucao: 7,
+}
+
+const TIPO_LABEL: Record<string, string> = {
+  residencial: 'Residencial', comercial: 'Comercial', institucional: 'Institucional',
+}
+
 export default function ArquitetoDashboardPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
+
+  // Real projects from Supabase
+  const [realProjects, setRealProjects] = useState<Project[]>([])
+  const [escritorioId, setEscritorioId] = useState<string | null>(null)
+  const [loadingProjects, setLoadingProjects] = useState(true)
+
+  // Novo Projeto modal
+  const [novoOpen, setNovoOpen] = useState(false)
+  const [novoForm, setNovoForm] = useState({ nome: '', tipo: 'residencial', descricao: '' })
+  const [novoSaving, setNovoSaving] = useState(false)
+
+  useEffect(() => {
+    async function loadProjects() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoadingProjects(false); return }
+
+      const { data: escritorio } = await supabase
+        .from('escritorios').select('id').eq('user_id', user.id).single()
+
+      if (escritorio) {
+        setEscritorioId(escritorio.id)
+        const { data: projs } = await supabase
+          .from('projetos').select('*').eq('escritorio_id', escritorio.id)
+          .order('created_at', { ascending: false })
+
+        if (projs && projs.length > 0) {
+          setRealProjects(projs.map((p, i) => ({
+            id: p.id,
+            name: p.nome,
+            client: '—',
+            initials: p.nome.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase(),
+            stageIndex: ETAPA_TO_STAGE[p.etapa_atual] ?? 2,
+            type: TIPO_LABEL[p.tipo] ?? 'Residencial',
+            dueDate: '—',
+            image: FALLBACK_IMAGES[i % FALLBACK_IMAGES.length],
+          })))
+        }
+      }
+      setLoadingProjects(false)
+    }
+    loadProjects()
+  }, [])
+
+  async function handleCriarProjeto(e: React.FormEvent) {
+    e.preventDefault()
+    if (!escritorioId || !novoForm.nome) return
+    setNovoSaving(true)
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('projetos')
+      .insert({ escritorio_id: escritorioId, nome: novoForm.nome, tipo: novoForm.tipo, descricao: novoForm.descricao })
+      .select('*').single()
+
+    if (!error && data) {
+      const novo: Project = {
+        id: data.id, name: data.nome, client: '—',
+        initials: data.nome.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase(),
+        stageIndex: 2, type: TIPO_LABEL[data.tipo] ?? 'Residencial',
+        dueDate: '—', image: FALLBACK_IMAGES[realProjects.length % FALLBACK_IMAGES.length],
+      }
+      setRealProjects(prev => [novo, ...prev])
+    }
+    setNovoSaving(false)
+    setNovoOpen(false)
+    setNovoForm({ nome: '', tipo: 'residencial', descricao: '' })
+  }
+
+  const displayProjects = realProjects.length > 0 ? realProjects : MOCK_PROJECTS
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -684,12 +772,29 @@ export default function ArquitetoDashboardPage() {
                     Atendimento · Reunião · Briefing · 3D · Alt. 3D · Detalhamento · Orçamento · Execução
                   </div>
                 </div>
-                <button style={goldButton}>Ver todos</button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button style={goldButton}>Ver todos</button>
+                  <button
+                    onClick={() => setNovoOpen(true)}
+                    style={{
+                      ...goldButton,
+                      background: 'rgba(200,169,110,0.14)',
+                      display: 'flex', alignItems: 'center', gap: 5,
+                    }}
+                  >
+                    <Plus size={12} /> Novo Projeto
+                  </button>
+                </div>
               </div>
 
               <div style={{ padding: 20 }}>
+                {loadingProjects ? (
+                  <div style={{ textAlign: 'center', padding: '40px 0', color: '#333', fontSize: 13 }}>
+                    Carregando projetos...
+                  </div>
+                ) : (
                 <div className="proj-grid">
-                  {projects.map((project) => {
+                  {displayProjects.map((project) => {
                     const progress = Math.round(
                       ((project.stageIndex + 1) / PIPELINE_STAGES.length) * 100
                     )
@@ -869,6 +974,7 @@ export default function ArquitetoDashboardPage() {
                     )
                   })}
                 </div>
+                )}
               </div>
             </div>
 
@@ -1130,6 +1236,127 @@ export default function ArquitetoDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* ═══════ NOVO PROJETO MODAL ═══════ */}
+      {novoOpen && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+          }}
+          onClick={() => setNovoOpen(false)}
+        >
+          <div
+            style={{
+              background: '#0f0f0f', border: '1px solid #222', borderRadius: 14,
+              padding: 32, width: '100%', maxWidth: 480, position: 'relative',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setNovoOpen(false)}
+              style={{
+                position: 'absolute', top: 16, right: 16,
+                background: 'none', border: 'none', cursor: 'pointer', color: '#444', padding: 4,
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f0f0f0', marginBottom: 6 }}>
+              Novo Projeto
+            </h2>
+            <p style={{ fontSize: 12, color: '#444', marginBottom: 24 }}>
+              Adicione um novo projeto ao seu pipeline
+            </p>
+
+            <form onSubmit={handleCriarProjeto} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#555', marginBottom: 6, letterSpacing: '0.08em', fontWeight: 600 }}>
+                  NOME DO PROJETO
+                </label>
+                <input
+                  value={novoForm.nome}
+                  onChange={e => setNovoForm(p => ({ ...p, nome: e.target.value }))}
+                  placeholder="Ex: Residência Costa"
+                  required
+                  style={{
+                    width: '100%', padding: '10px 14px', background: '#111',
+                    border: '1px solid #222', color: '#e8e8e8', fontSize: 13.5,
+                    outline: 'none', boxSizing: 'border-box', borderRadius: 6,
+                  }}
+                  onFocus={e => (e.target.style.borderColor = '#c8a96e')}
+                  onBlur={e => (e.target.style.borderColor = '#222')}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#555', marginBottom: 6, letterSpacing: '0.08em', fontWeight: 600 }}>
+                  TIPO
+                </label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {['residencial', 'comercial', 'institucional'].map(t => (
+                    <button
+                      key={t} type="button"
+                      onClick={() => setNovoForm(p => ({ ...p, tipo: t }))}
+                      style={{
+                        flex: 1, padding: '9px 4px', fontSize: 12, fontWeight: 500,
+                        borderRadius: 7, cursor: 'pointer', transition: 'all 0.15s',
+                        background: novoForm.tipo === t ? 'rgba(200,169,110,0.12)' : '#111',
+                        border: `1px solid ${novoForm.tipo === t ? '#c8a96e' : '#222'}`,
+                        color: novoForm.tipo === t ? '#c8a96e' : '#555',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#555', marginBottom: 6, letterSpacing: '0.08em', fontWeight: 600 }}>
+                  DESCRIÇÃO (opcional)
+                </label>
+                <textarea
+                  value={novoForm.descricao}
+                  onChange={e => setNovoForm(p => ({ ...p, descricao: e.target.value }))}
+                  placeholder="Breve descrição do projeto..."
+                  rows={3}
+                  style={{
+                    width: '100%', padding: '10px 14px', background: '#111',
+                    border: '1px solid #222', color: '#e8e8e8', fontSize: 13.5,
+                    outline: 'none', boxSizing: 'border-box', borderRadius: 6, resize: 'none',
+                  }}
+                  onFocus={e => (e.target.style.borderColor = '#c8a96e')}
+                  onBlur={e => (e.target.style.borderColor = '#222')}
+                />
+              </div>
+
+              {!escritorioId && (
+                <p style={{ fontSize: 12, color: '#f97316', padding: '10px 14px', background: 'rgba(249,115,22,0.08)', borderRadius: 6, border: '1px solid rgba(249,115,22,0.2)' }}>
+                  Configure seu perfil em &quot;Meu Perfil&quot; antes de criar projetos.
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={novoSaving || !escritorioId || !novoForm.nome}
+                style={{
+                  width: '100%', padding: '12px', background: novoSaving ? '#2a2010' : '#c8a96e',
+                  color: novoSaving ? '#666' : '#0d0d0d', border: 'none', borderRadius: 8,
+                  fontSize: 13, fontWeight: 700, letterSpacing: '0.1em',
+                  cursor: novoSaving || !escritorioId || !novoForm.nome ? 'not-allowed' : 'pointer',
+                  marginTop: 4,
+                }}
+              >
+                {novoSaving ? 'CRIANDO...' : 'CRIAR PROJETO'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

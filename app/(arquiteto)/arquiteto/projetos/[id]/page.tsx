@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import {
@@ -26,7 +26,8 @@ import {
   CheckCircle2,
   MapPin,
 } from 'lucide-react'
-import CalendarioObra, { CalendarioEvent, EVENT_META } from '@/components/shared/CalendarioObra'
+import CalendarioObra, { CalendarioEvent, EVENT_META, EventType } from '@/components/shared/CalendarioObra'
+import { createClient } from '@/lib/supabase'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -310,7 +311,32 @@ export default function ProjetoDetailPage() {
   const [dragOver, setDragOver] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [notes, setNotes] = useState<Note[]>(project.notes)
+  const isRealProject = !/^\d+$/.test(projectId)
   const [calEvents, setCalEvents] = useState<CalendarioEvent[]>(project.events ?? [])
+
+  // Load events from Supabase for real (UUID) projects
+  useEffect(() => {
+    if (!isRealProject) return
+    async function loadEvents() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('eventos').select('*').eq('projeto_id', projectId).order('data_inicio')
+      if (data) {
+        setCalEvents(data.map(e => ({
+          id: e.id,
+          type: e.tipo as EventType,
+          title: e.titulo,
+          provider: e.observacao ?? '',
+          startDate: e.data_inicio,
+          endDate: e.data_fim,
+          startTime: e.hora_inicio ?? undefined,
+          endTime: e.hora_fim ?? undefined,
+          note: e.observacao ?? undefined,
+        })))
+      }
+    }
+    loadEvents()
+  }, [projectId, isRealProject])
   const [dirFilter, setDirFilter] = useState<string>('Todos')
   const [dirQuoteTarget, setDirQuoteTarget] = useState<DirSupplier | null>(null)
   const [dirQuoteForm, setDirQuoteForm] = useState({ descricao: '', data: '' })
@@ -1072,9 +1098,26 @@ export default function ProjetoDetailPage() {
             <CalendarioObra
               events={calEvents}
               readonly={false}
-              onEventAdd={(ev) =>
-                setCalEvents((prev) => [...prev, { ...ev, id: Date.now() }])
-              }
+              onEventAdd={async (ev) => {
+                const tempId = Date.now()
+                setCalEvents(prev => [...prev, { ...ev, id: tempId }])
+                if (isRealProject) {
+                  const supabase = createClient()
+                  const { data } = await supabase.from('eventos').insert({
+                    projeto_id: projectId,
+                    titulo: ev.title,
+                    tipo: ev.type,
+                    data_inicio: ev.startDate,
+                    data_fim: ev.endDate,
+                    hora_inicio: ev.startTime ?? null,
+                    hora_fim: ev.endTime ?? null,
+                    observacao: ev.note ?? null,
+                  }).select('id').single()
+                  if (data) {
+                    setCalEvents(prev => prev.map(e => e.id === tempId ? { ...e, id: data.id } : e))
+                  }
+                }
+              }}
             />
           )}
 

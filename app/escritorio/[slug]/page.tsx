@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
 import {
   Star, MapPin, ArrowLeft, CheckCircle2,
@@ -321,8 +322,31 @@ const TAB_LABELS: Record<Tab, string> = {
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function EstudioPage({ params }: { params: { slug: string } }) {
-  const studio = STUDIOS[params.slug] ?? GENERIC_FALLBACK
+  const mockBase = STUDIOS[params.slug] ?? GENERIC_FALLBACK
+  const [studio, setStudio] = useState<Studio>(mockBase)
   const [activeTab, setActiveTab] = useState<Tab>('portfolio')
+
+  useEffect(() => {
+    async function loadFromDB() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('escritorios').select('*').eq('slug', params.slug).single()
+      if (data) {
+        setStudio(prev => ({
+          ...prev,
+          name: data.nome ?? prev.name,
+          city: data.cidade ?? prev.city,
+          state: data.estado ?? prev.state,
+          specialty: data.estilo ?? prev.specialty,
+          bio: data.bio ?? prev.bio,
+          rating: data.rating ?? prev.rating,
+          phone: data.telefone ?? prev.phone,
+          instagram: data.instagram ?? prev.instagram,
+        }))
+      }
+    }
+    loadFromDB()
+  }, [params.slug])
   const yearsExp = new Date().getFullYear() - studio.founded
 
   return (
