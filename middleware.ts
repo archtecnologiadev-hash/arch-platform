@@ -42,6 +42,23 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
   const pathname = request.nextUrl.pathname
 
+  // ── Admin route guard ──────────────────────────────────────────────────────
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', session.user.id)
+      .single()
+    if (!userData || userData.role !== 'admin') {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    return response
+  }
+
+  // ── Regular protected routes ───────────────────────────────────────────────
   const isProtected = PROTECTED_PATHS.some(
     (p) => pathname === p || pathname.startsWith(p + '/')
   )
