@@ -306,14 +306,14 @@ const iconBox = (color = '#555') => ({
 export default function ProjetoDetailPage() {
   const params = useParams()
   const projectId = (params?.id as string) ?? '1'
+  const isRealProject = !/^\d+$/.test(projectId)
   const project = PROJECTS[projectId] ?? PROJECTS['1']
 
   const [activeTab, setActiveTab] = useState<TabId>('arquivos')
   const [dragOver, setDragOver] = useState(false)
   const [noteText, setNoteText] = useState('')
-  const [notes, setNotes] = useState<Note[]>(project.notes)
-  const isRealProject = !/^\d+$/.test(projectId)
-  const [calEvents, setCalEvents] = useState<CalendarioEvent[]>(project.events ?? [])
+  const [notes, setNotes] = useState<Note[]>(isRealProject ? [] : project.notes)
+  const [calEvents, setCalEvents] = useState<CalendarioEvent[]>(isRealProject ? [] : (project.events ?? []))
   const [stageIndex, setStageIndex] = useState(project.stageIndex)
   const [advancingStage, setAdvancingStage] = useState(false)
   const [stageAdvanced, setStageAdvanced] = useState(false)
@@ -397,7 +397,8 @@ export default function ProjetoDetailPage() {
   }
 
   const progress = Math.round(((stageIndex + 1) / STAGES.length) * 100)
-  const budgetPercent = Math.round((project.budget.spent / project.budget.total) * 100)
+  const effectiveBudget = isRealProject ? { total: 0, spent: 0, items: [] } : project.budget
+  const budgetPercent = effectiveBudget.total > 0 ? Math.round((effectiveBudget.spent / effectiveBudget.total) * 100) : 0
 
   return (
     <div style={{ minHeight: '100vh', background: '#080808', color: '#e0e0e0' }}>
@@ -780,11 +781,11 @@ export default function ProjetoDetailPage() {
                     Arquivos do Projeto
                   </span>
                   <span style={{ fontSize: 11, color: '#3a3a3a' }}>
-                    {project.files.length} arquivo{project.files.length !== 1 ? 's' : ''}
+                    {(isRealProject ? [] : project.files).length} arquivo{(isRealProject ? [] : project.files).length !== 1 ? 's' : ''}
                   </span>
                 </div>
 
-                {project.files.map((file, i) => (
+                {(isRealProject ? [] : project.files).map((file, i) => (
                   <div
                     key={file.id}
                     className="proj-file-row"
@@ -793,7 +794,7 @@ export default function ProjetoDetailPage() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 13,
-                      borderBottom: i < project.files.length - 1 ? '1px solid #111' : 'none',
+                      borderBottom: i < (isRealProject ? [] : project.files).length - 1 ? '1px solid #111' : 'none',
                       cursor: 'pointer',
                       transition: 'background 0.12s',
                     }}
@@ -995,7 +996,7 @@ export default function ProjetoDetailPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
               {/* ── Fornecedores do projeto ── */}
-              {project.suppliers.length > 0 && (
+              {!isRealProject && project.suppliers.length > 0 && (
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#383838', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: 10 }}>
                     No projeto
@@ -1152,9 +1153,9 @@ export default function ProjetoDetailPage() {
               {/* Summary cards */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                 {[
-                  { label: 'Orçamento Total', value: `R$ ${project.budget.total.toLocaleString('pt-BR')}`, color: '#e0e0e0' },
-                  { label: 'Executado', value: `R$ ${project.budget.spent.toLocaleString('pt-BR')}`, color: '#c8a96e' },
-                  { label: 'Saldo Disponível', value: `R$ ${(project.budget.total - project.budget.spent).toLocaleString('pt-BR')}`, color: '#34d399' },
+                  { label: 'Orçamento Total', value: effectiveBudget.total > 0 ? `R$ ${effectiveBudget.total.toLocaleString('pt-BR')}` : '—', color: '#e0e0e0' },
+                  { label: 'Executado', value: effectiveBudget.spent > 0 ? `R$ ${effectiveBudget.spent.toLocaleString('pt-BR')}` : '—', color: '#c8a96e' },
+                  { label: 'Saldo Disponível', value: effectiveBudget.total > 0 ? `R$ ${(effectiveBudget.total - effectiveBudget.spent).toLocaleString('pt-BR')}` : '—', color: '#34d399' },
                 ].map((item) => (
                   <div
                     key={item.label}
@@ -1194,7 +1195,7 @@ export default function ProjetoDetailPage() {
               </div>
 
               {/* Line items */}
-              {project.budget.items.length > 0 && (
+              {effectiveBudget.items.length > 0 && (
                 <div style={panel}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 120px', padding: '10px 20px', borderBottom: '1px solid #141414' }}>
                     {['Categoria', 'Descrição', 'Valor'].map((h) => (
@@ -1203,7 +1204,7 @@ export default function ProjetoDetailPage() {
                       </span>
                     ))}
                   </div>
-                  {project.budget.items.map((item, i) => (
+                  {effectiveBudget.items.map((item, i) => (
                     <div
                       key={i}
                       className="proj-bud-row"
@@ -1211,7 +1212,7 @@ export default function ProjetoDetailPage() {
                         display: 'grid',
                         gridTemplateColumns: '1fr 1fr 120px',
                         padding: '13px 20px',
-                        borderBottom: i < project.budget.items.length - 1 ? '1px solid #111' : 'none',
+                        borderBottom: i < effectiveBudget.items.length - 1 ? '1px solid #111' : 'none',
                         alignItems: 'center',
                         transition: 'background 0.12s',
                       }}

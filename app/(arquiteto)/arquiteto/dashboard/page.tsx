@@ -12,8 +12,6 @@ import {
   FileText,
   Phone,
   CalendarDays,
-  MapPin,
-  Video,
   LogOut,
   Settings,
   User,
@@ -26,8 +24,6 @@ import { createClient } from '@/lib/supabase'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type AgendaType = 'meeting' | 'call' | 'presentation' | 'visit'
-
 interface Project {
   id: string
   name: string
@@ -39,224 +35,26 @@ interface Project {
   image: string
 }
 
-interface Lead {
-  id: number
-  name: string
-  contact: string
-  date: string
-  origin: string
-  type: string
-}
-
-interface AgendaItem {
-  id: number
-  time: string
-  title: string
-  subtitle: string
-  type: AgendaType
-  duration: string
-}
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const PIPELINE_STAGES = [
-  'Atendimento',
-  'Reunião',
-  'Briefing',
-  '3D',
-  'Alt. 3D',
-  'Detalhamento',
-  'Orçamento',
-  'Execução',
+  'Atendimento', 'Reunião', 'Briefing', '3D', 'Alt. 3D', 'Detalhamento', 'Orçamento', 'Execução',
 ]
 
-const MOCK_PROJECTS: Project[] = [
-  {
-    id: '1',
-    name: 'Residência Costa',
-    client: 'Marina Fernandes',
-    initials: 'MF',
-    stageIndex: 3,
-    type: 'Residencial',
-    dueDate: '30 Mai 2026',
-    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80',
-  },
-  {
-    id: '2',
-    name: 'Escritório Zen',
-    client: 'Rafael Monteiro',
-    initials: 'RM',
-    stageIndex: 5,
-    type: 'Corporativo',
-    dueDate: '15 Jun 2026',
-    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80',
-  },
-  {
-    id: '3',
-    name: 'Cobertura Moderna',
-    client: 'Juliana Carvalho',
-    initials: 'JC',
-    stageIndex: 2,
-    type: 'Residencial',
-    dueDate: '20 Jul 2026',
-    image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80',
-  },
-  {
-    id: '4',
-    name: 'Vila Contemporânea',
-    client: 'Eduardo Santos',
-    initials: 'ES',
-    stageIndex: 7,
-    type: 'Residencial',
-    dueDate: '10 Mai 2026',
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80',
-  },
+const FALLBACK_IMAGES = [
+  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80',
+  'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80',
+  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80',
+  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80',
 ]
 
-const leads: Lead[] = [
-  {
-    id: 1,
-    name: 'Paulo Henrique Borges',
-    contact: '(11) 99834-5621',
-    date: '17 Abr',
-    origin: 'Instagram',
-    type: 'Residencial',
-  },
-  {
-    id: 2,
-    name: 'Fernanda Luz',
-    contact: '(21) 98756-3412',
-    date: '16 Abr',
-    origin: 'Indicação',
-    type: 'Corporativo',
-  },
-  {
-    id: 3,
-    name: 'Rodrigo Mendes',
-    contact: '(11) 97654-2109',
-    date: '15 Abr',
-    origin: 'Site',
-    type: 'Residencial',
-  },
-  {
-    id: 4,
-    name: 'Camila Ribeiro',
-    contact: '(31) 99123-4567',
-    date: '14 Abr',
-    origin: 'Instagram',
-    type: 'Reforma',
-  },
-  {
-    id: 5,
-    name: 'André Lacerda',
-    contact: '(11) 98901-2345',
-    date: '13 Abr',
-    origin: 'Indicação',
-    type: 'Residencial',
-  },
-  {
-    id: 6,
-    name: 'Beatriz Nascimento',
-    contact: '(51) 97890-1234',
-    date: '12 Abr',
-    origin: 'LinkedIn',
-    type: 'Corporativo',
-  },
-]
-
-const agenda: AgendaItem[] = [
-  {
-    id: 1,
-    time: '09:00',
-    title: 'Reunião de Briefing',
-    subtitle: 'Marina Fernandes',
-    type: 'meeting',
-    duration: '1h',
-  },
-  {
-    id: 2,
-    time: '10:30',
-    title: 'Call de Alinhamento',
-    subtitle: 'TechSpace Ltda',
-    type: 'call',
-    duration: '30min',
-  },
-  {
-    id: 3,
-    time: '14:00',
-    title: 'Apresentação 3D',
-    subtitle: 'Rafael Monteiro',
-    type: 'presentation',
-    duration: '1h30',
-  },
-  {
-    id: 4,
-    time: '16:00',
-    title: 'Visita à Obra',
-    subtitle: 'Cobertura Moderna',
-    type: 'visit',
-    duration: '2h',
-  },
-  {
-    id: 5,
-    time: '17:30',
-    title: 'Reunião com Fornecedor',
-    subtitle: 'Madeiras Silva',
-    type: 'meeting',
-    duration: '45min',
-  },
-]
-
-const STATS = [
-  {
-    title: 'Projetos Ativos',
-    value: '12',
-    delta: '+2 este mês',
-    icon: FolderOpen,
-    color: '#4f9cf9',
-  },
-  {
-    title: 'Leads Recebidos',
-    value: '28',
-    delta: '+11 este mês',
-    icon: TrendingUp,
-    color: '#c8a96e',
-  },
-  {
-    title: 'Reuniões Agendadas',
-    value: '5',
-    delta: '3 esta semana',
-    icon: Clock,
-    color: '#a78bfa',
-  },
-  {
-    title: 'Orçamentos Pendentes',
-    value: '7',
-    delta: '4 aguardando aprovação',
-    icon: FileText,
-    color: '#34d399',
-  },
-]
-
-const ORIGIN_COLORS: Record<string, string> = {
-  Instagram: '#e1306c',
-  Indicação: '#c8a96e',
-  Site: '#4f9cf9',
-  LinkedIn: '#0077b5',
+const ETAPA_TO_STAGE: Record<string, number> = {
+  atendimento: 0, reuniao: 1, briefing: 2,
+  '3d': 3, alt_3d: 4, detalhamento: 5, orcamento: 6, execucao: 7,
 }
 
-const AGENDA_ICONS: Record<AgendaType, typeof CalendarDays> = {
-  meeting: CalendarDays,
-  call: Phone,
-  presentation: Video,
-  visit: MapPin,
-}
-
-const AGENDA_COLORS: Record<AgendaType, string> = {
-  meeting: '#c8a96e',
-  call: '#4f9cf9',
-  presentation: '#a78bfa',
-  visit: '#34d399',
+const TIPO_LABEL: Record<string, string> = {
+  residencial: 'Residencial', comercial: 'Comercial', institucional: 'Institucional',
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -289,22 +87,6 @@ const goldButton = {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80',
-  'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80',
-  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80',
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80',
-]
-
-const ETAPA_TO_STAGE: Record<string, number> = {
-  atendimento: 0, reuniao: 1, briefing: 2,
-  '3d': 3, alt_3d: 4, detalhamento: 5, orcamento: 6, execucao: 7,
-}
-
-const TIPO_LABEL: Record<string, string> = {
-  residencial: 'Residencial', comercial: 'Comercial', institucional: 'Institucional',
-}
-
 export default function ArquitetoDashboardPage() {
   const router = useRouter()
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -312,20 +94,21 @@ export default function ArquitetoDashboardPage() {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
 
-  // User info
   const [userName, setUserName] = useState('Arquiteto')
   const [userEmail, setUserEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
 
-  // Real projects from Supabase
   const [realProjects, setRealProjects] = useState<Project[]>([])
   const [escritorioId, setEscritorioId] = useState<string | null>(null)
   const [loadingProjects, setLoadingProjects] = useState(true)
 
-  // Novo Projeto modal
   const [novoOpen, setNovoOpen] = useState(false)
   const [novoForm, setNovoForm] = useState({ nome: '', tipo: 'residencial', descricao: '' })
   const [novoSaving, setNovoSaving] = useState(false)
+
+  const userInitials = userName.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'A'
+
+  const todayLabel = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   useEffect(() => {
     async function loadProjects() {
@@ -337,7 +120,6 @@ export default function ArquitetoDashboardPage() {
       setUserName(nome)
       setUserEmail(user.email ?? '')
 
-      // Check admin role
       if (user.user_metadata?.role === 'admin') {
         setIsAdmin(true)
       } else {
@@ -403,57 +185,47 @@ export default function ArquitetoDashboardPage() {
     setNovoForm({ nome: '', tipo: 'residencial', descricao: '' })
   }
 
-  const displayProjects = realProjects.length > 0 ? realProjects : MOCK_PROJECTS
-
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false)
-      }
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setNotifOpen(false)
-      }
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setDropdownOpen(false)
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  const statsData = [
+    { title: 'Projetos Ativos', value: loadingProjects ? '—' : String(realProjects.length), delta: '', icon: FolderOpen, color: '#4f9cf9' },
+    { title: 'Leads Recebidos', value: '0', delta: '', icon: TrendingUp, color: '#c8a96e' },
+    { title: 'Reuniões Agendadas', value: '0', delta: '', icon: Clock, color: '#a78bfa' },
+    { title: 'Orçamentos Pendentes', value: '0', delta: '', icon: FileText, color: '#34d399' },
+  ]
+
   return (
     <div style={{ minHeight: '100vh', background: '#080808', color: '#e0e0e0' }}>
 
       {/* ═══════════════════════════ HEADER ═══════════════════════════ */}
-      <div
-        style={{
-          padding: '0 32px',
-          height: 70,
-          borderBottom: '1px solid #1c1c1c',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: '#0a0a0a',
-          position: 'sticky',
-          top: 0,
-          zIndex: 30,
-        }}
-      >
+      <div style={{
+        padding: '0 32px', height: 70, borderBottom: '1px solid #1c1c1c',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        background: '#0a0a0a', position: 'sticky', top: 0, zIndex: 30,
+      }}>
         <div>
           <div style={{ fontSize: 11.5, color: '#c8a96e', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             Bom dia
           </div>
           <div style={{ fontSize: 18, fontWeight: 700, color: '#f0f0f0', lineHeight: 1.2 }}>
-            Serafim Figueiredo
+            {userName}
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Admin button */}
           {isAdmin && (
             <Link href="/admin" style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '7px 13px', borderRadius: 8, textDecoration: 'none',
               background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.3)',
               color: '#c8a96e', fontSize: 12.5, fontWeight: 700, letterSpacing: '0.04em',
-              transition: 'all 0.15s',
             }}
               onMouseEnter={e => (e.currentTarget.style.background = 'rgba(200,169,110,0.2)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'rgba(200,169,110,0.1)')}>
@@ -461,169 +233,56 @@ export default function ArquitetoDashboardPage() {
               Painel Admin
             </Link>
           )}
-          {/* Bell */}
-          <div ref={notifRef} style={{ position: 'relative' }}>
-            <button
-              onClick={() => { setNotifOpen(!notifOpen); setDropdownOpen(false) }}
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 8,
-                background: 'transparent',
-                border: '1px solid #222',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                position: 'relative',
-              }}
-            >
-              <Bell size={17} color="#666" />
-              <div
-                style={{
-                  position: 'absolute',
-                  top: -5,
-                  right: -5,
-                  width: 18,
-                  height: 18,
-                  borderRadius: '50%',
-                  background: '#c8a96e',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: '#080808',
-                  border: '2px solid #0a0a0a',
-                }}
-              >
-                3
-              </div>
-            </button>
 
+          <div ref={notifRef} style={{ position: 'relative' }}>
+            <button onClick={() => { setNotifOpen(!notifOpen); setDropdownOpen(false) }} style={{
+              width: 38, height: 38, borderRadius: 8, background: 'transparent',
+              border: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
+            }}>
+              <Bell size={17} color="#666" />
+            </button>
             {notifOpen && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 46,
-                  right: 0,
-                  width: 300,
-                  background: '#111',
-                  border: '1px solid #1c1c1c',
-                  borderRadius: 12,
-                  boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
-                  zIndex: 100,
-                  overflow: 'hidden',
-                }}
-              >
-                <div
-                  style={{
-                    padding: '13px 16px',
-                    borderBottom: '1px solid #1c1c1c',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
+              <div style={{
+                position: 'absolute', top: 46, right: 0, width: 260,
+                background: '#111', border: '1px solid #1c1c1c', borderRadius: 12,
+                boxShadow: '0 20px 50px rgba(0,0,0,0.6)', zIndex: 100, overflow: 'hidden',
+              }}>
+                <div style={{ padding: '13px 16px', borderBottom: '1px solid #1c1c1c' }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#e0e0e0' }}>Notificações</span>
-                  <span style={{ fontSize: 11, color: '#c8a96e', cursor: 'pointer' }}>
-                    Marcar todas como lidas
-                  </span>
                 </div>
-                {[
-                  { text: 'Novo lead: Paulo Henrique Borges', time: '2h atrás' },
-                  { text: 'Briefing aprovado — Escritório Zen', time: '5h atrás' },
-                  { text: 'Orçamento pendente: Vila Contemporânea', time: '1 dia atrás' },
-                ].map((n, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      padding: '12px 16px',
-                      borderBottom: i < 2 ? '1px solid #141414' : 'none',
-                      display: 'flex',
-                      gap: 10,
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#151515')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <div
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: '#c8a96e',
-                        marginTop: 5,
-                        flexShrink: 0,
-                      }}
-                    />
-                    <div>
-                      <div style={{ fontSize: 12.5, color: '#ccc' }}>{n.text}</div>
-                      <div style={{ fontSize: 11, color: '#444', marginTop: 2 }}>{n.time}</div>
-                    </div>
-                  </div>
-                ))}
+                <div style={{ padding: '24px 16px', textAlign: 'center', color: '#333', fontSize: 12 }}>
+                  Nenhuma notificação
+                </div>
               </div>
             )}
           </div>
 
-          {/* Avatar + dropdown */}
           <div ref={dropdownRef} style={{ position: 'relative' }}>
-            <button
-              onClick={() => { setDropdownOpen(!dropdownOpen); setNotifOpen(false) }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '4px 10px 4px 4px',
-                background: 'transparent',
-                border: '1px solid #222',
-                borderRadius: 10,
-                cursor: 'pointer',
-              }}
-            >
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  background: 'rgba(200,169,110,0.15)',
-                  border: '1px solid rgba(200,169,110,0.4)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: '#c8a96e',
-                }}
-              >
-                SF
+            <button onClick={() => { setDropdownOpen(!dropdownOpen); setNotifOpen(false) }} style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '4px 10px 4px 4px', background: 'transparent',
+              border: '1px solid #222', borderRadius: 10, cursor: 'pointer',
+            }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: 'rgba(200,169,110,0.15)', border: '1px solid rgba(200,169,110,0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, fontWeight: 700, color: '#c8a96e',
+              }}>
+                {userInitials}
               </div>
-              <div
-                style={{
-                  transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.15s',
-                }}
-              >
+              <div style={{ transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>
                 <ChevronDown size={13} color="#555" />
               </div>
             </button>
 
             {dropdownOpen && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 48,
-                  right: 0,
-                  width: 210,
-                  background: '#111',
-                  border: '1px solid #1c1c1c',
-                  borderRadius: 10,
-                  boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
-                  zIndex: 100,
-                  overflow: 'hidden',
-                }}
-              >
+              <div style={{
+                position: 'absolute', top: 48, right: 0, width: 210,
+                background: '#111', border: '1px solid #1c1c1c', borderRadius: 10,
+                boxShadow: '0 20px 50px rgba(0,0,0,0.6)', zIndex: 100, overflow: 'hidden',
+              }}>
                 <div style={{ padding: '13px 15px', borderBottom: '1px solid #1c1c1c' }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#e0e0e0' }}>{userName}</div>
                   <div style={{ fontSize: 11, color: '#444', marginTop: 2 }}>{userEmail}</div>
@@ -632,41 +291,27 @@ export default function ArquitetoDashboardPage() {
                   { label: 'Meu Perfil', icon: User, href: '/arquiteto/perfil' },
                   { label: 'Configurações', icon: Settings, href: '/arquiteto/perfil' },
                 ].map(({ label, icon: Icon, href }) => (
-                  <Link
-                    key={label}
-                    href={href}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 9,
-                      width: '100%', padding: '10px 15px',
-                      background: 'transparent', textDecoration: 'none',
-                      fontSize: 13, color: '#999',
-                      transition: 'background 0.1s, color 0.1s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#1a1a1a'
-                      e.currentTarget.style.color = '#e0e0e0'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'transparent'
-                      e.currentTarget.style.color = '#999'
-                    }}
-                  >
+                  <Link key={label} href={href} style={{
+                    display: 'flex', alignItems: 'center', gap: 9,
+                    width: '100%', padding: '10px 15px',
+                    background: 'transparent', textDecoration: 'none',
+                    fontSize: 13, color: '#999',
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#1a1a1a'; e.currentTarget.style.color = '#e0e0e0' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#999' }}>
                     <Icon size={14} />
                     {label}
                   </Link>
                 ))}
                 <div style={{ height: 1, background: '#1c1c1c', margin: '3px 0' }} />
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 9,
-                    width: '100%', padding: '10px 15px',
-                    background: 'transparent', border: 'none',
-                    textAlign: 'left', fontSize: 13, color: '#ef4444', cursor: 'pointer',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                >
+                <button onClick={handleLogout} style={{
+                  display: 'flex', alignItems: 'center', gap: 9,
+                  width: '100%', padding: '10px 15px',
+                  background: 'transparent', border: 'none',
+                  textAlign: 'left', fontSize: 13, color: '#ef4444', cursor: 'pointer',
+                }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   <LogOut size={14} />
                   Sair
                 </button>
@@ -680,68 +325,29 @@ export default function ArquitetoDashboardPage() {
       <div style={{ padding: '28px 32px' }}>
 
         {/* ─── Stats Cards ─── */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 16,
-            marginBottom: 24,
-          }}
-        >
-          {STATS.map((stat) => {
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+          {statsData.map((stat) => {
             const Icon = stat.icon
             return (
-              <div
-                key={stat.title}
-                style={{
-                  background: '#0f0f0f',
-                  border: '1px solid #1c1c1c',
-                  borderRadius: 12,
-                  padding: '20px 20px',
-                  transition: 'border-color 0.2s',
-                }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(200,169,110,0.3)')
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLDivElement).style.borderColor = '#1c1c1c')
-                }
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    marginBottom: 14,
-                  }}
-                >
+              <div key={stat.title} style={{
+                background: '#0f0f0f', border: '1px solid #1c1c1c',
+                borderRadius: 12, padding: '20px 20px', transition: 'border-color 0.2s',
+              }}
+                onMouseEnter={e => ((e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(200,169,110,0.3)')}
+                onMouseLeave={e => ((e.currentTarget as HTMLDivElement).style.borderColor = '#1c1c1c')}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                   <span style={{ fontSize: 12, color: '#555', fontWeight: 500 }}>{stat.title}</span>
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      background: `${stat.color}18`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8,
+                    background: `${stat.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
                     <Icon size={15} color={stat.color} />
                   </div>
                 </div>
-                <div
-                  style={{
-                    fontSize: 30,
-                    fontWeight: 700,
-                    color: '#f0f0f0',
-                    lineHeight: 1,
-                    marginBottom: 6,
-                  }}
-                >
+                <div style={{ fontSize: 30, fontWeight: 700, color: '#f0f0f0', lineHeight: 1, marginBottom: 6 }}>
                   {stat.value}
                 </div>
-                <div style={{ fontSize: 11, color: '#3a3a3a' }}>{stat.delta}</div>
+                {stat.delta && <div style={{ fontSize: 11, color: '#3a3a3a' }}>{stat.delta}</div>}
               </div>
             )
           })}
@@ -756,60 +362,28 @@ export default function ArquitetoDashboardPage() {
             {/* ── Pipeline ── */}
             <div style={card}>
               <style>{`
-                .proj-grid {
-                  display: grid;
-                  grid-template-columns: repeat(3, 1fr);
-                  gap: 16px;
-                }
-                @media (max-width: 1100px) {
-                  .proj-grid { grid-template-columns: repeat(2, 1fr); }
-                }
-                @media (max-width: 640px) {
-                  .proj-grid { grid-template-columns: 1fr; }
-                }
-                .proj-card {
-                  border-radius: 12px;
-                  overflow: hidden;
-                  border: 1px solid #1c1c1c;
-                  background: #0d0d0d;
-                  cursor: pointer;
-                  transition: border-color 0.25s, box-shadow 0.25s;
-                }
-                .proj-card:hover {
-                  border-color: rgba(200,169,110,0.5);
-                  box-shadow: 0 8px 32px rgba(200,169,110,0.07);
-                }
-                .proj-card-img {
-                  width: 100%;
-                  height: 100%;
-                  object-fit: cover;
-                  display: block;
-                  transition: transform 0.45s ease;
-                }
-                .proj-card:hover .proj-card-img {
-                  transform: scale(1.06);
-                }
+                .proj-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+                @media (max-width: 1100px) { .proj-grid { grid-template-columns: repeat(2, 1fr); } }
+                @media (max-width: 640px) { .proj-grid { grid-template-columns: 1fr; } }
+                .proj-card { border-radius: 12px; overflow: hidden; border: 1px solid #1c1c1c; background: #0d0d0d; cursor: pointer; transition: border-color 0.25s, box-shadow 0.25s; }
+                .proj-card:hover { border-color: rgba(200,169,110,0.5); box-shadow: 0 8px 32px rgba(200,169,110,0.07); }
+                .proj-card-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.45s ease; }
+                .proj-card:hover .proj-card-img { transform: scale(1.06); }
               `}</style>
 
               <div style={sectionHeader}>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#e8e8e8' }}>
-                    Pipeline de Projetos
-                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#e8e8e8' }}>Pipeline de Projetos</div>
                   <div style={{ fontSize: 11, color: '#3a3a3a', marginTop: 3 }}>
                     Atendimento · Reunião · Briefing · 3D · Alt. 3D · Detalhamento · Orçamento · Execução
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button style={goldButton}>Ver todos</button>
-                  <button
-                    onClick={() => setNovoOpen(true)}
-                    style={{
-                      ...goldButton,
-                      background: 'rgba(200,169,110,0.14)',
-                      display: 'flex', alignItems: 'center', gap: 5,
-                    }}
-                  >
+                  <button onClick={() => setNovoOpen(true)} style={{
+                    ...goldButton, background: 'rgba(200,169,110,0.14)',
+                    display: 'flex', alignItems: 'center', gap: 5,
+                  }}>
                     <Plus size={12} /> Novo Projeto
                   </button>
                 </div>
@@ -820,167 +394,74 @@ export default function ArquitetoDashboardPage() {
                   <div style={{ textAlign: 'center', padding: '40px 0', color: '#333', fontSize: 13 }}>
                     Carregando projetos...
                   </div>
+                ) : realProjects.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                    <FolderOpen size={40} color="#222" style={{ marginBottom: 14 }} />
+                    <div style={{ fontSize: 14, color: '#333', marginBottom: 6 }}>Nenhum projeto ainda</div>
+                    <div style={{ fontSize: 12, color: '#2a2a2a', marginBottom: 18 }}>
+                      Crie seu primeiro projeto para começar
+                    </div>
+                    <button onClick={() => setNovoOpen(true)} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 7,
+                      padding: '10px 18px', borderRadius: 8, cursor: 'pointer',
+                      background: '#c8a96e', color: '#080808', border: 'none',
+                      fontSize: 13, fontWeight: 700,
+                    }}>
+                      <Plus size={14} /> Criar primeiro projeto
+                    </button>
+                  </div>
                 ) : (
-                <div className="proj-grid">
-                  {displayProjects.map((project) => {
-                    const progress = Math.round(
-                      ((project.stageIndex + 1) / PIPELINE_STAGES.length) * 100
-                    )
-                    const currentStage = PIPELINE_STAGES[project.stageIndex]
-
-                    return (
-                      <Link key={project.id} href={`/arquiteto/projetos/${project.id}`} className="proj-card" style={{ textDecoration: 'none', display: 'block', cursor: 'pointer' }}>
-
-                        {/* Image area — ~60% of card height */}
-                        <div style={{ position: 'relative', height: 190, overflow: 'hidden' }}>
-                          <img
-                            src={project.image}
-                            alt={project.name}
-                            className="proj-card-img"
-                          />
-
-                          {/* Dark gradient overlay */}
-                          <div
-                            style={{
-                              position: 'absolute',
-                              inset: 0,
-                              background:
-                                'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.15) 55%, transparent 100%)',
-                            }}
-                          />
-
-                          {/* Stage badge — top right */}
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: 10,
-                              right: 10,
-                              fontSize: 10,
-                              fontWeight: 700,
-                              padding: '4px 10px',
-                              borderRadius: 20,
-                              background: 'rgba(14,10,3,0.55)',
-                              border: '1px solid rgba(200,169,110,0.55)',
-                              color: '#c8a96e',
-                              backdropFilter: 'blur(8px)',
-                              letterSpacing: '0.05em',
-                              textTransform: 'uppercase' as const,
-                            }}
-                          >
-                            {currentStage}
-                          </div>
-
-                          {/* Project name + client on overlay */}
-                          <div
-                            style={{
-                              position: 'absolute',
-                              bottom: 10,
-                              left: 14,
-                              right: 14,
-                            }}
-                          >
-                            <div
-                              style={{
-                                fontSize: 14.5,
-                                fontWeight: 700,
-                                color: '#fff',
-                                lineHeight: 1.25,
-                                textShadow: '0 1px 6px rgba(0,0,0,0.6)',
-                              }}
-                            >
-                              {project.name}
+                  <div className="proj-grid">
+                    {realProjects.map((project) => {
+                      const progress = Math.round(((project.stageIndex + 1) / PIPELINE_STAGES.length) * 100)
+                      const currentStage = PIPELINE_STAGES[project.stageIndex]
+                      return (
+                        <Link key={project.id} href={`/arquiteto/projetos/${project.id}`} className="proj-card" style={{ textDecoration: 'none', display: 'block' }}>
+                          <div style={{ position: 'relative', height: 190, overflow: 'hidden' }}>
+                            <img src={project.image} alt={project.name} className="proj-card-img" />
+                            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.15) 55%, transparent 100%)' }} />
+                            <div style={{
+                              position: 'absolute', top: 10, right: 10,
+                              fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 20,
+                              background: 'rgba(14,10,3,0.55)', border: '1px solid rgba(200,169,110,0.55)',
+                              color: '#c8a96e', backdropFilter: 'blur(8px)',
+                              letterSpacing: '0.05em', textTransform: 'uppercase' as const,
+                            }}>
+                              {currentStage}
                             </div>
-                            <div
-                              style={{
-                                fontSize: 11,
-                                color: 'rgba(255,255,255,0.5)',
-                                marginTop: 2,
-                              }}
-                            >
-                              {project.client}
+                            <div style={{ position: 'absolute', bottom: 10, left: 14, right: 14 }}>
+                              <div style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', lineHeight: 1.25, textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
+                                {project.name}
+                              </div>
+                              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{project.client}</div>
+                            </div>
+                            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'rgba(0,0,0,0.5)' }}>
+                              <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, rgba(200,169,110,0.5) 0%, #c8a96e 100%)' }} />
                             </div>
                           </div>
-
-                          {/* Progress bar — bottom of image */}
-                          <div
-                            style={{
-                              position: 'absolute',
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              height: 3,
-                              background: 'rgba(0,0,0,0.5)',
-                            }}
-                          >
-                            <div
-                              style={{
-                                height: '100%',
-                                width: `${progress}%`,
-                                background:
-                                  'linear-gradient(90deg, rgba(200,169,110,0.5) 0%, #c8a96e 100%)',
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Card footer */}
-                        <div
-                          style={{
-                            padding: '11px 13px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 9,
-                            borderTop: '1px solid #181818',
-                          }}
-                        >
-                          {/* Client avatar */}
-                          <div
-                            style={{
-                              width: 30,
-                              height: 30,
-                              borderRadius: '50%',
-                              background: 'rgba(200,169,110,0.1)',
-                              border: '1px solid rgba(200,169,110,0.25)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: 10,
-                              fontWeight: 700,
-                              color: '#c8a96e',
-                              flexShrink: 0,
-                            }}
-                          >
-                            {project.initials}
-                          </div>
-
-                          {/* Client name + due date */}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div
-                              style={{
-                                fontSize: 11.5,
-                                fontWeight: 600,
-                                color: '#c8c8c8',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}
-                            >
-                              {project.client}
+                          <div style={{ padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 9, borderTop: '1px solid #181818' }}>
+                            <div style={{
+                              width: 30, height: 30, borderRadius: '50%',
+                              background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.25)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 10, fontWeight: 700, color: '#c8a96e', flexShrink: 0,
+                            }}>
+                              {project.initials}
                             </div>
-                            <div style={{ fontSize: 10, color: '#3a3a3a', marginTop: 1 }}>
-                              {project.dueDate}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 11.5, fontWeight: 600, color: '#c8c8c8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {project.client}
+                              </div>
+                              <div style={{ fontSize: 10, color: '#3a3a3a', marginTop: 1 }}>{project.dueDate}</div>
+                            </div>
+                            <div style={{ flexShrink: 0, color: '#c8a96e', opacity: 0.6 }}>
+                              <ArrowRight size={12} />
                             </div>
                           </div>
-
-                          {/* Arrow indicator */}
-                          <div style={{ flexShrink: 0, color: '#c8a96e', opacity: 0.6 }}>
-                            <ArrowRight size={12} />
-                          </div>
-                        </div>
-                      </Link>
-                    )
-                  })}
-                </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
                 )}
               </div>
             </div>
@@ -989,255 +470,49 @@ export default function ArquitetoDashboardPage() {
             <div style={card}>
               <div style={sectionHeader}>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#e8e8e8' }}>
-                    Leads Recentes
-                  </div>
-                  <div style={{ fontSize: 11, color: '#3a3a3a', marginTop: 3 }}>
-                    Últimos contatos recebidos
-                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#e8e8e8' }}>Leads Recentes</div>
+                  <div style={{ fontSize: 11, color: '#3a3a3a', marginTop: 3 }}>Últimos contatos recebidos</div>
                 </div>
                 <button style={goldButton}>Ver todos</button>
               </div>
-
-              {/* Table header */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 148px 68px 96px 90px',
-                  padding: '10px 22px',
-                  borderBottom: '1px solid #141414',
-                }}
-              >
-                {['Nome', 'Contato', 'Data', 'Origem', ''].map((h, i) => (
-                  <span
-                    key={i}
-                    style={{
-                      fontSize: 10.5,
-                      color: '#3a3a3a',
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                    }}
-                  >
-                    {h}
-                  </span>
-                ))}
-              </div>
-
-              {/* Table rows */}
-              {leads.map((lead, i) => (
-                <div
-                  key={lead.id}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 148px 68px 96px 90px',
-                    padding: '13px 22px',
-                    borderBottom: i < leads.length - 1 ? '1px solid #111' : 'none',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#131313')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                >
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: '#d0d0d0' }}>
-                      {lead.name}
-                    </div>
-                    <div style={{ fontSize: 11, color: '#3a3a3a', marginTop: 1 }}>{lead.type}</div>
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 5,
-                      fontSize: 12,
-                      color: '#555',
-                    }}
-                  >
-                    <Phone size={10} color="#3a3a3a" />
-                    {lead.contact}
-                  </div>
-                  <div style={{ fontSize: 12, color: '#444' }}>{lead.date}</div>
-                  <div>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        padding: '3px 8px',
-                        borderRadius: 4,
-                        background: `${ORIGIN_COLORS[lead.origin] ?? '#555'}18`,
-                        color: ORIGIN_COLORS[lead.origin] ?? '#888',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {lead.origin}
-                    </span>
-                  </div>
-                  <div>
-                    <button
-                      style={{
-                        fontSize: 11.5,
-                        padding: '5px 10px',
-                        borderRadius: 6,
-                        background: 'rgba(200,169,110,0.08)',
-                        border: '1px solid rgba(200,169,110,0.2)',
-                        color: '#c8a96e',
-                        cursor: 'pointer',
-                        fontWeight: 600,
-                        transition: 'background 0.15s',
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.background = 'rgba(200,169,110,0.15)')
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.background = 'rgba(200,169,110,0.08)')
-                      }
-                    >
-                      Contatar
-                    </button>
-                  </div>
+              <div style={{ padding: '48px 22px', textAlign: 'center' }}>
+                <Phone size={32} color="#222" style={{ marginBottom: 12 }} />
+                <div style={{ fontSize: 13, color: '#333', marginBottom: 4 }}>Nenhum lead ainda</div>
+                <div style={{ fontSize: 11, color: '#2a2a2a' }}>
+                  Os leads recebidos aparecerão aqui
                 </div>
-              ))}
+              </div>
             </div>
           </div>
 
           {/* ─── Right column — Agenda ─── */}
           <div>
-            <div
-              style={{
-                ...card,
-                position: 'sticky',
-                top: 90,
-              }}
-            >
+            <div style={{ ...card, position: 'sticky', top: 90 }}>
               <div style={{ padding: '18px 20px', borderBottom: '1px solid #1c1c1c' }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: '#e8e8e8' }}>
-                  Agenda do Dia
-                </div>
-                <div style={{ fontSize: 11.5, color: '#3a3a3a', marginTop: 3 }}>
-                  Sexta-feira, 18 de Abril
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#e8e8e8' }}>Agenda do Dia</div>
+                <div style={{ fontSize: 11.5, color: '#3a3a3a', marginTop: 3, textTransform: 'capitalize' }}>
+                  {todayLabel}
                 </div>
               </div>
-
-              <div style={{ padding: '10px 0 4px' }}>
-                {agenda.map((item, i) => {
-                  const Icon = AGENDA_ICONS[item.type]
-                  const color = AGENDA_COLORS[item.type]
-                  return (
-                    <div
-                      key={item.id}
-                      style={{
-                        padding: '12px 20px',
-                        display: 'flex',
-                        gap: 12,
-                        cursor: 'pointer',
-                        transition: 'background 0.15s',
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = '#131313')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      {/* Time */}
-                      <div
-                        style={{
-                          fontSize: 11,
-                          color: '#444',
-                          fontWeight: 600,
-                          minWidth: 40,
-                          paddingTop: 2,
-                          letterSpacing: '0.02em',
-                        }}
-                      >
-                        {item.time}
-                      </div>
-
-                      {/* Timeline dot + line */}
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            background: color,
-                            flexShrink: 0,
-                            marginTop: 3,
-                            boxShadow: `0 0 6px ${color}60`,
-                          }}
-                        />
-                        {i < agenda.length - 1 && (
-                          <div
-                            style={{
-                              width: 1,
-                              flex: 1,
-                              background: '#1c1c1c',
-                              minHeight: 24,
-                              marginTop: 3,
-                            }}
-                          />
-                        )}
-                      </div>
-
-                      {/* Content */}
-                      <div style={{ flex: 1, minWidth: 0, paddingBottom: i < agenda.length - 1 ? 8 : 0 }}>
-                        <div
-                          style={{
-                            fontSize: 12.5,
-                            fontWeight: 600,
-                            color: '#d8d8d8',
-                            lineHeight: 1.3,
-                          }}
-                        >
-                          {item.title}
-                        </div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 5,
-                            marginTop: 3,
-                          }}
-                        >
-                          <Icon size={10} color={color} />
-                          <span style={{ fontSize: 11, color: '#444' }}>{item.subtitle}</span>
-                        </div>
-                        <div style={{ fontSize: 10.5, color: '#2e2e2e', marginTop: 2 }}>
-                          {item.duration}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
+              <div style={{ padding: '32px 20px', textAlign: 'center' }}>
+                <CalendarDays size={32} color="#222" style={{ marginBottom: 12 }} />
+                <div style={{ fontSize: 13, color: '#333', marginBottom: 4 }}>Nenhum compromisso hoje</div>
+                <div style={{ fontSize: 11, color: '#2a2a2a' }}>
+                  Acesse o calendário para adicionar eventos
+                </div>
               </div>
-
               <div style={{ padding: '12px 20px', borderTop: '1px solid #141414' }}>
-                <button
-                  style={{
-                    width: '100%',
-                    padding: '9px',
-                    background: 'rgba(200,169,110,0.07)',
-                    border: '1px solid rgba(200,169,110,0.18)',
-                    borderRadius: 8,
-                    color: '#c8a96e',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    letterSpacing: '0.03em',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = 'rgba(200,169,110,0.13)')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = 'rgba(200,169,110,0.07)')
-                  }
-                >
-                  + Adicionar compromisso
-                </button>
+                <Link href="/arquiteto/calendario" style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: '100%', padding: '9px',
+                  background: 'rgba(200,169,110,0.07)', border: '1px solid rgba(200,169,110,0.18)',
+                  borderRadius: 8, color: '#c8a96e', fontSize: 12, fontWeight: 600,
+                  letterSpacing: '0.03em', textDecoration: 'none',
+                }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(200,169,110,0.13)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(200,169,110,0.07)')}>
+                  Ver Calendário
+                </Link>
               </div>
             </div>
           </div>
@@ -1246,56 +521,38 @@ export default function ArquitetoDashboardPage() {
 
       {/* ═══════ NOVO PROJETO MODAL ═══════ */}
       {novoOpen && (
-        <div
-          style={{
-            position: 'fixed', inset: 0, zIndex: 200,
-            background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
-          }}
-          onClick={() => setNovoOpen(false)}
-        >
-          <div
-            style={{
-              background: '#0f0f0f', border: '1px solid #222', borderRadius: 14,
-              padding: 32, width: '100%', maxWidth: 480, position: 'relative',
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setNovoOpen(false)}
-              style={{
-                position: 'absolute', top: 16, right: 16,
-                background: 'none', border: 'none', cursor: 'pointer', color: '#444', padding: 4,
-              }}
-            >
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+        }} onClick={() => setNovoOpen(false)}>
+          <div style={{
+            background: '#0f0f0f', border: '1px solid #222', borderRadius: 14,
+            padding: 32, width: '100%', maxWidth: 480, position: 'relative',
+          }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setNovoOpen(false)} style={{
+              position: 'absolute', top: 16, right: 16,
+              background: 'none', border: 'none', cursor: 'pointer', color: '#444', padding: 4,
+            }}>
               <X size={18} />
             </button>
 
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f0f0f0', marginBottom: 6 }}>
-              Novo Projeto
-            </h2>
-            <p style={{ fontSize: 12, color: '#444', marginBottom: 24 }}>
-              Adicione um novo projeto ao seu pipeline
-            </p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f0f0f0', marginBottom: 6 }}>Novo Projeto</h2>
+            <p style={{ fontSize: 12, color: '#444', marginBottom: 24 }}>Adicione um novo projeto ao seu pipeline</p>
 
             <form onSubmit={handleCriarProjeto} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 11, color: '#555', marginBottom: 6, letterSpacing: '0.08em', fontWeight: 600 }}>
                   NOME DO PROJETO
                 </label>
-                <input
-                  value={novoForm.nome}
-                  onChange={e => setNovoForm(p => ({ ...p, nome: e.target.value }))}
-                  placeholder="Ex: Residência Costa"
-                  required
-                  style={{
+                <input value={novoForm.nome} onChange={e => setNovoForm(p => ({ ...p, nome: e.target.value }))}
+                  placeholder="Ex: Residência Costa" required style={{
                     width: '100%', padding: '10px 14px', background: '#111',
                     border: '1px solid #222', color: '#e8e8e8', fontSize: 13.5,
                     outline: 'none', boxSizing: 'border-box', borderRadius: 6,
                   }}
                   onFocus={e => (e.target.style.borderColor = '#c8a96e')}
-                  onBlur={e => (e.target.style.borderColor = '#222')}
-                />
+                  onBlur={e => (e.target.style.borderColor = '#222')} />
               </div>
 
               <div>
@@ -1304,18 +561,13 @@ export default function ArquitetoDashboardPage() {
                 </label>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {['residencial', 'comercial', 'institucional'].map(t => (
-                    <button
-                      key={t} type="button"
-                      onClick={() => setNovoForm(p => ({ ...p, tipo: t }))}
-                      style={{
-                        flex: 1, padding: '9px 4px', fontSize: 12, fontWeight: 500,
-                        borderRadius: 7, cursor: 'pointer', transition: 'all 0.15s',
-                        background: novoForm.tipo === t ? 'rgba(200,169,110,0.12)' : '#111',
-                        border: `1px solid ${novoForm.tipo === t ? '#c8a96e' : '#222'}`,
-                        color: novoForm.tipo === t ? '#c8a96e' : '#555',
-                        textTransform: 'capitalize',
-                      }}
-                    >
+                    <button key={t} type="button" onClick={() => setNovoForm(p => ({ ...p, tipo: t }))} style={{
+                      flex: 1, padding: '9px 4px', fontSize: 12, fontWeight: 500,
+                      borderRadius: 7, cursor: 'pointer', transition: 'all 0.15s',
+                      background: novoForm.tipo === t ? 'rgba(200,169,110,0.12)' : '#111',
+                      border: `1px solid ${novoForm.tipo === t ? '#c8a96e' : '#222'}`,
+                      color: novoForm.tipo === t ? '#c8a96e' : '#555', textTransform: 'capitalize',
+                    }}>
                       {t}
                     </button>
                   ))}
@@ -1326,38 +578,28 @@ export default function ArquitetoDashboardPage() {
                 <label style={{ display: 'block', fontSize: 11, color: '#555', marginBottom: 6, letterSpacing: '0.08em', fontWeight: 600 }}>
                   DESCRIÇÃO (opcional)
                 </label>
-                <textarea
-                  value={novoForm.descricao}
-                  onChange={e => setNovoForm(p => ({ ...p, descricao: e.target.value }))}
-                  placeholder="Breve descrição do projeto..."
-                  rows={3}
-                  style={{
+                <textarea value={novoForm.descricao} onChange={e => setNovoForm(p => ({ ...p, descricao: e.target.value }))}
+                  placeholder="Breve descrição do projeto..." rows={3} style={{
                     width: '100%', padding: '10px 14px', background: '#111',
                     border: '1px solid #222', color: '#e8e8e8', fontSize: 13.5,
                     outline: 'none', boxSizing: 'border-box', borderRadius: 6, resize: 'none',
                   }}
                   onFocus={e => (e.target.style.borderColor = '#c8a96e')}
-                  onBlur={e => (e.target.style.borderColor = '#222')}
-                />
+                  onBlur={e => (e.target.style.borderColor = '#222')} />
               </div>
 
-              {!escritorioId && (
+              {!escritorioId && !loadingProjects && (
                 <p style={{ fontSize: 12, color: '#f97316', padding: '10px 14px', background: 'rgba(249,115,22,0.08)', borderRadius: 6, border: '1px solid rgba(249,115,22,0.2)' }}>
                   Configure seu perfil em &quot;Meu Perfil&quot; antes de criar projetos.
                 </p>
               )}
 
-              <button
-                type="submit"
-                disabled={novoSaving || !escritorioId || !novoForm.nome}
-                style={{
-                  width: '100%', padding: '12px', background: novoSaving ? '#2a2010' : '#c8a96e',
-                  color: novoSaving ? '#666' : '#0d0d0d', border: 'none', borderRadius: 8,
-                  fontSize: 13, fontWeight: 700, letterSpacing: '0.1em',
-                  cursor: novoSaving || !escritorioId || !novoForm.nome ? 'not-allowed' : 'pointer',
-                  marginTop: 4,
-                }}
-              >
+              <button type="submit" disabled={novoSaving || !escritorioId || !novoForm.nome} style={{
+                width: '100%', padding: '12px', background: novoSaving ? '#2a2010' : '#c8a96e',
+                color: novoSaving ? '#666' : '#0d0d0d', border: 'none', borderRadius: 8,
+                fontSize: 13, fontWeight: 700, letterSpacing: '0.1em',
+                cursor: novoSaving || !escritorioId || !novoForm.nome ? 'not-allowed' : 'pointer', marginTop: 4,
+              }}>
                 {novoSaving ? 'CRIANDO...' : 'CRIAR PROJETO'}
               </button>
             </form>

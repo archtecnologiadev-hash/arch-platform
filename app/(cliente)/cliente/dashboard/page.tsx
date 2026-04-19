@@ -1,23 +1,46 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { StatsCard } from '@/components/shared/stats-card'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { FolderOpen, FileText, Clock } from 'lucide-react'
+import { createClient } from '@/lib/supabase'
 
-const myProjects = [
-  { id: '1', title: 'Residência Moderna', arquiteto: 'Arq. João Silva', status: 'in_progress', progress: 65 },
-  { id: '2', title: 'Reforma Cozinha', arquiteto: 'Arq. Maria Costa', status: 'review', progress: 90 },
-]
+interface Project {
+  id: string
+  nome: string
+  status: string
+  etapa_atual: string
+}
 
 const statusLabels: Record<string, string> = {
   in_progress: 'Em andamento',
   review: 'Em revisão',
   completed: 'Concluído',
   draft: 'Rascunho',
+  ativo: 'Em andamento',
 }
 
 export default function ClienteDashboardPage() {
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+      const { data } = await supabase
+        .from('projetos')
+        .select('id, nome, status, etapa_atual')
+        .eq('cliente_id', user.id)
+        .order('created_at', { ascending: false })
+      setProjects(data ?? [])
+      setLoading(false)
+    }
+    load()
+  }, [])
+
   return (
     <div className="space-y-6">
       <div>
@@ -26,9 +49,9 @@ export default function ClienteDashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <StatsCard title="Projetos Ativos" value="2" icon={FolderOpen} />
-        <StatsCard title="Orçamentos Recebidos" value="5" description="2 aguardando sua aprovação" icon={FileText} />
-        <StatsCard title="Último Acesso" value="Hoje" description="18/04/2026 às 09:30" icon={Clock} />
+        <StatsCard title="Projetos Ativos" value={loading ? '—' : String(projects.length)} icon={FolderOpen} />
+        <StatsCard title="Orçamentos Recebidos" value="0" description="Nenhum aguardando aprovação" icon={FileText} />
+        <StatsCard title="Último Acesso" value="Hoje" icon={Clock} />
       </div>
 
       <Card>
@@ -36,31 +59,33 @@ export default function ClienteDashboardPage() {
           <CardTitle>Meus Projetos</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {myProjects.map((project) => (
-              <div key={project.id} className="rounded-lg border p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{project.title}</p>
-                    <p className="text-sm text-muted-foreground">{project.arquiteto}</p>
+          {loading ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">Carregando...</div>
+          ) : projects.length === 0 ? (
+            <div className="text-center py-12 space-y-2">
+              <FolderOpen className="mx-auto h-10 w-10 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">Nenhum projeto ainda</p>
+              <p className="text-xs text-muted-foreground/60">
+                Seus projetos com o arquiteto aparecerão aqui
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {projects.map((project) => (
+                <div key={project.id} className="rounded-lg border p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium">{project.nome}</p>
+                    <span className="text-xs border rounded-full px-2 py-0.5 text-muted-foreground">
+                      {statusLabels[project.status] ?? statusLabels[project.etapa_atual] ?? 'Em andamento'}
+                    </span>
                   </div>
-                  <Badge variant="outline">{statusLabels[project.status]}</Badge>
+                  {project.etapa_atual && (
+                    <p className="text-xs text-muted-foreground">Etapa: {project.etapa_atual}</p>
+                  )}
                 </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Progresso</span>
-                    <span>{project.progress}%</span>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-secondary">
-                    <div
-                      className="h-2 rounded-full bg-primary transition-all"
-                      style={{ width: `${project.progress}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
