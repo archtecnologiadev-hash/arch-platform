@@ -13,26 +13,42 @@ const PROTECTED_PATHS = [
   '/fornecedor/pedidos',
 ]
 
-// Service role client bypasses RLS — used only for admin role check
-function serviceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-}
+/**
+ * Check admin status via three layers (in order of reliability):
+ * 1. JWT user_metadata.role — instant, no DB query, set by auth trigger or admin API
+ * 2. DB query with anon client + session (uses RLS users_select_own)
+ * 3. DB query with service role (bypasses RLS, requires SUPABASE_SERVICE_ROLE_KEY)
+ */
+async function isAdmin(
+  session: { user: { id: string; user_metadata?: Record<string, unknown> } },
+  anonClient: ReturnType<typeof createServerClient>
+): Promise<boolean> {
+  // Layer 1: JWT metadata (fast path — no network request)
+  if (session.user.user_metadata?.role === 'admin') return true
 
-async function getUserRole(userId: string): Promise<string | null> {
+  // Layer 2: anon client with session cookie (relies on RLS users_select_own)
   try {
-    const { data } = await serviceClient()
+    const { data } = await anonClient
       .from('users')
       .select('role')
-      .eq('id', userId)
+      .eq('id', session.user.id)
       .single()
-    return data?.role ?? null
-  } catch {
-    return null
+    if (data?.role === 'admin') return true
+  } catch { /* ignore — column may not exist yet */ }
+
+  // Layer 3: service role (bypasses RLS, requires env var)
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const { data } = await createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      ).from('users').select('role').eq('id', session.user.id).single()
+      if (data?.role === 'admin') return true
+    } catch { /* ignore */ }
   }
+
+  return false
 }
 
 export async function middleware(request: NextRequest) {
@@ -63,31 +79,40 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
   const pathname = request.nextUrl.pathname
 
-  // ── Admin route guard (service role — bypasses RLS) ────────────────────────
+  // ── /admin routes — check role FIRST ──────────────────────────────────────
   if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     if (!session) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
-    const role = await getUserRole(session.user.id)
-    if (role !== 'admin') {
-      return NextResponse.redirect(new URL('/login', request.url))
+    const admin = await isAdmin(session, supabase)
+    if (!admin) {
+      // Not admin — send to their own dashboard, not /login (avoids redirect loop)
+      const tipo = session.user.user_metadata?.tipo ?? 'cliente'
+      return NextResponse.redirect(new URL(`/${tipo}/dashboard`, request.url))
     }
     return response
   }
 
-  // ── Regular protected routes ───────────────────────────────────────────────
+  // ── Regular protected paths ────────────────────────────────────────────────
   const isProtected = PROTECTED_PATHS.some(
     (p) => pathname === p || pathname.startsWith(p + '/')
   )
 
-  if (isProtected && !session) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  if (isProtected) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    // Admin trying to access non-admin protected paths → redirect to /admin
+    const admin = await isAdmin(session, supabase)
+    if (admin) {
+      return NextResponse.redirect(new URL('/admin', request.url))
+    }
   }
 
-  // ── Redirect logged-in users away from auth pages ─────────────────────────
+  // ── Auth pages: redirect already-logged-in users ───────────────────────────
   if ((pathname === '/login' || pathname === '/cadastro') && session) {
-    const role = await getUserRole(session.user.id)
-    if (role === 'admin') {
+    const admin = await isAdmin(session, supabase)
+    if (admin) {
       return NextResponse.redirect(new URL('/admin', request.url))
     }
     const tipo = session.user.user_metadata?.tipo ?? 'cliente'

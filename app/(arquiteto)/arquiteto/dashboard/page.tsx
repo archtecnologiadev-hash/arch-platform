@@ -20,6 +20,7 @@ import {
   ArrowRight,
   Plus,
   X,
+  ShieldCheck,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
@@ -314,6 +315,7 @@ export default function ArquitetoDashboardPage() {
   // User info
   const [userName, setUserName] = useState('Arquiteto')
   const [userEmail, setUserEmail] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
 
   // Real projects from Supabase
   const [realProjects, setRealProjects] = useState<Project[]>([])
@@ -334,6 +336,14 @@ export default function ArquitetoDashboardPage() {
       const nome = user.user_metadata?.nome ?? user.email ?? 'Arquiteto'
       setUserName(nome)
       setUserEmail(user.email ?? '')
+
+      // Check admin role
+      if (user.user_metadata?.role === 'admin') {
+        setIsAdmin(true)
+      } else {
+        const { data: userData } = await supabase.from('users').select('role').eq('id', user.id).single()
+        if (userData?.role === 'admin') setIsAdmin(true)
+      }
 
       const { data: escritorio } = await supabase
         .from('escritorios').select('id').eq('user_id', user.id).single()
@@ -436,6 +446,21 @@ export default function ArquitetoDashboardPage() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Admin button */}
+          {isAdmin && (
+            <Link href="/admin" style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '7px 13px', borderRadius: 8, textDecoration: 'none',
+              background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.3)',
+              color: '#c8a96e', fontSize: 12.5, fontWeight: 700, letterSpacing: '0.04em',
+              transition: 'all 0.15s',
+            }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(200,169,110,0.2)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(200,169,110,0.1)')}>
+              <ShieldCheck size={14} />
+              Painel Admin
+            </Link>
+          )}
           {/* Bell */}
           <div ref={notifRef} style={{ position: 'relative' }}>
             <button
