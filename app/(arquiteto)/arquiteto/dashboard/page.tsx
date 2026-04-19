@@ -314,7 +314,6 @@ export default function ArquitetoDashboardPage() {
   // User info
   const [userName, setUserName] = useState('Arquiteto')
   const [userEmail, setUserEmail] = useState('')
-  const [userInitials, setUserInitials] = useState('A')
 
   // Real projects from Supabase
   const [realProjects, setRealProjects] = useState<Project[]>([])
@@ -335,7 +334,6 @@ export default function ArquitetoDashboardPage() {
       const nome = user.user_metadata?.nome ?? user.email ?? 'Arquiteto'
       setUserName(nome)
       setUserEmail(user.email ?? '')
-      setUserInitials(nome.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase())
 
       const { data: escritorio } = await supabase
         .from('escritorios').select('id').eq('user_id', user.id).single()
