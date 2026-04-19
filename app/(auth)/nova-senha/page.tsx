@@ -25,29 +25,23 @@ export default function NovaSenhaPage() {
   const [invalidLink, setInvalidLink] = useState(false)
 
   useEffect(() => {
-    async function init() {
-      const params = new URLSearchParams(window.location.search)
-      const code = params.get('code')
-
-      if (!code) {
-        setInvalidLink(true)
-        return
-      }
-
-      const supabase = createClient()
-      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-
-      if (exchangeError) {
-        setInvalidLink(true)
-        return
-      }
-
-      // Remove code from URL so it can't be reused
-      window.history.replaceState(null, '', window.location.pathname)
-      setReady(true)
+    // If /auth/confirm redirected here with an error flag, show invalid state
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('erro') === 'link-invalido') {
+      setInvalidLink(true)
+      return
     }
 
-    init()
+    // /auth/confirm already exchanged the code and set session cookies.
+    // Just verify a session exists.
+    const supabase = createClient()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setReady(true)
+      } else {
+        setInvalidLink(true)
+      }
+    })
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -128,7 +122,7 @@ export default function NovaSenhaPage() {
   if (!ready) {
     return (
       <div style={{ background: '#0d0d0d', border: '1px solid #1c1c1c', padding: '40px 36px', textAlign: 'center' }}>
-        <div style={{ fontSize: 13, color: '#444' }}>Verificando link de recuperação...</div>
+        <div style={{ fontSize: 13, color: '#444' }}>Verificando sessão...</div>
       </div>
     )
   }
