@@ -1,5 +1,4 @@
 import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -7,26 +6,30 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code')
 
   if (code) {
-    const cookieStore = cookies()
+    // Build the redirect response first so we can attach cookies to it
+    const response = NextResponse.redirect(new URL('/nova-senha', origin))
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          get(name) { return cookieStore.get(name)?.value },
+          get(name) { return request.cookies.get(name)?.value },
           set(name, value, options) {
-            try { cookieStore.set({ name, value, ...options }) } catch { /* read-only context */ }
+            // Write session cookies directly onto the redirect response
+            response.cookies.set({ name, value, ...options })
           },
           remove(name, options) {
-            try { cookieStore.set({ name, value: '', ...options }) } catch { /* read-only context */ }
+            response.cookies.set({ name, value: '', ...options })
           },
         },
       }
     )
 
     const { error } = await supabase.auth.exchangeCodeForSession(code)
+
     if (!error) {
-      return NextResponse.redirect(new URL('/nova-senha', origin))
+      return response  // carries the session cookies to the browser
     }
   }
 
