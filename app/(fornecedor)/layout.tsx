@@ -1,8 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { LayoutDashboard, UserCircle, Package, FileText, MessageCircle } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { LayoutDashboard, UserCircle, Package, FileText, MessageCircle, LogOut } from 'lucide-react'
+import { createClient } from '@/lib/supabase'
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/fornecedor/dashboard', icon: LayoutDashboard },
@@ -14,6 +16,34 @@ const NAV_ITEMS = [
 
 function FornecedorSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [userName, setUserName] = useState('Fornecedor')
+  const [userInitials, setUserInitials] = useState('F')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        const nome = data.user.user_metadata?.nome ?? data.user.email ?? 'Fornecedor'
+        setUserName(nome)
+        setUserInitials(
+          nome
+            .split(' ')
+            .slice(0, 2)
+            .map((n: string) => n[0])
+            .join('')
+            .toUpperCase()
+        )
+      }
+    })
+  }, [])
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   return (
     <aside
@@ -109,7 +139,7 @@ function FornecedorSidebar() {
       <div
         style={{
           borderTop: '1px solid #1c1c1c',
-          padding: '16px 18px',
+          padding: '14px 18px',
           display: 'flex',
           alignItems: 'center',
           gap: 12,
@@ -131,9 +161,9 @@ function FornecedorSidebar() {
             flexShrink: 0,
           }}
         >
-          MS
+          {userInitials}
         </div>
-        <div style={{ minWidth: 0 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
           <div
             style={{
               fontSize: 13,
@@ -144,10 +174,29 @@ function FornecedorSidebar() {
               textOverflow: 'ellipsis',
             }}
           >
-            Marcenaria Silva & Filhos
+            {userName}
           </div>
-          <div style={{ fontSize: 11, color: '#4a4a4a', marginTop: 2 }}>Marcenaria</div>
+          <div style={{ fontSize: 11, color: '#4a4a4a', marginTop: 2 }}>Fornecedor</div>
         </div>
+        <button
+          onClick={handleLogout}
+          title="Sair"
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#3a3a3a',
+            padding: 4,
+            display: 'flex',
+            alignItems: 'center',
+            transition: 'color 0.15s',
+            flexShrink: 0,
+          }}
+          onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#ef4444')}
+          onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#3a3a3a')}
+        >
+          <LogOut size={16} />
+        </button>
       </div>
     </aside>
   )

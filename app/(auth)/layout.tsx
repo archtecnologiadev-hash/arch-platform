@@ -2,11 +2,32 @@ import Link from 'next/link'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 p-4">
-      <Link href="/" className="mb-8 text-2xl font-bold text-primary">
-        Arch Platform
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#080808',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px 16px',
+      }}
+    >
+      <Link
+        href="/"
+        style={{
+          marginBottom: 40,
+          fontSize: 22,
+          fontWeight: 800,
+          letterSpacing: '0.3em',
+          color: '#c8a96e',
+          textDecoration: 'none',
+          fontFamily: 'Georgia, serif',
+        }}
+      >
+        ARCH
       </Link>
-      <div className="w-full max-w-md">{children}</div>
+      <div style={{ width: '100%', maxWidth: 440 }}>{children}</div>
     </div>
   )
 }
