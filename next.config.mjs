@@ -9,16 +9,15 @@ const nextConfig = {
     ],
   },
   experimental: {
-    // Exclude native SWC binaries from file tracing — common ENOENT fix on Vercel
     outputFileTracingExcludes: {
       '*': [
-        'node_modules/@swc/core-linux-x64-gnu',
-        'node_modules/@swc/core-linux-x64-musl',
-        'node_modules/@swc/core-linux-arm64-gnu',
-        'node_modules/@swc/core-linux-arm64-musl',
-        'node_modules/esbuild/bin',
-        'node_modules/webpack',
-        'node_modules/rollup',
+        './node_modules/@swc/core-linux-x64-gnu',
+        './node_modules/@swc/core-linux-x64-musl',
+        './node_modules/@swc/core-linux-arm64-gnu',
+        './node_modules/@swc/core-linux-arm64-musl',
+        './node_modules/esbuild/bin',
+        './node_modules/webpack',
+        './node_modules/rollup',
       ],
     },
   },
