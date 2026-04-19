@@ -12,14 +12,6 @@ const inp: React.CSSProperties = {
   outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s',
 }
 
-function parseHash(hash: string): Record<string, string> {
-  return hash.replace(/^#/, '').split('&').reduce<Record<string, string>>((acc, pair) => {
-    const [k, v] = pair.split('=')
-    if (k) acc[k] = decodeURIComponent(v ?? '')
-    return acc
-  }, {})
-}
-
 export default function NovaSenhaPage() {
   const router = useRouter()
   const [password, setPassword] = useState('')
@@ -34,28 +26,23 @@ export default function NovaSenhaPage() {
 
   useEffect(() => {
     async function init() {
-      const hash = parseHash(window.location.hash)
-      const accessToken = hash['access_token']
-      const refreshToken = hash['refresh_token']
-      const type = hash['type']
+      const params = new URLSearchParams(window.location.search)
+      const code = params.get('code')
 
-      if (!accessToken || !refreshToken || type !== 'recovery') {
+      if (!code) {
         setInvalidLink(true)
         return
       }
 
       const supabase = createClient()
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      })
+      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
-      if (sessionError) {
+      if (exchangeError) {
         setInvalidLink(true)
         return
       }
 
-      // Clear the hash so tokens aren't stored in browser history
+      // Remove code from URL so it can't be reused
       window.history.replaceState(null, '', window.location.pathname)
       setReady(true)
     }
@@ -102,12 +89,9 @@ export default function NovaSenhaPage() {
         }}>
           <CheckCircle2 size={26} color="#34d399" />
         </div>
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: '#e8e8e8', marginBottom: 10 }}>
-          Senha atualizada!
-        </h2>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: '#e8e8e8', marginBottom: 10 }}>Senha atualizada!</h2>
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 24 }}>
-          Sua senha foi alterada com sucesso.<br />
-          Redirecionando para o login...
+          Sua senha foi alterada com sucesso.<br />Redirecionando para o login...
         </p>
         <Link href="/login" style={{ fontSize: 13, color: '#c8a96e', textDecoration: 'none', fontWeight: 600 }}>
           Ir para o login agora
@@ -126,12 +110,9 @@ export default function NovaSenhaPage() {
         }}>
           <AlertCircle size={26} color="#ef4444" />
         </div>
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: '#e8e8e8', marginBottom: 10 }}>
-          Link inválido ou expirado
-        </h2>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: '#e8e8e8', marginBottom: 10 }}>Link inválido ou expirado</h2>
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 28 }}>
-          O link de recuperação expirou ou já foi utilizado.<br />
-          Solicite um novo link para continuar.
+          O link de recuperação expirou ou já foi utilizado.<br />Solicite um novo link para continuar.
         </p>
         <Link href="/recuperar-senha" style={{
           display: 'inline-block', padding: '11px 24px',
