@@ -13,48 +13,27 @@ const PROTECTED_PATHS = [
   '/fornecedor/pedidos',
 ]
 
-/**
- * Check admin status via three layers (in order of reliability):
- * 1. JWT user_metadata.role — instant, no DB query, set by auth trigger or admin API
- * 2. DB query with anon client + session (uses RLS users_select_own)
- * 3. DB query with service role (bypasses RLS, requires SUPABASE_SERVICE_ROLE_KEY)
- */
-async function isAdmin(
-  session: { user: { id: string; user_metadata?: Record<string, unknown> } },
-  anonClient: ReturnType<typeof createServerClient>
-): Promise<boolean> {
-  // Layer 1: JWT metadata (fast path — no network request)
-  if (session.user.user_metadata?.role === 'admin') return true
-
-  // Layer 2: anon client with session cookie (relies on RLS users_select_own)
+// Queries public.users directly with service role — bypasses RLS entirely
+async function getRoleFromDB(userId: string): Promise<string | null> {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return null
   try {
-    const { data } = await anonClient
+    const { data } = await createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
       .from('users')
       .select('role')
-      .eq('id', session.user.id)
+      .eq('id', userId)
       .single()
-    if (data?.role === 'admin') return true
-  } catch { /* ignore — column may not exist yet */ }
-
-  // Layer 3: service role (bypasses RLS, requires env var)
-  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    try {
-      const { data } = await createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY,
-        { auth: { autoRefreshToken: false, persistSession: false } }
-      ).from('users').select('role').eq('id', session.user.id).single()
-      if (data?.role === 'admin') return true
-    } catch { /* ignore */ }
+    return data?.role ?? null
+  } catch {
+    return null
   }
-
-  return false
 }
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: { headers: request.headers },
-  })
+  let response = NextResponse.next({ request: { headers: request.headers } })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -79,46 +58,43 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
   const pathname = request.nextUrl.pathname
 
-  // ── /admin routes — check role FIRST ──────────────────────────────────────
-  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
-    if (!session) {
+  const isAdminPath    = pathname === '/admin' || pathname.startsWith('/admin/')
+  const isProtected    = PROTECTED_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
+  const isAuthPage     = pathname === '/login' || pathname === '/cadastro'
+
+  // ── 1. No session: block protected routes ─────────────────────────────────
+  if (!session) {
+    if (isAdminPath || isProtected) {
       return NextResponse.redirect(new URL('/login', request.url))
-    }
-    const admin = await isAdmin(session, supabase)
-    if (!admin) {
-      // Not admin — send to their own dashboard, not /login (avoids redirect loop)
-      const tipo = session.user.user_metadata?.tipo ?? 'cliente'
-      return NextResponse.redirect(new URL(`/${tipo}/dashboard`, request.url))
     }
     return response
   }
 
-  // ── Regular protected paths ────────────────────────────────────────────────
-  const isProtected = PROTECTED_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(p + '/')
-  )
+  // ── 2. Has session: check role FIRST from public.users (service role) ─────
+  const role = await getRoleFromDB(session.user.id)
 
-  if (isProtected) {
-    if (!session) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-    // Admin trying to access non-admin protected paths → redirect to /admin
-    const admin = await isAdmin(session, supabase)
-    if (admin) {
+  if (role === 'admin') {
+    // Admin accessing /admin → allow
+    if (isAdminPath) return response
+    // Admin on protected routes or auth pages → send to /admin
+    if (isProtected || isAuthPage) {
       return NextResponse.redirect(new URL('/admin', request.url))
     }
+    // Admin on public pages → allow freely
+    return response
   }
 
-  // ── Auth pages: redirect already-logged-in users ───────────────────────────
-  if ((pathname === '/login' || pathname === '/cadastro') && session) {
-    const admin = await isAdmin(session, supabase)
-    if (admin) {
-      return NextResponse.redirect(new URL('/admin', request.url))
-    }
+  // ── 3. Non-admin rules ─────────────────────────────────────────────────────
+  if (isAdminPath) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  if (isAuthPage) {
     const tipo = session.user.user_metadata?.tipo ?? 'cliente'
     return NextResponse.redirect(new URL(`/${tipo}/dashboard`, request.url))
   }
 
+  // Protected path with valid session: allow through
   return response
 }
 
