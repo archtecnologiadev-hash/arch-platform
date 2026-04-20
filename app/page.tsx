@@ -60,10 +60,13 @@ export default function LandingPage() {
     load()
   }, [])
 
-  const styles = ['Todos', ...Array.from(new Set(studios.map(s => s.estilo).filter(Boolean) as string[]))]
-  const cities = ['Todas', ...Array.from(new Set(studios.map(s => s.cidade).filter(Boolean) as string[]))]
+  // only show studios with at least a photo and a bio
+  const withProfile = studios.filter(s => (s.image_url || s.cover_url) && s.bio)
 
-  const filtered = studios.filter(
+  const styles = ['Todos', ...Array.from(new Set(withProfile.map(s => s.estilo).filter(Boolean) as string[]))]
+  const cities = ['Todas', ...Array.from(new Set(withProfile.map(s => s.cidade).filter(Boolean) as string[]))]
+
+  const filtered = withProfile.filter(
     (s) =>
       (selectedStyle === 'Todos' || s.estilo === selectedStyle) &&
       (selectedCity === 'Todas' || s.cidade === selectedCity)
@@ -122,15 +125,15 @@ export default function LandingPage() {
               <div key={i} className="h-[42vh] min-h-[240px] bg-[#e5e5ea] animate-pulse" />
             ))}
           </div>
-        ) : studios.length === 0 ? (
+        ) : withProfile.length === 0 ? (
           <div className="flex h-[60vh] items-center justify-center bg-[#f2f2f7]">
             <div className="text-center">
-              <p className="text-sm font-light text-[#8e8e93]">Nenhum escritório cadastrado ainda.</p>
+              <p className="text-sm font-light text-[#8e8e93]">Nenhum escritório disponível ainda.</p>
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-px bg-black/[0.06] sm:grid-cols-2 lg:grid-cols-3">
-            {studios.map((studio) => (
+            {withProfile.map((studio) => (
               <Link
                 key={studio.id}
                 href={`/escritorio/${studio.slug}`}
@@ -198,7 +201,7 @@ export default function LandingPage() {
           {/* Stats row */}
           <div className="mt-3 flex gap-2">
             {[
-              { value: `${studios.length || '—'}`, label: 'Escritórios' },
+              { value: `${withProfile.length || '—'}`, label: 'Escritórios' },
               { value: '500+', label: 'Projetos' },
               { value: '98%', label: 'Satisfação' },
             ].map((stat) => (
@@ -224,7 +227,7 @@ export default function LandingPage() {
               <p className="text-[10px] font-light tracking-[0.4em] text-[#8e8e93] uppercase">Escritórios</p>
               <h2 className="mt-1 text-2xl font-extralight text-black">Todos os escritórios</h2>
             </div>
-            {studios.length > 0 && (
+            {withProfile.length > 0 && (
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-light transition-all ${
