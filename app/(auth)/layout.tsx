@@ -5,7 +5,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div
       style={{
         minHeight: '100vh',
-        background: '#080808',
+        background: '#f2f2f7',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -16,13 +16,12 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <Link
         href="/"
         style={{
-          marginBottom: 40,
-          fontSize: 22,
-          fontWeight: 800,
-          letterSpacing: '0.3em',
-          color: '#c8a96e',
+          marginBottom: 32,
+          fontSize: 20,
+          fontWeight: 300,
+          letterSpacing: '0.35em',
+          color: '#007AFF',
           textDecoration: 'none',
-          fontFamily: 'Georgia, serif',
         }}
       >
         ARC

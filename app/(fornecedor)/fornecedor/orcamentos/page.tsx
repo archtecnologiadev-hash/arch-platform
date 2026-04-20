@@ -104,10 +104,10 @@ const ALL_QUOTES: QuoteRequest[] = [
 ]
 
 const STATUS_META: Record<QuoteStatus, { color: string; bg: string; border: string }> = {
-  Pendente:    { color: '#c8a96e', bg: 'rgba(200,169,110,0.1)', border: 'rgba(200,169,110,0.22)' },
-  'Em análise': { color: '#4f9cf9', bg: 'rgba(79,156,249,0.1)', border: 'rgba(79,156,249,0.22)' },
-  Aprovado:    { color: '#34d399', bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.22)' },
-  Recusado:    { color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.22)' },
+  Pendente:     { color: '#007AFF', bg: 'rgba(0,122,255,0.08)', border: 'rgba(0,122,255,0.2)' },
+  'Em análise': { color: '#007AFF', bg: 'rgba(0,122,255,0.08)', border: 'rgba(0,122,255,0.2)' },
+  Aprovado:     { color: '#34d399', bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.22)' },
+  Recusado:     { color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.22)' },
 }
 
 const FILTERS: Array<QuoteStatus | 'Todos'> = [
@@ -144,23 +144,45 @@ export default function FornecedorOrcamentosPage() {
         padding: '32px 36px',
         minHeight: '100vh',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        color: '#d0d0d0',
+        color: '#1a1a1a',
+        background: '#f2f2f7',
       }}
     >
       <style>{`
-        .orc-card { background: #0e0e0e; border: 1px solid #161616; border-radius: 12px; overflow: hidden; transition: border-color 0.18s; }
-        .orc-card:hover { border-color: #222; }
+        .orc-card {
+          background: #ffffff;
+          border: 1px solid rgba(0,0,0,0.08);
+          border-radius: 14px;
+          overflow: hidden;
+          transition: box-shadow 0.18s;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .orc-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .orc-filter-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-        .orc-inp { width: 100%; background: #111; border: 1px solid #222; border-radius: 8px; padding: 10px 14px; color: #d0d0d0; font-size: 13px; outline: none; transition: border-color 0.15s; color-scheme: dark; box-sizing: border-box; font-family: inherit; resize: vertical; }
-        .orc-inp:focus { border-color: rgba(200,169,110,0.45); }
+        .orc-inp {
+          width: 100%;
+          background: #f2f2f7;
+          border: 1px solid rgba(0,0,0,0.1);
+          border-radius: 10px;
+          padding: 10px 14px;
+          color: #1a1a1a;
+          font-size: 13px;
+          outline: none;
+          transition: border-color 0.15s;
+          box-sizing: border-box;
+          font-family: inherit;
+          resize: vertical;
+        }
+        .orc-inp:focus { border-color: #007AFF; }
+        .orc-inp::placeholder { color: #8e8e93; }
         @keyframes orc-modal-in { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         .orc-modal-box { animation: orc-modal-in 0.2s ease; }
       `}</style>
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#f0f0f0', margin: 0 }}>Orçamentos</h1>
-        <p style={{ fontSize: 13, color: '#444', margin: '5px 0 0' }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a', margin: 0 }}>Orçamentos</h1>
+        <p style={{ fontSize: 13, color: '#6b6b6b', margin: '5px 0 0' }}>
           Gerencie todas as solicitações recebidas
         </p>
       </div>
@@ -179,12 +201,13 @@ export default function FornecedorOrcamentosPage() {
                 background: isActive
                   ? meta
                     ? meta.bg
-                    : 'rgba(200,169,110,0.12)'
-                  : 'transparent',
+                    : 'rgba(0,122,255,0.1)'
+                  : '#ffffff',
                 border: isActive
-                  ? `1px solid ${meta ? meta.border : 'rgba(200,169,110,0.25)'}`
-                  : '1px solid #222',
-                color: isActive ? (meta ? meta.color : '#c8a96e') : '#555',
+                  ? `1px solid ${meta ? meta.border : 'rgba(0,122,255,0.25)'}`
+                  : '1px solid rgba(0,0,0,0.1)',
+                color: isActive ? (meta ? meta.color : '#007AFF') : '#6b6b6b',
+                boxShadow: isActive ? 'none' : '0 1px 2px rgba(0,0,0,0.06)',
               }}
             >
               {f}
@@ -214,10 +237,10 @@ export default function FornecedorOrcamentosPage() {
                   style={{
                     width: 64,
                     height: 64,
-                    borderRadius: 9,
+                    borderRadius: 10,
                     objectFit: 'cover' as const,
                     flexShrink: 0,
-                    border: '1px solid #1c1c1c',
+                    border: '1px solid rgba(0,0,0,0.08)',
                   }}
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -230,7 +253,7 @@ export default function FornecedorOrcamentosPage() {
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: 14.5, fontWeight: 700, color: '#d0d0d0' }}>
+                      <div style={{ fontSize: 14.5, fontWeight: 700, color: '#1a1a1a' }}>
                         {q.project}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
@@ -239,19 +262,19 @@ export default function FornecedorOrcamentosPage() {
                             width: 22,
                             height: 22,
                             borderRadius: '50%',
-                            background: 'rgba(200,169,110,0.1)',
-                            border: '1px solid rgba(200,169,110,0.2)',
+                            background: 'rgba(0,122,255,0.1)',
+                            border: '1px solid rgba(0,122,255,0.2)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: 8,
                             fontWeight: 700,
-                            color: '#c8a96e',
+                            color: '#007AFF',
                           }}
                         >
                           {q.avatar}
                         </div>
-                        <span style={{ fontSize: 12, color: '#555' }}>
+                        <span style={{ fontSize: 12, color: '#6b6b6b' }}>
                           {q.arquiteto} · {q.date}
                         </span>
                       </div>
@@ -271,10 +294,10 @@ export default function FornecedorOrcamentosPage() {
                       >
                         {q.status}
                       </div>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: '#c8a96e' }}>{q.value}</div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: '#007AFF' }}>{q.value}</div>
                     </div>
                   </div>
-                  <div style={{ fontSize: 13, color: '#666', marginTop: 8, lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 13, color: '#6b6b6b', marginTop: 8, lineHeight: 1.5 }}>
                     {q.service}
                   </div>
                   <div
@@ -285,10 +308,10 @@ export default function FornecedorOrcamentosPage() {
                       style={{
                         fontSize: 11.5,
                         padding: '5px 12px',
-                        borderRadius: 6,
-                        background: 'transparent',
-                        border: '1px solid #222',
-                        color: '#555',
+                        borderRadius: 8,
+                        background: '#f2f2f7',
+                        border: '1px solid rgba(0,0,0,0.1)',
+                        color: '#6b6b6b',
                         cursor: 'pointer',
                         fontWeight: 600,
                       }}
@@ -301,10 +324,10 @@ export default function FornecedorOrcamentosPage() {
                         style={{
                           fontSize: 11.5,
                           padding: '5px 12px',
-                          borderRadius: 6,
-                          background: 'rgba(200,169,110,0.09)',
-                          border: '1px solid rgba(200,169,110,0.22)',
-                          color: '#c8a96e',
+                          borderRadius: 8,
+                          background: 'rgba(0,122,255,0.08)',
+                          border: '1px solid rgba(0,122,255,0.2)',
+                          color: '#007AFF',
                           cursor: 'pointer',
                           fontWeight: 600,
                         }}
@@ -320,15 +343,15 @@ export default function FornecedorOrcamentosPage() {
               {isExpanded && (
                 <div
                   style={{
-                    borderTop: '1px solid #111',
+                    borderTop: '1px solid rgba(0,0,0,0.06)',
                     padding: '14px 20px',
-                    background: '#0b0b0b',
+                    background: '#f9f9fb',
                   }}
                 >
-                  <div style={{ fontSize: 11, color: '#444', fontWeight: 600, marginBottom: 6 }}>
+                  <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 600, marginBottom: 6 }}>
                     Detalhes da solicitação
                   </div>
-                  <p style={{ fontSize: 13, color: '#777', lineHeight: 1.65, margin: 0 }}>
+                  <p style={{ fontSize: 13, color: '#6b6b6b', lineHeight: 1.65, margin: 0 }}>
                     {q.details}
                   </p>
                 </div>
@@ -347,7 +370,7 @@ export default function FornecedorOrcamentosPage() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.75)',
+            background: 'rgba(0,0,0,0.4)',
             backdropFilter: 'blur(5px)',
             zIndex: 200,
             display: 'flex',
@@ -359,21 +382,22 @@ export default function FornecedorOrcamentosPage() {
           <div
             className="orc-modal-box"
             style={{
-              background: '#0e0e0e',
-              border: '1px solid #222',
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.08)',
               borderRadius: 16,
               width: '100%',
               maxWidth: 480,
               padding: 28,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
             }}
           >
             {replySent ? (
               <div style={{ textAlign: 'center' as const, padding: '22px 0' }}>
                 <CheckCircle2 size={52} color="#34d399" style={{ marginBottom: 16 }} />
-                <div style={{ fontSize: 19, fontWeight: 700, color: '#f0f0f0', marginBottom: 8 }}>
+                <div style={{ fontSize: 19, fontWeight: 700, color: '#1a1a1a', marginBottom: 8 }}>
                   Resposta enviada!
                 </div>
-                <div style={{ fontSize: 13, color: '#555' }}>
+                <div style={{ fontSize: 13, color: '#6b6b6b' }}>
                   {replyQuote?.arquiteto} será notificado.
                 </div>
               </div>
@@ -388,16 +412,16 @@ export default function FornecedorOrcamentosPage() {
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f0f0' }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>
                       Responder Solicitação
                     </div>
-                    <div style={{ fontSize: 12, color: '#555', marginTop: 3 }}>
+                    <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 3 }}>
                       {replyQuote?.project} · {replyQuote?.arquiteto}
                     </div>
                   </div>
                   <button
                     onClick={() => setReplyId(null)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555', padding: 4 }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}
                   >
                     <X size={18} />
                   </button>
@@ -407,7 +431,7 @@ export default function FornecedorOrcamentosPage() {
                     <label
                       style={{
                         fontSize: 11.5,
-                        color: '#555',
+                        color: '#6b6b6b',
                         display: 'block',
                         marginBottom: 6,
                         fontWeight: 600,
@@ -427,10 +451,10 @@ export default function FornecedorOrcamentosPage() {
                   <button
                     type="submit"
                     style={{
-                      background: '#c8a96e',
-                      color: '#080808',
+                      background: '#007AFF',
+                      color: '#ffffff',
                       border: 'none',
-                      borderRadius: 9,
+                      borderRadius: 10,
                       padding: '12px',
                       fontSize: 14,
                       fontWeight: 700,

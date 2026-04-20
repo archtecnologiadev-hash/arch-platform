@@ -7,11 +7,11 @@ const TIPOS = ['arquiteto', 'fornecedor', 'cliente']
 const PLANOS = ['free', 'arquiteto', 'fornecedor']
 
 const inp: React.CSSProperties = {
-  width: '100%', background: '#111', border: '1px solid #222', color: '#d0d0d0',
-  borderRadius: 7, padding: '9px 12px', fontSize: 13, outline: 'none', boxSizing: 'border-box' as const,
+  width: '100%', background: '#ffffff', border: '1px solid rgba(0,0,0,0.12)', color: '#1a1a1a',
+  borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', boxSizing: 'border-box' as const,
 }
 const lbl: React.CSSProperties = {
-  fontSize: 11, color: '#555', fontWeight: 700, display: 'block', marginBottom: 5, letterSpacing: '0.07em',
+  fontSize: 11, color: '#6b6b6b', fontWeight: 500, display: 'block', marginBottom: 5, letterSpacing: '0.03em',
 }
 const sel: React.CSSProperties = { ...inp, cursor: 'pointer' }
 
@@ -72,12 +72,13 @@ export default function AdminCadastrar() {
   }
 
   return (
-    <div style={{ padding: 32, color: '#e0e0e0', maxWidth: 680 }}>
+    <div style={{ padding: 32, color: '#1a1a1a', background: '#f2f2f7', minHeight: '100vh', maxWidth: 680 }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <UserPlus size={20} color="#c8a96e" /> Cadastrar Usuário
+        <h1 style={{ fontSize: 22, fontWeight: 500, color: '#1a1a1a', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <UserPlus size={20} color="#007AFF" /> Cadastrar Usuário
         </h1>
-        <p style={{ fontSize: 13, color: '#444' }}>Cadastro manual com senha provisória automática</p>
+        <p style={{ fontSize: 13, color: '#8e8e93' }}>Cadastro manual com senha provisória automática</p>
       </div>
 
       {/* Success card */}
@@ -88,103 +89,102 @@ export default function AdminCadastrar() {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <CheckCircle2 size={18} color="#34d399" />
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#34d399' }}>Usuário criado com sucesso</span>
+            <span style={{ fontSize: 14, fontWeight: 500, color: '#34d399' }}>Usuário criado com sucesso</span>
           </div>
-          <div style={{ fontSize: 12, color: '#555', marginBottom: 10 }}>
-            ID: <span style={{ fontFamily: 'monospace', color: '#444' }}>{result.user_id}</span>
+          <div style={{ fontSize: 12, color: '#6b6b6b', marginBottom: 10 }}>
+            ID: <span style={{ fontFamily: 'monospace', color: '#8e8e93' }}>{result.user_id}</span>
           </div>
-          <div style={{ background: '#0a0a0a', borderRadius: 8, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 10, color: '#444', fontWeight: 700, letterSpacing: '0.07em', marginBottom: 4 }}>SENHA PROVISÓRIA</div>
-              <div style={{ fontFamily: 'monospace', fontSize: 15, color: '#c8a96e', letterSpacing: '0.05em' }}>
+              <div style={{ fontSize: 10, color: '#8e8e93', fontWeight: 500, letterSpacing: '0.04em', marginBottom: 4 }}>SENHA PROVISÓRIA</div>
+              <div style={{ fontFamily: 'monospace', fontSize: 15, color: '#007AFF', letterSpacing: '0.05em' }}>
                 {showSenha ? result.senha_provisoria : '•'.repeat(result.senha_provisoria.length)}
               </div>
             </div>
-            <button onClick={() => setShowSenha(s => !s)} style={{ background: 'none', border: 'none', color: '#444', cursor: 'pointer', padding: 4 }}>
+            <button onClick={() => setShowSenha(s => !s)} style={{ background: 'none', border: 'none', color: '#8e8e93', cursor: 'pointer', padding: 4 }}>
               {showSenha ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
             <button onClick={copyPassword} style={{
-              background: copied ? 'rgba(52,211,153,0.1)' : 'rgba(200,169,110,0.1)',
-              border: `1px solid ${copied ? 'rgba(52,211,153,0.3)' : 'rgba(200,169,110,0.25)'}`,
-              color: copied ? '#34d399' : '#c8a96e',
+              background: copied ? 'rgba(52,211,153,0.1)' : 'rgba(0,122,255,0.08)',
+              border: `1px solid ${copied ? 'rgba(52,211,153,0.3)' : 'rgba(0,122,255,0.2)'}`,
+              color: copied ? '#34d399' : '#007AFF',
               borderRadius: 7, padding: '6px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 600,
               display: 'flex', alignItems: 'center', gap: 5,
             }}>
               {copied ? <><CheckCircle2 size={12} /> Copiado</> : <><Copy size={12} /> Copiar</>}
             </button>
           </div>
-          <p style={{ fontSize: 11, color: '#333', marginTop: 8 }}>
+          <p style={{ fontSize: 11, color: '#8e8e93', marginTop: 8 }}>
             Compartilhe a senha com o usuário. Ele poderá alterá-la no primeiro login.
           </p>
         </div>
       )}
 
       <form onSubmit={handleSubmit}>
-        <div style={{ background: '#0d0d0d', border: '1px solid #1c1c1c', borderRadius: 14, padding: 24 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#c8a96e', letterSpacing: '0.1em', marginBottom: 18 }}>INFORMAÇÕES DO USUÁRIO</p>
+        <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <p style={{ fontSize: 12, fontWeight: 500, color: '#007AFF', letterSpacing: '0.04em', marginBottom: 18 }}>Informações do Usuário</p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label style={lbl}>NOME COMPLETO *</label>
+                <label style={lbl}>Nome completo *</label>
                 <input required value={form.nome} onChange={e => set('nome', e.target.value)} placeholder="João Silva" style={inp}
-                  onFocus={e => (e.target.style.borderColor = '#c8a96e')} onBlur={e => (e.target.style.borderColor = '#222')} />
+                  onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.5)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.12)')} />
               </div>
               <div>
-                <label style={lbl}>EMAIL *</label>
+                <label style={lbl}>Email *</label>
                 <input required type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="joao@email.com" style={inp}
-                  onFocus={e => (e.target.style.borderColor = '#c8a96e')} onBlur={e => (e.target.style.borderColor = '#222')} />
+                  onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.5)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.12)')} />
               </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label style={lbl}>TELEFONE</label>
+                <label style={lbl}>Telefone</label>
                 <input value={form.telefone} onChange={e => set('telefone', e.target.value)} placeholder="(11) 99999-9999" style={inp}
-                  onFocus={e => (e.target.style.borderColor = '#c8a96e')} onBlur={e => (e.target.style.borderColor = '#222')} />
+                  onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.5)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.12)')} />
               </div>
               <div>
-                <label style={lbl}>CIDADE</label>
+                <label style={lbl}>Cidade</label>
                 <input value={form.cidade} onChange={e => set('cidade', e.target.value)} placeholder="São Paulo" style={inp}
-                  onFocus={e => (e.target.style.borderColor = '#c8a96e')} onBlur={e => (e.target.style.borderColor = '#222')} />
+                  onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.5)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.12)')} />
               </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
               <div>
-                <label style={lbl}>TIPO *</label>
+                <label style={lbl}>Tipo *</label>
                 <select required value={form.tipo} onChange={e => set('tipo', e.target.value)} style={sel}>
                   {TIPOS.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
                 </select>
               </div>
               <div>
-                <label style={lbl}>PLANO</label>
+                <label style={lbl}>Plano</label>
                 <select value={form.plano} onChange={e => set('plano', e.target.value)} style={sel}>
                   {PLANOS.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
                 </select>
               </div>
               <div>
-                <label style={lbl}>TRIAL (DIAS)</label>
+                <label style={lbl}>Trial (dias)</label>
                 <input type="number" min={0} max={365} value={form.trial_dias} onChange={e => set('trial_dias', e.target.value)} placeholder="0 = sem trial" style={inp}
-                  onFocus={e => (e.target.style.borderColor = '#c8a96e')} onBlur={e => (e.target.style.borderColor = '#222')} />
+                  onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.5)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.12)')} />
               </div>
             </div>
           </div>
 
           {error && (
-            <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 12, color: '#ef4444' }}>
+            <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 12, color: '#ef4444' }}>
               {error}
             </div>
           )}
 
           <button type="submit" disabled={saving} style={{
-            marginTop: 22, width: '100%', padding: '13px', borderRadius: 9, fontSize: 13.5, fontWeight: 700,
-            background: saving ? '#1a1a1a' : '#c8a96e', color: saving ? '#555' : '#080808',
+            marginTop: 22, width: '100%', padding: '13px', borderRadius: 10, fontSize: 13.5, fontWeight: 600,
+            background: saving ? 'rgba(0,0,0,0.06)' : '#007AFF', color: saving ? '#8e8e93' : '#ffffff',
             border: 'none', cursor: saving ? 'not-allowed' : 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
-            {saving ? <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> CRIANDO...</> : <><UserPlus size={15} /> CADASTRAR USUÁRIO</>}
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+            {saving ? <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Criando...</> : <><UserPlus size={15} /> Cadastrar Usuário</>}
           </button>
         </div>
       </form>

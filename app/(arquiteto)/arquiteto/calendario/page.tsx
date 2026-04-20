@@ -100,40 +100,40 @@ export default function CalendarioPage() {
   const todayYMD = toYMD(today)
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#080808', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Loader2 size={28} color="#c8a96e" style={{ animation: 'spin 1s linear infinite' }} />
+    <div style={{ minHeight: '100vh', background: '#f2f2f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Loader2 size={28} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: '#080808', color: '#e0e0e0', padding: 32 }}>
+    <div style={{ minHeight: '100vh', background: '#f2f2f7', color: '#1a1a1a', padding: 32 }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Calendar size={20} color="#c8a96e" />
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Calendar size={20} color="#007AFF" />
           Calendário
         </h1>
-        <p style={{ fontSize: 13, color: '#444' }}>Todos os eventos dos seus projetos</p>
+        <p style={{ fontSize: 13, color: '#6b6b6b' }}>Todos os eventos dos seus projetos</p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24, alignItems: 'start' }}>
 
         {/* Calendar grid */}
-        <div style={{ background: '#0d0d0d', border: '1px solid #1c1c1c', borderRadius: 14, padding: 24 }}>
+        <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
           {/* Month navigation */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <button onClick={prevMonth} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', padding: 6, borderRadius: 6, display: 'flex' }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#c8a96e')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#666')}>
+            <button onClick={prevMonth} style={{ background: 'none', border: 'none', color: '#8e8e93', cursor: 'pointer', padding: 6, borderRadius: 6, display: 'flex' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#007AFF')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#8e8e93')}>
               <ChevronLeft size={18} />
             </button>
-            <span style={{ fontSize: 15, fontWeight: 700, color: '#e0e0e0' }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>
               {MONTHS[viewMonth]} {viewYear}
             </span>
-            <button onClick={nextMonth} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', padding: 6, borderRadius: 6, display: 'flex' }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#c8a96e')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#666')}>
+            <button onClick={nextMonth} style={{ background: 'none', border: 'none', color: '#8e8e93', cursor: 'pointer', padding: 6, borderRadius: 6, display: 'flex' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#007AFF')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#8e8e93')}>
               <ChevronRight size={18} />
             </button>
           </div>
@@ -141,7 +141,7 @@ export default function CalendarioPage() {
           {/* Day headers */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 6 }}>
             {DAYS.map(d => (
-              <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: '#444', padding: '4px 0', letterSpacing: '0.05em' }}>
+              <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 400, color: '#8e8e93', padding: '4px 0', letterSpacing: '0.05em' }}>
                 {d}
               </div>
             ))}
@@ -157,25 +157,25 @@ export default function CalendarioPage() {
               const isSelected = ymd === selectedDay
               return (
                 <button key={i} onClick={() => setSelectedDay(ymd)} style={{
-                  background: isSelected ? 'rgba(200,169,110,0.15)' : isToday ? 'rgba(200,169,110,0.06)' : 'transparent',
-                  border: isSelected ? '1px solid rgba(200,169,110,0.5)' : isToday ? '1px solid rgba(200,169,110,0.2)' : '1px solid transparent',
+                  background: isSelected ? 'rgba(0,122,255,0.12)' : isToday ? 'rgba(0,122,255,0.05)' : 'transparent',
+                  border: isSelected ? '1px solid rgba(0,122,255,0.4)' : isToday ? '1px solid rgba(0,122,255,0.18)' : '1px solid transparent',
                   borderRadius: 8, padding: '8px 4px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s',
                   minHeight: 52,
                 }}
-                  onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
-                  onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = isToday ? 'rgba(200,169,110,0.06)' : 'transparent' }}>
-                  <div style={{ fontSize: 12.5, fontWeight: isToday ? 700 : 400, color: isSelected ? '#c8a96e' : isToday ? '#c8a96e' : '#aaa', marginBottom: 4 }}>
+                  onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(0,0,0,0.04)' }}
+                  onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = isToday ? 'rgba(0,122,255,0.05)' : 'transparent' }}>
+                  <div style={{ fontSize: 12.5, fontWeight: isToday ? 700 : 400, color: isSelected ? '#007AFF' : isToday ? '#007AFF' : '#1a1a1a', marginBottom: 4 }}>
                     {day}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
                     {dayEvents.slice(0, 2).map(ev => {
-                      const meta = EVENT_META[ev.tipo as keyof typeof EVENT_META] ?? { color: '#666', label: ev.tipo }
+                      const meta = EVENT_META[ev.tipo as keyof typeof EVENT_META] ?? { color: '#8e8e93', label: ev.tipo }
                       return (
                         <div key={ev.id} style={{ width: 6, height: 6, borderRadius: '50%', background: meta.color }} />
                       )
                     })}
                     {dayEvents.length > 2 && (
-                      <div style={{ fontSize: 8, color: '#555' }}>+{dayEvents.length - 2}</div>
+                      <div style={{ fontSize: 8, color: '#8e8e93' }}>+{dayEvents.length - 2}</div>
                     )}
                   </div>
                 </button>
@@ -185,40 +185,40 @@ export default function CalendarioPage() {
         </div>
 
         {/* Event list for selected day */}
-        <div style={{ background: '#0d0d0d', border: '1px solid #1c1c1c', borderRadius: 14, padding: 20 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#444', letterSpacing: '0.1em', marginBottom: 16 }}>
-            {selectedDay ? selectedDay.split('-').reverse().join('/') : 'SELECIONE UM DIA'}
+        <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <p style={{ fontSize: 11, fontWeight: 400, color: '#8e8e93', letterSpacing: '0.04em', marginBottom: 16 }}>
+            {selectedDay ? selectedDay.split('-').reverse().join('/') : 'Selecione um dia'}
           </p>
 
           {selectedEvents.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '32px 0', color: '#333', fontSize: 13 }}>
+            <div style={{ textAlign: 'center', padding: '32px 0', color: '#8e8e93', fontSize: 13 }}>
               Nenhum evento neste dia
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {selectedEvents.map(ev => {
-                const meta = EVENT_META[ev.tipo as keyof typeof EVENT_META] ?? { color: '#666', label: ev.tipo, icon: '●' }
+                const meta = EVENT_META[ev.tipo as keyof typeof EVENT_META] ?? { color: '#8e8e93', label: ev.tipo, icon: '●' }
                 return (
                   <div key={ev.id} style={{
-                    background: '#111', border: '1px solid #1c1c1c', borderRadius: 10, padding: '12px 14px',
+                    background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, padding: '12px 14px',
                     borderLeft: `3px solid ${meta.color}`,
                   }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: '#e0e0e0', marginBottom: 4 }}>{ev.titulo}</div>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1a1a1a', marginBottom: 4 }}>{ev.titulo}</div>
                     <div style={{ fontSize: 10, color: meta.color, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>
                       {meta.label}
                     </div>
                     {(ev.hora_inicio || ev.hora_fim) && (
-                      <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>
+                      <div style={{ fontSize: 11, color: '#6b6b6b', marginBottom: 4 }}>
                         {ev.hora_inicio}{ev.hora_fim ? ` → ${ev.hora_fim}` : ''}
                       </div>
                     )}
-                    <Link href={`/arquiteto/projetos/${ev.projeto_id}`} style={{ fontSize: 10, color: '#555', textDecoration: 'none' }}
-                      onMouseEnter={e => (e.currentTarget.style.color = '#c8a96e')}
-                      onMouseLeave={e => (e.currentTarget.style.color = '#555')}>
+                    <Link href={`/arquiteto/projetos/${ev.projeto_id}`} style={{ fontSize: 10, color: '#8e8e93', textDecoration: 'none' }}
+                      onMouseEnter={e => (e.currentTarget.style.color = '#007AFF')}
+                      onMouseLeave={e => (e.currentTarget.style.color = '#8e8e93')}>
                       {ev.projeto_nome} →
                     </Link>
                     {ev.observacao && (
-                      <div style={{ fontSize: 11, color: '#444', marginTop: 6, paddingTop: 6, borderTop: '1px solid #1c1c1c' }}>
+                      <div style={{ fontSize: 11, color: '#6b6b6b', marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
                         {ev.observacao}
                       </div>
                     )}

@@ -15,10 +15,10 @@ interface UserData {
 interface LogEntry { id: number; acao: string; detalhes: Record<string, unknown>; created_at: string }
 
 const inp: React.CSSProperties = {
-  width: '100%', background: '#111', border: '1px solid #222', color: '#d0d0d0',
-  borderRadius: 7, padding: '9px 12px', fontSize: 13, outline: 'none', boxSizing: 'border-box' as const,
+  width: '100%', background: '#ffffff', border: '1px solid rgba(0,0,0,0.12)', color: '#1a1a1a',
+  borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', boxSizing: 'border-box' as const,
 }
-const lbl: React.CSSProperties = { fontSize: 11, color: '#555', fontWeight: 700, display: 'block', marginBottom: 5, letterSpacing: '0.07em' }
+const lbl: React.CSSProperties = { fontSize: 11, color: '#6b6b6b', fontWeight: 500, display: 'block', marginBottom: 5, letterSpacing: '0.03em' }
 const sel: React.CSSProperties = { ...inp, cursor: 'pointer' }
 
 export default function EditarUsuario() {
@@ -96,33 +96,34 @@ export default function EditarUsuario() {
   }
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Loader2 size={26} color="#c8a96e" style={{ animation: 'spin 1s linear infinite' }} />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f2f2f7' }}>
+      <Loader2 size={26} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 
   if (!form) return (
-    <div style={{ padding: 32, color: '#555' }}>Usuário não encontrado.</div>
+    <div style={{ padding: 32, color: '#8e8e93', background: '#f2f2f7', minHeight: '100vh' }}>Usuário não encontrado.</div>
   )
 
   return (
-    <div style={{ padding: 32, color: '#e0e0e0', maxWidth: 900 }}>
+    <div style={{ padding: 32, color: '#1a1a1a', background: '#f2f2f7', minHeight: '100vh', maxWidth: 900 }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
         <Link href="/admin/usuarios" style={{
-          display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#444',
-          textDecoration: 'none', padding: '6px 12px', border: '1px solid #1c1c1c', borderRadius: 7,
+          display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#007AFF',
+          textDecoration: 'none', padding: '6px 12px', border: '1px solid rgba(0,122,255,0.25)', borderRadius: 8,
+          background: 'rgba(0,122,255,0.06)',
         }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#e0e0e0')}
-          onMouseLeave={e => (e.currentTarget.style.color = '#444')}>
+          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.12)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.06)')}>
           <ArrowLeft size={13} /> Voltar
         </Link>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#f0f0f0' }}>{form.nome}</h1>
-          <p style={{ fontSize: 12, color: '#444', marginTop: 2 }}>
-            ID: <span style={{ fontFamily: 'monospace', color: '#333' }}>{userId}</span>
+          <h1 style={{ fontSize: 20, fontWeight: 500, color: '#1a1a1a' }}>{form.nome}</h1>
+          <p style={{ fontSize: 12, color: '#8e8e93', marginTop: 2 }}>
+            ID: <span style={{ fontFamily: 'monospace', color: '#6b6b6b' }}>{userId}</span>
             {' · '}Cadastrado em {new Date(form.created_at).toLocaleDateString('pt-BR')}
           </p>
         </div>
@@ -131,32 +132,32 @@ export default function EditarUsuario() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20, alignItems: 'start' }}>
 
         {/* Form */}
-        <div style={{ background: '#0d0d0d', border: '1px solid #1c1c1c', borderRadius: 14, padding: 24 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#c8a96e', letterSpacing: '0.1em', marginBottom: 18 }}>DADOS DO USUÁRIO</p>
+        <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <p style={{ fontSize: 12, fontWeight: 500, color: '#007AFF', letterSpacing: '0.04em', marginBottom: 18 }}>Dados do Usuário</p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label style={lbl}>NOME</label>
+                <label style={lbl}>Nome</label>
                 <input value={form.nome} onChange={e => set('nome', e.target.value)} style={inp}
-                  onFocus={e => (e.target.style.borderColor = '#c8a96e')} onBlur={e => (e.target.style.borderColor = '#222')} />
+                  onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.5)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.12)')} />
               </div>
               <div>
-                <label style={lbl}>EMAIL</label>
+                <label style={lbl}>Email</label>
                 <input value={form.email} onChange={e => set('email', e.target.value)} style={inp}
-                  onFocus={e => (e.target.style.borderColor = '#c8a96e')} onBlur={e => (e.target.style.borderColor = '#222')} />
+                  onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.5)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.12)')} />
               </div>
             </div>
 
             <div>
-              <label style={lbl}>TELEFONE</label>
+              <label style={lbl}>Telefone</label>
               <input value={form.telefone ?? ''} onChange={e => set('telefone', e.target.value)} style={inp}
-                onFocus={e => (e.target.style.borderColor = '#c8a96e')} onBlur={e => (e.target.style.borderColor = '#222')} />
+                onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.5)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.12)')} />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
               <div>
-                <label style={lbl}>TIPO</label>
+                <label style={lbl}>Tipo</label>
                 <select value={form.tipo} onChange={e => set('tipo', e.target.value)} style={sel}>
                   <option value="arquiteto">Arquiteto</option>
                   <option value="fornecedor">Fornecedor</option>
@@ -165,7 +166,7 @@ export default function EditarUsuario() {
                 </select>
               </div>
               <div>
-                <label style={lbl}>PLANO</label>
+                <label style={lbl}>Plano</label>
                 <select value={form.plano ?? 'free'} onChange={e => set('plano', e.target.value)} style={sel}>
                   <option value="free">Free</option>
                   <option value="arquiteto">Arquiteto</option>
@@ -174,7 +175,7 @@ export default function EditarUsuario() {
                 </select>
               </div>
               <div>
-                <label style={lbl}>STATUS</label>
+                <label style={lbl}>Status</label>
                 <select value={form.status_conta ?? 'ativo'} onChange={e => set('status_conta', e.target.value)} style={sel}>
                   <option value="ativo">Ativo</option>
                   <option value="trial">Trial</option>
@@ -182,7 +183,7 @@ export default function EditarUsuario() {
                 </select>
               </div>
               <div>
-                <label style={lbl}>ROLE</label>
+                <label style={lbl}>Role</label>
                 <select value={form.role ?? 'user'} onChange={e => set('role', e.target.value)} style={sel}>
                   <option value="user">User</option>
                   <option value="admin">Admin</option>
@@ -191,26 +192,26 @@ export default function EditarUsuario() {
             </div>
 
             <div>
-              <label style={lbl}>TRIAL ATÉ</label>
+              <label style={lbl}>Trial até</label>
               <input type="datetime-local" value={form.trial_ate ? form.trial_ate.slice(0, 16) : ''} onChange={e => set('trial_ate', e.target.value)} style={inp}
-                onFocus={e => (e.target.style.borderColor = '#c8a96e')} onBlur={e => (e.target.style.borderColor = '#222')} />
+                onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.5)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.12)')} />
             </div>
           </div>
 
           {error && (
-            <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, fontSize: 12, color: '#ef4444' }}>
+            <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 12, color: '#ef4444' }}>
               {error}
             </div>
           )}
 
           <button onClick={handleSave} disabled={saving} style={{
-            marginTop: 20, width: '100%', padding: '12px', borderRadius: 8, fontSize: 13, fontWeight: 700,
-            background: saved ? 'rgba(52,211,153,0.1)' : '#c8a96e',
-            color: saved ? '#34d399' : '#080808',
+            marginTop: 20, width: '100%', padding: '12px', borderRadius: 9, fontSize: 13, fontWeight: 600,
+            background: saved ? 'rgba(52,211,153,0.1)' : '#007AFF',
+            color: saved ? '#34d399' : '#ffffff',
             border: saved ? '1px solid rgba(52,211,153,0.3)' : 'none',
             cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
-            {saved ? <><CheckCircle2 size={14} /> SALVO</> : saving ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> SALVANDO...</> : <><Save size={14} /> SALVAR</>}
+            {saved ? <><CheckCircle2 size={14} /> Salvo</> : saving ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</> : <><Save size={14} /> Salvar</>}
           </button>
         </div>
 
@@ -218,11 +219,11 @@ export default function EditarUsuario() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* Actions */}
-          <div style={{ background: '#0d0d0d', border: '1px solid #1c1c1c', borderRadius: 14, padding: 20 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#444', letterSpacing: '0.1em', marginBottom: 14 }}>AÇÕES</p>
+          <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <p style={{ fontSize: 11, fontWeight: 500, color: '#8e8e93', letterSpacing: '0.04em', marginBottom: 14 }}>AÇÕES</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button onClick={handleSuspend} disabled={saving || form.status_conta === 'suspenso'} style={{
-                width: '100%', padding: '10px', borderRadius: 7, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                width: '100%', padding: '10px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
                 background: 'rgba(239,180,60,0.08)', border: '1px solid rgba(239,180,60,0.2)', color: '#f59e0b',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: form.status_conta === 'suspenso' ? 0.4 : 1,
               }}>
@@ -232,8 +233,8 @@ export default function EditarUsuario() {
 
               {!confirmDelete ? (
                 <button onClick={() => setConfirmDelete(true)} style={{
-                  width: '100%', padding: '10px', borderRadius: 7, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-                  background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444',
+                  width: '100%', padding: '10px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                  background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                 }}>
                   <Trash2 size={13} /> Excluir conta
@@ -246,10 +247,10 @@ export default function EditarUsuario() {
                   </p>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button onClick={() => setConfirmDelete(false)} style={{
-                      flex: 1, padding: '8px', borderRadius: 6, background: '#141414', border: '1px solid #222', color: '#555', cursor: 'pointer', fontSize: 12,
+                      flex: 1, padding: '8px', borderRadius: 7, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', cursor: 'pointer', fontSize: 12,
                     }}>Cancelar</button>
                     <button onClick={handleDelete} disabled={deleting} style={{
-                      flex: 1, padding: '8px', borderRadius: 6, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', color: '#ef4444', cursor: 'pointer', fontSize: 12,
+                      flex: 1, padding: '8px', borderRadius: 7, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', cursor: 'pointer', fontSize: 12,
                     }}>
                       {deleting ? 'Excluindo...' : 'Confirmar'}
                     </button>
@@ -260,16 +261,16 @@ export default function EditarUsuario() {
           </div>
 
           {/* Log */}
-          <div style={{ background: '#0d0d0d', border: '1px solid #1c1c1c', borderRadius: 14, padding: 20 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#444', letterSpacing: '0.1em', marginBottom: 14 }}>HISTÓRICO ADMIN</p>
+          <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <p style={{ fontSize: 11, fontWeight: 500, color: '#8e8e93', letterSpacing: '0.04em', marginBottom: 14 }}>HISTÓRICO ADMIN</p>
             {logs.length === 0 ? (
-              <p style={{ fontSize: 12, color: '#2a2a2a', textAlign: 'center', padding: '12px 0' }}>Sem registros</p>
+              <p style={{ fontSize: 12, color: '#8e8e93', textAlign: 'center', padding: '12px 0' }}>Sem registros</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {logs.map(log => (
-                  <div key={log.id} style={{ borderBottom: '1px solid #111', paddingBottom: 8 }}>
-                    <div style={{ fontSize: 12, color: '#c8a96e', fontWeight: 600 }}>{log.acao.replace('_', ' ')}</div>
-                    <div style={{ fontSize: 10.5, color: '#333', marginTop: 2 }}>
+                  <div key={log.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: 8 }}>
+                    <div style={{ fontSize: 12, color: '#007AFF', fontWeight: 500 }}>{log.acao.replace('_', ' ')}</div>
+                    <div style={{ fontSize: 10.5, color: '#8e8e93', marginTop: 2 }}>
                       {new Date(log.created_at).toLocaleString('pt-BR')}
                     </div>
                   </div>

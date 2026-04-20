@@ -10,13 +10,13 @@ interface UserRow {
   plano: string; status_conta: string; created_at: string
 }
 
-const TIPO_COLOR: Record<string, string> = { arquiteto: '#c8a96e', fornecedor: '#4f9cf9', cliente: '#34d399', admin: '#a78bfa' }
-const STATUS_COLOR: Record<string, string> = { ativo: '#34d399', trial: '#c8a96e', suspenso: '#ef4444' }
+const TIPO_COLOR: Record<string, string> = { arquiteto: '#007AFF', fornecedor: '#4f9cf9', cliente: '#34d399', admin: '#a78bfa' }
+const STATUS_COLOR: Record<string, string> = { ativo: '#34d399', trial: '#007AFF', suspenso: '#ef4444' }
 
 function Badge({ text, color }: { text: string; color: string }) {
   return (
     <span style={{
-      fontSize: 10.5, fontWeight: 700, padding: '3px 9px', borderRadius: 20,
+      fontSize: 10.5, fontWeight: 600, padding: '3px 9px', borderRadius: 20,
       background: `${color}18`, color, border: `1px solid ${color}30`,
       textTransform: 'capitalize' as const, whiteSpace: 'nowrap' as const,
     }}>{text ?? '—'}</span>
@@ -24,8 +24,8 @@ function Badge({ text, color }: { text: string; color: string }) {
 }
 
 const inp: React.CSSProperties = {
-  background: '#0e0e0e', border: '1px solid #222', color: '#d0d0d0',
-  borderRadius: 7, padding: '8px 12px', fontSize: 13, outline: 'none',
+  background: '#ffffff', border: '1px solid rgba(0,0,0,0.12)', color: '#1a1a1a',
+  borderRadius: 8, padding: '8px 12px', fontSize: 13, outline: 'none',
 }
 const sel: React.CSSProperties = { ...inp, cursor: 'pointer' }
 
@@ -59,22 +59,22 @@ export default function AdminUsuarios() {
   useEffect(() => { load() }, [load])
 
   return (
-    <div style={{ padding: 32, color: '#e0e0e0' }}>
+    <div style={{ padding: 32, color: '#1a1a1a', background: '#f2f2f7', minHeight: '100vh' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 4 }}>Usuários</h1>
-        <p style={{ fontSize: 13, color: '#444' }}>{total} usuário{total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}</p>
+        <h1 style={{ fontSize: 22, fontWeight: 500, color: '#1a1a1a', marginBottom: 4 }}>Usuários</h1>
+        <p style={{ fontSize: 13, color: '#8e8e93' }}>{total} usuário{total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}</p>
       </div>
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' as const }}>
         <div style={{ position: 'relative', flex: '1 1 220px' }}>
-          <Search size={14} color="#444" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }} />
+          <Search size={14} color="#8e8e93" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }} />
           <input
             value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por nome ou email..."
             style={{ ...inp, width: '100%', paddingLeft: 32, boxSizing: 'border-box' as const }}
-            onFocus={e => (e.target.style.borderColor = '#c8a96e')}
-            onBlur={e => (e.target.style.borderColor = '#222')}
+            onFocus={e => (e.target.style.borderColor = '#007AFF')}
+            onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.12)')}
           />
         </div>
         <select value={tipoFilter} onChange={e => setTipoFilter(e.target.value)} style={sel}>
@@ -91,8 +91,8 @@ export default function AdminUsuarios() {
           <option value="suspenso">Suspenso</option>
         </select>
         <button onClick={load} style={{
-          background: 'rgba(200,169,110,0.1)', border: '1px solid rgba(200,169,110,0.25)',
-          color: '#c8a96e', borderRadius: 7, padding: '8px 14px', cursor: 'pointer',
+          background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.25)',
+          color: '#007AFF', borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
           fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
         }}>
           <Filter size={13} /> Filtrar
@@ -100,47 +100,47 @@ export default function AdminUsuarios() {
       </div>
 
       {/* Table */}
-      <div style={{ background: '#0d0d0d', border: '1px solid #1c1c1c', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
         {loading ? (
           <div style={{ padding: 48, display: 'flex', justifyContent: 'center' }}>
-            <Loader2 size={24} color="#c8a96e" style={{ animation: 'spin 1s linear infinite' }} />
+            <Loader2 size={24} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
             <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #141414' }}>
+              <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
                 {['Nome', 'Email', 'Tipo', 'Plano', 'Status', 'Cadastro', ''].map((h, i) => (
-                  <th key={i} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 10, color: '#333', fontWeight: 700, letterSpacing: '0.08em' }}>
-                    {h.toUpperCase()}
+                  <th key={i} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: '#8e8e93', fontWeight: 500, letterSpacing: '0.04em' }}>
+                    {h}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {users.length === 0 && (
-                <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#333', fontSize: 13 }}>Nenhum usuário encontrado</td></tr>
+                <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>Nenhum usuário encontrado</td></tr>
               )}
               {users.map((u, i) => (
                 <tr key={u.id}
-                  style={{ borderBottom: i < users.length - 1 ? '1px solid #111' : 'none', transition: 'background 0.12s' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#111')}
+                  style={{ borderBottom: i < users.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', transition: 'background 0.12s' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.03)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                  <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: '#d0d0d0' }}>{u.nome}</td>
-                  <td style={{ padding: '12px 16px', fontSize: 12, color: '#555', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{u.email}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 500, color: '#1a1a1a' }}>{u.nome}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b6b6b', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{u.email}</td>
                   <td style={{ padding: '12px 16px' }}><Badge text={u.tipo} color={TIPO_COLOR[u.tipo] ?? '#666'} /></td>
-                  <td style={{ padding: '12px 16px', fontSize: 12, color: '#555' }}>{u.plano ?? 'free'}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b6b6b' }}>{u.plano ?? 'free'}</td>
                   <td style={{ padding: '12px 16px' }}><Badge text={u.status_conta ?? 'ativo'} color={STATUS_COLOR[u.status_conta ?? 'ativo']} /></td>
-                  <td style={{ padding: '12px 16px', fontSize: 11, color: '#444' }}>{new Date(u.created_at).toLocaleDateString('pt-BR')}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 11, color: '#8e8e93' }}>{new Date(u.created_at).toLocaleDateString('pt-BR')}</td>
                   <td style={{ padding: '12px 16px' }}>
                     <Link href={`/admin/usuarios/${u.id}`} style={{
                       display: 'inline-flex', alignItems: 'center', gap: 5,
-                      fontSize: 11.5, color: '#555', textDecoration: 'none',
-                      background: '#151515', border: '1px solid #222', borderRadius: 6, padding: '5px 10px',
+                      fontSize: 11.5, color: '#007AFF', textDecoration: 'none',
+                      background: 'rgba(0,122,255,0.06)', border: '1px solid rgba(0,122,255,0.2)', borderRadius: 6, padding: '5px 10px',
                       transition: 'all 0.15s',
                     }}
-                      onMouseEnter={e => { e.currentTarget.style.color = '#c8a96e'; e.currentTarget.style.borderColor = 'rgba(200,169,110,0.35)' }}
-                      onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.borderColor = '#222' }}>
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,122,255,0.12)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,122,255,0.06)' }}>
                       <Pencil size={11} /> Editar
                     </Link>
                   </td>

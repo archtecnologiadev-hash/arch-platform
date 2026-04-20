@@ -126,16 +126,49 @@ export default function FornecedorMensagensPage() {
         height: '100vh',
         display: 'flex',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        color: '#d0d0d0',
+        color: '#1a1a1a',
+        background: '#f2f2f7',
       }}
     >
       <style>{`
-        .msg-conv-item { display: flex; align-items: center; gap: 12px; padding: 13px 16px; cursor: pointer; transition: background 0.12s; border-bottom: 1px solid #0f0f0f; }
-        .msg-conv-item:hover { background: #111; }
-        .msg-conv-item.selected { background: rgba(200,169,110,0.07); border-left: 2px solid #c8a96e; }
-        .msg-bubble-me { background: rgba(200,169,110,0.14); border: 1px solid rgba(200,169,110,0.2); border-radius: 12px 12px 4px 12px; padding: 10px 14px; max-width: 72%; }
-        .msg-bubble-them { background: #111; border: 1px solid #1a1a1a; border-radius: 12px 12px 12px 4px; padding: 10px 14px; max-width: 72%; }
-        .msg-inp { flex: 1; background: transparent; border: none; outline: none; color: #d0d0d0; font-size: 13.5px; font-family: inherit; }
+        .msg-conv-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 13px 16px;
+          cursor: pointer;
+          transition: background 0.12s;
+          border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .msg-conv-item:hover { background: rgba(0,0,0,0.03); }
+        .msg-conv-item.selected {
+          background: rgba(0,122,255,0.06);
+          border-left: 2px solid #007AFF;
+        }
+        .msg-bubble-me {
+          background: #007AFF;
+          border-radius: 16px 16px 4px 16px;
+          padding: 10px 14px;
+          max-width: 72%;
+        }
+        .msg-bubble-them {
+          background: #ffffff;
+          border: 1px solid rgba(0,0,0,0.08);
+          border-radius: 16px 16px 16px 4px;
+          padding: 10px 14px;
+          max-width: 72%;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        }
+        .msg-inp {
+          flex: 1;
+          background: transparent;
+          border: none;
+          outline: none;
+          color: #1a1a1a;
+          font-size: 13.5px;
+          font-family: inherit;
+        }
+        .msg-inp::placeholder { color: #8e8e93; }
       `}</style>
 
       {/* ── Conversation list ── */}
@@ -143,26 +176,27 @@ export default function FornecedorMensagensPage() {
         style={{
           width: 300,
           minWidth: 300,
-          borderRight: '1px solid #111',
+          borderRight: '1px solid rgba(0,0,0,0.08)',
           display: 'flex',
           flexDirection: 'column',
-          background: '#0a0a0a',
+          background: '#ffffff',
+          boxShadow: '1px 0 0 rgba(0,0,0,0.06)',
         }}
       >
         {/* List header */}
         <div
           style={{
             padding: '20px 16px 14px',
-            borderBottom: '1px solid #111',
+            borderBottom: '1px solid rgba(0,0,0,0.08)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#f0f0f0' }}>Mensagens</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>Mensagens</div>
             {totalUnread > 0 && (
               <div
                 style={{
-                  background: '#c8a96e',
-                  color: '#080808',
+                  background: '#007AFF',
+                  color: '#ffffff',
                   fontSize: 10,
                   fontWeight: 800,
                   padding: '2px 7px',
@@ -190,14 +224,14 @@ export default function FornecedorMensagensPage() {
                     width: 40,
                     height: 40,
                     borderRadius: '50%',
-                    background: 'rgba(200,169,110,0.1)',
-                    border: '1.5px solid rgba(200,169,110,0.22)',
+                    background: 'rgba(0,122,255,0.1)',
+                    border: '1.5px solid rgba(0,122,255,0.2)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: 12,
                     fontWeight: 700,
-                    color: '#c8a96e',
+                    color: '#007AFF',
                   }}
                 >
                   {conv.avatar}
@@ -212,7 +246,7 @@ export default function FornecedorMensagensPage() {
                       height: 10,
                       borderRadius: '50%',
                       background: '#34d399',
-                      border: '2px solid #0a0a0a',
+                      border: '2px solid #ffffff',
                     }}
                   />
                 )}
@@ -230,7 +264,7 @@ export default function FornecedorMensagensPage() {
                     style={{
                       fontSize: 13,
                       fontWeight: conv.unread > 0 ? 700 : 500,
-                      color: '#d0d0d0',
+                      color: '#1a1a1a',
                       whiteSpace: 'nowrap' as const,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -245,13 +279,13 @@ export default function FornecedorMensagensPage() {
                         minWidth: 18,
                         height: 18,
                         borderRadius: '50%',
-                        background: '#c8a96e',
+                        background: '#007AFF',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: 9,
                         fontWeight: 800,
-                        color: '#080808',
+                        color: '#ffffff',
                         flexShrink: 0,
                       }}
                     >
@@ -262,8 +296,8 @@ export default function FornecedorMensagensPage() {
                 <div
                   style={{
                     fontSize: 11,
-                    color: '#c8a96e',
-                    opacity: 0.6,
+                    color: '#007AFF',
+                    opacity: 0.7,
                     marginTop: 1,
                   }}
                 >
@@ -272,7 +306,7 @@ export default function FornecedorMensagensPage() {
                 <div
                   style={{
                     fontSize: 11.5,
-                    color: '#3e3e3e',
+                    color: '#8e8e93',
                     marginTop: 2,
                     whiteSpace: 'nowrap' as const,
                     overflow: 'hidden',
@@ -288,17 +322,19 @@ export default function FornecedorMensagensPage() {
       </div>
 
       {/* ── Chat panel ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#080808' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#f2f2f7' }}>
         {/* Chat header */}
         <div
           style={{
             height: 64,
-            borderBottom: '1px solid #111',
+            borderBottom: '1px solid rgba(0,0,0,0.08)',
             display: 'flex',
             alignItems: 'center',
             padding: '0 24px',
             gap: 14,
             flexShrink: 0,
+            background: '#ffffff',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
           }}
         >
           <div
@@ -307,14 +343,14 @@ export default function FornecedorMensagensPage() {
               width: 38,
               height: 38,
               borderRadius: '50%',
-              background: 'rgba(200,169,110,0.1)',
-              border: '1.5px solid rgba(200,169,110,0.22)',
+              background: 'rgba(0,122,255,0.1)',
+              border: '1.5px solid rgba(0,122,255,0.2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 11,
               fontWeight: 700,
-              color: '#c8a96e',
+              color: '#007AFF',
               flexShrink: 0,
             }}
           >
@@ -329,16 +365,16 @@ export default function FornecedorMensagensPage() {
                   height: 9,
                   borderRadius: '50%',
                   background: '#34d399',
-                  border: '2px solid #080808',
+                  border: '2px solid #ffffff',
                 }}
               />
             )}
           </div>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#d0d0d0' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>
               {selected.arquiteto}
             </div>
-            <div style={{ fontSize: 11, color: selected.online ? '#34d399' : '#444', marginTop: 1 }}>
+            <div style={{ fontSize: 11, color: selected.online ? '#34d399' : '#8e8e93', marginTop: 1 }}>
               {selected.online ? 'Online agora' : 'Offline'} · {selected.project}
             </div>
           </div>
@@ -365,12 +401,18 @@ export default function FornecedorMensagensPage() {
             >
               <div>
                 <div className={msg.from === 'me' ? 'msg-bubble-me' : 'msg-bubble-them'}>
-                  <div style={{ fontSize: 13.5, color: '#d0d0d0', lineHeight: 1.55 }}>{msg.text}</div>
+                  <div style={{
+                    fontSize: 13.5,
+                    color: msg.from === 'me' ? '#ffffff' : '#1a1a1a',
+                    lineHeight: 1.55,
+                  }}>
+                    {msg.text}
+                  </div>
                 </div>
                 <div
                   style={{
                     fontSize: 10.5,
-                    color: '#333',
+                    color: '#8e8e93',
                     marginTop: 4,
                     textAlign: msg.from === 'me' ? 'right' : 'left' as const,
                   }}
@@ -387,20 +429,20 @@ export default function FornecedorMensagensPage() {
         <form
           onSubmit={handleSend}
           style={{
-            borderTop: '1px solid #111',
+            borderTop: '1px solid rgba(0,0,0,0.08)',
             padding: '14px 24px',
             display: 'flex',
             alignItems: 'center',
             gap: 12,
-            background: '#0a0a0a',
+            background: '#ffffff',
             flexShrink: 0,
           }}
         >
           <div
             style={{
               flex: 1,
-              background: '#111',
-              border: '1px solid #1c1c1c',
+              background: '#f2f2f7',
+              border: '1px solid rgba(0,0,0,0.1)',
               borderRadius: 10,
               padding: '10px 16px',
               display: 'flex',
@@ -421,7 +463,7 @@ export default function FornecedorMensagensPage() {
               width: 42,
               height: 42,
               borderRadius: '50%',
-              background: newMsg.trim() ? '#c8a96e' : '#1a1a1a',
+              background: newMsg.trim() ? '#007AFF' : 'rgba(0,0,0,0.08)',
               border: 'none',
               cursor: newMsg.trim() ? 'pointer' : 'default',
               display: 'flex',
@@ -431,7 +473,7 @@ export default function FornecedorMensagensPage() {
               flexShrink: 0,
             }}
           >
-            <Send size={15} color={newMsg.trim() ? '#080808' : '#333'} />
+            <Send size={15} color={newMsg.trim() ? '#ffffff' : '#8e8e93'} />
           </button>
         </form>
       </div>

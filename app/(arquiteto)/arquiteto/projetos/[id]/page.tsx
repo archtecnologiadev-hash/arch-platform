@@ -103,7 +103,7 @@ const STAGES = [
 
 const SUPPLIER_STATUS_COLORS: Record<string, string> = {
   Confirmado: '#34d399',
-  'Em negociação': '#c8a96e',
+  'Em negociação': '#007AFF',
   'Aguardando orçamento': '#4f9cf9',
 }
 
@@ -266,34 +266,35 @@ function FileTypeIcon({ type }: { type: string }) {
   if (type === 'pdf') return <FileText size={15} color="#ef4444" />
   if (type === 'image') return <ImageIcon size={15} color="#34d399" />
   if (type === 'dwg') return <File size={15} color="#4f9cf9" />
-  return <File size={15} color="#666" />
+  return <File size={15} color="#6b6b6b" />
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const panel = {
-  background: '#0f0f0f',
-  border: '1px solid #1c1c1c',
+  background: '#ffffff',
+  border: '1px solid rgba(0,0,0,0.08)',
   borderRadius: 12,
   overflow: 'hidden' as const,
+  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
 }
 
 const panelHeader = {
   padding: '13px 16px',
-  borderBottom: '1px solid #1c1c1c',
+  borderBottom: '1px solid rgba(0,0,0,0.08)',
   fontSize: 11,
-  color: '#3a3a3a',
+  color: '#8e8e93',
   fontWeight: 600 as const,
   letterSpacing: '0.07em',
   textTransform: 'uppercase' as const,
 }
 
-const iconBox = (color = '#555') => ({
+const iconBox = (color = '#6b6b6b') => ({
   width: 28,
   height: 28,
   borderRadius: 7,
-  background: '#141414',
-  border: '1px solid #1c1c1c',
+  background: '#f2f2f7',
+  border: '1px solid rgba(0,0,0,0.08)',
   display: 'flex' as const,
   alignItems: 'center' as const,
   justifyContent: 'center' as const,
@@ -401,27 +402,27 @@ export default function ProjetoDetailPage() {
   const budgetPercent = effectiveBudget.total > 0 ? Math.round((effectiveBudget.spent / effectiveBudget.total) * 100) : 0
 
   return (
-    <div style={{ minHeight: '100vh', background: '#080808', color: '#e0e0e0' }}>
+    <div style={{ minHeight: '100vh', background: '#f2f2f7', color: '#1a1a1a' }}>
 
       <style>{`
         @keyframes pulse-ring {
-          0%   { box-shadow: 0 0 0 0   rgba(200,169,110,0.55); }
-          70%  { box-shadow: 0 0 0 8px rgba(200,169,110,0);    }
-          100% { box-shadow: 0 0 0 0   rgba(200,169,110,0);    }
+          0%   { box-shadow: 0 0 0 0   rgba(0,122,255,0.4); }
+          70%  { box-shadow: 0 0 0 8px rgba(0,122,255,0);   }
+          100% { box-shadow: 0 0 0 0   rgba(0,122,255,0);   }
         }
         .stage-pulse { animation: pulse-ring 1.8s ease-out infinite; }
-        .proj-file-row:hover  { background: #111 !important; }
-        .proj-note-card:hover { border-color: rgba(200,169,110,0.28) !important; }
-        .proj-sup-row:hover   { background: #111 !important; }
-        .proj-bud-row:hover   { background: #111 !important; }
-        .proj-back-btn:hover  { color: #fff !important; border-color: rgba(255,255,255,0.2) !important; }
-        .dir-card { background: #111; border: 1px solid #1a1a1a; border-radius: 10px; overflow: hidden; transition: border-color 0.2s; }
-        .dir-card:hover { border-color: rgba(200,169,110,0.25); }
+        .proj-file-row:hover  { background: #f2f2f7 !important; }
+        .proj-note-card:hover { border-color: rgba(0,122,255,0.25) !important; }
+        .proj-sup-row:hover   { background: #f2f2f7 !important; }
+        .proj-bud-row:hover   { background: #f2f2f7 !important; }
+        .proj-back-btn:hover  { color: #1a1a1a !important; border-color: rgba(0,0,0,0.18) !important; }
+        .dir-card { background: #ffffff; border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; overflow: hidden; transition: border-color 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .dir-card:hover { border-color: rgba(0,122,255,0.25); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
         .dir-card-img { width: 100%; height: 100px; object-fit: cover; display: block; transition: transform 0.4s; }
         .dir-card:hover .dir-card-img { transform: scale(1.05); }
         .dir-seg-btn { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-        .dir-inp { width: 100%; background: #0e0e0e; border: 1px solid #222; border-radius: 7px; padding: 9px 12px; color: #d0d0d0; font-size: 13px; outline: none; transition: border-color 0.15s; color-scheme: dark; box-sizing: border-box; font-family: inherit; }
-        .dir-inp:focus { border-color: rgba(200,169,110,0.4); }
+        .dir-inp { width: 100%; background: #f2f2f7; border: 1px solid rgba(0,0,0,0.08); border-radius: 7px; padding: 9px 12px; color: #1a1a1a; font-size: 13px; outline: none; transition: border-color 0.15s; box-sizing: border-box; font-family: inherit; }
+        .dir-inp:focus { border-color: rgba(0,122,255,0.4); }
         @keyframes dir-modal-in { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         .dir-modal-box { animation: dir-modal-in 0.2s ease; }
       `}</style>
@@ -438,7 +439,7 @@ export default function ProjetoDetailPage() {
             position: 'absolute',
             inset: 0,
             background:
-              'linear-gradient(to top, rgba(8,8,8,0.96) 0%, rgba(8,8,8,0.38) 52%, rgba(8,8,8,0.12) 100%)',
+              'linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.28) 52%, rgba(0,0,0,0.08) 100%)',
           }}
         />
 
@@ -462,11 +463,11 @@ export default function ProjetoDetailPage() {
               alignItems: 'center',
               gap: 7,
               fontSize: 12.5,
-              color: 'rgba(255,255,255,0.65)',
+              color: 'rgba(255,255,255,0.85)',
               textDecoration: 'none',
-              background: 'rgba(0,0,0,0.4)',
+              background: 'rgba(255,255,255,0.18)',
               backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.25)',
               padding: '6px 13px 6px 10px',
               borderRadius: 8,
               fontWeight: 500,
@@ -485,10 +486,10 @@ export default function ProjetoDetailPage() {
                   fontSize: 11,
                   padding: '4px 10px',
                   borderRadius: 6,
-                  background: 'rgba(0,0,0,0.45)',
+                  background: 'rgba(255,255,255,0.18)',
                   backdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(255,255,255,0.07)',
-                  color: '#777',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  color: 'rgba(255,255,255,0.9)',
                 }}
               >
                 {tag}
@@ -526,7 +527,7 @@ export default function ProjetoDetailPage() {
             <div
               style={{
                 fontSize: 13.5,
-                color: 'rgba(255,255,255,0.45)',
+                color: 'rgba(255,255,255,0.75)',
                 marginTop: 5,
                 display: 'flex',
                 alignItems: 'center',
@@ -535,9 +536,9 @@ export default function ProjetoDetailPage() {
               }}
             >
               <span>{project.client.name}</span>
-              <span style={{ color: 'rgba(255,255,255,0.18)' }}>·</span>
+              <span style={{ color: 'rgba(255,255,255,0.4)' }}>·</span>
               <span>Previsão: {project.dueDate}</span>
-              <span style={{ color: 'rgba(255,255,255,0.18)' }}>·</span>
+              <span style={{ color: 'rgba(255,255,255,0.4)' }}>·</span>
               <span>{project.value}</span>
             </div>
           </div>
@@ -549,9 +550,9 @@ export default function ProjetoDetailPage() {
               fontWeight: 700,
               padding: '6px 15px',
               borderRadius: 20,
-              background: 'rgba(10,6,1,0.65)',
-              border: '1.5px solid rgba(200,169,110,0.65)',
-              color: '#c8a96e',
+              background: 'rgba(0,122,255,0.9)',
+              border: '1.5px solid rgba(255,255,255,0.3)',
+              color: '#fff',
               backdropFilter: 'blur(10px)',
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
@@ -566,12 +567,13 @@ export default function ProjetoDetailPage() {
       {/* ═══════════════════ TIMELINE ═══════════════════ */}
       <div
         style={{
-          background: '#0a0a0a',
-          borderBottom: '1px solid #1c1c1c',
+          background: '#ffffff',
+          borderBottom: '1px solid rgba(0,0,0,0.08)',
           padding: '0 28px',
           position: 'sticky',
           top: 0,
           zIndex: 20,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
         }}
       >
         <div
@@ -613,11 +615,11 @@ export default function ProjetoDetailPage() {
                       height: 26,
                       borderRadius: '50%',
                       background: done
-                        ? '#c8a96e'
+                        ? '#007AFF'
                         : current
-                        ? 'rgba(200,169,110,0.12)'
-                        : '#111',
-                      border: `2px solid ${done ? '#c8a96e' : current ? '#c8a96e' : '#252525'}`,
+                        ? 'rgba(0,122,255,0.12)'
+                        : '#f2f2f7',
+                      border: `2px solid ${done ? '#007AFF' : current ? '#007AFF' : 'rgba(0,0,0,0.12)'}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -625,18 +627,18 @@ export default function ProjetoDetailPage() {
                     }}
                   >
                     {done ? (
-                      <Check size={12} color="#080808" strokeWidth={3} />
+                      <Check size={12} color="#ffffff" strokeWidth={3} />
                     ) : current ? (
-                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#c8a96e' }} />
+                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#007AFF' }} />
                     ) : (
-                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#282828' }} />
+                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(0,0,0,0.2)' }} />
                     )}
                   </div>
                   <div
                     style={{
                       fontSize: 9.5,
                       fontWeight: current ? 700 : 400,
-                      color: done ? '#c8a96e' : current ? '#e0e0e0' : '#2e2e2e',
+                      color: done ? '#007AFF' : current ? '#1a1a1a' : '#8e8e93',
                       whiteSpace: 'nowrap',
                       letterSpacing: '0.02em',
                     }}
@@ -652,7 +654,7 @@ export default function ProjetoDetailPage() {
                       flex: 1,
                       height: 2,
                       marginBottom: 18,
-                      background: done ? '#c8a96e' : '#1a1a1a',
+                      background: done ? '#007AFF' : 'rgba(0,0,0,0.08)',
                       minWidth: 6,
                     }}
                   />
@@ -680,8 +682,12 @@ export default function ProjetoDetailPage() {
           <div
             style={{
               display: 'flex',
-              borderBottom: '1px solid #1c1c1c',
+              borderBottom: '1px solid rgba(0,0,0,0.08)',
               marginBottom: 22,
+              background: '#ffffff',
+              borderRadius: '12px 12px 0 0',
+              padding: '0 4px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             }}
           >
             {TABS.map((tab) => {
@@ -698,8 +704,8 @@ export default function ProjetoDetailPage() {
                     padding: '11px 18px',
                     background: 'transparent',
                     border: 'none',
-                    borderBottom: `2px solid ${active ? '#c8a96e' : 'transparent'}`,
-                    color: active ? '#c8a96e' : '#3e3e3e',
+                    borderBottom: `2px solid ${active ? '#007AFF' : 'transparent'}`,
+                    color: active ? '#007AFF' : '#8e8e93',
                     fontSize: 13,
                     fontWeight: active ? 600 : 400,
                     cursor: 'pointer',
@@ -707,10 +713,10 @@ export default function ProjetoDetailPage() {
                     transition: 'color 0.15s',
                   }}
                   onMouseEnter={(e) => {
-                    if (!active) e.currentTarget.style.color = '#888'
+                    if (!active) e.currentTarget.style.color = '#6b6b6b'
                   }}
                   onMouseLeave={(e) => {
-                    if (!active) e.currentTarget.style.color = '#3e3e3e'
+                    if (!active) e.currentTarget.style.color = '#8e8e93'
                   }}
                 >
                   <Icon size={13} />
@@ -730,7 +736,7 @@ export default function ProjetoDetailPage() {
                 onDragLeave={() => setDragOver(false)}
                 onDrop={(e) => { e.preventDefault(); setDragOver(false) }}
                 style={{
-                  border: `2px dashed ${dragOver ? '#c8a96e' : '#1e1e1e'}`,
+                  border: `2px dashed ${dragOver ? '#007AFF' : 'rgba(0,0,0,0.15)'}`,
                   borderRadius: 12,
                   padding: '30px 24px',
                   display: 'flex',
@@ -738,8 +744,9 @@ export default function ProjetoDetailPage() {
                   alignItems: 'center',
                   gap: 10,
                   cursor: 'pointer',
-                  background: dragOver ? 'rgba(200,169,110,0.04)' : 'transparent',
+                  background: dragOver ? 'rgba(0,122,255,0.04)' : '#ffffff',
                   transition: 'border-color 0.2s, background 0.2s',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                 }}
               >
                 <div
@@ -747,20 +754,20 @@ export default function ProjetoDetailPage() {
                     width: 42,
                     height: 42,
                     borderRadius: 10,
-                    background: 'rgba(200,169,110,0.08)',
-                    border: '1px solid rgba(200,169,110,0.18)',
+                    background: 'rgba(0,122,255,0.08)',
+                    border: '1px solid rgba(0,122,255,0.18)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Upload size={18} color="#c8a96e" />
+                  <Upload size={18} color="#007AFF" />
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: '#c8c8c8' }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: '#1a1a1a' }}>
                     Arraste arquivos aqui
                   </div>
-                  <div style={{ fontSize: 11.5, color: '#2e2e2e', marginTop: 3 }}>
+                  <div style={{ fontSize: 11.5, color: '#8e8e93', marginTop: 3 }}>
                     ou clique para selecionar · PDF, DWG, JPG, PNG
                   </div>
                 </div>
@@ -771,16 +778,16 @@ export default function ProjetoDetailPage() {
                 <div
                   style={{
                     padding: '13px 20px',
-                    borderBottom: '1px solid #1c1c1c',
+                    borderBottom: '1px solid rgba(0,0,0,0.08)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                   }}
                 >
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#c0c0c0' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>
                     Arquivos do Projeto
                   </span>
-                  <span style={{ fontSize: 11, color: '#3a3a3a' }}>
+                  <span style={{ fontSize: 11, color: '#8e8e93' }}>
                     {(isRealProject ? [] : project.files).length} arquivo{(isRealProject ? [] : project.files).length !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -794,7 +801,7 @@ export default function ProjetoDetailPage() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 13,
-                      borderBottom: i < (isRealProject ? [] : project.files).length - 1 ? '1px solid #111' : 'none',
+                      borderBottom: i < (isRealProject ? [] : project.files).length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
                       cursor: 'pointer',
                       transition: 'background 0.12s',
                     }}
@@ -804,8 +811,8 @@ export default function ProjetoDetailPage() {
                         width: 36,
                         height: 36,
                         borderRadius: 8,
-                        background: '#141414',
-                        border: '1px solid #1c1c1c',
+                        background: '#f2f2f7',
+                        border: '1px solid rgba(0,0,0,0.08)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -820,7 +827,7 @@ export default function ProjetoDetailPage() {
                         style={{
                           fontSize: 13,
                           fontWeight: 500,
-                          color: '#d0d0d0',
+                          color: '#1a1a1a',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -828,12 +835,12 @@ export default function ProjetoDetailPage() {
                       >
                         {file.name}
                       </div>
-                      <div style={{ fontSize: 11, color: '#333', marginTop: 2 }}>
+                      <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>
                         {file.size} · Enviado por {file.uploader}
                       </div>
                     </div>
 
-                    <div style={{ fontSize: 11, color: '#333', flexShrink: 0 }}>{file.date}</div>
+                    <div style={{ fontSize: 11, color: '#8e8e93', flexShrink: 0 }}>{file.date}</div>
 
                     <button
                       style={{
@@ -846,18 +853,18 @@ export default function ProjetoDetailPage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        color: '#3a3a3a',
+                        color: '#8e8e93',
                         flexShrink: 0,
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#1a1a1a'
-                        e.currentTarget.style.borderColor = '#222'
-                        e.currentTarget.style.color = '#888'
+                        e.currentTarget.style.background = '#f2f2f7'
+                        e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
+                        e.currentTarget.style.color = '#6b6b6b'
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = 'transparent'
                         e.currentTarget.style.borderColor = 'transparent'
-                        e.currentTarget.style.color = '#3a3a3a'
+                        e.currentTarget.style.color = '#8e8e93'
                       }}
                     >
                       <MoreHorizontal size={13} />
@@ -882,11 +889,11 @@ export default function ProjetoDetailPage() {
                     rows={4}
                     style={{
                       width: '100%',
-                      background: '#141414',
-                      border: '1px solid #222',
+                      background: '#f2f2f7',
+                      border: '1px solid rgba(0,0,0,0.08)',
                       borderRadius: 8,
                       padding: '11px 13px',
-                      color: '#e0e0e0',
+                      color: '#1a1a1a',
                       fontSize: 13,
                       resize: 'vertical' as const,
                       outline: 'none',
@@ -895,8 +902,8 @@ export default function ProjetoDetailPage() {
                       boxSizing: 'border-box' as const,
                       transition: 'border-color 0.15s',
                     }}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(200,169,110,0.4)')}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = '#222')}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(0,122,255,0.4)')}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)')}
                   />
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
                     <button
@@ -908,18 +915,18 @@ export default function ProjetoDetailPage() {
                         fontSize: 12.5,
                         padding: '7px 15px',
                         borderRadius: 7,
-                        background: 'rgba(200,169,110,0.1)',
-                        border: '1px solid rgba(200,169,110,0.28)',
-                        color: '#c8a96e',
+                        background: 'rgba(0,122,255,0.1)',
+                        border: '1px solid rgba(0,122,255,0.25)',
+                        color: '#007AFF',
                         cursor: 'pointer',
                         fontWeight: 600,
                         transition: 'background 0.15s',
                       }}
                       onMouseEnter={(e) =>
-                        (e.currentTarget.style.background = 'rgba(200,169,110,0.2)')
+                        (e.currentTarget.style.background = 'rgba(0,122,255,0.18)')
                       }
                       onMouseLeave={(e) =>
-                        (e.currentTarget.style.background = 'rgba(200,169,110,0.1)')
+                        (e.currentTarget.style.background = 'rgba(0,122,255,0.1)')
                       }
                     >
                       <Plus size={12} />
@@ -931,7 +938,7 @@ export default function ProjetoDetailPage() {
 
               {/* Notes list */}
               {notes.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#2a2a2a', fontSize: 13 }}>
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#8e8e93', fontSize: 13 }}>
                   Nenhuma anotação ainda
                 </div>
               ) : (
@@ -941,14 +948,15 @@ export default function ProjetoDetailPage() {
                       key={note.id}
                       className="proj-note-card"
                       style={{
-                        background: '#0f0f0f',
-                        border: '1px solid #1c1c1c',
+                        background: '#ffffff',
+                        border: '1px solid rgba(0,0,0,0.08)',
                         borderRadius: 10,
                         padding: '14px 16px',
                         transition: 'border-color 0.18s',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                       }}
                     >
-                      <div style={{ fontSize: 13.5, color: '#d5d5d5', lineHeight: 1.65 }}>
+                      <div style={{ fontSize: 13.5, color: '#1a1a1a', lineHeight: 1.65 }}>
                         {note.text}
                       </div>
                       <div
@@ -958,7 +966,7 @@ export default function ProjetoDetailPage() {
                           gap: 7,
                           marginTop: 11,
                           paddingTop: 11,
-                          borderTop: '1px solid #141414',
+                          borderTop: '1px solid rgba(0,0,0,0.06)',
                         }}
                       >
                         <div
@@ -966,23 +974,23 @@ export default function ProjetoDetailPage() {
                             width: 20,
                             height: 20,
                             borderRadius: '50%',
-                            background: 'rgba(200,169,110,0.1)',
-                            border: '1px solid rgba(200,169,110,0.22)',
+                            background: 'rgba(0,122,255,0.1)',
+                            border: '1px solid rgba(0,122,255,0.22)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: 7.5,
                             fontWeight: 700,
-                            color: '#c8a96e',
+                            color: '#007AFF',
                           }}
                         >
                           SF
                         </div>
-                        <span style={{ fontSize: 11, color: '#3e3e3e' }}>{note.author}</span>
-                        <span style={{ color: '#222' }}>·</span>
-                        <span style={{ fontSize: 11, color: '#2e2e2e' }}>{note.date}</span>
-                        <span style={{ color: '#222' }}>·</span>
-                        <span style={{ fontSize: 11, color: '#2e2e2e' }}>{note.time}</span>
+                        <span style={{ fontSize: 11, color: '#6b6b6b' }}>{note.author}</span>
+                        <span style={{ color: 'rgba(0,0,0,0.15)' }}>·</span>
+                        <span style={{ fontSize: 11, color: '#8e8e93' }}>{note.date}</span>
+                        <span style={{ color: 'rgba(0,0,0,0.15)' }}>·</span>
+                        <span style={{ fontSize: 11, color: '#8e8e93' }}>{note.time}</span>
                       </div>
                     </div>
                   ))}
@@ -998,7 +1006,7 @@ export default function ProjetoDetailPage() {
               {/* ── Fornecedores do projeto ── */}
               {!isRealProject && project.suppliers.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#383838', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: 10 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#8e8e93', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: 10 }}>
                     No projeto
                   </div>
                   <div style={panel}>
@@ -1006,16 +1014,16 @@ export default function ProjetoDetailPage() {
                       <div
                         key={sup.id}
                         className="proj-sup-row"
-                        style={{ padding: '13px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: i < project.suppliers.length - 1 ? '1px solid #111' : 'none', cursor: 'pointer', transition: 'background 0.12s' }}
+                        style={{ padding: '13px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: i < project.suppliers.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', cursor: 'pointer', transition: 'background 0.12s' }}
                       >
-                        <div style={{ width: 32, height: 32, borderRadius: 7, background: '#141414', border: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <Package size={13} color="#444" />
+                        <div style={{ width: 32, height: 32, borderRadius: 7, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Package size={13} color="#6b6b6b" />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: '#d0d0d0' }}>{sup.name}</div>
-                          <div style={{ fontSize: 11, color: '#3e3e3e', marginTop: 1 }}>{sup.category} · {sup.contact}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{sup.name}</div>
+                          <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 1 }}>{sup.category} · {sup.contact}</div>
                         </div>
-                        <div style={{ fontSize: 10.5, padding: '3px 10px', borderRadius: 20, background: `${SUPPLIER_STATUS_COLORS[sup.status] ?? '#888'}14`, border: `1px solid ${SUPPLIER_STATUS_COLORS[sup.status] ?? '#888'}30`, color: SUPPLIER_STATUS_COLORS[sup.status] ?? '#888', fontWeight: 600, flexShrink: 0, whiteSpace: 'nowrap' as const }}>
+                        <div style={{ fontSize: 10.5, padding: '3px 10px', borderRadius: 20, background: `${SUPPLIER_STATUS_COLORS[sup.status] ?? '#6b6b6b'}14`, border: `1px solid ${SUPPLIER_STATUS_COLORS[sup.status] ?? '#6b6b6b'}30`, color: SUPPLIER_STATUS_COLORS[sup.status] ?? '#6b6b6b', fontWeight: 600, flexShrink: 0, whiteSpace: 'nowrap' as const }}>
                           {sup.status}
                         </div>
                       </div>
@@ -1027,14 +1035,14 @@ export default function ProjetoDetailPage() {
               {/* ── Diretório ARC ── */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#383838', letterSpacing: '0.12em', textTransform: 'uppercase' as const }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#8e8e93', letterSpacing: '0.12em', textTransform: 'uppercase' as const }}>
                     Diretório ARC
                   </div>
                   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' as const }}>
                     {DIR_SEGMENTS.map((seg) => {
                       const isActive = dirFilter === seg
                       return (
-                        <button key={seg} onClick={() => setDirFilter(seg)} className="dir-seg-btn" style={{ background: isActive ? 'rgba(200,169,110,0.12)' : 'transparent', border: isActive ? '1px solid rgba(200,169,110,0.28)' : '1px solid #1c1c1c', color: isActive ? '#c8a96e' : '#444' }}>
+                        <button key={seg} onClick={() => setDirFilter(seg)} className="dir-seg-btn" style={{ background: isActive ? 'rgba(0,122,255,0.1)' : 'transparent', border: isActive ? '1px solid rgba(0,122,255,0.25)' : '1px solid rgba(0,0,0,0.08)', color: isActive ? '#007AFF' : '#6b6b6b' }}>
                           {seg}
                         </button>
                       )
@@ -1052,23 +1060,23 @@ export default function ProjetoDetailPage() {
                         </div>
                       </div>
                       <div style={{ padding: '12px 14px' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#d0d0d0', marginBottom: 4 }}>{sup.name}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a', marginBottom: 4 }}>{sup.name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
                           <div style={{ display: 'flex', gap: 1 }}>
-                            {[1,2,3,4,5].map((s) => <Star key={s} size={9} fill={s <= Math.round(sup.rating) ? '#c8a96e' : 'none'} color="#c8a96e" />)}
+                            {[1,2,3,4,5].map((s) => <Star key={s} size={9} fill={s <= Math.round(sup.rating) ? '#007AFF' : 'none'} color="#007AFF" />)}
                           </div>
-                          <span style={{ fontSize: 11, color: '#c8a96e', fontWeight: 700 }}>{sup.rating}</span>
-                          <span style={{ fontSize: 10, color: '#383838' }}>({sup.reviewCount})</span>
-                          <span style={{ fontSize: 10, color: '#333' }}>·</span>
-                          <MapPin size={9} color="#444" />
-                          <span style={{ fontSize: 10, color: '#444' }}>{sup.city}</span>
+                          <span style={{ fontSize: 11, color: '#007AFF', fontWeight: 700 }}>{sup.rating}</span>
+                          <span style={{ fontSize: 10, color: '#8e8e93' }}>({sup.reviewCount})</span>
+                          <span style={{ fontSize: 10, color: 'rgba(0,0,0,0.15)' }}>·</span>
+                          <MapPin size={9} color="#6b6b6b" />
+                          <span style={{ fontSize: 10, color: '#6b6b6b' }}>{sup.city}</span>
                         </div>
-                        <p style={{ fontSize: 11.5, color: '#555', lineHeight: 1.55, margin: '0 0 10px' }}>{sup.description}</p>
+                        <p style={{ fontSize: 11.5, color: '#6b6b6b', lineHeight: 1.55, margin: '0 0 10px' }}>{sup.description}</p>
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <Link href={`/fornecedor/${sup.slug}`} target="_blank" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, padding: '6px', borderRadius: 6, background: 'transparent', border: '1px solid #1c1c1c', color: '#555', textDecoration: 'none', fontWeight: 600 }}>
+                          <Link href={`/fornecedor/${sup.slug}`} target="_blank" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, padding: '6px', borderRadius: 6, background: 'transparent', border: '1px solid rgba(0,0,0,0.08)', color: '#6b6b6b', textDecoration: 'none', fontWeight: 600 }}>
                             <ExternalLink size={10} /> Ver Perfil
                           </Link>
-                          <button onClick={() => setDirQuoteTarget(sup)} style={{ flex: 1, fontSize: 11, padding: '6px', borderRadius: 6, background: 'rgba(200,169,110,0.09)', border: '1px solid rgba(200,169,110,0.22)', color: '#c8a96e', cursor: 'pointer', fontWeight: 600 }}>
+                          <button onClick={() => setDirQuoteTarget(sup)} style={{ flex: 1, fontSize: 11, padding: '6px', borderRadius: 6, background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.22)', color: '#007AFF', cursor: 'pointer', fontWeight: 600 }}>
                             Solicitar Orçamento
                           </button>
                         </div>
@@ -1080,33 +1088,33 @@ export default function ProjetoDetailPage() {
 
               {/* Quote modal */}
               {dirQuoteTarget !== null && (
-                <div onClick={(e) => { if (e.target === e.currentTarget) setDirQuoteTarget(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(5px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-                  <div className="dir-modal-box" style={{ background: '#0e0e0e', border: '1px solid #222', borderRadius: 14, width: '100%', maxWidth: 460, padding: 26 }}>
+                <div onClick={(e) => { if (e.target === e.currentTarget) setDirQuoteTarget(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(5px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+                  <div className="dir-modal-box" style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, width: '100%', maxWidth: 460, padding: 26, boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
                     {dirQuoteSent ? (
                       <div style={{ textAlign: 'center' as const, padding: '20px 0' }}>
                         <CheckCircle2 size={48} color="#34d399" style={{ marginBottom: 14 }} />
-                        <div style={{ fontSize: 17, fontWeight: 700, color: '#f0f0f0', marginBottom: 6 }}>Solicitação enviada!</div>
-                        <div style={{ fontSize: 12.5, color: '#555' }}>{dirQuoteTarget.name} será notificado.</div>
+                        <div style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>Solicitação enviada!</div>
+                        <div style={{ fontSize: 12.5, color: '#6b6b6b' }}>{dirQuoteTarget.name} será notificado.</div>
                       </div>
                     ) : (
                       <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
                           <div>
-                            <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f0f0' }}>Solicitar Orçamento</div>
-                            <div style={{ fontSize: 12, color: '#555', marginTop: 2 }}>{dirQuoteTarget.name}</div>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Solicitar Orçamento</div>
+                            <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 2 }}>{dirQuoteTarget.name}</div>
                           </div>
-                          <button onClick={() => setDirQuoteTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555', padding: 4 }}><X size={16} /></button>
+                          <button onClick={() => setDirQuoteTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}><X size={16} /></button>
                         </div>
                         <form onSubmit={(e) => { e.preventDefault(); setDirQuoteSent(true); setTimeout(() => { setDirQuoteTarget(null); setDirQuoteSent(false); setDirQuoteForm({ descricao: '', data: '' }) }, 2200) }} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                           <div>
-                            <label style={{ fontSize: 11, color: '#555', display: 'block', marginBottom: 5, fontWeight: 600 }}>Descrição do serviço *</label>
+                            <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Descrição do serviço *</label>
                             <textarea className="dir-inp" required rows={3} placeholder="Descreva o que você precisa..." value={dirQuoteForm.descricao} onChange={(e) => setDirQuoteForm((f) => ({ ...f, descricao: e.target.value }))} style={{ resize: 'vertical' as const }} />
                           </div>
                           <div>
-                            <label style={{ fontSize: 11, color: '#555', display: 'block', marginBottom: 5, fontWeight: 600 }}>Data prevista de início</label>
+                            <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Data prevista de início</label>
                             <input className="dir-inp" type="date" value={dirQuoteForm.data} onChange={(e) => setDirQuoteForm((f) => ({ ...f, data: e.target.value }))} />
                           </div>
-                          <button type="submit" style={{ background: '#c8a96e', color: '#080808', border: 'none', borderRadius: 8, padding: '11px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                          <button type="submit" style={{ background: '#007AFF', color: '#ffffff', border: 'none', borderRadius: 8, padding: '11px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
                             <Send size={13} /> Enviar Solicitação
                           </button>
                         </form>
@@ -1153,20 +1161,21 @@ export default function ProjetoDetailPage() {
               {/* Summary cards */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                 {[
-                  { label: 'Orçamento Total', value: effectiveBudget.total > 0 ? `R$ ${effectiveBudget.total.toLocaleString('pt-BR')}` : '—', color: '#e0e0e0' },
-                  { label: 'Executado', value: effectiveBudget.spent > 0 ? `R$ ${effectiveBudget.spent.toLocaleString('pt-BR')}` : '—', color: '#c8a96e' },
+                  { label: 'Orçamento Total', value: effectiveBudget.total > 0 ? `R$ ${effectiveBudget.total.toLocaleString('pt-BR')}` : '—', color: '#1a1a1a' },
+                  { label: 'Executado', value: effectiveBudget.spent > 0 ? `R$ ${effectiveBudget.spent.toLocaleString('pt-BR')}` : '—', color: '#007AFF' },
                   { label: 'Saldo Disponível', value: effectiveBudget.total > 0 ? `R$ ${(effectiveBudget.total - effectiveBudget.spent).toLocaleString('pt-BR')}` : '—', color: '#34d399' },
                 ].map((item) => (
                   <div
                     key={item.label}
                     style={{
-                      background: '#0f0f0f',
-                      border: '1px solid #1c1c1c',
+                      background: '#ffffff',
+                      border: '1px solid rgba(0,0,0,0.08)',
                       borderRadius: 10,
                       padding: '16px 18px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                     }}
                   >
-                    <div style={{ fontSize: 10.5, color: '#3a3a3a', marginBottom: 9, textTransform: 'uppercase' as const, letterSpacing: '0.06em', fontWeight: 600 }}>
+                    <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 9, textTransform: 'uppercase' as const, letterSpacing: '0.06em', fontWeight: 600 }}>
                       {item.label}
                     </div>
                     <div style={{ fontSize: 18, fontWeight: 700, color: item.color }}>
@@ -1177,17 +1186,17 @@ export default function ProjetoDetailPage() {
               </div>
 
               {/* Progress */}
-              <div style={{ background: '#0f0f0f', border: '1px solid #1c1c1c', borderRadius: 10, padding: '14px 18px' }}>
+              <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, padding: '14px 18px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 12, color: '#4a4a4a' }}>Execução do orçamento</span>
-                  <span style={{ fontSize: 12.5, fontWeight: 700, color: '#c8a96e' }}>{budgetPercent}%</span>
+                  <span style={{ fontSize: 12, color: '#6b6b6b' }}>Execução do orçamento</span>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: '#007AFF' }}>{budgetPercent}%</span>
                 </div>
-                <div style={{ height: 6, background: '#181818', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: 6, background: 'rgba(0,0,0,0.06)', borderRadius: 3, overflow: 'hidden' }}>
                   <div
                     style={{
                       height: '100%',
                       width: `${budgetPercent}%`,
-                      background: 'linear-gradient(90deg, rgba(200,169,110,0.5) 0%, #c8a96e 100%)',
+                      background: 'linear-gradient(90deg, rgba(0,122,255,0.5) 0%, #007AFF 100%)',
                       borderRadius: 3,
                     }}
                   />
@@ -1197,9 +1206,9 @@ export default function ProjetoDetailPage() {
               {/* Line items */}
               {effectiveBudget.items.length > 0 && (
                 <div style={panel}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 120px', padding: '10px 20px', borderBottom: '1px solid #141414' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 120px', padding: '10px 20px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                     {['Categoria', 'Descrição', 'Valor'].map((h) => (
-                      <span key={h} style={{ fontSize: 10.5, color: '#2e2e2e', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+                      <span key={h} style={{ fontSize: 10.5, color: '#8e8e93', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
                         {h}
                       </span>
                     ))}
@@ -1212,14 +1221,14 @@ export default function ProjetoDetailPage() {
                         display: 'grid',
                         gridTemplateColumns: '1fr 1fr 120px',
                         padding: '13px 20px',
-                        borderBottom: i < effectiveBudget.items.length - 1 ? '1px solid #111' : 'none',
+                        borderBottom: i < effectiveBudget.items.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
                         alignItems: 'center',
                         transition: 'background 0.12s',
                       }}
                     >
-                      <div style={{ fontSize: 13, fontWeight: 500, color: '#ccc' }}>{item.category}</div>
-                      <div style={{ fontSize: 12, color: '#404040' }}>{item.description}</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#c8a96e' }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: '#1a1a1a' }}>{item.category}</div>
+                      <div style={{ fontSize: 12, color: '#6b6b6b' }}>{item.description}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#007AFF' }}>
                         R$ {item.value.toLocaleString('pt-BR')}
                       </div>
                     </div>
@@ -1253,24 +1262,24 @@ export default function ProjetoDetailPage() {
                     width: 46,
                     height: 46,
                     borderRadius: '50%',
-                    background: 'rgba(200,169,110,0.1)',
-                    border: '2px solid rgba(200,169,110,0.32)',
+                    background: 'rgba(0,122,255,0.1)',
+                    border: '2px solid rgba(0,122,255,0.3)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: 14,
                     fontWeight: 700,
-                    color: '#c8a96e',
+                    color: '#007AFF',
                     flexShrink: 0,
                   }}
                 >
                   {project.client.initials}
                 </div>
                 <div>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: '#e0e0e0' }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: '#1a1a1a' }}>
                     {project.client.name}
                   </div>
-                  <div style={{ fontSize: 11, color: '#333', marginTop: 2 }}>{project.type}</div>
+                  <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{project.type}</div>
                 </div>
               </div>
 
@@ -1281,9 +1290,9 @@ export default function ProjetoDetailPage() {
                 ].map(({ icon: Icon, text }) => (
                   <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                     <div style={iconBox()}>
-                      <Icon size={11} color="#555" />
+                      <Icon size={11} color="#6b6b6b" />
                     </div>
-                    <span style={{ fontSize: 12, color: '#777', wordBreak: 'break-all' as const }}>
+                    <span style={{ fontSize: 12, color: '#6b6b6b', wordBreak: 'break-all' as const }}>
                       {text}
                     </span>
                   </div>
@@ -1299,17 +1308,17 @@ export default function ProjetoDetailPage() {
                   justifyContent: 'center',
                   gap: 7,
                   padding: '9px',
-                  background: 'rgba(200,169,110,0.09)',
-                  border: '1px solid rgba(200,169,110,0.22)',
+                  background: 'rgba(0,122,255,0.09)',
+                  border: '1px solid rgba(0,122,255,0.22)',
                   borderRadius: 8,
-                  color: '#c8a96e',
+                  color: '#007AFF',
                   fontSize: 12.5,
                   fontWeight: 600,
                   cursor: 'pointer',
                   transition: 'background 0.15s',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(200,169,110,0.18)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(200,169,110,0.09)')}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,122,255,0.18)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(0,122,255,0.09)')}
               >
                 <MessageCircle size={13} />
                 Iniciar conversa
@@ -1327,24 +1336,24 @@ export default function ProjetoDetailPage() {
                     width: 36,
                     height: 36,
                     borderRadius: 9,
-                    background: 'rgba(200,169,110,0.07)',
-                    border: '1px solid rgba(200,169,110,0.18)',
+                    background: 'rgba(0,122,255,0.07)',
+                    border: '1px solid rgba(0,122,255,0.18)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
                   }}
                 >
-                  <Calendar size={15} color="#c8a96e" />
+                  <Calendar size={15} color="#007AFF" />
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#d5d5d5', lineHeight: 1.3 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', lineHeight: 1.3 }}>
                     {project.nextMeeting.title}
                   </div>
-                  <div style={{ fontSize: 11.5, color: '#4a4a4a', marginTop: 4 }}>
+                  <div style={{ fontSize: 11.5, color: '#6b6b6b', marginTop: 4 }}>
                     {project.nextMeeting.date}
                   </div>
-                  <div style={{ fontSize: 11, color: '#2e2e2e', marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>
                     {project.nextMeeting.time}
                   </div>
                 </div>
@@ -1355,13 +1364,14 @@ export default function ProjetoDetailPage() {
           {/* Quick stats */}
           <div
             style={{
-              background: '#0f0f0f',
-              border: '1px solid #1c1c1c',
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.08)',
               borderRadius: 12,
               padding: '14px 16px',
               display: 'flex',
               flexDirection: 'column',
               gap: 11,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             }}
           >
             {[
@@ -1374,8 +1384,8 @@ export default function ProjetoDetailPage() {
                 key={stat.label}
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
               >
-                <span style={{ fontSize: 11.5, color: '#3a3a3a' }}>{stat.label}</span>
-                <span style={{ fontSize: 12.5, fontWeight: 600, color: '#c8a96e' }}>
+                <span style={{ fontSize: 11.5, color: '#8e8e93' }}>{stat.label}</span>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: '#007AFF' }}>
                   {stat.value}
                 </span>
               </div>
@@ -1389,9 +1399,9 @@ export default function ProjetoDetailPage() {
               disabled={advancingStage}
               style={{
                 width: '100%', padding: '12px', borderRadius: 9,
-                background: stageAdvanced ? 'rgba(52,211,153,0.12)' : advancingStage ? '#111' : 'rgba(200,169,110,0.1)',
-                border: stageAdvanced ? '1px solid rgba(52,211,153,0.35)' : '1px solid rgba(200,169,110,0.28)',
-                color: stageAdvanced ? '#34d399' : advancingStage ? '#555' : '#c8a96e',
+                background: stageAdvanced ? 'rgba(52,211,153,0.1)' : advancingStage ? '#f2f2f7' : 'rgba(0,122,255,0.1)',
+                border: stageAdvanced ? '1px solid rgba(52,211,153,0.35)' : '1px solid rgba(0,122,255,0.28)',
+                color: stageAdvanced ? '#34d399' : advancingStage ? '#8e8e93' : '#007AFF',
                 fontSize: 12.5, fontWeight: 700, cursor: advancingStage ? 'not-allowed' : 'pointer',
                 letterSpacing: '0.04em', transition: 'all 0.2s',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -1428,7 +1438,7 @@ export default function ProjetoDetailPage() {
                       display: 'flex',
                       gap: 10,
                       padding: '8px 14px',
-                      borderBottom: `1px solid #111`,
+                      borderBottom: `1px solid rgba(0,0,0,0.06)`,
                       opacity: !hasEvents && !isToday ? 0.35 : 1,
                     }}
                   >
@@ -1437,7 +1447,7 @@ export default function ProjetoDetailPage() {
                       <div
                         style={{
                           fontSize: 9,
-                          color: '#3a3a3a',
+                          color: '#8e8e93',
                           textTransform: 'uppercase',
                           letterSpacing: '0.04em',
                           fontWeight: 600,
@@ -1449,7 +1459,7 @@ export default function ProjetoDetailPage() {
                         style={{
                           fontSize: 14,
                           fontWeight: 700,
-                          color: isToday ? '#c8a96e' : '#2e2e2e',
+                          color: isToday ? '#007AFF' : '#8e8e93',
                           lineHeight: 1.1,
                           marginTop: 1,
                         }}
@@ -1461,7 +1471,7 @@ export default function ProjetoDetailPage() {
                     {/* Events column */}
                     <div style={{ flex: 1, minWidth: 0, paddingTop: 1 }}>
                       {!hasEvents ? (
-                        <div style={{ fontSize: 10.5, color: '#1e1e1e', paddingTop: 4 }}>—</div>
+                        <div style={{ fontSize: 10.5, color: 'rgba(0,0,0,0.2)', paddingTop: 4 }}>—</div>
                       ) : (
                         dayEvents.map((ev) => {
                           const color = EVENT_META[ev.type].color
@@ -1500,7 +1510,7 @@ export default function ProjetoDetailPage() {
                               </div>
                               {ev.startTime && (
                                 <div
-                                  style={{ fontSize: 9.5, color: '#2e2e2e', flexShrink: 0 }}
+                                  style={{ fontSize: 9.5, color: '#8e8e93', flexShrink: 0 }}
                                 >
                                   {ev.startTime}
                                 </div>

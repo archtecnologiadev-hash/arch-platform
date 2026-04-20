@@ -119,27 +119,28 @@ export default function ArquitetoFornecedoresPage() {
         padding: '32px 36px',
         minHeight: '100vh',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        color: '#d0d0d0',
+        color: '#1a1a1a',
+        background: '#f2f2f7',
       }}
     >
       <style>{`
-        .af-card { background: #0e0e0e; border: 1px solid #161616; border-radius: 12px; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; }
-        .af-card:hover { border-color: rgba(200,169,110,0.25); box-shadow: 0 6px 24px rgba(0,0,0,0.3); }
+        .af-card { background: #ffffff; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+        .af-card:hover { border-color: rgba(0,122,255,0.2); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
         .af-img { width: 100%; height: 160px; object-fit: cover; display: block; transition: transform 0.4s ease; }
         .af-card:hover .af-img { transform: scale(1.04); }
-        .af-seg-btn { padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-        .af-inp { width: 100%; background: #111; border: 1px solid #222; border-radius: 8px; padding: 10px 14px; color: #d0d0d0; font-size: 13.5px; outline: none; transition: border-color 0.15s; color-scheme: dark; box-sizing: border-box; font-family: inherit; }
-        .af-inp:focus { border-color: rgba(200,169,110,0.45); }
+        .af-seg-btn { padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+        .af-inp { width: 100%; background: #f2f2f7; border: 1px solid rgba(0,0,0,0.12); border-radius: 8px; padding: 10px 14px; color: #1a1a1a; font-size: 13.5px; outline: none; transition: border-color 0.15s; box-sizing: border-box; font-family: inherit; }
+        .af-inp:focus { border-color: rgba(0,122,255,0.45); }
         @keyframes af-modal-in { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         .af-modal-box { animation: af-modal-in 0.2s ease; }
       `}</style>
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#f0f0f0', margin: 0 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 500, color: '#1a1a1a', margin: 0 }}>
           Fornecedores
         </h1>
-        <p style={{ fontSize: 13, color: '#444', margin: '5px 0 0' }}>
+        <p style={{ fontSize: 13, color: '#8e8e93', margin: '5px 0 0' }}>
           Diretório de fornecedores parceiros certificados pela plataforma ARC
         </p>
       </div>
@@ -154,9 +155,9 @@ export default function ArquitetoFornecedoresPage() {
               onClick={() => setSegFilter(seg)}
               className="af-seg-btn"
               style={{
-                background: isActive ? 'rgba(200,169,110,0.12)' : 'transparent',
-                border: isActive ? '1px solid rgba(200,169,110,0.3)' : '1px solid #222',
-                color: isActive ? '#c8a96e' : '#555',
+                background: isActive ? 'rgba(0,122,255,0.1)' : '#ffffff',
+                border: isActive ? '1px solid rgba(0,122,255,0.3)' : '1px solid rgba(0,0,0,0.12)',
+                color: isActive ? '#007AFF' : '#6b6b6b',
               }}
             >
               {seg}
@@ -168,7 +169,7 @@ export default function ArquitetoFornecedoresPage() {
             </button>
           )
         })}
-        <div style={{ marginLeft: 'auto', fontSize: 12, color: '#333', alignSelf: 'center' }}>
+        <div style={{ marginLeft: 'auto', fontSize: 12, color: '#8e8e93', alignSelf: 'center' }}>
           {filtered.length} fornecedor{filtered.length !== 1 ? 'es' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
         </div>
       </div>
@@ -190,7 +191,7 @@ export default function ArquitetoFornecedoresPage() {
                   border: `1px solid ${sup.color}55`,
                   color: sup.color,
                   fontSize: 10,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   padding: '3px 10px',
                   borderRadius: 20,
                   backdropFilter: 'blur(4px)',
@@ -202,7 +203,7 @@ export default function ArquitetoFornecedoresPage() {
 
             {/* Body */}
             <div style={{ padding: '16px 18px' }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#d0d0d0', marginBottom: 4 }}>
+              <div style={{ fontSize: 15, fontWeight: 500, color: '#1a1a1a', marginBottom: 4 }}>
                 {sup.name}
               </div>
               <div
@@ -218,15 +219,15 @@ export default function ArquitetoFornecedoresPage() {
                     <Star
                       key={s}
                       size={11}
-                      fill={s <= Math.round(sup.rating) ? '#c8a96e' : 'none'}
-                      color="#c8a96e"
+                      fill={s <= Math.round(sup.rating) ? '#007AFF' : 'none'}
+                      color="#007AFF"
                     />
                   ))}
                 </div>
-                <span style={{ fontSize: 12, color: '#c8a96e', fontWeight: 700 }}>{sup.rating}</span>
-                <span style={{ fontSize: 11, color: '#444' }}>({sup.reviewCount})</span>
-                <span style={{ fontSize: 11, color: '#333' }}>·</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: '#444' }}>
+                <span style={{ fontSize: 12, color: '#007AFF', fontWeight: 600 }}>{sup.rating}</span>
+                <span style={{ fontSize: 11, color: '#8e8e93' }}>({sup.reviewCount})</span>
+                <span style={{ fontSize: 11, color: '#8e8e93' }}>·</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: '#6b6b6b' }}>
                   <MapPin size={10} />
                   {sup.city}
                 </div>
@@ -234,14 +235,14 @@ export default function ArquitetoFornecedoresPage() {
               <p
                 style={{
                   fontSize: 12.5,
-                  color: '#666',
+                  color: '#6b6b6b',
                   lineHeight: 1.6,
                   margin: '0 0 14px',
                 }}
               >
                 {sup.description}
               </p>
-              <div style={{ fontSize: 11, color: '#383838', marginBottom: 14 }}>
+              <div style={{ fontSize: 11, color: '#8e8e93', marginBottom: 14 }}>
                 {sup.projectCount}+ projetos entregues
               </div>
 
@@ -258,12 +259,12 @@ export default function ArquitetoFornecedoresPage() {
                     gap: 5,
                     fontSize: 12,
                     padding: '8px',
-                    borderRadius: 7,
+                    borderRadius: 8,
                     background: 'transparent',
-                    border: '1px solid #222',
-                    color: '#888',
+                    border: '1px solid rgba(0,0,0,0.12)',
+                    color: '#6b6b6b',
                     textDecoration: 'none',
-                    fontWeight: 600,
+                    fontWeight: 500,
                   }}
                 >
                   <ExternalLink size={12} />
@@ -275,10 +276,10 @@ export default function ArquitetoFornecedoresPage() {
                     flex: 1,
                     fontSize: 12,
                     padding: '8px',
-                    borderRadius: 7,
-                    background: 'rgba(200,169,110,0.1)',
-                    border: '1px solid rgba(200,169,110,0.25)',
-                    color: '#c8a96e',
+                    borderRadius: 8,
+                    background: 'rgba(0,122,255,0.08)',
+                    border: '1px solid rgba(0,122,255,0.2)',
+                    color: '#007AFF',
                     cursor: 'pointer',
                     fontWeight: 600,
                   }}
@@ -300,7 +301,7 @@ export default function ArquitetoFornecedoresPage() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.75)',
+            background: 'rgba(0,0,0,0.4)',
             backdropFilter: 'blur(6px)',
             zIndex: 200,
             display: 'flex',
@@ -312,21 +313,22 @@ export default function ArquitetoFornecedoresPage() {
           <div
             className="af-modal-box"
             style={{
-              background: '#0e0e0e',
-              border: '1px solid #222',
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.1)',
               borderRadius: 16,
               width: '100%',
               maxWidth: 500,
               padding: 30,
+              boxShadow: '0 8px 40px rgba(0,0,0,0.15)',
             }}
           >
             {sent ? (
               <div style={{ textAlign: 'center' as const, padding: '22px 0' }}>
                 <CheckCircle2 size={52} color="#34d399" style={{ marginBottom: 16 }} />
-                <div style={{ fontSize: 19, fontWeight: 700, color: '#f0f0f0', marginBottom: 8 }}>
+                <div style={{ fontSize: 19, fontWeight: 500, color: '#1a1a1a', marginBottom: 8 }}>
                   Orçamento solicitado!
                 </div>
-                <div style={{ fontSize: 13, color: '#555' }}>
+                <div style={{ fontSize: 13, color: '#6b6b6b' }}>
                   {quoteTarget.name} receberá sua solicitação em breve.
                 </div>
               </div>
@@ -341,23 +343,23 @@ export default function ArquitetoFornecedoresPage() {
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: '#f0f0f0' }}>
+                    <div style={{ fontSize: 17, fontWeight: 500, color: '#1a1a1a' }}>
                       Solicitar Orçamento
                     </div>
-                    <div style={{ fontSize: 12.5, color: '#555', marginTop: 3 }}>
+                    <div style={{ fontSize: 12.5, color: '#6b6b6b', marginTop: 3 }}>
                       {quoteTarget.name} · {quoteTarget.segment}
                     </div>
                   </div>
                   <button
                     onClick={() => setQuoteTarget(null)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555', padding: 4 }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}
                   >
                     <X size={18} />
                   </button>
                 </div>
                 <form onSubmit={handleSend} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div>
-                    <label style={{ fontSize: 11.5, color: '#555', display: 'block', marginBottom: 6, fontWeight: 600 }}>
+                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 500 }}>
                       Projeto *
                     </label>
                     <input
@@ -369,7 +371,7 @@ export default function ArquitetoFornecedoresPage() {
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: 11.5, color: '#555', display: 'block', marginBottom: 6, fontWeight: 600 }}>
+                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 500 }}>
                       Descrição do serviço *
                     </label>
                     <textarea
@@ -383,7 +385,7 @@ export default function ArquitetoFornecedoresPage() {
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: 11.5, color: '#555', display: 'block', marginBottom: 6, fontWeight: 600 }}>
+                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 500 }}>
                       Data prevista de início
                     </label>
                     <input
@@ -397,13 +399,13 @@ export default function ArquitetoFornecedoresPage() {
                     type="submit"
                     style={{
                       marginTop: 4,
-                      background: '#c8a96e',
-                      color: '#080808',
+                      background: '#007AFF',
+                      color: '#ffffff',
                       border: 'none',
-                      borderRadius: 9,
+                      borderRadius: 10,
                       padding: '12px',
                       fontSize: 14,
-                      fontWeight: 700,
+                      fontWeight: 600,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',

@@ -23,7 +23,7 @@ export function Sidebar({ navItems, title, userRole }: SidebarProps) {
   return (
     <aside className="flex h-screen w-64 flex-col border-r bg-card">
       <div className="flex h-16 items-center border-b px-6">
-        <span className="text-lg font-bold text-primary">Arch Platform</span>
+        <span className="text-lg font-light tracking-[0.35em] text-primary">ARC</span>
       </div>
       <div className="px-4 py-3">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

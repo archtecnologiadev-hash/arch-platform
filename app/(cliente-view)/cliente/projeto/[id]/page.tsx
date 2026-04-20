@@ -97,7 +97,7 @@ const MILESTONES: Milestone[] = [
     title: 'Projeto iniciado',
     desc: 'Contrato assinado e projeto criado. Bem-vinda ao seu espaço de acompanhamento!',
     author: 'Arq. Serafim Figueiredo',
-    color: '#c8a96e',
+    color: '#007AFF',
   },
   {
     id: 2,
@@ -129,7 +129,7 @@ const MILESTONES: Milestone[] = [
     title: 'Aguardando sua aprovação do 3D',
     desc: 'Acesse a aba Arquivos para visualizar os renders. Seu feedback é fundamental para avançarmos para a próxima etapa.',
     author: null,
-    color: '#c8a96e',
+    color: '#007AFF',
     isCurrent: true,
   },
 ]
@@ -148,14 +148,14 @@ function FileIcon({ type }: { type: string }) {
   if (type === 'pdf')   return <FileText  size={18} color="#ef4444" />
   if (type === 'image') return <ImageIcon size={18} color="#34d399" />
   if (type === 'dwg')   return <File      size={18} color="#4f9cf9" />
-  return <File size={18} color="#888" />
+  return <File size={18} color="#8e8e93" />
 }
 
 function fileBadge(type: string) {
   if (type === 'pdf')   return { label: 'PDF', color: '#ef4444' }
   if (type === 'image') return { label: 'JPG', color: '#34d399' }
   if (type === 'dwg')   return { label: 'DWG', color: '#4f9cf9' }
-  return { label: 'ARQ', color: '#888' }
+  return { label: 'ARQ', color: '#8e8e93' }
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -184,25 +184,25 @@ export default function ClienteProjetoPage() {
   }, [messages, chatOpen])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#080808', color: '#e0e0e0' }}>
+    <div style={{ minHeight: '100vh', background: '#f2f2f7', color: '#1a1a1a' }}>
 
       <style>{`
         @keyframes stage-pulse-cl {
-          0%   { box-shadow: 0 0 0 0   rgba(200,169,110,0.55); }
-          70%  { box-shadow: 0 0 0 8px rgba(200,169,110,0);    }
-          100% { box-shadow: 0 0 0 0   rgba(200,169,110,0);    }
+          0%   { box-shadow: 0 0 0 0   rgba(0,122,255,0.4); }
+          70%  { box-shadow: 0 0 0 8px rgba(0,122,255,0);   }
+          100% { box-shadow: 0 0 0 0   rgba(0,122,255,0);   }
         }
         @keyframes dot-breathe {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
         }
         @keyframes chat-pulse {
-          0%   { box-shadow: 0 6px 20px rgba(200,169,110,0.4), 0 0 0 0   rgba(200,169,110,0.4); }
-          70%  { box-shadow: 0 6px 20px rgba(200,169,110,0.4), 0 0 0 12px rgba(200,169,110,0); }
-          100% { box-shadow: 0 6px 20px rgba(200,169,110,0.4), 0 0 0 0   rgba(200,169,110,0); }
+          0%   { box-shadow: 0 6px 20px rgba(0,122,255,0.35), 0 0 0 0   rgba(0,122,255,0.35); }
+          70%  { box-shadow: 0 6px 20px rgba(0,122,255,0.35), 0 0 0 12px rgba(0,122,255,0);   }
+          100% { box-shadow: 0 6px 20px rgba(0,122,255,0.35), 0 0 0 0   rgba(0,122,255,0);   }
         }
-        .cl-tab:hover { color: #b89060 !important; }
-        .cl-file-row:hover { background: #0e0e0e !important; }
+        .cl-tab:hover { color: #007AFF !important; }
+        .cl-file-row:hover { background: #f7f7f9 !important; }
         .cl-chat-fab { animation: chat-pulse 2.8s ease-out infinite; }
         .cl-chat-fab:hover { transform: scale(1.1) !important; }
       `}</style>
@@ -211,9 +211,9 @@ export default function ClienteProjetoPage() {
       <header
         style={{
           height: 64,
-          background: 'rgba(8,8,8,0.97)',
+          background: '#ffffff',
           backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid #141414',
+          borderBottom: '1px solid rgba(0,0,0,0.08)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -221,6 +221,7 @@ export default function ClienteProjetoPage() {
           position: 'sticky',
           top: 0,
           zIndex: 30,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
         }}
       >
         {/* Logo */}
@@ -229,7 +230,7 @@ export default function ClienteProjetoPage() {
             fontSize: 20,
             fontWeight: 800,
             letterSpacing: '0.3em',
-            color: '#c8a96e',
+            color: '#007AFF',
             fontFamily: 'Georgia, serif',
           }}
         >
@@ -243,19 +244,19 @@ export default function ClienteProjetoPage() {
               width: 32,
               height: 32,
               borderRadius: '50%',
-              background: 'rgba(200,169,110,0.1)',
-              border: '1.5px solid rgba(200,169,110,0.3)',
+              background: 'rgba(0,122,255,0.08)',
+              border: '1.5px solid rgba(0,122,255,0.25)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 11,
               fontWeight: 700,
-              color: '#c8a96e',
+              color: '#007AFF',
             }}
           >
             {PROJECT.client.initials}
           </div>
-          <span style={{ fontSize: 13.5, color: '#777', fontWeight: 500 }}>
+          <span style={{ fontSize: 13.5, color: '#6b6b6b', fontWeight: 500 }}>
             {PROJECT.client.name}
           </span>
         </div>
@@ -267,21 +268,21 @@ export default function ClienteProjetoPage() {
             alignItems: 'center',
             gap: 6,
             fontSize: 12.5,
-            color: '#3e3e3e',
+            color: '#6b6b6b',
             background: 'transparent',
-            border: '1px solid #1a1a1a',
+            border: '1px solid rgba(0,0,0,0.08)',
             borderRadius: 7,
             padding: '6px 13px',
             cursor: 'pointer',
             transition: 'color 0.15s, border-color 0.15s',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#777'
-            e.currentTarget.style.borderColor = '#2e2e2e'
+            e.currentTarget.style.color = '#1a1a1a'
+            e.currentTarget.style.borderColor = 'rgba(0,0,0,0.18)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = '#3e3e3e'
-            e.currentTarget.style.borderColor = '#1a1a1a'
+            e.currentTarget.style.color = '#6b6b6b'
+            e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
           }}
         >
           <LogOut size={13} />
@@ -301,7 +302,7 @@ export default function ClienteProjetoPage() {
             position: 'absolute',
             inset: 0,
             background:
-              'linear-gradient(to top, rgba(8,8,8,0.97) 0%, rgba(8,8,8,0.35) 55%, transparent 100%)',
+              'linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.25) 55%, transparent 100%)',
           }}
         />
 
@@ -322,7 +323,7 @@ export default function ClienteProjetoPage() {
               style={{
                 fontSize: 10.5,
                 fontWeight: 700,
-                color: 'rgba(200,169,110,0.6)',
+                color: 'rgba(255,255,255,0.65)',
                 letterSpacing: '0.12em',
                 textTransform: 'uppercase',
                 marginBottom: 7,
@@ -334,10 +335,10 @@ export default function ClienteProjetoPage() {
               style={{
                 fontSize: 34,
                 fontWeight: 800,
-                color: '#fff',
+                color: '#ffffff',
                 lineHeight: 1.1,
                 letterSpacing: '-0.025em',
-                textShadow: '0 2px 16px rgba(0,0,0,0.6)',
+                textShadow: '0 2px 16px rgba(0,0,0,0.4)',
               }}
             >
               {PROJECT.name}
@@ -345,7 +346,7 @@ export default function ClienteProjetoPage() {
             <div
               style={{
                 fontSize: 13.5,
-                color: 'rgba(255,255,255,0.38)',
+                color: 'rgba(255,255,255,0.55)',
                 marginTop: 6,
                 display: 'flex',
                 gap: 8,
@@ -353,9 +354,9 @@ export default function ClienteProjetoPage() {
               }}
             >
               <span>{PROJECT.area}</span>
-              <span style={{ color: 'rgba(255,255,255,0.15)' }}>·</span>
+              <span style={{ color: 'rgba(255,255,255,0.25)' }}>·</span>
               <span>{PROJECT.type}</span>
-              <span style={{ color: 'rgba(255,255,255,0.15)' }}>·</span>
+              <span style={{ color: 'rgba(255,255,255,0.25)' }}>·</span>
               <span>Previsão: {PROJECT.dueDate}</span>
             </div>
           </div>
@@ -367,9 +368,9 @@ export default function ClienteProjetoPage() {
                 fontWeight: 700,
                 padding: '6px 16px',
                 borderRadius: 20,
-                background: 'rgba(10,6,1,0.7)',
-                border: '1.5px solid rgba(200,169,110,0.6)',
-                color: '#c8a96e',
+                background: 'rgba(0,0,0,0.45)',
+                border: '1.5px solid rgba(0,122,255,0.7)',
+                color: '#ffffff',
                 backdropFilter: 'blur(10px)',
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
@@ -377,7 +378,7 @@ export default function ClienteProjetoPage() {
             >
               {STAGES[PROJECT.stageIndex]}
             </div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 6 }}>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 6 }}>
               Etapa {PROJECT.stageIndex + 1} de {STAGES.length}
             </div>
           </div>
@@ -387,12 +388,13 @@ export default function ClienteProjetoPage() {
       {/* ════════════════════ TIMELINE ════════════════════ */}
       <div
         style={{
-          background: '#090909',
-          borderBottom: '1px solid #141414',
+          background: '#ffffff',
+          borderBottom: '1px solid rgba(0,0,0,0.08)',
           padding: '0 32px',
           position: 'sticky',
           top: 64,
           zIndex: 20,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', padding: '16px 0', overflowX: 'auto' }}>
@@ -416,8 +418,8 @@ export default function ClienteProjetoPage() {
                       width: 26,
                       height: 26,
                       borderRadius: '50%',
-                      background: done ? '#c8a96e' : current ? 'rgba(200,169,110,0.12)' : '#111',
-                      border: `2px solid ${done ? '#c8a96e' : current ? '#c8a96e' : '#1e1e1e'}`,
+                      background: done ? '#007AFF' : current ? 'rgba(0,122,255,0.1)' : '#f2f2f7',
+                      border: `2px solid ${done ? '#007AFF' : current ? '#007AFF' : 'rgba(0,0,0,0.12)'}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -425,18 +427,18 @@ export default function ClienteProjetoPage() {
                     }}
                   >
                     {done ? (
-                      <Check size={12} color="#080808" strokeWidth={3} />
+                      <Check size={12} color="#ffffff" strokeWidth={3} />
                     ) : current ? (
-                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#c8a96e' }} />
+                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#007AFF' }} />
                     ) : (
-                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#1e1e1e' }} />
+                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(0,0,0,0.15)' }} />
                     )}
                   </div>
                   <div
                     style={{
                       fontSize: 9.5,
                       fontWeight: current ? 700 : 400,
-                      color: done ? '#c8a96e' : current ? '#e0e0e0' : '#222',
+                      color: done ? '#007AFF' : current ? '#1a1a1a' : '#8e8e93',
                       whiteSpace: 'nowrap',
                       letterSpacing: '0.02em',
                     }}
@@ -450,7 +452,7 @@ export default function ClienteProjetoPage() {
                       flex: 1,
                       height: 2,
                       marginBottom: 18,
-                      background: done ? '#c8a96e' : '#191919',
+                      background: done ? '#007AFF' : 'rgba(0,0,0,0.08)',
                       minWidth: 6,
                     }}
                   />
@@ -467,43 +469,44 @@ export default function ClienteProjetoPage() {
         {/* Progress summary card */}
         <div
           style={{
-            background: '#0f0f0f',
-            border: '1px solid #1c1c1c',
+            background: '#ffffff',
+            border: '1px solid rgba(0,0,0,0.08)',
             borderRadius: 14,
             padding: '18px 22px',
             marginBottom: 26,
             display: 'flex',
             alignItems: 'center',
             gap: 18,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           }}
         >
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 9 }}>
-              <span style={{ fontSize: 13, color: '#4a4a4a' }}>Progresso geral do seu projeto</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#c8a96e' }}>{progress}%</span>
+              <span style={{ fontSize: 13, color: '#8e8e93' }}>Progresso geral do seu projeto</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#007AFF' }}>{progress}%</span>
             </div>
-            <div style={{ height: 7, background: '#181818', borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{ height: 7, background: '#f2f2f7', borderRadius: 4, overflow: 'hidden' }}>
               <div
                 style={{
                   height: '100%',
                   width: `${progress}%`,
-                  background: 'linear-gradient(90deg, rgba(200,169,110,0.45) 0%, #c8a96e 100%)',
+                  background: 'linear-gradient(90deg, rgba(0,122,255,0.45) 0%, #007AFF 100%)',
                   borderRadius: 4,
                   transition: 'width 0.6s ease',
                 }}
               />
             </div>
           </div>
-          <div style={{ textAlign: 'right', flexShrink: 0, paddingLeft: 8, borderLeft: '1px solid #1c1c1c' }}>
-            <div style={{ fontSize: 12.5, color: '#c8a96e', fontWeight: 700 }}>
+          <div style={{ textAlign: 'right', flexShrink: 0, paddingLeft: 8, borderLeft: '1px solid rgba(0,0,0,0.08)' }}>
+            <div style={{ fontSize: 12.5, color: '#007AFF', fontWeight: 700 }}>
               {STAGES[PROJECT.stageIndex]}
             </div>
-            <div style={{ fontSize: 11, color: '#2e2e2e', marginTop: 2 }}>etapa atual</div>
+            <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>etapa atual</div>
           </div>
         </div>
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', borderBottom: '1px solid #1c1c1c', marginBottom: 26 }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid rgba(0,0,0,0.08)', marginBottom: 26 }}>
           {TABS.map((tab) => {
             const Icon   = tab.icon
             const active = activeTab === tab.id
@@ -519,8 +522,8 @@ export default function ClienteProjetoPage() {
                   padding: '12px 20px',
                   background: 'transparent',
                   border: 'none',
-                  borderBottom: `2px solid ${active ? '#c8a96e' : 'transparent'}`,
-                  color: active ? '#c8a96e' : '#3a3a3a',
+                  borderBottom: `2px solid ${active ? '#007AFF' : 'transparent'}`,
+                  color: active ? '#007AFF' : '#8e8e93',
                   fontSize: 13.5,
                   fontWeight: active ? 600 : 400,
                   cursor: 'pointer',
@@ -546,7 +549,7 @@ export default function ClienteProjetoPage() {
                 top: 14,
                 bottom: 24,
                 width: 1.5,
-                background: 'linear-gradient(to bottom, #c8a96e 30%, rgba(200,169,110,0.15) 80%, transparent 100%)',
+                background: 'linear-gradient(to bottom, #007AFF 30%, rgba(0,122,255,0.15) 80%, transparent 100%)',
               }}
             />
 
@@ -564,7 +567,7 @@ export default function ClienteProjetoPage() {
                     width: 23,
                     height: 23,
                     borderRadius: '50%',
-                    background: m.isCurrent ? 'rgba(200,169,110,0.1)' : `${m.color}18`,
+                    background: m.isCurrent ? 'rgba(0,122,255,0.1)' : `${m.color}18`,
                     border: `2px solid ${m.color}`,
                     display: 'flex',
                     alignItems: 'center',
@@ -586,11 +589,12 @@ export default function ClienteProjetoPage() {
                 {/* Card */}
                 <div
                   style={{
-                    background: m.isCurrent ? 'rgba(200,169,110,0.035)' : '#0f0f0f',
-                    border: `1px solid ${m.isCurrent ? 'rgba(200,169,110,0.22)' : '#1c1c1c'}`,
+                    background: m.isCurrent ? 'rgba(0,122,255,0.04)' : '#ffffff',
+                    border: `1px solid ${m.isCurrent ? 'rgba(0,122,255,0.2)' : 'rgba(0,0,0,0.08)'}`,
                     borderRadius: 12,
                     padding: '15px 18px',
                     transition: 'border-color 0.2s',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                   }}
                 >
                   <div
@@ -602,7 +606,7 @@ export default function ClienteProjetoPage() {
                       gap: 12,
                     }}
                   >
-                    <div style={{ fontSize: 14, fontWeight: 700, color: m.isCurrent ? '#c8a96e' : '#d5d5d5', lineHeight: 1.3 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: m.isCurrent ? '#007AFF' : '#1a1a1a', lineHeight: 1.3 }}>
                       {m.title}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
@@ -613,25 +617,25 @@ export default function ClienteProjetoPage() {
                             fontWeight: 700,
                             padding: '2px 9px',
                             borderRadius: 20,
-                            background: 'rgba(200,169,110,0.12)',
-                            border: '1px solid rgba(200,169,110,0.28)',
-                            color: '#c8a96e',
+                            background: 'rgba(0,122,255,0.1)',
+                            border: '1px solid rgba(0,122,255,0.25)',
+                            color: '#007AFF',
                             letterSpacing: '0.04em',
                           }}
                         >
                           AGORA
                         </div>
                       )}
-                      <div style={{ fontSize: 11.5, color: '#2e2e2e' }}>{m.date}</div>
+                      <div style={{ fontSize: 11.5, color: '#8e8e93' }}>{m.date}</div>
                     </div>
                   </div>
 
-                  <div style={{ fontSize: 13.5, color: '#555', lineHeight: 1.65 }}>{m.desc}</div>
+                  <div style={{ fontSize: 13.5, color: '#6b6b6b', lineHeight: 1.65 }}>{m.desc}</div>
 
                   {m.author && (
                     <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
                       <div style={{ width: 5, height: 5, borderRadius: '50%', background: m.color, flexShrink: 0 }} />
-                      <span style={{ fontSize: 11.5, color: '#333' }}>{m.author}</span>
+                      <span style={{ fontSize: 11.5, color: '#8e8e93' }}>{m.author}</span>
                     </div>
                   )}
                 </div>
@@ -649,30 +653,31 @@ export default function ClienteProjetoPage() {
         {activeTab === 'arquivos' && (
           <div
             style={{
-              background: '#0f0f0f',
-              border: '1px solid #1c1c1c',
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.08)',
               borderRadius: 14,
               overflow: 'hidden',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             }}
           >
             <div
               style={{
                 padding: '16px 22px',
-                borderBottom: '1px solid #1c1c1c',
+                borderBottom: '1px solid rgba(0,0,0,0.08)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
               }}
             >
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#d0d0d0' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>
                   Arquivos do Projeto
                 </div>
-                <div style={{ fontSize: 12, color: '#3a3a3a', marginTop: 2 }}>
+                <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 2 }}>
                   Documentos e imagens disponibilizados pelo seu arquiteto
                 </div>
               </div>
-              <span style={{ fontSize: 11.5, color: '#333' }}>
+              <span style={{ fontSize: 11.5, color: '#8e8e93' }}>
                 {FILES.length} arquivos
               </span>
             </div>
@@ -688,7 +693,7 @@ export default function ClienteProjetoPage() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 14,
-                    borderBottom: i < FILES.length - 1 ? '1px solid #111' : 'none',
+                    borderBottom: i < FILES.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
                     transition: 'background 0.12s',
                   }}
                 >
@@ -698,8 +703,8 @@ export default function ClienteProjetoPage() {
                       width: 42,
                       height: 42,
                       borderRadius: 10,
-                      background: '#141414',
-                      border: '1px solid #1c1c1c',
+                      background: '#f2f2f7',
+                      border: '1px solid rgba(0,0,0,0.08)',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
@@ -727,7 +732,7 @@ export default function ClienteProjetoPage() {
                       style={{
                         fontSize: 14,
                         fontWeight: 600,
-                        color: '#c8c8c8',
+                        color: '#1a1a1a',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -735,13 +740,13 @@ export default function ClienteProjetoPage() {
                     >
                       {file.label}
                     </div>
-                    <div style={{ fontSize: 11.5, color: '#2e2e2e', marginTop: 2 }}>
+                    <div style={{ fontSize: 11.5, color: '#8e8e93', marginTop: 2 }}>
                       {file.name} · {file.size}
                     </div>
                   </div>
 
                   {/* Date */}
-                  <div style={{ fontSize: 12, color: '#2e2e2e', flexShrink: 0 }}>{file.date}</div>
+                  <div style={{ fontSize: 12, color: '#8e8e93', flexShrink: 0 }}>{file.date}</div>
 
                   {/* Download button */}
                   <a
@@ -753,20 +758,20 @@ export default function ClienteProjetoPage() {
                       gap: 5,
                       fontSize: 12.5,
                       fontWeight: 600,
-                      color: '#c8a96e',
+                      color: '#007AFF',
                       textDecoration: 'none',
-                      background: 'rgba(200,169,110,0.07)',
-                      border: '1px solid rgba(200,169,110,0.18)',
+                      background: 'rgba(0,122,255,0.07)',
+                      border: '1px solid rgba(0,122,255,0.18)',
                       borderRadius: 8,
                       padding: '6px 13px',
                       flexShrink: 0,
                       transition: 'background 0.15s',
                     }}
                     onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = 'rgba(200,169,110,0.15)')
+                      (e.currentTarget.style.background = 'rgba(0,122,255,0.14)')
                     }
                     onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = 'rgba(200,169,110,0.07)')
+                      (e.currentTarget.style.background = 'rgba(0,122,255,0.07)')
                     }
                   >
                     <Download size={12} />
@@ -791,7 +796,7 @@ export default function ClienteProjetoPage() {
             width: 58,
             height: 58,
             borderRadius: '50%',
-            background: '#c8a96e',
+            background: '#007AFF',
             border: 'none',
             display: 'flex',
             alignItems: 'center',
@@ -801,7 +806,7 @@ export default function ClienteProjetoPage() {
             transition: 'transform 0.2s ease',
           }}
         >
-          <MessageCircle size={23} color="#080808" />
+          <MessageCircle size={23} color="#ffffff" />
         </button>
       )}
 
@@ -813,14 +818,14 @@ export default function ClienteProjetoPage() {
           right: 0,
           width: 360,
           height: '100vh',
-          background: '#0d0d0d',
-          borderLeft: '1px solid #1c1c1c',
+          background: '#ffffff',
+          borderLeft: '1px solid rgba(0,0,0,0.08)',
           zIndex: 100,
           display: 'flex',
           flexDirection: 'column',
           transform: chatOpen ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)',
-          boxShadow: chatOpen ? '-24px 0 64px rgba(0,0,0,0.65)' : 'none',
+          boxShadow: chatOpen ? '-8px 0 32px rgba(0,0,0,0.12)' : 'none',
         }}
       >
         {/* Chat header */}
@@ -828,11 +833,12 @@ export default function ClienteProjetoPage() {
           style={{
             height: 66,
             padding: '0 18px',
-            borderBottom: '1px solid #1c1c1c',
+            borderBottom: '1px solid rgba(0,0,0,0.08)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexShrink: 0,
+            background: '#ffffff',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -841,25 +847,25 @@ export default function ClienteProjetoPage() {
                 width: 36,
                 height: 36,
                 borderRadius: '50%',
-                background: 'rgba(200,169,110,0.1)',
-                border: '1.5px solid rgba(200,169,110,0.28)',
+                background: 'rgba(0,122,255,0.08)',
+                border: '1.5px solid rgba(0,122,255,0.25)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: 11,
                 fontWeight: 700,
-                color: '#c8a96e',
+                color: '#007AFF',
               }}
             >
               SF
             </div>
             <div>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#ddd' }}>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#1a1a1a' }}>
                 Arq. Serafim Figueiredo
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#34d399' }} />
-                <span style={{ fontSize: 10.5, color: '#3a3a3a' }}>Online</span>
+                <span style={{ fontSize: 10.5, color: '#6b6b6b' }}>Online</span>
               </div>
             </div>
           </div>
@@ -871,21 +877,21 @@ export default function ClienteProjetoPage() {
               height: 28,
               borderRadius: 7,
               background: 'transparent',
-              border: '1px solid #1e1e1e',
+              border: '1px solid rgba(0,0,0,0.08)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              color: '#444',
+              color: '#8e8e93',
               transition: 'background 0.15s, color 0.15s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#1a1a1a'
-              e.currentTarget.style.color = '#999'
+              e.currentTarget.style.background = '#f2f2f7'
+              e.currentTarget.style.color = '#1a1a1a'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.color = '#444'
+              e.currentTarget.style.color = '#8e8e93'
             }}
           >
             <X size={13} />
@@ -901,6 +907,7 @@ export default function ClienteProjetoPage() {
             display: 'flex',
             flexDirection: 'column',
             gap: 14,
+            background: '#f2f2f7',
           }}
         >
           {messages.map((msg) => {
@@ -921,14 +928,14 @@ export default function ClienteProjetoPage() {
                     width: 27,
                     height: 27,
                     borderRadius: '50%',
-                    background: isClient ? 'rgba(200,169,110,0.1)' : 'rgba(79,156,249,0.1)',
-                    border: `1.5px solid ${isClient ? 'rgba(200,169,110,0.28)' : 'rgba(79,156,249,0.28)'}`,
+                    background: isClient ? 'rgba(0,122,255,0.1)' : 'rgba(79,156,249,0.1)',
+                    border: `1.5px solid ${isClient ? 'rgba(0,122,255,0.25)' : 'rgba(79,156,249,0.25)'}`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: 9,
                     fontWeight: 700,
-                    color: isClient ? '#c8a96e' : '#4f9cf9',
+                    color: isClient ? '#007AFF' : '#4f9cf9',
                     flexShrink: 0,
                   }}
                 >
@@ -939,22 +946,23 @@ export default function ClienteProjetoPage() {
                 <div style={{ maxWidth: '74%' }}>
                   <div
                     style={{
-                      background: isClient ? 'rgba(200,169,110,0.1)' : '#161616',
-                      border: `1px solid ${isClient ? 'rgba(200,169,110,0.18)' : '#1e1e1e'}`,
+                      background: isClient ? '#007AFF' : '#ffffff',
+                      border: `1px solid ${isClient ? 'transparent' : 'rgba(0,0,0,0.08)'}`,
                       borderRadius: isClient
                         ? '13px 13px 3px 13px'
                         : '13px 13px 13px 3px',
                       padding: '10px 13px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                     }}
                   >
-                    <div style={{ fontSize: 13.5, color: '#d5d5d5', lineHeight: 1.58 }}>
+                    <div style={{ fontSize: 13.5, color: isClient ? '#ffffff' : '#1a1a1a', lineHeight: 1.58 }}>
                       {msg.text}
                     </div>
                   </div>
                   <div
                     style={{
                       fontSize: 10,
-                      color: '#282828',
+                      color: '#8e8e93',
                       marginTop: 3,
                       textAlign: isClient ? 'right' : 'left',
                     }}
@@ -972,11 +980,11 @@ export default function ClienteProjetoPage() {
         <div
           style={{
             padding: '12px 14px',
-            borderTop: '1px solid #1c1c1c',
+            borderTop: '1px solid rgba(0,0,0,0.08)',
             display: 'flex',
             gap: 8,
             flexShrink: 0,
-            background: '#0d0d0d',
+            background: '#ffffff',
           }}
         >
           <input
@@ -988,18 +996,18 @@ export default function ClienteProjetoPage() {
             placeholder="Escreva uma mensagem..."
             style={{
               flex: 1,
-              background: '#141414',
-              border: '1px solid #222',
+              background: '#f2f2f7',
+              border: '1px solid rgba(0,0,0,0.08)',
               borderRadius: 10,
               padding: '9px 13px',
-              color: '#e0e0e0',
+              color: '#1a1a1a',
               fontSize: 13.5,
               outline: 'none',
               fontFamily: 'inherit',
               transition: 'border-color 0.15s',
             }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(200,169,110,0.4)')}
-            onBlur={(e) => (e.currentTarget.style.borderColor = '#222')}
+            onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(0,122,255,0.4)')}
+            onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)')}
           />
           <button
             onClick={sendMsg}
@@ -1007,8 +1015,8 @@ export default function ClienteProjetoPage() {
               width: 40,
               height: 40,
               borderRadius: 10,
-              background: 'rgba(200,169,110,0.12)',
-              border: '1px solid rgba(200,169,110,0.28)',
+              background: '#007AFF',
+              border: 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -1016,10 +1024,10 @@ export default function ClienteProjetoPage() {
               flexShrink: 0,
               transition: 'background 0.15s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(200,169,110,0.22)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(200,169,110,0.12)')}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#0066d6')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#007AFF')}
           >
-            <Send size={15} color="#c8a96e" />
+            <Send size={15} color="#ffffff" />
           </button>
         </div>
       </div>

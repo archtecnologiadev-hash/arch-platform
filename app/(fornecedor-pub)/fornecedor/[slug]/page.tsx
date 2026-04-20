@@ -200,7 +200,7 @@ const SUPPLIERS: Record<string, SupplierPublicData> = {
 
 export default function FornecedorPublicPage({ params }: { params: { slug: string } }) {
   const supplier = SUPPLIERS[params.slug] ?? SUPPLIERS['marcenaria-silva']
-  const segmentColor = SEG_COLOR[supplier.segment] ?? '#c8a96e'
+  const segmentColor = SEG_COLOR[supplier.segment] ?? '#007AFF'
 
   const [quoteModalOpen, setQuoteModalOpen] = useState(false)
   const [videoPlaying, setVideoPlaying] = useState(false)
@@ -224,24 +224,25 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
     <div
       style={{
         minHeight: '100vh',
-        background: '#080808',
-        color: '#d0d0d0',
+        background: '#f2f2f7',
+        color: '#1a1a1a',
         fontFamily: 'system-ui, -apple-system, sans-serif',
       }}
     >
       <style>{`
-        .fp-gallery-item { position: relative; overflow: hidden; border-radius: 10px; cursor: pointer; background: #0e0e0e; }
+        .fp-gallery-item { position: relative; overflow: hidden; border-radius: 12px; cursor: pointer; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
         .fp-gallery-img { width: 100%; height: 220px; object-fit: cover; display: block; transition: transform 0.45s ease; }
         .fp-gallery-item:hover .fp-gallery-img { transform: scale(1.07); }
-        .fp-gallery-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(8,8,8,0.93) 0%, rgba(8,8,8,0.25) 60%, transparent 100%); opacity: 0; transition: opacity 0.28s ease; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px; }
+        .fp-gallery-item:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+        .fp-gallery-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 60%, transparent 100%); opacity: 0; transition: opacity 0.28s ease; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px; border-radius: 12px; }
         .fp-gallery-item:hover .fp-gallery-overlay { opacity: 1; }
-        .fp-review-card { background: #0e0e0e; border: 1px solid #1c1c1c; border-radius: 12px; padding: 22px; transition: border-color 0.2s; }
-        .fp-review-card:hover { border-color: #2a2a2a; }
-        .fp-cta-btn { background: #c8a96e; color: #080808; border: none; border-radius: 10px; padding: 15px 40px; font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: 0.04em; transition: background 0.15s, transform 0.1s; }
-        .fp-cta-btn:hover { background: #d4b87a; transform: translateY(-1px); }
+        .fp-review-card { background: #ffffff; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; padding: 22px; transition: box-shadow 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .fp-review-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+        .fp-cta-btn { background: #007AFF; color: #ffffff; border: none; border-radius: 10px; padding: 15px 40px; font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: 0.04em; transition: background 0.15s, transform 0.1s; }
+        .fp-cta-btn:hover { background: #0066d6; transform: translateY(-1px); }
         .fp-cta-btn:active { transform: translateY(0); }
-        .fp-inp { width: 100%; background: #111; border: 1px solid #222; border-radius: 8px; padding: 10px 14px; color: #d0d0d0; font-size: 13.5px; outline: none; transition: border-color 0.15s; color-scheme: dark; box-sizing: border-box; font-family: inherit; }
-        .fp-inp:focus { border-color: rgba(200,169,110,0.5); }
+        .fp-inp { width: 100%; background: #f2f2f7; border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 10px 14px; color: #1a1a1a; font-size: 13.5px; outline: none; transition: border-color 0.15s, background 0.15s; box-sizing: border-box; font-family: inherit; }
+        .fp-inp:focus { border-color: rgba(0,122,255,0.4); background: #ffffff; }
         @keyframes fp-modal-in { from { opacity: 0; transform: scale(0.96) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         .fp-modal-box { animation: fp-modal-in 0.22s ease; }
         @keyframes fp-spin { to { transform: rotate(360deg); } }
@@ -255,9 +256,9 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
           top: 0,
           zIndex: 50,
           height: 64,
-          background: 'rgba(8,8,8,0.92)',
+          background: 'rgba(255,255,255,0.95)',
           backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid #1a1a1a',
+          borderBottom: '1px solid rgba(0,0,0,0.08)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -269,7 +270,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
             fontSize: 20,
             fontWeight: 800,
             letterSpacing: '0.3em',
-            color: '#c8a96e',
+            color: '#1a1a1a',
             fontFamily: 'Georgia, serif',
           }}
         >
@@ -278,10 +279,10 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
         <button
           onClick={() => setQuoteModalOpen(true)}
           style={{
-            background: 'rgba(200,169,110,0.1)',
-            border: '1px solid rgba(200,169,110,0.3)',
-            color: '#c8a96e',
-            borderRadius: 8,
+            background: 'rgba(0,122,255,0.08)',
+            border: '1px solid rgba(0,122,255,0.25)',
+            color: '#007AFF',
+            borderRadius: 10,
             padding: '8px 20px',
             fontSize: 13,
             fontWeight: 600,
@@ -304,7 +305,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
             position: 'absolute',
             inset: 0,
             background:
-              'linear-gradient(to top, rgba(8,8,8,0.97) 0%, rgba(8,8,8,0.55) 45%, rgba(8,8,8,0.1) 100%)',
+              'linear-gradient(to top, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.05) 100%)',
           }}
         />
         <div
@@ -331,7 +332,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
             >
               {supplier.segmentFull}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#666', fontSize: 12.5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'rgba(255,255,255,0.7)', fontSize: 12.5 }}>
               <MapPin size={13} />
               {supplier.city}
             </div>
@@ -340,7 +341,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
             style={{
               fontSize: 48,
               fontWeight: 800,
-              color: '#f0f0f0',
+              color: '#ffffff',
               margin: 0,
               letterSpacing: '-0.02em',
               lineHeight: 1.1,
@@ -356,15 +357,15 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                 <Star
                   key={s}
                   size={14}
-                  fill={s <= Math.round(supplier.rating) ? '#c8a96e' : 'none'}
-                  color="#c8a96e"
+                  fill={s <= Math.round(supplier.rating) ? '#007AFF' : 'none'}
+                  color="#007AFF"
                 />
               ))}
             </div>
-            <span style={{ fontSize: 14, color: '#c8a96e', fontWeight: 700 }}>
+            <span style={{ fontSize: 14, color: '#007AFF', fontWeight: 700 }}>
               {supplier.rating}
             </span>
-            <span style={{ fontSize: 12.5, color: '#555' }}>
+            <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.55)' }}>
               ({supplier.reviewCount} avaliações · {supplier.projectCount} projetos entregues)
             </span>
           </div>
@@ -389,30 +390,31 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                 fontSize: 11,
                 fontWeight: 700,
                 letterSpacing: '0.18em',
-                color: '#444',
+                color: '#8e8e93',
                 textTransform: 'uppercase' as const,
                 marginBottom: 18,
               }}
             >
               Sobre nós
             </div>
-            <p style={{ fontSize: 15.5, color: '#8a8a8a', lineHeight: 1.78, margin: 0 }}>
+            <p style={{ fontSize: 15.5, color: '#6b6b6b', lineHeight: 1.78, margin: 0 }}>
               {supplier.bio}
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div
               style={{
-                background: '#0e0e0e',
-                border: '1px solid #1c1c1c',
-                borderRadius: 12,
+                background: '#ffffff',
+                border: '1px solid rgba(0,0,0,0.08)',
+                borderRadius: 16,
                 padding: '18px 20px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
               }}
             >
               <div
                 style={{
                   fontSize: 10,
-                  color: '#383838',
+                  color: '#8e8e93',
                   letterSpacing: '0.14em',
                   textTransform: 'uppercase' as const,
                   marginBottom: 14,
@@ -422,12 +424,12 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                 Contato
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: '#7a7a7a' }}>
-                  <Phone size={13} color="#444" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: '#6b6b6b' }}>
+                  <Phone size={13} color="#8e8e93" />
                   {supplier.phone}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: '#7a7a7a' }}>
-                  <Globe size={13} color="#444" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: '#6b6b6b' }}>
+                  <Globe size={13} color="#8e8e93" />
                   {supplier.instagram}
                 </div>
               </div>
@@ -436,32 +438,34 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
               <div
                 style={{
                   flex: 1,
-                  background: '#0e0e0e',
-                  border: '1px solid #1c1c1c',
-                  borderRadius: 10,
+                  background: '#ffffff',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                  borderRadius: 12,
                   padding: '16px 12px',
                   textAlign: 'center' as const,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                 }}
               >
-                <div style={{ fontSize: 24, fontWeight: 800, color: '#c8a96e' }}>
+                <div style={{ fontSize: 24, fontWeight: 800, color: '#007AFF' }}>
                   {supplier.projectCount}+
                 </div>
-                <div style={{ fontSize: 10.5, color: '#444', marginTop: 4 }}>Projetos</div>
+                <div style={{ fontSize: 10.5, color: '#8e8e93', marginTop: 4 }}>Projetos</div>
               </div>
               <div
                 style={{
                   flex: 1,
-                  background: '#0e0e0e',
-                  border: '1px solid #1c1c1c',
-                  borderRadius: 10,
+                  background: '#ffffff',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                  borderRadius: 12,
                   padding: '16px 12px',
                   textAlign: 'center' as const,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                 }}
               >
-                <div style={{ fontSize: 24, fontWeight: 800, color: '#c8a96e' }}>
+                <div style={{ fontSize: 24, fontWeight: 800, color: '#007AFF' }}>
                   {supplier.founded}
                 </div>
-                <div style={{ fontSize: 10.5, color: '#444', marginTop: 4 }}>Fundação</div>
+                <div style={{ fontSize: 10.5, color: '#8e8e93', marginTop: 4 }}>Fundação</div>
               </div>
             </div>
           </div>
@@ -474,7 +478,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
               fontSize: 11,
               fontWeight: 700,
               letterSpacing: '0.18em',
-              color: '#444',
+              color: '#8e8e93',
               textTransform: 'uppercase' as const,
               marginBottom: 22,
             }}
@@ -486,8 +490,8 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
               <div key={item.id} className="fp-gallery-item">
                 <img src={item.image} alt={item.title} className="fp-gallery-img" />
                 <div className="fp-gallery-overlay">
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f0f0' }}>{item.title}</div>
-                  <div style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>{item.description}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#ffffff' }}>{item.title}</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 4 }}>{item.description}</div>
                 </div>
               </div>
             ))}
@@ -501,7 +505,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
               fontSize: 11,
               fontWeight: 700,
               letterSpacing: '0.18em',
-              color: '#444',
+              color: '#8e8e93',
               textTransform: 'uppercase' as const,
               marginBottom: 22,
             }}
@@ -512,12 +516,13 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
             onClick={() => setVideoPlaying(true)}
             style={{
               position: 'relative',
-              borderRadius: 14,
+              borderRadius: 16,
               overflow: 'hidden',
               cursor: 'pointer',
-              background: '#0e0e0e',
-              border: '1px solid #1c1c1c',
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.08)',
               aspectRatio: '16/9',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             }}
           >
             {!videoPlaying ? (
@@ -525,7 +530,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                 <img
                   src={supplier.videoThumb}
                   alt="Vídeo"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: 0.55 }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: 0.75 }}
                 />
                 <div
                   style={{
@@ -541,14 +546,14 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                       width: 76,
                       height: 76,
                       borderRadius: '50%',
-                      background: 'rgba(200,169,110,0.92)',
+                      background: 'rgba(0,122,255,0.92)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      boxShadow: '0 4px 28px rgba(200,169,110,0.45)',
+                      boxShadow: '0 4px 28px rgba(0,122,255,0.45)',
                     }}
                   >
-                    <Play size={28} fill="#080808" color="#080808" style={{ marginLeft: 4 }} />
+                    <Play size={28} fill="#ffffff" color="#ffffff" style={{ marginLeft: 4 }} />
                   </div>
                 </div>
                 <div
@@ -556,10 +561,10 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                     position: 'absolute',
                     bottom: 22,
                     left: 26,
-                    color: '#f0f0f0',
+                    color: '#ffffff',
                     fontSize: 15,
                     fontWeight: 600,
-                    textShadow: '0 2px 8px rgba(0,0,0,0.8)',
+                    textShadow: '0 2px 8px rgba(0,0,0,0.6)',
                   }}
                 >
                   {supplier.name} — Conheça nosso trabalho
@@ -582,12 +587,12 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                   style={{
                     width: 48,
                     height: 48,
-                    border: '3px solid #c8a96e',
+                    border: '3px solid #007AFF',
                     borderTop: '3px solid transparent',
                     borderRadius: '50%',
                   }}
                 />
-                <span style={{ color: '#c8a96e', fontSize: 13 }}>Carregando vídeo...</span>
+                <span style={{ color: '#007AFF', fontSize: 13 }}>Carregando vídeo...</span>
               </div>
             )}
           </div>
@@ -597,9 +602,8 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
         <div
           style={{
             marginBottom: 80,
-            background:
-              'linear-gradient(135deg, rgba(200,169,110,0.07) 0%, rgba(200,169,110,0.02) 100%)',
-            border: '1px solid rgba(200,169,110,0.14)',
+            background: 'rgba(0,122,255,0.05)',
+            border: '1px solid rgba(0,122,255,0.12)',
             borderRadius: 18,
             padding: '54px 60px',
             textAlign: 'center' as const,
@@ -609,14 +613,14 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
             style={{
               fontSize: 30,
               fontWeight: 800,
-              color: '#f0f0f0',
+              color: '#1a1a1a',
               margin: '0 0 12px',
               letterSpacing: '-0.01em',
             }}
           >
             Pronto para transformar seu projeto?
           </h2>
-          <p style={{ fontSize: 15, color: '#555', margin: '0 0 34px', lineHeight: 1.6 }}>
+          <p style={{ fontSize: 15, color: '#6b6b6b', margin: '0 0 34px', lineHeight: 1.6 }}>
             Solicite um orçamento sem compromisso. Respondemos em até 24 horas.
           </p>
           <button className="fp-cta-btn" onClick={() => setQuoteModalOpen(true)}>
@@ -631,7 +635,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
               fontSize: 11,
               fontWeight: 700,
               letterSpacing: '0.18em',
-              color: '#444',
+              color: '#8e8e93',
               textTransform: 'uppercase' as const,
               marginBottom: 22,
             }}
@@ -655,24 +659,24 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                         width: 38,
                         height: 38,
                         borderRadius: '50%',
-                        background: 'rgba(200,169,110,0.1)',
-                        border: '1.5px solid rgba(200,169,110,0.25)',
+                        background: 'rgba(0,122,255,0.08)',
+                        border: '1.5px solid rgba(0,122,255,0.2)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: 11,
                         fontWeight: 700,
-                        color: '#c8a96e',
+                        color: '#007AFF',
                         flexShrink: 0,
                       }}
                     >
                       {authorInitials(rev.author)}
                     </div>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#d0d0d0' }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>
                         {rev.author}
                       </div>
-                      <div style={{ fontSize: 11, color: '#444', marginTop: 2 }}>{rev.company}</div>
+                      <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{rev.company}</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 2 }}>
@@ -680,16 +684,16 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                       <Star
                         key={s}
                         size={11}
-                        fill={s <= rev.rating ? '#c8a96e' : 'none'}
-                        color="#c8a96e"
+                        fill={s <= rev.rating ? '#007AFF' : 'none'}
+                        color="#007AFF"
                       />
                     ))}
                   </div>
                 </div>
-                <p style={{ fontSize: 13, color: '#6e6e6e', lineHeight: 1.68, margin: 0 }}>
+                <p style={{ fontSize: 13, color: '#6b6b6b', lineHeight: 1.68, margin: 0 }}>
                   {rev.text}
                 </p>
-                <div style={{ fontSize: 11, color: '#333', marginTop: 12 }}>{rev.date}</div>
+                <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 12 }}>{rev.date}</div>
               </div>
             ))}
           </div>
@@ -699,7 +703,8 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
       {/* Footer */}
       <div
         style={{
-          borderTop: '1px solid #111',
+          borderTop: '1px solid rgba(0,0,0,0.08)',
+          background: '#ffffff',
           padding: '22px 40px',
           display: 'flex',
           justifyContent: 'space-between',
@@ -711,13 +716,13 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
             fontSize: 16,
             fontWeight: 800,
             letterSpacing: '0.3em',
-            color: '#c8a96e',
+            color: '#1a1a1a',
             fontFamily: 'Georgia, serif',
           }}
         >
           ARC
         </span>
-        <span style={{ fontSize: 12, color: '#2e2e2e' }}>
+        <span style={{ fontSize: 12, color: '#8e8e93' }}>
           Plataforma de conexão entre arquitetos e fornecedores premium
         </span>
       </div>
@@ -731,7 +736,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.78)',
+            background: 'rgba(0,0,0,0.45)',
             backdropFilter: 'blur(6px)',
             zIndex: 200,
             display: 'flex',
@@ -743,21 +748,22 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
           <div
             className="fp-modal-box"
             style={{
-              background: '#0e0e0e',
-              border: '1px solid #222',
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.08)',
               borderRadius: 16,
               width: '100%',
               maxWidth: 520,
               padding: 32,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
             }}
           >
             {submitted ? (
               <div style={{ textAlign: 'center' as const, padding: '24px 0' }}>
                 <CheckCircle2 size={54} color="#34d399" style={{ marginBottom: 18 }} />
-                <div style={{ fontSize: 21, fontWeight: 700, color: '#f0f0f0', marginBottom: 8 }}>
+                <div style={{ fontSize: 21, fontWeight: 700, color: '#1a1a1a', marginBottom: 8 }}>
                   Solicitação enviada!
                 </div>
-                <div style={{ fontSize: 13.5, color: '#555' }}>
+                <div style={{ fontSize: 13.5, color: '#6b6b6b' }}>
                   A {supplier.name} entrará em contato em breve.
                 </div>
               </div>
@@ -772,10 +778,10 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: '#f0f0f0' }}>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1a' }}>
                       Solicitar Orçamento
                     </div>
-                    <div style={{ fontSize: 12.5, color: '#555', marginTop: 3 }}>
+                    <div style={{ fontSize: 12.5, color: '#6b6b6b', marginTop: 3 }}>
                       {supplier.name}
                     </div>
                   </div>
@@ -785,7 +791,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      color: '#555',
+                      color: '#8e8e93',
                       padding: 4,
                     }}
                   >
@@ -798,7 +804,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                       <label
                         style={{
                           fontSize: 11.5,
-                          color: '#555',
+                          color: '#6b6b6b',
                           display: 'block',
                           marginBottom: 6,
                           fontWeight: 600,
@@ -818,7 +824,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                       <label
                         style={{
                           fontSize: 11.5,
-                          color: '#555',
+                          color: '#6b6b6b',
                           display: 'block',
                           marginBottom: 6,
                           fontWeight: 600,
@@ -839,7 +845,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                     <label
                       style={{
                         fontSize: 11.5,
-                        color: '#555',
+                        color: '#6b6b6b',
                         display: 'block',
                         marginBottom: 6,
                         fontWeight: 600,
@@ -860,7 +866,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                     <label
                       style={{
                         fontSize: 11.5,
-                        color: '#555',
+                        color: '#6b6b6b',
                         display: 'block',
                         marginBottom: 6,
                         fontWeight: 600,
@@ -882,7 +888,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                     <label
                       style={{
                         fontSize: 11.5,
-                        color: '#555',
+                        color: '#6b6b6b',
                         display: 'block',
                         marginBottom: 6,
                         fontWeight: 600,
@@ -901,10 +907,10 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
                     type="submit"
                     style={{
                       marginTop: 6,
-                      background: '#c8a96e',
-                      color: '#080808',
+                      background: '#007AFF',
+                      color: '#ffffff',
                       border: 'none',
-                      borderRadius: 9,
+                      borderRadius: 10,
                       padding: '13px',
                       fontSize: 14,
                       fontWeight: 700,

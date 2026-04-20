@@ -6,13 +6,13 @@ import { Star, MapPin, Globe, Phone, CheckCircle2 } from 'lucide-react'
 const SEGMENTS = ['Marcenaria', 'Elétrica', 'Vidraçaria', 'Gesseiro', 'Pintura', 'Iluminação', 'Outro']
 
 const SEG_COLOR: Record<string, string> = {
-  Marcenaria: '#4f9cf9',
+  Marcenaria: '#007AFF',
   Elétrica: '#34d399',
   Vidraçaria: '#a78bfa',
   Gesseiro: '#f97316',
   Pintura: '#ef4444',
-  Iluminação: '#c8a96e',
-  Outro: '#888',
+  Iluminação: '#007AFF',
+  Outro: '#6b6b6b',
 }
 
 export default function FornecedorPerfilPage() {
@@ -38,7 +38,7 @@ export default function FornecedorPerfilPage() {
     setTimeout(() => setSaved(false), 3000)
   }
 
-  const segColor = SEG_COLOR[form.segment] ?? '#888'
+  const segColor = SEG_COLOR[form.segment] ?? '#6b6b6b'
 
   return (
     <div
@@ -46,21 +46,45 @@ export default function FornecedorPerfilPage() {
         padding: '32px 36px',
         minHeight: '100vh',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        color: '#d0d0d0',
+        color: '#1a1a1a',
+        background: '#f2f2f7',
       }}
     >
       <style>{`
-        .pf-inp { width: 100%; background: #0e0e0e; border: 1px solid #1c1c1c; border-radius: 8px; padding: 10px 14px; color: #d0d0d0; font-size: 13.5px; outline: none; transition: border-color 0.15s; color-scheme: dark; box-sizing: border-box; font-family: inherit; }
-        .pf-inp:focus { border-color: rgba(200,169,110,0.45); }
-        .pf-label { font-size: 11.5px; color: #555; display: block; margin-bottom: 7px; font-weight: 600; }
-        .pf-save-btn { background: #c8a96e; color: #080808; border: none; border-radius: 9px; padding: 12px 28px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.15s; }
-        .pf-save-btn:hover { background: #d4b87a; }
+        .pf-inp {
+          width: 100%;
+          background: #f2f2f7;
+          border: 1px solid rgba(0,0,0,0.1);
+          border-radius: 10px;
+          padding: 10px 14px;
+          color: #1a1a1a;
+          font-size: 13.5px;
+          outline: none;
+          transition: border-color 0.15s;
+          box-sizing: border-box;
+          font-family: inherit;
+        }
+        .pf-inp:focus { border-color: #007AFF; }
+        .pf-inp::placeholder { color: #8e8e93; }
+        .pf-label { font-size: 11.5px; color: #6b6b6b; display: block; margin-bottom: 7px; font-weight: 600; }
+        .pf-save-btn {
+          background: #007AFF;
+          color: #ffffff;
+          border: none;
+          border-radius: 10px;
+          padding: 12px 28px;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+        .pf-save-btn:hover { background: #0066d6; }
       `}</style>
 
       {/* Header */}
       <div style={{ marginBottom: 30 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#f0f0f0', margin: 0 }}>Meu Perfil</h1>
-        <p style={{ fontSize: 13, color: '#444', margin: '5px 0 0' }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a', margin: 0 }}>Meu Perfil</h1>
+        <p style={{ fontSize: 13, color: '#6b6b6b', margin: '5px 0 0' }}>
           Edite as informações que aparecerão no seu perfil público
         </p>
       </div>
@@ -70,13 +94,14 @@ export default function FornecedorPerfilPage() {
         <form onSubmit={handleSave}>
           <div
             style={{
-              background: '#0a0a0a',
-              border: '1px solid #161616',
-              borderRadius: 14,
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.08)',
+              borderRadius: 16,
               padding: '28px 28px',
               display: 'flex',
               flexDirection: 'column',
               gap: 20,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             }}
           >
             <div
@@ -84,10 +109,10 @@ export default function FornecedorPerfilPage() {
                 fontSize: 11,
                 fontWeight: 700,
                 letterSpacing: '0.14em',
-                color: '#333',
+                color: '#8e8e93',
                 textTransform: 'uppercase' as const,
                 paddingBottom: 12,
-                borderBottom: '1px solid #111',
+                borderBottom: '1px solid rgba(0,0,0,0.06)',
               }}
             >
               Informações da empresa
@@ -132,7 +157,7 @@ export default function FornecedorPerfilPage() {
                 placeholder="Descreva sua empresa, diferenciais e especialidades..."
                 style={{ resize: 'vertical' as const }}
               />
-              <div style={{ fontSize: 11, color: '#333', marginTop: 4, textAlign: 'right' as const }}>
+              <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 4, textAlign: 'right' as const }}>
                 {form.bio.length}/500 caracteres
               </div>
             </div>
@@ -142,12 +167,12 @@ export default function FornecedorPerfilPage() {
                 fontSize: 11,
                 fontWeight: 700,
                 letterSpacing: '0.14em',
-                color: '#333',
+                color: '#8e8e93',
                 textTransform: 'uppercase' as const,
                 paddingTop: 8,
                 paddingBottom: 12,
-                borderTop: '1px solid #111',
-                borderBottom: '1px solid #111',
+                borderTop: '1px solid rgba(0,0,0,0.06)',
+                borderBottom: '1px solid rgba(0,0,0,0.06)',
               }}
             >
               Contato e redes sociais
@@ -174,12 +199,12 @@ export default function FornecedorPerfilPage() {
                 fontSize: 11,
                 fontWeight: 700,
                 letterSpacing: '0.14em',
-                color: '#333',
+                color: '#8e8e93',
                 textTransform: 'uppercase' as const,
                 paddingTop: 8,
                 paddingBottom: 12,
-                borderTop: '1px solid #111',
-                borderBottom: '1px solid #111',
+                borderTop: '1px solid rgba(0,0,0,0.06)',
+                borderBottom: '1px solid rgba(0,0,0,0.06)',
               }}
             >
               Foto de capa
@@ -197,10 +222,10 @@ export default function FornecedorPerfilPage() {
                 <div
                   style={{
                     marginTop: 10,
-                    borderRadius: 8,
+                    borderRadius: 10,
                     overflow: 'hidden',
                     height: 100,
-                    border: '1px solid #1c1c1c',
+                    border: '1px solid rgba(0,0,0,0.08)',
                   }}
                 >
                   <img
@@ -241,7 +266,7 @@ export default function FornecedorPerfilPage() {
           <div
             style={{
               fontSize: 11,
-              color: '#383838',
+              color: '#8e8e93',
               fontWeight: 700,
               letterSpacing: '0.12em',
               textTransform: 'uppercase' as const,
@@ -252,10 +277,11 @@ export default function FornecedorPerfilPage() {
           </div>
           <div
             style={{
-              background: '#0a0a0a',
-              border: '1px solid #161616',
-              borderRadius: 14,
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.08)',
+              borderRadius: 16,
               overflow: 'hidden',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             }}
           >
             {/* Cover */}
@@ -267,13 +293,13 @@ export default function FornecedorPerfilPage() {
                   style={{ width: '100%', height: '100%', objectFit: 'cover' as const, display: 'block' }}
                 />
               ) : (
-                <div style={{ width: '100%', height: '100%', background: '#111' }} />
+                <div style={{ width: '100%', height: '100%', background: '#f2f2f7' }} />
               )}
               <div
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background: 'linear-gradient(to top, rgba(8,8,8,0.85) 0%, transparent 60%)',
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 60%)',
                 }}
               />
               <div
@@ -294,16 +320,19 @@ export default function FornecedorPerfilPage() {
                       fontWeight: 700,
                       padding: '2px 8px',
                       borderRadius: 20,
-                    }}
+                      backdropFilter: 'blur(4px)',
+                      background: 'rgba(255,255,255,0.85)',
+                      color: segColor,
+                    } as React.CSSProperties}
                   >
                     {form.segment}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#888', fontSize: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, color: 'rgba(255,255,255,0.85)', fontSize: 10 }}>
                     <MapPin size={9} />
                     {form.city || 'Cidade, Estado'}
                   </div>
                 </div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#f0f0f0', lineHeight: 1.2 }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#ffffff', lineHeight: 1.2 }}>
                   {form.name || 'Nome da empresa'}
                 </div>
               </div>
@@ -313,16 +342,16 @@ export default function FornecedorPerfilPage() {
             <div style={{ padding: '14px 16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 10 }}>
                 {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} size={11} fill="#c8a96e" color="#c8a96e" />
+                  <Star key={s} size={11} fill="#f97316" color="#f97316" />
                 ))}
-                <span style={{ fontSize: 12, color: '#c8a96e', fontWeight: 700, marginLeft: 2 }}>4.9</span>
-                <span style={{ fontSize: 11, color: '#444' }}>(47 avaliações)</span>
+                <span style={{ fontSize: 12, color: '#f97316', fontWeight: 700, marginLeft: 2 }}>4.9</span>
+                <span style={{ fontSize: 11, color: '#8e8e93' }}>(47 avaliações)</span>
               </div>
 
               <p
                 style={{
                   fontSize: 12,
-                  color: '#666',
+                  color: '#6b6b6b',
                   lineHeight: 1.6,
                   margin: '0 0 12px',
                   display: '-webkit-box',
@@ -336,14 +365,14 @@ export default function FornecedorPerfilPage() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {form.instagram && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: '#555' }}>
-                    <Globe size={11} color="#444" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: '#6b6b6b' }}>
+                    <Globe size={11} color="#8e8e93" />
                     {form.instagram}
                   </div>
                 )}
                 {form.whatsapp && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: '#555' }}>
-                    <Phone size={11} color="#444" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: '#6b6b6b' }}>
+                    <Phone size={11} color="#8e8e93" />
                     {form.whatsapp}
                   </div>
                 )}
@@ -352,9 +381,9 @@ export default function FornecedorPerfilPage() {
               <div
                 style={{
                   marginTop: 14,
-                  background: '#c8a96e',
-                  color: '#080808',
-                  borderRadius: 8,
+                  background: '#007AFF',
+                  color: '#ffffff',
+                  borderRadius: 10,
                   padding: '9px',
                   fontSize: 12,
                   fontWeight: 700,
@@ -370,13 +399,13 @@ export default function FornecedorPerfilPage() {
             style={{
               marginTop: 12,
               fontSize: 11,
-              color: '#2e2e2e',
+              color: '#8e8e93',
               textAlign: 'center' as const,
               lineHeight: 1.5,
             }}
           >
             Esta é a aparência do seu link de perfil público em{' '}
-            <span style={{ color: '#c8a96e' }}>arch.com/fornecedor/marcenaria-silva</span>
+            <span style={{ color: '#007AFF' }}>arch.com/fornecedor/marcenaria-silva</span>
           </div>
         </div>
       </div>

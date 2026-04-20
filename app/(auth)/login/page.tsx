@@ -31,33 +31,41 @@ export default function LoginPage() {
     router.refresh()
   }
 
+  const inputBase: React.CSSProperties = {
+    width: '100%',
+    padding: '12px 14px',
+    background: '#f2f2f7',
+    border: '1px solid rgba(0,0,0,0.1)',
+    borderRadius: 10,
+    color: '#1a1a1a',
+    fontSize: 15,
+    fontWeight: 300,
+    outline: 'none',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.15s',
+  }
+
   return (
     <div
       style={{
-        background: '#0d0d0d',
-        border: '1px solid #1c1c1c',
-        padding: '40px 36px',
+        background: '#ffffff',
+        border: '1px solid rgba(0,0,0,0.08)',
+        borderRadius: 16,
+        padding: '36px 32px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
       }}
     >
-      <h1
-        style={{
-          fontSize: 22,
-          fontWeight: 700,
-          color: '#e8e8e8',
-          marginBottom: 6,
-          letterSpacing: '0.02em',
-        }}
-      >
+      <h1 style={{ fontSize: 22, fontWeight: 300, color: '#1a1a1a', marginBottom: 6 }}>
         Entrar
       </h1>
-      <p style={{ fontSize: 13, color: '#4a4a4a', marginBottom: 32 }}>
+      <p style={{ fontSize: 13, fontWeight: 300, color: '#8e8e93', marginBottom: 28 }}>
         Acesse sua conta na ARC Platform
       </p>
 
-      <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <label style={{ display: 'block', fontSize: 12, color: '#666', marginBottom: 7, letterSpacing: '0.08em' }}>
-            EMAIL
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: '#6b6b6b', marginBottom: 6 }}>
+            Email
           </label>
           <input
             type="email"
@@ -65,26 +73,16 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="seu@email.com"
             required
-            style={{
-              width: '100%',
-              padding: '11px 14px',
-              background: '#111',
-              border: '1px solid #222',
-              color: '#e8e8e8',
-              fontSize: 14,
-              outline: 'none',
-              boxSizing: 'border-box',
-              transition: 'border-color 0.15s',
-            }}
-            onFocus={(e) => (e.target.style.borderColor = '#c8a96e')}
-            onBlur={(e) => (e.target.style.borderColor = '#222')}
+            style={inputBase}
+            onFocus={(e) => (e.target.style.borderColor = '#007AFF')}
+            onBlur={(e) => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
           />
         </div>
 
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
-            <label style={{ fontSize: 12, color: '#666', letterSpacing: '0.08em' }}>SENHA</label>
-            <Link href="/recuperar-senha" style={{ fontSize: 11, color: '#c8a96e', textDecoration: 'none' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <label style={{ fontSize: 12, fontWeight: 400, color: '#6b6b6b' }}>Senha</label>
+            <Link href="/recuperar-senha" style={{ fontSize: 12, color: '#007AFF', textDecoration: 'none' }}>
               Esqueceu a senha?
             </Link>
           </div>
@@ -94,24 +92,20 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
             required
-            style={{
-              width: '100%',
-              padding: '11px 14px',
-              background: '#111',
-              border: '1px solid #222',
-              color: '#e8e8e8',
-              fontSize: 14,
-              outline: 'none',
-              boxSizing: 'border-box',
-              transition: 'border-color 0.15s',
-            }}
-            onFocus={(e) => (e.target.style.borderColor = '#c8a96e')}
-            onBlur={(e) => (e.target.style.borderColor = '#222')}
+            style={inputBase}
+            onFocus={(e) => (e.target.style.borderColor = '#007AFF')}
+            onBlur={(e) => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
           />
         </div>
 
         {error && (
-          <p style={{ fontSize: 13, color: '#ef4444', textAlign: 'center', margin: 0 }}>{error}</p>
+          <p style={{
+            fontSize: 13, color: '#ff3b30', textAlign: 'center', margin: 0,
+            padding: '10px 14px', background: 'rgba(255,59,48,0.06)',
+            borderRadius: 8, border: '1px solid rgba(255,59,48,0.15)',
+          }}>
+            {error}
+          </p>
         )}
 
         <button
@@ -120,24 +114,24 @@ export default function LoginPage() {
           style={{
             width: '100%',
             padding: '13px',
-            background: loading ? '#2a2010' : '#c8a96e',
-            color: loading ? '#666' : '#0d0d0d',
+            background: loading ? '#a0c4ff' : '#007AFF',
+            color: '#ffffff',
             border: 'none',
-            fontSize: 13,
-            fontWeight: 700,
-            letterSpacing: '0.15em',
+            borderRadius: 10,
+            fontSize: 15,
+            fontWeight: 400,
             cursor: loading ? 'not-allowed' : 'pointer',
-            transition: 'background 0.2s',
+            transition: 'opacity 0.2s',
             marginTop: 4,
           }}
         >
-          {loading ? 'ENTRANDO...' : 'ENTRAR'}
+          {loading ? 'Entrando…' : 'Entrar'}
         </button>
       </form>
 
-      <p style={{ marginTop: 28, textAlign: 'center', fontSize: 13, color: '#3a3a3a' }}>
+      <p style={{ marginTop: 24, textAlign: 'center', fontSize: 13, fontWeight: 300, color: '#8e8e93' }}>
         Não tem conta?{' '}
-        <Link href="/cadastro" style={{ color: '#c8a96e', textDecoration: 'none' }}>
+        <Link href="/cadastro" style={{ color: '#007AFF', textDecoration: 'none' }}>
           Cadastre-se
         </Link>
       </p>

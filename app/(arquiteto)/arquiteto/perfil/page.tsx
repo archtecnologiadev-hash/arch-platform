@@ -29,13 +29,13 @@ const ESTILOS = ['Contemporâneo', 'Minimalista', 'Clássico', 'Residencial', 'C
 const ESTADOS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']
 
 const inp: React.CSSProperties = {
-  width: '100%', padding: '10px 14px', background: '#111',
-  border: '1px solid #222', color: '#e8e8e8', fontSize: 13.5,
-  outline: 'none', boxSizing: 'border-box', borderRadius: 6,
+  width: '100%', padding: '10px 14px', background: '#f2f2f7',
+  border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', fontSize: 13.5,
+  outline: 'none', boxSizing: 'border-box', borderRadius: 10,
 }
 const lbl: React.CSSProperties = {
-  display: 'block', fontSize: 11, color: '#555',
-  marginBottom: 6, letterSpacing: '0.08em', fontWeight: 600,
+  display: 'block', fontSize: 11, color: '#8e8e93',
+  marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400,
 }
 
 export default function ArquitetoPerfilPage() {
@@ -111,7 +111,7 @@ export default function ArquitetoPerfilPage() {
     opts?: { type?: string; placeholder?: string; textarea?: boolean }
   ) => (
     <div>
-      <label style={lbl}>{label.toUpperCase()}</label>
+      <label style={lbl}>{label}</label>
       {opts?.textarea ? (
         <textarea
           value={form[key]}
@@ -119,8 +119,8 @@ export default function ArquitetoPerfilPage() {
           placeholder={opts.placeholder}
           rows={4}
           style={{ ...inp, resize: 'vertical', lineHeight: 1.6 }}
-          onFocus={e => (e.target.style.borderColor = '#c8a96e')}
-          onBlur={e => (e.target.style.borderColor = '#222')}
+          onFocus={e => (e.target.style.borderColor = '#007AFF')}
+          onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')}
         />
       ) : (
         <input
@@ -129,8 +129,8 @@ export default function ArquitetoPerfilPage() {
           onChange={e => set(key, e.target.value)}
           placeholder={opts?.placeholder}
           style={inp}
-          onFocus={e => (e.target.style.borderColor = '#c8a96e')}
-          onBlur={e => (e.target.style.borderColor = '#222')}
+          onFocus={e => (e.target.style.borderColor = '#007AFF')}
+          onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')}
         />
       )}
     </div>
@@ -138,21 +138,21 @@ export default function ArquitetoPerfilPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#080808', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Loader2 size={28} color="#c8a96e" style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ minHeight: '100vh', background: '#f2f2f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Loader2 size={28} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#080808', color: '#e0e0e0', padding: '32px' }}>
+    <div style={{ minHeight: '100vh', background: '#f2f2f7', color: '#1a1a1a', padding: '32px' }}>
 
       {/* Header */}
       <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f0f0f0', marginBottom: 4 }}>Meu Perfil</h1>
-          <p style={{ fontSize: 13, color: '#444' }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginBottom: 4 }}>Meu Perfil</h1>
+          <p style={{ fontSize: 13, color: '#6b6b6b' }}>
             {escritorioId ? 'Edite as informações do seu escritório' : 'Configure seu perfil público para aparecer na plataforma'}
           </p>
         </div>
@@ -163,10 +163,10 @@ export default function ArquitetoPerfilPage() {
             rel="noopener noreferrer"
             style={{
               display: 'flex', alignItems: 'center', gap: 7,
-              fontSize: 12, color: '#c8a96e', textDecoration: 'none',
-              border: '1px solid rgba(200,169,110,0.25)',
+              fontSize: 12, color: '#007AFF', textDecoration: 'none',
+              border: '1px solid rgba(0,122,255,0.2)',
               padding: '8px 14px', borderRadius: 8,
-              background: 'rgba(200,169,110,0.06)',
+              background: 'rgba(0,122,255,0.06)',
             }}
           >
             <ExternalLink size={13} />
@@ -179,24 +179,24 @@ export default function ArquitetoPerfilPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
 
           {/* Left — form */}
-          <div style={{ background: '#0d0d0d', border: '1px solid #1c1c1c', borderRadius: 14, padding: 28 }}>
+          <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 28, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
 
             <div style={{ marginBottom: 22 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: '#c8a96e', letterSpacing: '0.1em', marginBottom: 16 }}>
-                INFORMAÇÕES DO ESCRITÓRIO
+              <p style={{ fontSize: 12, fontWeight: 400, color: '#007AFF', letterSpacing: '0.04em', marginBottom: 16 }}>
+                Informações do escritório
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {field('Nome do escritório', 'nome', { placeholder: 'Ex: Estúdio Brasilis' })}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 12 }}>
                   {field('Cidade', 'cidade', { placeholder: 'São Paulo' })}
                   <div>
-                    <label style={lbl}>ESTADO</label>
+                    <label style={lbl}>Estado</label>
                     <select
                       value={form.estado}
                       onChange={e => set('estado', e.target.value)}
                       style={{ ...inp, cursor: 'pointer' }}
-                      onFocus={e => (e.target.style.borderColor = '#c8a96e')}
-                      onBlur={e => (e.target.style.borderColor = '#222')}
+                      onFocus={e => (e.target.style.borderColor = '#007AFF')}
+                      onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')}
                     >
                       <option value="">—</option>
                       {ESTADOS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
@@ -204,13 +204,13 @@ export default function ArquitetoPerfilPage() {
                   </div>
                 </div>
                 <div>
-                  <label style={lbl}>ESPECIALIDADE / ESTILO</label>
+                  <label style={lbl}>Especialidade / Estilo</label>
                   <select
                     value={form.estilo}
                     onChange={e => set('estilo', e.target.value)}
                     style={{ ...inp, cursor: 'pointer' }}
-                    onFocus={e => (e.target.style.borderColor = '#c8a96e')}
-                    onBlur={e => (e.target.style.borderColor = '#222')}
+                    onFocus={e => (e.target.style.borderColor = '#007AFF')}
+                    onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')}
                   >
                     <option value="">Selecione um estilo</option>
                     {ESTILOS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -223,9 +223,9 @@ export default function ArquitetoPerfilPage() {
               </div>
             </div>
 
-            <div style={{ borderTop: '1px solid #1c1c1c', paddingTop: 22 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: '#c8a96e', letterSpacing: '0.1em', marginBottom: 16 }}>
-                CONTATO
+            <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 22 }}>
+              <p style={{ fontSize: 12, fontWeight: 400, color: '#007AFF', letterSpacing: '0.04em', marginBottom: 16 }}>
+                Contato
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {field('Telefone / WhatsApp', 'telefone', { placeholder: '(11) 99999-9999' })}
@@ -238,29 +238,29 @@ export default function ArquitetoPerfilPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
             {/* Preview card */}
-            <div style={{ background: '#0d0d0d', border: '1px solid #1c1c1c', borderRadius: 14, padding: 22 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: '#444', letterSpacing: '0.1em', marginBottom: 16 }}>
-                PREVIEW DA LISTAGEM
+            <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 22, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+              <p style={{ fontSize: 11, fontWeight: 400, color: '#8e8e93', letterSpacing: '0.04em', marginBottom: 16 }}>
+                Preview da listagem
               </p>
-              <div style={{ border: '1px solid #1c1c1c', borderRadius: 10, overflow: 'hidden', background: '#111' }}>
-                <div style={{ height: 100, background: '#181818', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: 11, color: '#333' }}>Imagem de capa</span>
+              <div style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, overflow: 'hidden', background: '#f2f2f7' }}>
+                <div style={{ height: 100, background: '#e5e5ea', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 11, color: '#8e8e93' }}>Imagem de capa</span>
                 </div>
                 <div style={{ padding: '14px 16px' }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: form.nome ? '#e8e8e8' : '#333', marginBottom: 4 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: form.nome ? '#1a1a1a' : '#8e8e93', marginBottom: 4 }}>
                     {form.nome || 'Nome do escritório'}
                   </div>
-                  <div style={{ fontSize: 11, color: '#444', marginBottom: 10 }}>
+                  <div style={{ fontSize: 11, color: '#6b6b6b', marginBottom: 10 }}>
                     {form.estilo || 'Especialidade'}
                   </div>
                   {(form.cidade || form.estado) && (
-                    <div style={{ fontSize: 11, color: '#555' }}>
+                    <div style={{ fontSize: 11, color: '#8e8e93' }}>
                       {[form.cidade, form.estado].filter(Boolean).join(', ')}
                     </div>
                   )}
                   {publicUrl && (
-                    <div style={{ marginTop: 12, padding: '6px 10px', background: '#0a0a0a', borderRadius: 6 }}>
-                      <span style={{ fontSize: 10, color: '#3a3a3a', fontFamily: 'monospace' }}>
+                    <div style={{ marginTop: 12, padding: '6px 10px', background: '#f2f2f7', borderRadius: 6 }}>
+                      <span style={{ fontSize: 10, color: '#8e8e93', fontFamily: 'monospace' }}>
                         /escritorio/{slug}
                       </span>
                     </div>
@@ -275,27 +275,27 @@ export default function ArquitetoPerfilPage() {
               disabled={saving || !form.nome}
               style={{
                 width: '100%', padding: '13px',
-                background: saved ? 'rgba(52,211,153,0.15)' : saving ? '#1a1a1a' : '#c8a96e',
-                color: saved ? '#34d399' : saving ? '#555' : '#0d0d0d',
-                border: saved ? '1px solid rgba(52,211,153,0.3)' : 'none',
-                borderRadius: 8, fontSize: 13, fontWeight: 700,
-                letterSpacing: '0.1em', cursor: saving || !form.nome ? 'not-allowed' : 'pointer',
+                background: saved ? 'rgba(52,211,153,0.12)' : saving ? 'rgba(0,122,255,0.4)' : '#007AFF',
+                color: saved ? '#34d399' : '#ffffff',
+                border: saved ? '1px solid rgba(52,211,153,0.25)' : 'none',
+                borderRadius: 10, fontSize: 13, fontWeight: 400,
+                letterSpacing: '0.04em', cursor: saving || !form.nome ? 'not-allowed' : 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 transition: 'all 0.2s',
               }}
             >
               {saved ? (
-                <><CheckCircle2 size={15} /> PERFIL SALVO</>
+                <><CheckCircle2 size={15} /> Perfil salvo</>
               ) : saving ? (
-                <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> SALVANDO...</>
+                <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</>
               ) : (
-                <><Save size={15} /> SALVAR PERFIL</>
+                <><Save size={15} /> Salvar Perfil</>
               )}
             </button>
             <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
 
             {!form.nome && (
-              <p style={{ fontSize: 11, color: '#333', textAlign: 'center' }}>
+              <p style={{ fontSize: 11, color: '#8e8e93', textAlign: 'center' }}>
                 Preencha o nome do escritório para salvar
               </p>
             )}

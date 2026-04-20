@@ -27,12 +27,7 @@ function FornecedorSidebar() {
         const nome = data.user.user_metadata?.nome ?? data.user.email ?? 'Fornecedor'
         setUserName(nome)
         setUserInitials(
-          nome
-            .split(' ')
-            .slice(0, 2)
-            .map((n: string) => n[0])
-            .join('')
-            .toUpperCase()
+          nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase()
         )
       }
     })
@@ -46,65 +41,57 @@ function FornecedorSidebar() {
   }
 
   return (
-    <aside
-      style={{
-        width: 256,
-        minWidth: 256,
-        height: '100vh',
-        background: '#0a0a0a',
-        borderRight: '1px solid #1c1c1c',
+    <aside style={{
+      width: 248,
+      minWidth: 248,
+      height: '100vh',
+      background: '#ffffff',
+      borderRight: '1px solid rgba(0,0,0,0.08)',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'fixed',
+      left: 0,
+      top: 0,
+      zIndex: 40,
+    }}>
+      {/* Logo + label */}
+      <div style={{
+        height: 64,
         display: 'flex',
-        flexDirection: 'column',
-        position: 'fixed',
-        left: 0,
-        top: 0,
-        zIndex: 40,
-      }}
-    >
-      <div
-        style={{
-          height: 70,
-          display: 'flex',
-          alignItems: 'center',
-          paddingLeft: 28,
-          borderBottom: '1px solid #1c1c1c',
-          gap: 10,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 20,
-            fontWeight: 800,
-            letterSpacing: '0.3em',
-            color: '#c8a96e',
-            fontFamily: 'Georgia, serif',
-          }}
-        >
+        alignItems: 'center',
+        paddingLeft: 24,
+        gap: 10,
+        borderBottom: '1px solid rgba(0,0,0,0.06)',
+      }}>
+        <span style={{
+          fontSize: 18,
+          fontWeight: 300,
+          letterSpacing: '0.35em',
+          color: '#007AFF',
+        }}>
           ARC
         </span>
-        <span
-          style={{
-            fontSize: 9,
-            color: '#383838',
-            letterSpacing: '0.12em',
-            fontWeight: 600,
-            marginTop: 3,
-          }}
-        >
-          FORNECEDOR
+        <span style={{
+          fontSize: 9,
+          color: '#8e8e93',
+          letterSpacing: '0.15em',
+          fontWeight: 500,
+          marginTop: 3,
+          textTransform: 'uppercase',
+        }}>
+          Fornecedor
         </span>
       </div>
 
-      <nav
-        style={{
-          flex: 1,
-          padding: '20px 12px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-          overflowY: 'auto',
-        }}
-      >
+      {/* Nav */}
+      <nav style={{
+        flex: 1,
+        padding: '12px 10px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        overflowY: 'auto',
+      }}>
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon
           const isActive =
@@ -117,66 +104,60 @@ function FornecedorSidebar() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 12,
-                padding: '10px 16px',
-                borderRadius: 8,
+                gap: 10,
+                padding: '9px 14px',
+                borderRadius: 10,
                 fontSize: 13.5,
-                fontWeight: isActive ? 600 : 400,
+                fontWeight: isActive ? 500 : 400,
                 textDecoration: 'none',
                 transition: 'all 0.15s ease',
-                background: isActive ? 'rgba(200,169,110,0.1)' : 'transparent',
-                color: isActive ? '#c8a96e' : '#5a5a5a',
-                borderLeft: `2px solid ${isActive ? '#c8a96e' : 'transparent'}`,
+                background: isActive ? 'rgba(0,122,255,0.08)' : 'transparent',
+                color: isActive ? '#007AFF' : '#6b6b6b',
               }}
             >
-              <Icon size={17} />
+              <Icon size={16} strokeWidth={isActive ? 2 : 1.5} />
               <span>{item.label}</span>
             </Link>
           )
         })}
       </nav>
 
-      <div
-        style={{
-          borderTop: '1px solid #1c1c1c',
-          padding: '14px 18px',
+      {/* User footer */}
+      <div style={{
+        borderTop: '1px solid rgba(0,0,0,0.06)',
+        padding: '12px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+      }}>
+        <div style={{
+          width: 34,
+          height: 34,
+          borderRadius: '50%',
+          background: 'rgba(0,122,255,0.1)',
+          border: '1.5px solid rgba(0,122,255,0.2)',
           display: 'flex',
           alignItems: 'center',
-          gap: 12,
-        }}
-      >
-        <div
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: '50%',
-            background: 'rgba(79,156,249,0.12)',
-            border: '1.5px solid rgba(79,156,249,0.35)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 12,
-            fontWeight: 700,
-            color: '#4f9cf9',
-            flexShrink: 0,
-          }}
-        >
+          justifyContent: 'center',
+          fontSize: 12,
+          fontWeight: 500,
+          color: '#007AFF',
+          flexShrink: 0,
+        }}>
           {userInitials}
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: '#d0d0d0',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
+          <div style={{
+            fontSize: 13,
+            fontWeight: 400,
+            color: '#1a1a1a',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
             {userName}
           </div>
-          <div style={{ fontSize: 11, color: '#4a4a4a', marginTop: 2 }}>Fornecedor</div>
+          <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 1 }}>Fornecedor</div>
         </div>
         <button
           onClick={handleLogout}
@@ -185,17 +166,17 @@ function FornecedorSidebar() {
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            color: '#3a3a3a',
+            color: '#c7c7cc',
             padding: 4,
             display: 'flex',
             alignItems: 'center',
             transition: 'color 0.15s',
             flexShrink: 0,
           }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#ef4444')}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#3a3a3a')}
+          onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#ff3b30')}
+          onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#c7c7cc')}
         >
-          <LogOut size={16} />
+          <LogOut size={15} strokeWidth={1.5} />
         </button>
       </div>
     </aside>
@@ -204,17 +185,15 @@ function FornecedorSidebar() {
 
 export default function FornecedorLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#080808' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f2f2f7' }}>
       <FornecedorSidebar />
-      <main
-        style={{
-          flex: 1,
-          marginLeft: 256,
-          minHeight: '100vh',
-          background: '#080808',
-          overflowX: 'hidden',
-        }}
-      >
+      <main style={{
+        flex: 1,
+        marginLeft: 248,
+        minHeight: '100vh',
+        background: '#f2f2f7',
+        overflowX: 'hidden',
+      }}>
         {children}
       </main>
     </div>
