@@ -1024,11 +1024,11 @@ export default function ProjetoDetailPage() {
                 </div>
               )}
 
-              {/* ── Diretório ARCH ── */}
+              {/* ── Diretório ARC ── */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#383838', letterSpacing: '0.12em', textTransform: 'uppercase' as const }}>
-                    Diretório ARCH
+                    Diretório ARC
                   </div>
                   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' as const }}>
                     {DIR_SEGMENTS.map((seg) => {

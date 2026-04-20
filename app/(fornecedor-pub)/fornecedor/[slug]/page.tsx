@@ -273,7 +273,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
             fontFamily: 'Georgia, serif',
           }}
         >
-          ARCH
+          ARC
         </span>
         <button
           onClick={() => setQuoteModalOpen(true)}
@@ -715,7 +715,7 @@ export default function FornecedorPublicPage({ params }: { params: { slug: strin
             fontFamily: 'Georgia, serif',
           }}
         >
-          ARCH
+          ARC
         </span>
         <span style={{ fontSize: 12, color: '#2e2e2e' }}>
           Plataforma de conexão entre arquitetos e fornecedores premium

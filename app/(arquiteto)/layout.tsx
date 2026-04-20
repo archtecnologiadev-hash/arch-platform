@@ -91,7 +91,7 @@ function ArquitetoSidebar() {
             fontFamily: 'Georgia, serif',
           }}
         >
-          ARCH
+          ARC
         </span>
       </div>
 

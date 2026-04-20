@@ -25,7 +25,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           fontFamily: 'Georgia, serif',
         }}
       >
-        ARCH
+        ARC
       </Link>
       <div style={{ width: '100%', maxWidth: 440 }}>{children}</div>
     </div>

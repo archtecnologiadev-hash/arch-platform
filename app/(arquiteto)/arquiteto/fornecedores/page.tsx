@@ -140,7 +140,7 @@ export default function ArquitetoFornecedoresPage() {
           Fornecedores
         </h1>
         <p style={{ fontSize: 13, color: '#444', margin: '5px 0 0' }}>
-          Diretório de fornecedores parceiros certificados pela plataforma ARCH
+          Diretório de fornecedores parceiros certificados pela plataforma ARC
         </p>
       </div>
 

@@ -146,7 +146,7 @@ export default function LandingPage() {
       <header className="fixed top-0 z-50 w-full border-b border-white/5 bg-[#080808]/90 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl font-black tracking-[0.25em] text-white">ARCH</span>
+            <span className="text-2xl font-black tracking-[0.25em] text-white">ARC</span>
             <span className="hidden text-xs font-light tracking-[0.2em] text-[#888] sm:block">MARKETPLACE</span>
           </Link>
 
@@ -436,7 +436,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-12 md:grid-cols-4">
             <div className="md:col-span-2">
-              <span className="text-2xl font-black tracking-[0.25em] text-white">ARCH</span>
+              <span className="text-2xl font-black tracking-[0.25em] text-white">ARC</span>
               <p className="mt-4 max-w-xs text-sm font-light leading-relaxed text-[#444]">
                 A maior plataforma de conexão entre clientes e escritórios de arquitetura do Brasil.
               </p>
@@ -469,7 +469,7 @@ export default function LandingPage() {
 
           <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 md:flex-row">
             <p className="text-xs font-light text-[#333]">
-              © 2026 ARCH Marketplace. Todos os direitos reservados.
+              © 2026 ARC Marketplace. Todos os direitos reservados.
             </p>
             <div className="flex gap-6">
               {['Privacidade', 'Termos', 'Cookies'].map((item) => (

@@ -365,7 +365,7 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
             </Link>
             <div className="h-4 w-px bg-white/10" />
             <Link href="/" className="text-xl font-black tracking-[0.25em] text-white">
-              ARCH
+              ARC
             </Link>
           </div>
           <Link
@@ -647,7 +647,7 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                 <LeadForm studioName={studio.name} />
                 <div className="mt-4 space-y-2.5">
                   {[
-                    'Verificado pela ARCH Platform',
+                    'Verificado pela ARC Platform',
                     'Gratuito e sem compromisso',
                     'Resposta garantida em 24 horas',
                   ].map((item) => (
@@ -675,9 +675,9 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
       <footer className="mt-8 border-t border-white/5 px-6 py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 md:flex-row">
           <Link href="/" className="text-xl font-black tracking-[0.25em] text-white">
-            ARCH
+            ARC
           </Link>
-          <p className="text-xs text-[#222]">© 2026 ARCH Marketplace. Todos os direitos reservados.</p>
+          <p className="text-xs text-[#222]">© 2026 ARC Marketplace. Todos os direitos reservados.</p>
           <div className="flex gap-6">
             {['Privacidade', 'Termos'].map((item) => (
               <a key={item} href="#" className="text-xs text-[#222] transition-colors hover:text-[#444]">

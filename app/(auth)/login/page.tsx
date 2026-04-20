@@ -51,7 +51,7 @@ export default function LoginPage() {
         Entrar
       </h1>
       <p style={{ fontSize: 13, color: '#4a4a4a', marginBottom: 32 }}>
-        Acesse sua conta na ARCH Platform
+        Acesse sua conta na ARC Platform
       </p>
 
       <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>

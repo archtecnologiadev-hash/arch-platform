@@ -38,7 +38,7 @@ function AdminSidebar() {
         <ShieldCheck size={18} color="#c8a96e" />
         <div>
           <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.25em', color: '#c8a96e', fontFamily: 'Georgia, serif' }}>
-            ARCH
+            ARC
           </span>
           <span style={{ fontSize: 9, display: 'block', color: '#444', letterSpacing: '0.2em', fontWeight: 700, marginTop: -2 }}>
             ADMIN

@@ -80,7 +80,7 @@ function FornecedorSidebar() {
             fontFamily: 'Georgia, serif',
           }}
         >
-          ARCH
+          ARC
         </span>
         <span
           style={{

@@ -233,7 +233,7 @@ export default function ClienteProjetoPage() {
             fontFamily: 'Georgia, serif',
           }}
         >
-          ARCH
+          ARC
         </span>
 
         {/* Client ID */}
