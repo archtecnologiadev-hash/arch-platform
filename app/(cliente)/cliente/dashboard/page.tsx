@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { StatsCard } from '@/components/shared/stats-card'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
 import { FolderOpen, FileText, Clock } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
