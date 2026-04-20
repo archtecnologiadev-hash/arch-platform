@@ -313,7 +313,7 @@ export default function FornecedorPerfilPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                   <div
                     style={{
-                      background: `${segColor}22`,
+                      background: 'rgba(255,255,255,0.85)',
                       border: `1px solid ${segColor}44`,
                       color: segColor,
                       fontSize: 9.5,
@@ -321,8 +321,6 @@ export default function FornecedorPerfilPage() {
                       padding: '2px 8px',
                       borderRadius: 20,
                       backdropFilter: 'blur(4px)',
-                      background: 'rgba(255,255,255,0.85)',
-                      color: segColor,
                     } as React.CSSProperties}
                   >
                     {form.segment}
