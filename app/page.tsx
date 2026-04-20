@@ -16,7 +16,6 @@ const studios = [
     reviews: 124,
     image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=700&h=460&fit=crop&q=80',
     tagline: 'Residências de alto padrão',
-    accent: '#c8a96e',
   },
   {
     id: 2,
@@ -29,7 +28,6 @@ const studios = [
     reviews: 89,
     image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=700&h=460&fit=crop&q=80',
     tagline: 'Espaços que respiram',
-    accent: '#8fb3a0',
   },
   {
     id: 3,
@@ -42,7 +40,6 @@ const studios = [
     reviews: 67,
     image: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=700&h=460&fit=crop&q=80',
     tagline: 'Arquitetura corporativa',
-    accent: '#7a9cb8',
   },
   {
     id: 4,
@@ -55,7 +52,6 @@ const studios = [
     reviews: 103,
     image: 'https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=700&h=460&fit=crop&q=80',
     tagline: 'Menos é infinitamente mais',
-    accent: '#b8a99a',
   },
   {
     id: 5,
@@ -68,7 +64,6 @@ const studios = [
     reviews: 78,
     image: 'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=700&h=460&fit=crop&q=80',
     tagline: 'Design com propósito',
-    accent: '#91b89c',
   },
   {
     id: 6,
@@ -81,7 +76,6 @@ const studios = [
     reviews: 45,
     image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&h=460&fit=crop&q=80',
     tagline: 'Cidade e identidade urbana',
-    accent: '#c0a87a',
   },
   {
     id: 7,
@@ -94,7 +88,6 @@ const studios = [
     reviews: 91,
     image: 'https://images.unsplash.com/photo-1513584684374-8bab748fbf90?w=700&h=460&fit=crop&q=80',
     tagline: 'Interiores que contam histórias',
-    accent: '#d4b896',
   },
   {
     id: 8,
@@ -107,7 +100,6 @@ const studios = [
     reviews: 56,
     image: 'https://images.unsplash.com/photo-1600607687939-ce8a6f349abc?w=700&h=460&fit=crop&q=80',
     tagline: 'Modernidade à beira-mar',
-    accent: '#88aec0',
   },
 ]
 
@@ -116,11 +108,11 @@ const CITIES = ['Todas', 'São Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Curi
 
 function StarRating({ rating }: { rating: number }) {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          className="h-3.5 w-3.5"
+          className="h-3 w-3"
           fill={i <= Math.round(rating) ? 'currentColor' : 'none'}
         />
       ))}
@@ -140,14 +132,13 @@ export default function LandingPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[#080808] text-[#e8e8e8]">
+    <div className="min-h-screen bg-[#fafafa] text-[#1a1a1a]">
 
       {/* ── HEADER ──────────────────────────────────────────── */}
-      <header className="fixed top-0 z-50 w-full border-b border-white/5 bg-[#080808]/90 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl font-black tracking-[0.25em] text-white">ARC</span>
-            <span className="hidden text-xs font-light tracking-[0.2em] text-[#888] sm:block">MARKETPLACE</span>
+      <header className="fixed top-0 z-50 w-full border-b border-black/[0.06] bg-white/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="text-lg font-light tracking-[0.35em] text-black">ARC</span>
           </Link>
 
           <nav className="hidden items-center gap-8 md:flex">
@@ -155,28 +146,28 @@ export default function LandingPage() {
               <a
                 key={item}
                 href="#"
-                className="text-sm font-light tracking-wide text-[#888] transition-colors hover:text-white"
+                className="text-sm font-light text-[#aaa] transition-colors hover:text-black"
               >
                 {item}
               </a>
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Link
               href="/cadastro"
-              className="hidden text-sm font-light text-[#888] transition-colors hover:text-white md:block"
+              className="hidden text-sm font-light text-[#aaa] transition-colors hover:text-black md:block"
             >
               Cadastrar
             </Link>
             <Link
               href="/login"
-              className="rounded-none border border-[#c8a96e] bg-transparent px-5 py-2 text-sm font-light tracking-widest text-[#c8a96e] transition-all hover:bg-[#c8a96e] hover:text-black"
+              className="border border-black/70 px-5 py-1.5 text-sm font-light text-black transition-all hover:bg-black hover:text-white"
             >
-              ENTRAR
+              Entrar
             </Link>
             <button
-              className="text-[#888] md:hidden"
+              className="text-[#aaa] md:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -185,9 +176,9 @@ export default function LandingPage() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="border-t border-white/5 bg-[#080808] px-6 py-4 md:hidden">
+          <div className="border-t border-black/[0.06] bg-white px-6 py-4 md:hidden">
             {['Escritórios', 'Projetos', 'Sobre', 'Blog', 'Cadastrar'].map((item) => (
-              <a key={item} href="#" className="block py-3 text-sm text-[#888] hover:text-white">
+              <a key={item} href="#" className="block py-3 text-sm font-light text-[#777] hover:text-black">
                 {item}
               </a>
             ))}
@@ -196,136 +187,134 @@ export default function LandingPage() {
       </header>
 
       {/* ── HERO ────────────────────────────────────────────── */}
-      <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 pt-16">
-        {/* Background grid */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
-            backgroundSize: '60px 60px',
-          }}
-        />
+      <section className="mx-auto max-w-7xl px-6 pb-16 pt-28">
+        <div className="grid items-center gap-14 lg:grid-cols-2">
 
-        {/* Glow */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#c8a96e]/5 blur-[120px]" />
+          {/* Left: text */}
+          <div>
+            <p className="mb-8 text-[11px] font-light tracking-[0.45em] text-[#bbb] uppercase">
+              Plataforma de Arquitetura
+            </p>
+            <h1 className="mb-6 text-[2.6rem] font-extralight leading-[1.18] tracking-tight text-black md:text-5xl">
+              Encontre o arquiteto
+              <br />
+              certo para o seu
+              <br />
+              projeto.
+            </h1>
+            <p className="mb-10 max-w-[340px] text-sm font-light leading-relaxed text-[#999]">
+              Descubra escritórios excepcionais, compare portfólios e inicie seu projeto com confiança.
+            </p>
 
-        <div className="relative z-10 max-w-5xl text-center">
-          <p className="mb-6 text-xs font-light tracking-[0.4em] text-[#c8a96e]">
-            PLATAFORMA DE ARQUITETURA
-          </p>
-
-          <h1 className="mb-8 text-5xl font-black leading-[1.05] tracking-tight text-white md:text-7xl lg:text-8xl">
-            Conecte-se ao{' '}
-            <span
-              className="relative inline-block"
-              style={{
-                background: 'linear-gradient(135deg, #c8a96e 0%, #e8d5a3 50%, #c8a96e 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              melhor
-            </span>
-            <br />
-            da arquitetura
-            <br />
-            brasileira.
-          </h1>
-
-          <p className="mx-auto mb-12 max-w-xl text-base font-light leading-relaxed text-[#666] md:text-lg">
-            Descubra escritórios de arquitetura excepcionais. Compare portfólios,
-            leia avaliações reais e inicie seu projeto com confiança.
-          </p>
-
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <a
-              href="#escritorios"
-              className="group flex items-center gap-2 bg-[#c8a96e] px-8 py-4 text-sm font-semibold tracking-widest text-black transition-all hover:bg-[#e8d5a3]"
-            >
-              EXPLORAR ESCRITÓRIOS
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </a>
-            <Link
-              href="/cadastro"
-              className="px-8 py-4 text-sm font-light tracking-widest text-[#888] transition-colors hover:text-white"
-            >
-              SOU ARQUITETO →
-            </Link>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="relative z-10 mt-24 grid grid-cols-3 gap-12 border-t border-white/5 pt-12">
-          {[
-            { value: '500+', label: 'Projetos concluídos' },
-            { value: '200+', label: 'Escritórios cadastrados' },
-            { value: '98%', label: 'Clientes satisfeitos' },
-          ].map((stat) => (
-            <div key={stat.label} className="text-center">
-              <p className="text-3xl font-black text-white md:text-4xl">{stat.value}</p>
-              <p className="mt-1 text-xs font-light tracking-wider text-[#555]">{stat.label}</p>
+            <div className="flex flex-wrap items-center gap-4">
+              <a
+                href="#escritorios"
+                className="flex items-center gap-2 bg-black px-6 py-3 text-sm font-light text-white transition-colors hover:bg-[#222]"
+              >
+                Explorar escritórios
+                <ArrowRight className="h-3.5 w-3.5" />
+              </a>
+              <Link
+                href="/cadastro"
+                className="text-sm font-light text-[#999] transition-colors hover:text-black"
+              >
+                Sou arquiteto →
+              </Link>
             </div>
-          ))}
-        </div>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="h-8 w-[1px] bg-gradient-to-b from-[#c8a96e] to-transparent" />
+            <div className="mt-14 flex gap-10 border-t border-black/[0.07] pt-10">
+              {[
+                { value: '500+', label: 'Projetos' },
+                { value: '200+', label: 'Escritórios' },
+                { value: '98%', label: 'Satisfação' },
+              ].map((stat) => (
+                <div key={stat.label}>
+                  <p className="text-2xl font-extralight text-black">{stat.value}</p>
+                  <p className="mt-0.5 text-xs font-light text-[#bbb]">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: preview grid of first 4 cards */}
+          <div className="hidden grid-cols-2 gap-4 lg:grid">
+            {studios.slice(0, 4).map((studio) => (
+              <Link
+                key={studio.id}
+                href={`/escritorio/${studio.slug}`}
+                className="group block overflow-hidden border border-black/[0.07] bg-white transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.09)]"
+              >
+                <div className="relative h-40 overflow-hidden">
+                  <img
+                    src={studio.image}
+                    alt={studio.name}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+                <div className="p-4">
+                  <p className="text-[10px] font-light text-[#bbb]">{studio.style}</p>
+                  <h3 className="mt-0.5 text-sm font-light text-black">{studio.name}</h3>
+                  <div className="mt-2 flex items-center gap-1">
+                    <MapPin className="h-3 w-3 text-[#ccc]" />
+                    <span className="text-xs font-light text-[#bbb]">{studio.city}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ── STUDIOS SECTION ─────────────────────────────────── */}
-      <section id="escritorios" className="px-6 py-24">
+      <section id="escritorios" className="px-6 py-20">
         <div className="mx-auto max-w-7xl">
 
           {/* Section header */}
-          <div className="mb-16 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="mb-2 text-xs font-light tracking-[0.4em] text-[#c8a96e]">ESCRITÓRIOS</p>
-              <h2 className="text-4xl font-black text-white md:text-5xl">
+              <p className="mb-2 text-[11px] font-light tracking-[0.35em] text-[#bbb] uppercase">Escritórios</p>
+              <h2 className="text-3xl font-extralight text-black">
                 Talentos que transformam
                 <br />
                 espaços em experiências.
               </h2>
             </div>
-            <p className="max-w-sm text-sm font-light leading-relaxed text-[#555]">
-              Cada escritório foi cuidadosamente verificado. Analise portfólios,
-              avaliações e entre em contato diretamente.
+            <p className="max-w-xs text-sm font-light leading-relaxed text-[#aaa]">
+              Cada escritório foi verificado. Analise portfólios, avaliações e entre em contato diretamente.
             </p>
           </div>
 
-          {/* Filters */}
-          <div className="mb-12 space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <span className="mr-2 self-center text-xs tracking-widest text-[#444]">ESTILO</span>
+          {/* Filters — iOS pill style */}
+          <div className="mb-10 space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="mr-1 text-[11px] font-light text-[#ccc]">Estilo</span>
               {STYLES.map((s) => (
                 <button
                   key={s}
                   onClick={() => setSelectedStyle(s)}
-                  className={`px-4 py-1.5 text-xs font-light tracking-wider transition-all ${
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-light transition-all ${
                     selectedStyle === s
-                      ? 'bg-[#c8a96e] text-black'
-                      : 'border border-white/10 text-[#666] hover:border-white/30 hover:text-white'
+                      ? 'bg-black text-white'
+                      : 'bg-[#efefef] text-[#555] hover:bg-[#e4e4e4]'
                   }`}
                 >
-                  {s.toUpperCase()}
+                  {s}
                 </button>
               ))}
             </div>
-            <div className="flex flex-wrap gap-2">
-              <span className="mr-2 self-center text-xs tracking-widest text-[#444]">CIDADE</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="mr-1 text-[11px] font-light text-[#ccc]">Cidade</span>
               {CITIES.map((c) => (
                 <button
                   key={c}
                   onClick={() => setSelectedCity(c)}
-                  className={`px-4 py-1.5 text-xs font-light tracking-wider transition-all ${
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-light transition-all ${
                     selectedCity === c
-                      ? 'bg-white/10 text-white'
-                      : 'border border-white/10 text-[#666] hover:border-white/30 hover:text-white'
+                      ? 'bg-black text-white'
+                      : 'bg-[#efefef] text-[#555] hover:bg-[#e4e4e4]'
                   }`}
                 >
-                  {c.toUpperCase()}
+                  {c}
                 </button>
               ))}
             </div>
@@ -333,151 +322,104 @@ export default function LandingPage() {
 
           {/* Cards grid */}
           {filtered.length === 0 ? (
-            <div className="py-24 text-center text-[#444]">
-              <p className="text-lg">Nenhum escritório encontrado com esses filtros.</p>
+            <div className="py-24 text-center">
+              <p className="text-sm font-light text-[#bbb]">Nenhum escritório encontrado com esses filtros.</p>
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filtered.map((studio) => (
                 <Link
                   key={studio.id}
                   href={`/escritorio/${studio.slug}`}
-                  className="group relative block overflow-hidden border border-white/5 bg-[#0f0f0f] transition-all duration-500 hover:border-white/15 hover:shadow-[0_0_40px_rgba(200,169,110,0.08)]"
+                  className="group block overflow-hidden border border-black/[0.07] bg-white transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.09)]"
                 >
                   {/* Image */}
-                  <div className="relative h-56 overflow-hidden">
+                  <div className="relative h-52 overflow-hidden">
                     <img
                       src={studio.image}
                       alt={studio.name}
-                      className="h-full w-full object-cover transition-all duration-700 grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-90 group-hover:scale-105"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    {/* Bottom gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f0f] via-transparent to-transparent opacity-80" />
-
-                    {/* Style badge */}
                     <div className="absolute left-3 top-3">
-                      <span className="bg-black/60 px-2 py-1 text-[10px] font-light tracking-widest text-[#888] backdrop-blur-sm transition-colors group-hover:text-[#c8a96e]">
-                        {studio.style.toUpperCase()}
+                      <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-light text-[#666] backdrop-blur-sm">
+                        {studio.style}
                       </span>
                     </div>
                   </div>
 
                   {/* Content */}
                   <div className="p-5">
-                    <h3 className="mb-1 text-base font-bold text-white">{studio.name}</h3>
-                    <p className="mb-3 text-xs font-light text-[#555]">{studio.tagline}</p>
+                    <h3 className="mb-1 text-sm font-light text-black">{studio.name}</h3>
+                    <p className="mb-3 text-xs font-light text-[#bbb]">{studio.tagline}</p>
 
                     <div className="mb-4 flex items-center gap-1.5">
-                      <MapPin className="h-3 w-3 text-[#444] transition-colors group-hover:text-[#c8a96e]" />
-                      <span className="text-xs text-[#555]">
+                      <MapPin className="h-3 w-3 text-[#ccc]" />
+                      <span className="text-xs font-light text-[#bbb]">
                         {studio.city}, {studio.state}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-[#888]">{studio.rating}</span>
-                      <div className="text-[#555] transition-colors group-hover:text-[#c8a96e]">
+                      <span className="text-sm font-light text-[#666]">{studio.rating}</span>
+                      <div className="text-[#ccc]">
                         <StarRating rating={studio.rating} />
                       </div>
-                      <span className="text-[10px] text-[#444]">({studio.reviews})</span>
+                      <span className="text-[10px] font-light text-[#ccc]">({studio.reviews})</span>
                     </div>
 
-                    {/* CTA */}
-                    <div className="mt-4 flex items-center gap-1 text-xs font-light tracking-wider text-[#444] transition-all group-hover:text-[#c8a96e]">
+                    <div className="mt-4 flex items-center gap-1 text-xs font-light text-[#ccc] transition-colors group-hover:text-black">
                       Ver portfólio
                       <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
                     </div>
                   </div>
-
-                  {/* Gold left border accent on hover */}
-                  <div
-                    className="absolute left-0 top-0 h-0 w-[2px] bg-[#c8a96e] transition-all duration-500 group-hover:h-full"
-                    aria-hidden
-                  />
                 </Link>
               ))}
             </div>
           )}
 
           {/* Load more */}
-          <div className="mt-16 text-center">
-            <button className="border border-white/10 px-10 py-3 text-xs font-light tracking-[0.3em] text-[#555] transition-all hover:border-white/30 hover:text-white">
-              CARREGAR MAIS ESCRITÓRIOS
+          <div className="mt-14 text-center">
+            <button className="border border-black/10 px-8 py-2.5 text-xs font-light text-[#999] transition-all hover:border-black/25 hover:text-black">
+              Carregar mais escritórios
             </button>
           </div>
         </div>
       </section>
 
       {/* ── CTA BANNER ──────────────────────────────────────── */}
-      <section className="mx-6 mb-24 border border-white/5 bg-[#0d0d0d] px-10 py-16 md:mx-auto md:max-w-7xl">
+      <section className="mx-6 mb-20 border border-black/[0.07] bg-white px-10 py-14 md:mx-auto md:max-w-7xl">
         <div className="flex flex-col items-center gap-8 text-center md:flex-row md:justify-between md:text-left">
           <div>
-            <p className="mb-2 text-xs tracking-[0.4em] text-[#c8a96e]">PARA ARQUITETOS</p>
-            <h3 className="text-3xl font-black text-white md:text-4xl">
+            <p className="mb-2 text-[11px] font-light tracking-[0.35em] text-[#bbb] uppercase">Para arquitetos</p>
+            <h3 className="text-2xl font-extralight text-black">
               Mostre seu trabalho para
               <br />
               milhares de clientes.
             </h3>
-            <p className="mt-3 text-sm font-light text-[#555]">
+            <p className="mt-3 text-sm font-light text-[#aaa]">
               Cadastre seu escritório gratuitamente e comece a receber projetos hoje.
             </p>
           </div>
           <Link
             href="/cadastro"
-            className="shrink-0 bg-white px-10 py-4 text-sm font-bold tracking-[0.2em] text-black transition-all hover:bg-[#c8a96e]"
+            className="shrink-0 bg-black px-8 py-3 text-sm font-light text-white transition-colors hover:bg-[#222]"
           >
-            CRIAR PERFIL GRÁTIS
+            Criar perfil grátis
           </Link>
         </div>
       </section>
 
       {/* ── FOOTER ──────────────────────────────────────────── */}
-      <footer className="border-t border-white/5 px-6 py-16">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-12 md:grid-cols-4">
-            <div className="md:col-span-2">
-              <span className="text-2xl font-black tracking-[0.25em] text-white">ARC</span>
-              <p className="mt-4 max-w-xs text-sm font-light leading-relaxed text-[#444]">
-                A maior plataforma de conexão entre clientes e escritórios de arquitetura do Brasil.
-              </p>
-            </div>
-            <div>
-              <p className="mb-4 text-xs font-semibold tracking-[0.3em] text-[#c8a96e]">PLATAFORMA</p>
-              <ul className="space-y-3">
-                {['Escritórios', 'Projetos', 'Como funciona', 'Preços'].map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-sm font-light text-[#444] transition-colors hover:text-white">
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="mb-4 text-xs font-semibold tracking-[0.3em] text-[#c8a96e]">EMPRESA</p>
-              <ul className="space-y-3">
-                {['Sobre', 'Blog', 'Carreiras', 'Contato'].map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-sm font-light text-[#444] transition-colors hover:text-white">
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 md:flex-row">
-            <p className="text-xs font-light text-[#333]">
-              © 2026 ARC Marketplace. Todos os direitos reservados.
-            </p>
-            <div className="flex gap-6">
-              {['Privacidade', 'Termos', 'Cookies'].map((item) => (
-                <a key={item} href="#" className="text-xs font-light text-[#333] hover:text-[#666]">
-                  {item}
-                </a>
-              ))}
-            </div>
+      <footer className="border-t border-black/[0.06] px-6 py-8">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 md:flex-row">
+          <span className="text-base font-light tracking-[0.3em] text-black">ARC</span>
+          <p className="text-xs font-light text-[#ccc]">© 2026 ARC Marketplace. Todos os direitos reservados.</p>
+          <div className="flex gap-6">
+            {['Privacidade', 'Termos', 'Cookies'].map((item) => (
+              <a key={item} href="#" className="text-xs font-light text-[#ccc] transition-colors hover:text-[#888]">
+                {item}
+              </a>
+            ))}
           </div>
         </div>
       </footer>
