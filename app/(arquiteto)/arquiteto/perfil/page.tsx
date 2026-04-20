@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Save, ExternalLink, CheckCircle2, Loader2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Save, ExternalLink, CheckCircle2, Loader2, Upload, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 function slugify(text: string): string {
@@ -23,6 +23,8 @@ interface FormState {
   bio: string
   telefone: string
   instagram: string
+  image_url: string
+  cover_url: string
 }
 
 const ESTILOS = ['Contemporâneo', 'Minimalista', 'Clássico', 'Residencial', 'Comercial', 'Sustentável', 'Urbanismo', 'Industrial']
@@ -40,13 +42,18 @@ const lbl: React.CSSProperties = {
 
 export default function ArquitetoPerfilPage() {
   const [form, setForm] = useState<FormState>({
-    nome: '', cidade: '', estado: '', estilo: '', bio: '', telefone: '', instagram: '',
+    nome: '', cidade: '', estado: '', estilo: '', bio: '',
+    telefone: '', instagram: '', image_url: '', cover_url: '',
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [escritorioId, setEscritorioId] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [uploadingCover, setUploadingCover] = useState(false)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     async function load() {
@@ -71,6 +78,8 @@ export default function ArquitetoPerfilPage() {
           bio: data.bio ?? '',
           telefone: data.telefone ?? '',
           instagram: data.instagram ?? '',
+          image_url: data.image_url ?? '',
+          cover_url: data.cover_url ?? '',
         })
       }
       setLoading(false)
@@ -81,6 +90,20 @@ export default function ArquitetoPerfilPage() {
   function set(field: keyof FormState, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
     setSaved(false)
+  }
+
+  async function uploadFile(file: File, field: 'image_url' | 'cover_url', setUploading: (v: boolean) => void) {
+    if (!userId) return
+    setUploading(true)
+    const supabase = createClient()
+    const ext = file.name.split('.').pop()
+    const path = `${userId}/${field === 'cover_url' ? 'cover' : 'photo'}.${ext}`
+    const { error } = await supabase.storage.from('escritorios').upload(path, file, { upsert: true })
+    if (!error) {
+      const { data: { publicUrl } } = supabase.storage.from('escritorios').getPublicUrl(path)
+      set(field, publicUrl)
+    }
+    setUploading(false)
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -223,13 +246,111 @@ export default function ArquitetoPerfilPage() {
               </div>
             </div>
 
-            <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 22 }}>
+            <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 22, marginBottom: 22 }}>
               <p style={{ fontSize: 12, fontWeight: 400, color: '#007AFF', letterSpacing: '0.04em', marginBottom: 16 }}>
                 Contato
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {field('Telefone / WhatsApp', 'telefone', { placeholder: '(11) 99999-9999' })}
                 {field('Instagram', 'instagram', { placeholder: '@seu.escritorio' })}
+              </div>
+            </div>
+
+            <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 22 }}>
+              <p style={{ fontSize: 12, fontWeight: 400, color: '#007AFF', letterSpacing: '0.04em', marginBottom: 16 }}>
+                Imagens
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+                {/* Photo upload */}
+                <div>
+                  <label style={lbl}>Foto do escritório</label>
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      const file = e.target.files?.[0]
+                      if (file) uploadFile(file, 'image_url', setUploadingImage)
+                    }}
+                  />
+                  {form.image_url ? (
+                    <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', height: 120, border: '1px solid rgba(0,0,0,0.08)' }}>
+                      <img src={form.image_url} alt="Foto" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                        <button type="button" onClick={() => imageInputRef.current?.click()}
+                          style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                          <Upload size={12} /> Trocar
+                        </button>
+                        <button type="button" onClick={() => set('image_url', '')}
+                          style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, color: '#ef4444' }}>
+                          <X size={12} /> Remover
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => imageInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      style={{
+                        width: '100%', border: '1.5px dashed rgba(0,0,0,0.15)', borderRadius: 10,
+                        padding: '20px', background: '#f2f2f7', cursor: 'pointer',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                      }}
+                    >
+                      {uploadingImage ? <Loader2 size={18} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={18} color="#8e8e93" />}
+                      <span style={{ fontSize: 12, color: '#8e8e93' }}>{uploadingImage ? 'Enviando...' : 'Clique para enviar foto'}</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Cover upload */}
+                <div>
+                  <label style={lbl}>Foto de capa</label>
+                  <input
+                    ref={coverInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      const file = e.target.files?.[0]
+                      if (file) uploadFile(file, 'cover_url', setUploadingCover)
+                    }}
+                  />
+                  {form.cover_url ? (
+                    <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', height: 120, border: '1px solid rgba(0,0,0,0.08)' }}>
+                      <img src={form.cover_url} alt="Capa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div
+                        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                      >
+                        <button type="button" onClick={() => coverInputRef.current?.click()}
+                          style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                          <Upload size={12} /> Trocar
+                        </button>
+                        <button type="button" onClick={() => set('cover_url', '')}
+                          style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, color: '#ef4444' }}>
+                          <X size={12} /> Remover
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => coverInputRef.current?.click()}
+                      disabled={uploadingCover}
+                      style={{
+                        width: '100%', border: '1.5px dashed rgba(0,0,0,0.15)', borderRadius: 10,
+                        padding: '20px', background: '#f2f2f7', cursor: 'pointer',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                      }}
+                    >
+                      {uploadingCover ? <Loader2 size={18} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={18} color="#8e8e93" />}
+                      <span style={{ fontSize: 12, color: '#8e8e93' }}>{uploadingCover ? 'Enviando...' : 'Clique para enviar capa'}</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -243,8 +364,18 @@ export default function ArquitetoPerfilPage() {
                 Preview da listagem
               </p>
               <div style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, overflow: 'hidden', background: '#f2f2f7' }}>
-                <div style={{ height: 100, background: '#e5e5ea', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: 11, color: '#8e8e93' }}>Imagem de capa</span>
+                <div style={{ height: 100, background: '#e5e5ea', overflow: 'hidden' }}>
+                  {form.cover_url || form.image_url ? (
+                    <img
+                      src={form.cover_url || form.image_url}
+                      alt="Preview"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: 11, color: '#8e8e93' }}>Imagem de capa</span>
+                    </div>
+                  )}
                 </div>
                 <div style={{ padding: '14px 16px' }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: form.nome ? '#1a1a1a' : '#8e8e93', marginBottom: 4 }}>

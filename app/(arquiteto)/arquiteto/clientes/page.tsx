@@ -1,53 +1,25 @@
-import { Card, CardContent } from '@/components/ui/card'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
+'use client'
 
-const clients = [
-  { id: '1', name: 'Ana Lima', email: 'ana@email.com', projects: 2, status: 'active' },
-  { id: '2', name: 'Carlos Souza', email: 'carlos@email.com', projects: 1, status: 'active' },
-  { id: '3', name: 'TechCorp Ltda', email: 'contato@techcorp.com', projects: 3, status: 'active' },
-  { id: '4', name: 'Família Pereira', email: 'pereira@email.com', projects: 1, status: 'inactive' },
-]
+import { Users } from 'lucide-react'
 
 export default function ClientesPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Clientes</h1>
-          <p className="text-muted-foreground">Gerencie sua base de clientes</p>
-        </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Cliente
-        </Button>
+    <div style={{ padding: '32px', minHeight: '100vh', background: '#f2f2f7', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginBottom: 4 }}>Clientes</h1>
+        <p style={{ fontSize: 13, color: '#6b6b6b' }}>Gerencie sua base de clientes</p>
       </div>
 
-      <div className="space-y-3">
-        {clients.map((client) => {
-          const initials = client.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
-          return (
-            <Card key={client.id}>
-              <CardContent className="flex items-center gap-4 p-4">
-                <Avatar>
-                  <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="font-medium">{client.name}</p>
-                  <p className="text-sm text-muted-foreground">{client.email}</p>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {client.projects} projeto(s)
-                </div>
-                <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
-                  {client.status === 'active' ? 'Ativo' : 'Inativo'}
-                </Badge>
-              </CardContent>
-            </Card>
-          )
-        })}
+      <div style={{
+        background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)',
+        borderRadius: 14, padding: '64px 24px', textAlign: 'center',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+      }}>
+        <Users size={40} color="#c7c7cc" style={{ marginBottom: 14 }} />
+        <p style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 6 }}>Nenhum cliente ainda</p>
+        <p style={{ fontSize: 12, color: '#8e8e93' }}>
+          Clientes vinculados aos seus projetos aparecerão aqui
+        </p>
       </div>
     </div>
   )

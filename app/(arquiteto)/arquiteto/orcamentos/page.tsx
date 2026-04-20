@@ -1,47 +1,25 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
+'use client'
 
-const quotes = [
-  { id: '1', project: 'Residência Moderna', fornecedor: 'Madeiras Silva', total: 12500, status: 'pending' },
-  { id: '2', project: 'Escritório Corporativo', fornecedor: 'Móveis Premium', total: 85000, status: 'approved' },
-  { id: '3', project: 'Apartamento Minimalista', fornecedor: 'Acabamentos Arte', total: 8700, status: 'rejected' },
-]
-
-const statusLabels: Record<string, string> = {
-  pending: 'Pendente',
-  approved: 'Aprovado',
-  rejected: 'Rejeitado',
-}
+import { FileText } from 'lucide-react'
 
 export default function OrcamentosPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Orçamentos</h1>
-          <p className="text-muted-foreground">Controle os orçamentos dos projetos</p>
-        </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Solicitar Orçamento
-        </Button>
+    <div style={{ padding: '32px', minHeight: '100vh', background: '#f2f2f7', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginBottom: 4 }}>Orçamentos</h1>
+        <p style={{ fontSize: 13, color: '#6b6b6b' }}>Controle os orçamentos dos projetos</p>
       </div>
 
-      <div className="space-y-3">
-        {quotes.map((quote) => (
-          <Card key={quote.id}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-base">{quote.project}</CardTitle>
-              <Badge variant="outline">{statusLabels[quote.status]}</Badge>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Fornecedor: {quote.fornecedor}</p>
-              <p className="font-semibold">R$ {quote.total.toLocaleString('pt-BR')}</p>
-            </CardContent>
-          </Card>
-        ))}
+      <div style={{
+        background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)',
+        borderRadius: 14, padding: '64px 24px', textAlign: 'center',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+      }}>
+        <FileText size={40} color="#c7c7cc" style={{ marginBottom: 14 }} />
+        <p style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 6 }}>Nenhum orçamento ainda</p>
+        <p style={{ fontSize: 12, color: '#8e8e93' }}>
+          Quando você solicitar orçamentos de fornecedores, eles aparecerão aqui
+        </p>
       </div>
     </div>
   )

@@ -1,110 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Star, MapPin, ArrowRight, Menu, X, SlidersHorizontal } from 'lucide-react'
+import { createClient } from '@/lib/supabase'
 
-const studios = [
-  {
-    id: 1,
-    slug: 'estudio-brasilis',
-    name: 'Estúdio Brasilis',
-    city: 'São Paulo',
-    state: 'SP',
-    style: 'Contemporâneo',
-    rating: 4.9,
-    reviews: 124,
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop&q=80',
-    tagline: 'Residências de alto padrão',
-  },
-  {
-    id: 2,
-    slug: 'arquitetura-viva',
-    name: 'Arquitetura Viva',
-    city: 'Rio de Janeiro',
-    state: 'RJ',
-    style: 'Minimalista',
-    rating: 4.8,
-    reviews: 89,
-    image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&h=600&fit=crop&q=80',
-    tagline: 'Espaços que respiram',
-  },
-  {
-    id: 3,
-    slug: 'nova-forma-studio',
-    name: 'Nova Forma Studio',
-    city: 'Belo Horizonte',
-    state: 'MG',
-    style: 'Comercial',
-    rating: 4.7,
-    reviews: 67,
-    image: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&h=600&fit=crop&q=80',
-    tagline: 'Arquitetura corporativa',
-  },
-  {
-    id: 4,
-    slug: 'atelie-minimal',
-    name: 'Ateliê Minimal',
-    city: 'Curitiba',
-    state: 'PR',
-    style: 'Minimalista',
-    rating: 4.9,
-    reviews: 103,
-    image: 'https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=800&h=600&fit=crop&q=80',
-    tagline: 'Menos é infinitamente mais',
-  },
-  {
-    id: 5,
-    slug: 'forma-e-espaco',
-    name: 'Forma & Espaço',
-    city: 'Porto Alegre',
-    state: 'RS',
-    style: 'Sustentável',
-    rating: 4.8,
-    reviews: 78,
-    image: 'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=800&h=600&fit=crop&q=80',
-    tagline: 'Design com propósito',
-  },
-  {
-    id: 6,
-    slug: 'urbano-arquitetura',
-    name: 'Urbano Arquitetura',
-    city: 'Brasília',
-    state: 'DF',
-    style: 'Urbanismo',
-    rating: 4.6,
-    reviews: 45,
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop&q=80',
-    tagline: 'Cidade e identidade urbana',
-  },
-  {
-    id: 7,
-    slug: 'casa-e-conceito',
-    name: 'Casa & Conceito',
-    city: 'São Paulo',
-    state: 'SP',
-    style: 'Residencial',
-    rating: 4.7,
-    reviews: 91,
-    image: 'https://images.unsplash.com/photo-1513584684374-8bab748fbf90?w=800&h=600&fit=crop&q=80',
-    tagline: 'Interiores que contam histórias',
-  },
-  {
-    id: 8,
-    slug: 'linha-arquitetos',
-    name: 'Linha Arquitetos',
-    city: 'Florianópolis',
-    state: 'SC',
-    style: 'Contemporâneo',
-    rating: 4.9,
-    reviews: 56,
-    image: 'https://images.unsplash.com/photo-1600607687939-ce8a6f349abc?w=800&h=600&fit=crop&q=80',
-    tagline: 'Modernidade à beira-mar',
-  },
-]
-
-const STYLES = ['Todos', 'Residencial', 'Contemporâneo', 'Minimalista', 'Comercial', 'Sustentável', 'Urbanismo']
-const CITIES = ['Todas', 'São Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Curitiba', 'Porto Alegre', 'Brasília', 'Florianópolis']
+interface Studio {
+  id: string
+  slug: string
+  nome: string
+  cidade: string | null
+  estado: string | null
+  estilo: string | null
+  bio: string | null
+  rating: number | null
+  image_url: string | null
+  cover_url: string | null
+}
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -116,16 +28,45 @@ function StarRating({ rating }: { rating: number }) {
   )
 }
 
+function StudioImage({ url, alt }: { url: string | null; alt: string }) {
+  if (url) {
+    return <img src={url} alt={alt} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+  }
+  return (
+    <div className="h-full w-full bg-gradient-to-br from-[#e5e5ea] to-[#d1d1d6] flex items-center justify-center">
+      <span className="text-[11px] font-light text-[#8e8e93]">{alt}</span>
+    </div>
+  )
+}
+
 export default function LandingPage() {
+  const [studios, setStudios] = useState<Studio[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedStyle, setSelectedStyle] = useState('Todos')
   const [selectedCity, setSelectedCity] = useState('Todas')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
 
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('escritorios')
+        .select('id, slug, nome, cidade, estado, estilo, bio, rating, image_url, cover_url')
+        .order('created_at', { ascending: false })
+      setStudios(data ?? [])
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  const styles = ['Todos', ...Array.from(new Set(studios.map(s => s.estilo).filter(Boolean) as string[]))]
+  const cities = ['Todas', ...Array.from(new Set(studios.map(s => s.cidade).filter(Boolean) as string[]))]
+
   const filtered = studios.filter(
     (s) =>
-      (selectedStyle === 'Todos' || s.style === selectedStyle) &&
-      (selectedCity === 'Todas' || s.city === selectedCity)
+      (selectedStyle === 'Todos' || s.estilo === selectedStyle) &&
+      (selectedCity === 'Todas' || s.cidade === selectedCity)
   )
 
   return (
@@ -175,44 +116,55 @@ export default function LandingPage() {
 
       {/* ── HERO — full-width dense grid with text overlay ── */}
       <section className="relative pt-14">
-        {/* Dense cards grid — fills the screen */}
-        <div className="grid grid-cols-1 gap-px bg-black/[0.06] sm:grid-cols-2 lg:grid-cols-3">
-          {studios.map((studio) => (
-            <Link
-              key={studio.id}
-              href={`/escritorio/${studio.slug}`}
-              className="group relative block overflow-hidden bg-white"
-            >
-              <div className="relative h-[42vh] min-h-[240px] overflow-hidden sm:h-[46vh]">
-                <img
-                  src={studio.image}
-                  alt={studio.name}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                {/* Gradient for bottom text */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-                {/* Hover shimmer */}
-                <div className="absolute inset-0 bg-white/0 transition-all duration-300 group-hover:bg-white/[0.04]" />
+        {loading ? (
+          <div className="grid grid-cols-1 gap-px bg-black/[0.06] sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-[42vh] min-h-[240px] bg-[#e5e5ea] animate-pulse" />
+            ))}
+          </div>
+        ) : studios.length === 0 ? (
+          <div className="flex h-[60vh] items-center justify-center bg-[#f2f2f7]">
+            <div className="text-center">
+              <p className="text-sm font-light text-[#8e8e93]">Nenhum escritório cadastrado ainda.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-px bg-black/[0.06] sm:grid-cols-2 lg:grid-cols-3">
+            {studios.map((studio) => (
+              <Link
+                key={studio.id}
+                href={`/escritorio/${studio.slug}`}
+                className="group relative block overflow-hidden bg-white"
+              >
+                <div className="relative h-[42vh] min-h-[240px] overflow-hidden sm:h-[46vh]">
+                  <StudioImage url={studio.cover_url ?? studio.image_url} alt={studio.nome} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+                  <div className="absolute inset-0 bg-white/0 transition-all duration-300 group-hover:bg-white/[0.04]" />
 
-                {/* Style pill */}
-                <div className="absolute left-3 top-3">
-                  <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-light text-[#3a3a3a] backdrop-blur-sm">
-                    {studio.style}
-                  </span>
-                </div>
+                  {studio.estilo && (
+                    <div className="absolute left-3 top-3">
+                      <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-light text-[#3a3a3a] backdrop-blur-sm">
+                        {studio.estilo}
+                      </span>
+                    </div>
+                  )}
 
-                {/* Studio info */}
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <p className="text-sm font-light text-white">{studio.name}</p>
-                  <div className="mt-1 flex items-center gap-1">
-                    <MapPin className="h-3 w-3 text-white/60" />
-                    <span className="text-xs font-light text-white/70">{studio.city}, {studio.state}</span>
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <p className="text-sm font-light text-white">{studio.nome}</p>
+                    {(studio.cidade || studio.estado) && (
+                      <div className="mt-1 flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-white/60" />
+                        <span className="text-xs font-light text-white/70">
+                          {[studio.cidade, studio.estado].filter(Boolean).join(', ')}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* Text overlay — frosted glass card, top-left */}
         <div className="absolute left-5 top-[calc(3.5rem+1.5rem)] z-10 w-72 sm:left-8 sm:w-80">
@@ -246,8 +198,8 @@ export default function LandingPage() {
           {/* Stats row */}
           <div className="mt-3 flex gap-2">
             {[
+              { value: `${studios.length || '—'}`, label: 'Escritórios' },
               { value: '500+', label: 'Projetos' },
-              { value: '200+', label: 'Escritórios' },
               { value: '98%', label: 'Satisfação' },
             ].map((stat) => (
               <div
@@ -272,15 +224,17 @@ export default function LandingPage() {
               <p className="text-[10px] font-light tracking-[0.4em] text-[#8e8e93] uppercase">Escritórios</p>
               <h2 className="mt-1 text-2xl font-extralight text-black">Todos os escritórios</h2>
             </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-light transition-all ${
-                showFilters ? 'bg-black text-white' : 'bg-white text-[#6b6b6b] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
-              }`}
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              Filtros
-            </button>
+            {studios.length > 0 && (
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-light transition-all ${
+                  showFilters ? 'bg-black text-white' : 'bg-white text-[#6b6b6b] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
+                }`}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                Filtros
+              </button>
+            )}
           </div>
 
           {/* Filters — iOS pill style */}
@@ -288,7 +242,7 @@ export default function LandingPage() {
             <div className="mb-6 space-y-3 rounded-2xl bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="mr-1 text-[11px] font-light text-[#8e8e93]">Estilo</span>
-                {STYLES.map((s) => (
+                {styles.map((s) => (
                   <button
                     key={s}
                     onClick={() => setSelectedStyle(s)}
@@ -302,7 +256,7 @@ export default function LandingPage() {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="mr-1 text-[11px] font-light text-[#8e8e93]">Cidade</span>
-                {CITIES.map((c) => (
+                {cities.map((c) => (
                   <button
                     key={c}
                     onClick={() => setSelectedCity(c)}
@@ -318,7 +272,19 @@ export default function LandingPage() {
           )}
 
           {/* Cards grid */}
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="rounded-2xl bg-white overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.08)] animate-pulse">
+                  <div className="h-52 bg-[#e5e5ea]" />
+                  <div className="p-4 space-y-2">
+                    <div className="h-3 bg-[#e5e5ea] rounded w-2/3" />
+                    <div className="h-2 bg-[#e5e5ea] rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="rounded-2xl bg-white py-20 text-center shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
               <p className="text-sm font-light text-[#8e8e93]">Nenhum escritório encontrado.</p>
             </div>
@@ -331,36 +297,45 @@ export default function LandingPage() {
                   className="group block overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
                 >
                   <div className="relative h-52 overflow-hidden">
-                    <img
-                      src={studio.image}
-                      alt={studio.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute left-3 top-3">
-                      <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-light text-[#3a3a3a] backdrop-blur-sm">
-                        {studio.style}
-                      </span>
-                    </div>
+                    <StudioImage url={studio.image_url ?? studio.cover_url} alt={studio.nome} />
+                    {studio.estilo && (
+                      <div className="absolute left-3 top-3">
+                        <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-light text-[#3a3a3a] backdrop-blur-sm">
+                          {studio.estilo}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="p-4">
-                    <h3 className="mb-0.5 text-sm font-light text-black">{studio.name}</h3>
-                    <p className="mb-3 text-xs font-light text-[#8e8e93]">{studio.tagline}</p>
-                    <div className="mb-3 flex items-center gap-1.5">
-                      <MapPin className="h-3 w-3 text-[#c7c7cc]" />
-                      <span className="text-xs font-light text-[#8e8e93]">{studio.city}, {studio.state}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-light text-[#6b6b6b]">{studio.rating}</span>
-                        <div className="text-[#c7c7cc]">
-                          <StarRating rating={studio.rating} />
-                        </div>
-                        <span className="text-[10px] font-light text-[#c7c7cc]">({studio.reviews})</span>
+                    <h3 className="mb-0.5 text-sm font-light text-black">{studio.nome}</h3>
+                    {studio.bio && (
+                      <p className="mb-3 text-xs font-light text-[#8e8e93] line-clamp-2">{studio.bio}</p>
+                    )}
+                    {(studio.cidade || studio.estado) && (
+                      <div className="mb-3 flex items-center gap-1.5">
+                        <MapPin className="h-3 w-3 text-[#c7c7cc]" />
+                        <span className="text-xs font-light text-[#8e8e93]">
+                          {[studio.cidade, studio.estado].filter(Boolean).join(', ')}
+                        </span>
                       </div>
+                    )}
+                    {studio.rating && studio.rating > 0 ? (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-light text-[#6b6b6b]">{studio.rating.toFixed(1)}</span>
+                          <div className="text-[#c7c7cc]">
+                            <StarRating rating={studio.rating} />
+                          </div>
+                        </div>
+                        <span className="flex items-center gap-1 text-xs font-light text-[#007AFF] opacity-0 transition-opacity group-hover:opacity-100">
+                          Ver portfólio <ArrowRight className="h-3 w-3" />
+                        </span>
+                      </div>
+                    ) : (
                       <span className="flex items-center gap-1 text-xs font-light text-[#007AFF] opacity-0 transition-opacity group-hover:opacity-100">
                         Ver portfólio <ArrowRight className="h-3 w-3" />
                       </span>
-                    </div>
+                    )}
                   </div>
                 </Link>
               ))}

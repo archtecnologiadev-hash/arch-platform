@@ -17,7 +17,7 @@ export default function FornecedorDashboardPage() {
       const nome = user.user_metadata?.nome ?? user.email ?? 'Fornecedor'
       setUserName(nome)
       const { data: perfil } = await supabase
-        .from('fornecedor_perfis')
+        .from('fornecedores')
         .select('slug')
         .eq('user_id', user.id)
         .single()
