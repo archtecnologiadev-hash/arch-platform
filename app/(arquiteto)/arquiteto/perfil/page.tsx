@@ -74,8 +74,10 @@ export default function ArquitetoPerfilPage() {
   // images
   const [fotoPerfil, setFotoPerfil] = useState('')
   const [perfilFile, setPerfilFile] = useState<File | null>(null)
+  const [origImageUrl, setOrigImageUrl] = useState('')
   const [fotoCapa, setFotoCapa] = useState('')
   const [capaFile, setCapaFile] = useState<File | null>(null)
+  const [origCoverUrl, setOrigCoverUrl] = useState('')
 
   // portfolio
   const [projetos, setProjetos] = useState<ProjPortfolio[]>([])
@@ -109,7 +111,9 @@ export default function ArquitetoPerfilPage() {
         setBio(data.bio ?? '')
         setEspec(data.especialidades ?? [])
         setFotoPerfil(data.image_url ?? '')
+        setOrigImageUrl(data.image_url ?? '')
         setFotoCapa(data.cover_url ?? '')
+        setOrigCoverUrl(data.cover_url ?? '')
 
         const { data: projs } = await supabase
           .from('projetos_portfolio')
@@ -167,18 +171,18 @@ export default function ArquitetoPerfilPage() {
     const supabase = createClient()
     const slug = slugify(nome)
 
-    let imageUrl = fotoPerfil.split('?t=')[0]
-    let coverUrl = fotoCapa.split('?t=')[0]
+    let imageUrl = fotoPerfil.startsWith('blob:') ? origImageUrl : fotoPerfil.split('?t=')[0]
+    let coverUrl = fotoCapa.startsWith('blob:') ? origCoverUrl : fotoCapa.split('?t=')[0]
 
     if (perfilFile) {
       const ext = perfilFile.name.split('.').pop() ?? 'jpg'
       const url = await uploadImg(perfilFile, `${userId}/photo.${ext}`)
-      if (url) { imageUrl = url; setFotoPerfil(url); setPerfilFile(null) }
+      if (url) { imageUrl = url; setOrigImageUrl(url); setFotoPerfil(url); setPerfilFile(null) }
     }
     if (capaFile) {
       const ext = capaFile.name.split('.').pop() ?? 'jpg'
       const url = await uploadImg(capaFile, `${userId}/cover.${ext}`)
-      if (url) { coverUrl = url; setFotoCapa(url); setCapaFile(null) }
+      if (url) { coverUrl = url; setOrigCoverUrl(url); setFotoCapa(url); setCapaFile(null) }
     }
 
     const payload: Record<string, unknown> = {

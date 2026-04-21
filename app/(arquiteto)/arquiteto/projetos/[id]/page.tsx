@@ -319,14 +319,18 @@ export default function ProjetoDetailPage() {
   const [advancingStage, setAdvancingStage] = useState(false)
   const [stageAdvanced, setStageAdvanced] = useState(false)
 
-  // Load events + stage from Supabase for real (UUID) projects
+  // Real project data loaded from DB (overrides mock for UUID projects)
+  const [realNome, setRealNome] = useState('')
+  const [realTipo, setRealTipo] = useState('')
+
+  // Load events + stage + nome from Supabase for real (UUID) projects
   useEffect(() => {
     if (!isRealProject) return
     async function loadData() {
       const supabase = createClient()
       const [{ data: evs }, { data: proj }] = await Promise.all([
         supabase.from('eventos').select('*').eq('projeto_id', projectId).order('data_inicio'),
-        supabase.from('projetos').select('etapa_atual').eq('id', projectId).single(),
+        supabase.from('projetos').select('etapa_atual, nome, tipo').eq('id', projectId).single(),
       ])
       if (evs) {
         setCalEvents(evs.map(e => ({
@@ -341,9 +345,13 @@ export default function ProjetoDetailPage() {
           note: e.observacao ?? undefined,
         })))
       }
-      if (proj?.etapa_atual) {
-        const idx = STAGES.findIndex(s => s.toLowerCase() === proj.etapa_atual.toLowerCase())
-        if (idx >= 0) setStageIndex(idx)
+      if (proj) {
+        if (proj.etapa_atual) {
+          const idx = STAGES.findIndex(s => s.toLowerCase() === proj.etapa_atual.toLowerCase())
+          if (idx >= 0) setStageIndex(idx)
+        }
+        if (proj.nome) setRealNome(proj.nome)
+        if (proj.tipo) setRealTipo(proj.tipo)
       }
     }
     loadData()
@@ -399,6 +407,13 @@ export default function ProjetoDetailPage() {
 
   const progress = Math.round(((stageIndex + 1) / STAGES.length) * 100)
   const effectiveBudget = isRealProject ? { total: 0, spent: 0, items: [] } : project.budget
+
+  // For real (UUID) projects use DB-loaded values; for mock projects keep mock data
+  const TIPO_LABEL_MAP: Record<string, string> = {
+    residencial: 'Residencial', comercial: 'Comercial', institucional: 'Institucional',
+  }
+  const displayName = (isRealProject && realNome) ? realNome : project.name
+  const displayType = (isRealProject && realTipo) ? (TIPO_LABEL_MAP[realTipo] ?? realTipo) : project.type
   const budgetPercent = effectiveBudget.total > 0 ? Math.round((effectiveBudget.spent / effectiveBudget.total) * 100) : 0
 
   return (
@@ -479,7 +494,7 @@ export default function ProjetoDetailPage() {
           </Link>
 
           <div style={{ display: 'flex', gap: 7 }}>
-            {[project.type, project.area].map((tag) => (
+            {[displayType, project.area].map((tag) => (
               <div
                 key={tag}
                 style={{
@@ -522,7 +537,7 @@ export default function ProjetoDetailPage() {
                 textShadow: '0 2px 12px rgba(0,0,0,0.5)',
               }}
             >
-              {project.name}
+              {displayName}
             </div>
             <div
               style={{
@@ -1279,7 +1294,7 @@ export default function ProjetoDetailPage() {
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: '#1a1a1a' }}>
                     {project.client.name}
                   </div>
-                  <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{project.type}</div>
+                  <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{displayType}</div>
                 </div>
               </div>
 

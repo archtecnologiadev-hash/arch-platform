@@ -128,7 +128,7 @@ export default function ArquitetoDashboardPage() {
       }
 
       const { data: escritorio } = await supabase
-        .from('escritorios').select('id').eq('user_id', user.id).single()
+        .from('escritorios').select('id').eq('user_id', user.id).maybeSingle()
 
       if (escritorio) {
         setEscritorioId(escritorio.id)
