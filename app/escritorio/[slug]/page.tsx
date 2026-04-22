@@ -97,7 +97,7 @@ function LeadForm({ studioId, studioName }: { studioId: string | null; studioNam
           <CheckCircle2 className="h-7 w-7 text-[#007AFF]" />
         </div>
         <h3 className="text-lg font-bold text-[#1a1a1a]">Mensagem enviada!</h3>
-        <p className="mt-2 text-sm text-[#6b6b6b]">O {studioName} retornará em até 24 horas úteis.</p>
+        <p className="mt-2 text-sm text-[#6b6b6b]">{studioName} entrará em contato em breve.</p>
         <button onClick={() => { setSubmitted(false); setForm({ name: '', email: '', phone: '', message: '' }) }}
           className="mt-6 text-xs text-[#8e8e93] transition-colors hover:text-[#6b6b6b]">
           Enviar outra mensagem

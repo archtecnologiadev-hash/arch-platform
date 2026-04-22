@@ -35,6 +35,15 @@ interface Project {
   image: string
 }
 
+interface Lead {
+  id: string
+  nome: string
+  email: string
+  telefone: string | null
+  mensagem: string | null
+  created_at: string
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const PIPELINE_STAGES = [
@@ -99,6 +108,7 @@ export default function ArquitetoDashboardPage() {
   const [isAdmin, setIsAdmin] = useState(false)
 
   const [realProjects, setRealProjects] = useState<Project[]>([])
+  const [leads, setLeads] = useState<Lead[]>([])
   const [escritorioId, setEscritorioId] = useState<string | null>(null)
   const [loadingProjects, setLoadingProjects] = useState(true)
 
@@ -148,6 +158,13 @@ export default function ArquitetoDashboardPage() {
             image: FALLBACK_IMAGES[i % FALLBACK_IMAGES.length],
           })))
         }
+
+        const { data: leadsData } = await supabase
+          .from('leads').select('*')
+          .eq('escritorio_id', escritorio.id)
+          .order('created_at', { ascending: false })
+          .limit(10)
+        if (leadsData) setLeads(leadsData as Lead[])
       }
       setLoadingProjects(false)
     }
@@ -196,7 +213,7 @@ export default function ArquitetoDashboardPage() {
 
   const statsData = [
     { title: 'Projetos Ativos', value: loadingProjects ? '—' : String(realProjects.length), delta: '', icon: FolderOpen, color: '#4f9cf9' },
-    { title: 'Leads Recebidos', value: '0', delta: '', icon: TrendingUp, color: '#007AFF' },
+    { title: 'Leads Recebidos', value: loadingProjects ? '—' : String(leads.length), delta: '', icon: TrendingUp, color: '#007AFF' },
     { title: 'Reuniões Agendadas', value: '0', delta: '', icon: Clock, color: '#a78bfa' },
     { title: 'Orçamentos Pendentes', value: '0', delta: '', icon: FileText, color: '#34d399' },
   ]
@@ -473,17 +490,58 @@ export default function ArquitetoDashboardPage() {
               <div style={sectionHeader}>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Leads Recentes</div>
-                  <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 3 }}>Últimos contatos recebidos</div>
+                  <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 3 }}>Últimos contatos recebidos pelo perfil público</div>
                 </div>
-                <button style={blueButton}>Ver todos</button>
+                <span style={{ fontSize: 11, color: '#8e8e93' }}>{leads.length} contato{leads.length !== 1 ? 's' : ''}</span>
               </div>
-              <div style={{ padding: '48px 22px', textAlign: 'center' }}>
-                <Phone size={32} color="#8e8e93" style={{ marginBottom: 12 }} />
-                <div style={{ fontSize: 13, color: '#6b6b6b', marginBottom: 4 }}>Nenhum lead ainda</div>
-                <div style={{ fontSize: 11, color: '#8e8e93' }}>
-                  Os leads recebidos aparecerão aqui
+              {leads.length === 0 ? (
+                <div style={{ padding: '48px 22px', textAlign: 'center' }}>
+                  <Phone size={32} color="#8e8e93" style={{ marginBottom: 12 }} />
+                  <div style={{ fontSize: 13, color: '#6b6b6b', marginBottom: 4 }}>Nenhum lead ainda</div>
+                  <div style={{ fontSize: 11, color: '#8e8e93' }}>
+                    Quando alguém preencher o formulário do seu perfil público, aparecerá aqui
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                        {['Nome', 'Email', 'Telefone', 'Mensagem', 'Data'].map(h => (
+                          <th key={h} style={{ padding: '10px 22px', textAlign: 'left', fontSize: 10, color: '#8e8e93', fontWeight: 600, letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
+                            {h.toUpperCase()}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {leads.map((lead, i) => (
+                        <tr key={lead.id} style={{ borderBottom: i < leads.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}
+                          onMouseEnter={e => ((e.currentTarget as HTMLTableRowElement).style.background = '#f9f9fb')}
+                          onMouseLeave={e => ((e.currentTarget as HTMLTableRowElement).style.background = 'transparent')}>
+                          <td style={{ padding: '13px 22px', fontSize: 13, fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap' }}>
+                            {lead.nome}
+                          </td>
+                          <td style={{ padding: '13px 22px', fontSize: 12, color: '#6b6b6b' }}>
+                            <a href={`mailto:${lead.email}`} style={{ color: '#007AFF', textDecoration: 'none' }}>{lead.email}</a>
+                          </td>
+                          <td style={{ padding: '13px 22px', fontSize: 12, color: '#6b6b6b', whiteSpace: 'nowrap' }}>
+                            {lead.telefone ?? '—'}
+                          </td>
+                          <td style={{ padding: '13px 22px', fontSize: 12, color: '#6b6b6b', maxWidth: 240 }}>
+                            <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                              {lead.mensagem ?? '—'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '13px 22px', fontSize: 11, color: '#8e8e93', whiteSpace: 'nowrap' }}>
+                            {new Date(lead.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
 
