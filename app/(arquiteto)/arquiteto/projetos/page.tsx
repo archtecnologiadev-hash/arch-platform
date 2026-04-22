@@ -20,19 +20,13 @@ const TIPO_LABEL: Record<string, string> = {
   residencial: 'Residencial', comercial: 'Comercial', institucional: 'Institucional',
 }
 
-const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80',
-  'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80',
-  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80',
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80',
-]
-
 interface Projeto {
   id: string
   nome: string
   etapa_atual: string | null
   tipo: string | null
   status: string
+  cover_url: string | null
   created_at: string
 }
 
@@ -202,36 +196,43 @@ export default function ProjetosPage() {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
-          {projetos.map((proj, i) => {
+          {projetos.map((proj) => {
             const etapaLabel = ETAPA_TO_LABEL[proj.etapa_atual ?? ''] ?? proj.etapa_atual ?? 'Atendimento'
             const stageIdx = PIPELINE_STAGES.findIndex(s => s === etapaLabel)
             const progress = Math.round(((Math.max(0, stageIdx) + 1) / PIPELINE_STAGES.length) * 100)
             const tipoLabel = TIPO_LABEL[proj.tipo ?? ''] ?? proj.tipo ?? 'Residencial'
-            const img = FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]
+            const hasCover = !!proj.cover_url
 
             return (
               <Link key={proj.id} href={`/arquiteto/projetos/${proj.id}`} className="proj-card">
-                <div style={{ position: 'relative', height: 180, overflow: 'hidden' }}>
-                  <img src={img} alt={proj.nome} className="proj-card-img" />
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)',
-                  }} />
+                <div style={{ position: 'relative', height: 180, overflow: 'hidden', background: '#e5e5ea' }}>
+                  {hasCover
+                    ? <img src={proj.cover_url!} alt={proj.nome} className="proj-card-img" />
+                    : <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'linear-gradient(135deg, #e8e8f0 0%, #d4d4dc 100%)' }}>
+                        <FolderOpen size={28} color="#c7c7cc" />
+                        <span style={{ fontSize: 11, color: '#aeaeb2', fontWeight: 500 }}>Sem capa</span>
+                      </div>}
+                  {hasCover && (
+                    <div style={{
+                      position: 'absolute', inset: 0,
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)',
+                    }} />
+                  )}
                   <div style={{
                     position: 'absolute', top: 10, right: 10,
                     fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 20,
-                    background: 'rgba(255,255,255,0.88)', color: '#007AFF',
+                    background: 'rgba(255,255,255,0.92)', color: '#007AFF',
                     backdropFilter: 'blur(8px)', border: '1px solid rgba(0,122,255,0.3)',
                   }}>
                     {etapaLabel}
                   </div>
                   <div style={{ position: 'absolute', bottom: 10, left: 14, right: 14 }}>
-                    <div style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', lineHeight: 1.25, textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, color: hasCover ? '#fff' : '#1a1a1a', lineHeight: 1.25, textShadow: hasCover ? '0 1px 6px rgba(0,0,0,0.6)' : 'none' }}>
                       {proj.nome}
                     </div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{tipoLabel}</div>
+                    <div style={{ fontSize: 11, color: hasCover ? 'rgba(255,255,255,0.7)' : '#6b6b6b', marginTop: 2 }}>{tipoLabel}</div>
                   </div>
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'rgba(255,255,255,0.2)' }}>
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: hasCover ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.08)' }}>
                     <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, rgba(0,122,255,0.6) 0%, #007AFF 100%)' }} />
                   </div>
                 </div>
