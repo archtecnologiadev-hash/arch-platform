@@ -158,15 +158,24 @@ export default function ArquitetoPerfilPage() {
 
   async function uploadImg(file: File, path: string): Promise<string | null> {
     const supabase = createClient()
+    console.log('[perfil] upload start:', path)
     const { error } = await supabase.storage.from('escritorios').upload(path, file, { upsert: true })
-    if (error) { console.error('Upload error:', error); return null }
+    if (error) {
+      console.error('[perfil] upload error:', error.message, error)
+      return null
+    }
     const { data: { publicUrl } } = supabase.storage.from('escritorios').getPublicUrl(path)
-    // cache-bust
-    return `${publicUrl}?t=${Date.now()}`
+    const url = `${publicUrl}?t=${Date.now()}`
+    console.log('[perfil] upload success:', url)
+    return url
   }
 
   async function handleSave() {
-    if (!nome.trim() || !userId) return
+    console.log('[perfil] handleSave called — userId:', userId, 'nome:', nome.trim())
+    if (!nome.trim() || !userId) {
+      console.warn('[perfil] save aborted: nome vazio ou userId null')
+      return
+    }
     setSaving(true)
     const supabase = createClient()
     const slug = slugify(nome)
@@ -176,42 +185,55 @@ export default function ArquitetoPerfilPage() {
 
     if (perfilFile) {
       const ext = perfilFile.name.split('.').pop() ?? 'jpg'
-      const url = await uploadImg(perfilFile, `${userId}/photo.${ext}`)
+      const uploadPath = `${userId}/photo.${ext}`
+      console.log('[perfil] uploading profile photo →', uploadPath)
+      const url = await uploadImg(perfilFile, uploadPath)
+      console.log('[perfil] profile photo result:', url)
       if (url) { imageUrl = url; setOrigImageUrl(url); setFotoPerfil(url); setPerfilFile(null) }
     }
     if (capaFile) {
       const ext = capaFile.name.split('.').pop() ?? 'jpg'
-      const url = await uploadImg(capaFile, `${userId}/cover.${ext}`)
+      const uploadPath = `${userId}/cover.${ext}`
+      console.log('[perfil] uploading cover →', uploadPath)
+      const url = await uploadImg(capaFile, uploadPath)
+      console.log('[perfil] cover result:', url)
       if (url) { coverUrl = url; setOrigCoverUrl(url); setFotoCapa(url); setCapaFile(null) }
     }
 
-    const payload: Record<string, unknown> = {
-      nome: nome.trim(),
-      nome_responsavel: nomeResp.trim(),
-      cidade: cidade.trim(),
-      estado,
-      telefone,
-      instagram,
-      website,
-      bio,
-      especialidades: espec,
-      image_url: imageUrl,
-      cover_url: coverUrl,
+    const payload = {
+      user_id:          userId,
+      nome:             nome.trim(),
+      nome_responsavel: nomeResp.trim() || null,
+      cidade:           cidade.trim() || null,
+      estado:           estado || null,
+      telefone:         telefone || null,
+      instagram:        instagram || null,
+      website:          website || null,
+      bio:              bio || null,
+      especialidades:   espec,
+      image_url:        imageUrl || null,
+      cover_url:        coverUrl || null,
       slug,
-      user_id: userId,
     }
 
-    const { data, error } = escritorioId
-      ? await supabase.from('escritorios').update(payload).eq('id', escritorioId).select('id').single()
-      : await supabase.from('escritorios').insert(payload).select('id').single()
+    console.log('[perfil] upserting payload:', payload)
 
-    if (!error && data) {
+    const { data, error } = await supabase
+      .from('escritorios')
+      .upsert(payload, { onConflict: 'user_id' })
+      .select('id')
+      .single()
+
+    console.log('[perfil] upsert result — data:', data, 'error:', error)
+
+    if (error) {
+      console.error('[perfil] upsert error code:', error.code, 'message:', error.message, 'details:', error.details, 'hint:', error.hint)
+      showToast(error.message ?? 'Erro ao salvar. Tente novamente.', false)
+    } else if (data) {
+      console.log('[perfil] saved successfully, escritorio id:', data.id)
       if (!escritorioId) setEscritorioId(data.id)
       showToast('Perfil atualizado!')
       setTimeout(() => router.push('/arquiteto/dashboard'), 1600)
-    } else {
-      console.error('Save error:', error)
-      showToast(error?.message ?? 'Erro ao salvar. Tente novamente.', false)
     }
     setSaving(false)
   }
