@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
+import ImageCropModal, { type CropConfig } from '@/components/shared/ImageCropModal'
 import {
   Save, ExternalLink, Loader2, Camera, Plus, X, ImagePlus, CheckCircle2,
 } from 'lucide-react'
@@ -81,6 +82,8 @@ export default function ArquitetoPerfilPage() {
   const [showModal, setShowModal] = useState(false)
   const [novoProj, setNovoProj] = useState<ProjPortfolio>({ nome: '', descricao: '', categoria: '', imagens: [] })
   const [savingProj, setSavingProj] = useState(false)
+
+  const [cropConfig, setCropConfig] = useState<CropConfig | null>(null)
 
   const perfilRef = useRef<HTMLInputElement>(null)
   const capaRef = useRef<HTMLInputElement>(null)
@@ -389,7 +392,19 @@ export default function ArquitetoPerfilPage() {
         }}>
           {/* Cover */}
           <input ref={capaRef} type="file" accept="image/*" style={{ display: 'none' }}
-            onChange={e => { const f = e.target.files?.[0]; if (f) { setCapaFile(f); setFotoCapa(URL.createObjectURL(f)) }; e.target.value = '' }} />
+            onChange={e => {
+              const f = e.target.files?.[0]
+              if (f) {
+                const src = URL.createObjectURL(f)
+                setCropConfig({ src, aspect: 16 / 5, circular: false, onConfirm: blob => {
+                  const cropped = new File([blob], f.name, { type: 'image/jpeg' })
+                  setCapaFile(cropped)
+                  setFotoCapa(URL.createObjectURL(blob))
+                  setCropConfig(null)
+                }, onCancel: () => setCropConfig(null) })
+              }
+              e.target.value = ''
+            }} />
           <div
             onClick={() => capaRef.current?.click()}
             style={{
@@ -417,7 +432,19 @@ export default function ArquitetoPerfilPage() {
           {/* Avatar row */}
           <div style={{ padding: '0 20px 20px', display: 'flex', alignItems: 'flex-end', gap: 14, marginTop: -36 }}>
             <input ref={perfilRef} type="file" accept="image/*" style={{ display: 'none' }}
-              onChange={e => { const f = e.target.files?.[0]; if (f) { setPerfilFile(f); setFotoPerfil(URL.createObjectURL(f)) }; e.target.value = '' }} />
+              onChange={e => {
+                const f = e.target.files?.[0]
+                if (f) {
+                  const src = URL.createObjectURL(f)
+                  setCropConfig({ src, aspect: 1, circular: true, onConfirm: blob => {
+                    const cropped = new File([blob], f.name, { type: 'image/jpeg' })
+                    setPerfilFile(cropped)
+                    setFotoPerfil(URL.createObjectURL(blob))
+                    setCropConfig(null)
+                  }, onCancel: () => setCropConfig(null) })
+                }
+                e.target.value = ''
+              }} />
             <div
               onClick={() => perfilRef.current?.click()}
               title="Trocar foto de perfil"
@@ -545,6 +572,9 @@ export default function ArquitetoPerfilPage() {
         </div>
       </div>
 
+      {/* ── Crop Modal ─────────────────────────────────────────────── */}
+      {cropConfig && <ImageCropModal {...cropConfig} />}
+
       {/* ── Modal: Novo Projeto ─────────────────────────────────────── */}
       {showModal && (
         <div style={{
@@ -580,14 +610,17 @@ export default function ArquitetoPerfilPage() {
               </div>
               <div>
                 <label style={LBL}>Fotos <span style={{ color: '#c7c7cc' }}>(até 5)</span></label>
-                <input ref={projImgRef} type="file" accept="image/*" multiple style={{ display: 'none' }}
+                <input ref={projImgRef} type="file" accept="image/*" style={{ display: 'none' }}
                   onChange={e => {
-                    const files = Array.from(e.target.files ?? [])
-                    const remaining = 5 - novoProj.imagens.length
-                    setNovoProj(p => ({
-                      ...p,
-                      imagens: [...p.imagens, ...files.slice(0, remaining).map(f => ({ url: URL.createObjectURL(f), file: f }))],
-                    }))
+                    const f = e.target.files?.[0]
+                    if (f && novoProj.imagens.length < 5) {
+                      const src = URL.createObjectURL(f)
+                      setCropConfig({ src, aspect: 4 / 3, circular: false, onConfirm: blob => {
+                        const cropped = new File([blob], f.name, { type: 'image/jpeg' })
+                        setNovoProj(p => ({ ...p, imagens: [...p.imagens, { url: URL.createObjectURL(blob), file: cropped }] }))
+                        setCropConfig(null)
+                      }, onCancel: () => setCropConfig(null) })
+                    }
                     e.target.value = ''
                   }} />
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>

@@ -7,9 +7,10 @@ import {
   ArrowLeft, Upload, FileText, ImageIcon, File, MessageCircle,
   Mail, Calendar, Plus, Package, DollarSign, Check, Pencil,
   Star, ExternalLink, Send, X, CheckCircle2, MapPin, Loader2,
-  Download, AlertCircle,
+  Download, AlertCircle, Camera,
 } from 'lucide-react'
 import CalendarioObra, { CalendarioEvent, EVENT_META, EventType } from '@/components/shared/CalendarioObra'
+import ImageCropModal, { type CropConfig } from '@/components/shared/ImageCropModal'
 import { createClient } from '@/lib/supabase'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -21,6 +22,7 @@ interface ProjetoReal {
   etapa_atual: string | null
   status: string
   cliente_id: string | null
+  cover_url: string | null
   created_at: string
 }
 
@@ -145,6 +147,10 @@ export default function ProjetoDetailPage() {
   const [dirQuoteSent, setDirQuoteSent] = useState(false)
   const dirQuoteFileRef = useRef<HTMLInputElement>(null)
 
+  const [coverUploading, setCoverUploading] = useState(false)
+  const [cropConfig, setCropConfig] = useState<CropConfig | null>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     if (!projectId) return
     async function loadData() {
@@ -198,6 +204,21 @@ export default function ProjetoDetailPage() {
     }
     loadData()
   }, [projectId])
+
+  async function handleCoverUpload(blob: Blob) {
+    if (!currentUser || !projeto) return
+    setCoverUploading(true)
+    setCropConfig(null)
+    const supabase = createClient()
+    const path = `${currentUser.id}/${projeto.id}/cover_${Date.now()}.jpg`
+    const { error: upErr } = await supabase.storage.from('projetos').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
+    if (!upErr) {
+      const { data: { publicUrl } } = supabase.storage.from('projetos').getPublicUrl(path)
+      await supabase.from('projetos').update({ cover_url: publicUrl }).eq('id', projeto.id)
+      setProjeto(prev => prev ? { ...prev, cover_url: publicUrl } : prev)
+    }
+    setCoverUploading(false)
+  }
 
   async function handleFiles(files: FileList | null) {
     if (!files || !files.length || !currentUser || !projeto) return
@@ -342,8 +363,19 @@ export default function ProjetoDetailPage() {
       `}</style>
 
       {/* ═══════════════════ COVER HEADER ═══════════════════ */}
-      <div style={{ position: 'relative', height: 300, overflow: 'hidden' }}>
-        <img src={COVER_FALLBACK} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      <input ref={coverInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+        onChange={e => {
+          const f = e.target.files?.[0]
+          if (f) {
+            const src = URL.createObjectURL(f)
+            setCropConfig({ src, aspect: 16 / 9, circular: false, onConfirm: handleCoverUpload, onCancel: () => setCropConfig(null) })
+          }
+          e.target.value = ''
+        }} />
+      <div style={{ position: 'relative', height: 300, overflow: 'hidden', background: '#e5e5ea' }}>
+        {(projeto.cover_url || COVER_FALLBACK) && (
+          <img src={projeto.cover_url ?? COVER_FALLBACK} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.28) 52%, rgba(0,0,0,0.08) 100%)' }} />
 
         {/* Top bar */}
@@ -351,12 +383,21 @@ export default function ProjetoDetailPage() {
           <Link href="/arquiteto/projetos" className="proj-back-btn" style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: 'rgba(255,255,255,0.85)', textDecoration: 'none', background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.25)', padding: '6px 13px 6px 10px', borderRadius: 8, fontWeight: 500, transition: 'color 0.15s, border-color 0.15s' }}>
             <ArrowLeft size={13} /> Projetos
           </Link>
-          <div style={{ display: 'flex', gap: 7 }}>
+          <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
             {[displayType].map(tag => tag !== '—' && (
               <div key={tag} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.9)' }}>
                 {tag}
               </div>
             ))}
+            <button
+              onClick={() => coverInputRef.current?.click()}
+              disabled={coverUploading}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: 'rgba(255,255,255,0.9)', background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.25)', padding: '5px 11px 5px 9px', borderRadius: 8, cursor: coverUploading ? 'not-allowed' : 'pointer', fontWeight: 500 }}
+            >
+              {coverUploading
+                ? <><Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</>
+                : <><Camera size={12} /> Trocar capa</>}
+            </button>
           </div>
         </div>
 
@@ -749,6 +790,9 @@ export default function ProjetoDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Crop Modal ── */}
+      {cropConfig && <ImageCropModal {...cropConfig} />}
     </div>
   )
 }

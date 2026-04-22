@@ -32,7 +32,7 @@ interface Project {
   stageIndex: number
   type: string
   dueDate: string
-  image: string
+  coverUrl: string | null
 }
 
 interface Lead {
@@ -50,12 +50,6 @@ const PIPELINE_STAGES = [
   'Atendimento', 'Reunião', 'Briefing', '3D', 'Alt. 3D', 'Detalhamento', 'Orçamento', 'Execução',
 ]
 
-const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80',
-  'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80',
-  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80',
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80',
-]
 
 const ETAPA_TO_STAGE: Record<string, number> = {
   atendimento: 0, reuniao: 1, briefing: 2,
@@ -147,7 +141,7 @@ export default function ArquitetoDashboardPage() {
           .order('created_at', { ascending: false })
 
         if (projs && projs.length > 0) {
-          setRealProjects(projs.map((p, i) => ({
+          setRealProjects(projs.map((p) => ({
             id: p.id,
             name: p.nome,
             client: '—',
@@ -155,7 +149,7 @@ export default function ArquitetoDashboardPage() {
             stageIndex: ETAPA_TO_STAGE[p.etapa_atual] ?? 2,
             type: TIPO_LABEL[p.tipo] ?? 'Residencial',
             dueDate: '—',
-            image: FALLBACK_IMAGES[i % FALLBACK_IMAGES.length],
+            coverUrl: p.cover_url ?? null,
           })))
         }
 
@@ -193,7 +187,7 @@ export default function ArquitetoDashboardPage() {
         id: data.id, name: data.nome, client: '—',
         initials: data.nome.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase(),
         stageIndex: 2, type: TIPO_LABEL[data.tipo] ?? 'Residencial',
-        dueDate: '—', image: FALLBACK_IMAGES[realProjects.length % FALLBACK_IMAGES.length],
+        dueDate: '—', coverUrl: null,
       }
       setRealProjects(prev => [novo, ...prev])
     }
@@ -436,23 +430,28 @@ export default function ArquitetoDashboardPage() {
                       const currentStage = PIPELINE_STAGES[project.stageIndex]
                       return (
                         <Link key={project.id} href={`/arquiteto/projetos/${project.id}`} className="proj-card" style={{ textDecoration: 'none', display: 'block' }}>
-                          <div style={{ position: 'relative', height: 190, overflow: 'hidden' }}>
-                            <img src={project.image} alt={project.name} className="proj-card-img" />
-                            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)' }} />
+                          <div style={{ position: 'relative', height: 190, overflow: 'hidden', background: '#e5e5ea' }}>
+                            {project.coverUrl
+                              ? <img src={project.coverUrl} alt={project.name} className="proj-card-img" />
+                              : <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'linear-gradient(135deg, #e8e8f0 0%, #d4d4dc 100%)' }}>
+                                  <FolderOpen size={28} color="#c7c7cc" />
+                                  <span style={{ fontSize: 11, color: '#aeaeb2', fontWeight: 500 }}>Sem capa</span>
+                                </div>}
+                            <div style={{ position: 'absolute', inset: 0, background: project.coverUrl ? 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)' : 'none' }} />
                             <div style={{
                               position: 'absolute', top: 10, right: 10,
                               fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 20,
-                              background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(0,122,255,0.3)',
+                              background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(0,122,255,0.3)',
                               color: '#007AFF', backdropFilter: 'blur(8px)',
                               letterSpacing: '0.05em', textTransform: 'uppercase' as const,
                             }}>
                               {currentStage}
                             </div>
                             <div style={{ position: 'absolute', bottom: 10, left: 14, right: 14 }}>
-                              <div style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', lineHeight: 1.25, textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
+                              <div style={{ fontSize: 14.5, fontWeight: 700, color: project.coverUrl ? '#fff' : '#1a1a1a', lineHeight: 1.25, textShadow: project.coverUrl ? '0 1px 6px rgba(0,0,0,0.6)' : 'none' }}>
                                 {project.name}
                               </div>
-                              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{project.client}</div>
+                              <div style={{ fontSize: 11, color: project.coverUrl ? 'rgba(255,255,255,0.7)' : '#6b6b6b', marginTop: 2 }}>{project.client}</div>
                             </div>
                             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'rgba(255,255,255,0.2)' }}>
                               <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, rgba(0,122,255,0.6) 0%, #007AFF 100%)' }} />
