@@ -12,6 +12,7 @@ interface Studio {
   cidade: string | null
   estado: string | null
   estilo: string | null
+  especialidades: string[] | null
   bio: string | null
   rating: number | null
   image_url: string | null
@@ -52,7 +53,8 @@ export default function LandingPage() {
       const supabase = createClient()
       const { data } = await supabase
         .from('escritorios')
-        .select('id, slug, nome, cidade, estado, estilo, bio, rating, image_url, cover_url')
+        .select('id, slug, nome, cidade, estado, estilo, especialidades, bio, rating, image_url, cover_url')
+        .not('nome', 'is', null)
         .order('created_at', { ascending: false })
       setStudios(data ?? [])
       setLoading(false)
@@ -60,17 +62,20 @@ export default function LandingPage() {
     load()
   }, [])
 
-  // only show studios with at least a photo and a bio
-  const withProfile = studios.filter(s => (s.image_url || s.cover_url) && s.bio)
+  // show studios that have a nome and at least one photo
+  const withProfile = studios.filter(s => s.nome && (s.image_url || s.cover_url))
 
-  const styles = ['Todos', ...Array.from(new Set(withProfile.map(s => s.estilo).filter(Boolean) as string[]))]
+  const allEspecialidades = withProfile.flatMap(s => s.especialidades ?? (s.estilo ? [s.estilo] : []))
+  const styles = ['Todos', ...Array.from(new Set(allEspecialidades))]
   const cities = ['Todas', ...Array.from(new Set(withProfile.map(s => s.cidade).filter(Boolean) as string[]))]
 
-  const filtered = withProfile.filter(
-    (s) =>
-      (selectedStyle === 'Todos' || s.estilo === selectedStyle) &&
+  const filtered = withProfile.filter((s) => {
+    const espec = s.especialidades ?? (s.estilo ? [s.estilo] : [])
+    return (
+      (selectedStyle === 'Todos' || espec.includes(selectedStyle)) &&
       (selectedCity === 'Todas' || s.cidade === selectedCity)
-  )
+    )
+  })
 
   return (
     <div className="min-h-screen bg-[#f2f2f7] text-[#1a1a1a]">
@@ -144,10 +149,10 @@ export default function LandingPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
                   <div className="absolute inset-0 bg-white/0 transition-all duration-300 group-hover:bg-white/[0.04]" />
 
-                  {studio.estilo && (
+                  {(studio.especialidades?.[0] || studio.estilo) && (
                     <div className="absolute left-3 top-3">
                       <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-light text-[#3a3a3a] backdrop-blur-sm">
-                        {studio.estilo}
+                        {studio.especialidades?.[0] ?? studio.estilo}
                       </span>
                     </div>
                   )}
@@ -301,10 +306,10 @@ export default function LandingPage() {
                 >
                   <div className="relative h-52 overflow-hidden">
                     <StudioImage url={studio.image_url ?? studio.cover_url} alt={studio.nome} />
-                    {studio.estilo && (
+                    {(studio.especialidades?.[0] || studio.estilo) && (
                       <div className="absolute left-3 top-3">
                         <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-light text-[#3a3a3a] backdrop-blur-sm">
-                          {studio.estilo}
+                          {studio.especialidades?.[0] ?? studio.estilo}
                         </span>
                       </div>
                     )}

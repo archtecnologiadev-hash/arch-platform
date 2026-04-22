@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import {
   Save, ExternalLink, Loader2, Camera, Plus, X, ImagePlus, CheckCircle2,
@@ -52,8 +51,6 @@ function Field({ label, value, onChange, placeholder, required, type }: {
 }
 
 export default function ArquitetoPerfilPage() {
-  const router = useRouter()
-
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
@@ -164,10 +161,10 @@ export default function ArquitetoPerfilPage() {
       console.error('[perfil] upload error:', error.message, error)
       return null
     }
+    // Return clean URL without cache-bust — UI adds ?t= for display only
     const { data: { publicUrl } } = supabase.storage.from('escritorios').getPublicUrl(path)
-    const url = `${publicUrl}?t=${Date.now()}`
-    console.log('[perfil] upload success:', url)
-    return url
+    console.log('[perfil] upload success:', publicUrl)
+    return publicUrl
   }
 
   async function handleSave() {
@@ -180,8 +177,9 @@ export default function ArquitetoPerfilPage() {
     const supabase = createClient()
     const slug = slugify(nome)
 
-    let imageUrl = fotoPerfil.startsWith('blob:') ? origImageUrl : fotoPerfil.split('?t=')[0]
-    let coverUrl = fotoCapa.startsWith('blob:') ? origCoverUrl : fotoCapa.split('?t=')[0]
+    // Strip any cache-bust params; use origUrl as fallback for blobs not yet uploaded
+    let imageUrl = fotoPerfil.startsWith('blob:') ? origImageUrl : fotoPerfil.split('?')[0]
+    let coverUrl = fotoCapa.startsWith('blob:') ? origCoverUrl : fotoCapa.split('?')[0]
 
     if (perfilFile) {
       const ext = perfilFile.name.split('.').pop() ?? 'jpg'
@@ -189,7 +187,12 @@ export default function ArquitetoPerfilPage() {
       console.log('[perfil] uploading profile photo →', uploadPath)
       const url = await uploadImg(perfilFile, uploadPath)
       console.log('[perfil] profile photo result:', url)
-      if (url) { imageUrl = url; setOrigImageUrl(url); setFotoPerfil(url); setPerfilFile(null) }
+      if (url) {
+        imageUrl = url
+        setOrigImageUrl(url)
+        setFotoPerfil(`${url}?t=${Date.now()}`)  // cache-bust for display only
+        setPerfilFile(null)
+      }
     }
     if (capaFile) {
       const ext = capaFile.name.split('.').pop() ?? 'jpg'
@@ -197,7 +200,12 @@ export default function ArquitetoPerfilPage() {
       console.log('[perfil] uploading cover →', uploadPath)
       const url = await uploadImg(capaFile, uploadPath)
       console.log('[perfil] cover result:', url)
-      if (url) { coverUrl = url; setOrigCoverUrl(url); setFotoCapa(url); setCapaFile(null) }
+      if (url) {
+        coverUrl = url
+        setOrigCoverUrl(url)
+        setFotoCapa(`${url}?t=${Date.now()}`)  // cache-bust for display only
+        setCapaFile(null)
+      }
     }
 
     const payload = {
@@ -221,7 +229,7 @@ export default function ArquitetoPerfilPage() {
     const { data, error } = await supabase
       .from('escritorios')
       .upsert(payload, { onConflict: 'user_id' })
-      .select('id')
+      .select('id, image_url, cover_url')
       .single()
 
     console.log('[perfil] upsert result — data:', data, 'error:', error)
@@ -230,16 +238,28 @@ export default function ArquitetoPerfilPage() {
       console.error('[perfil] upsert error code:', error.code, 'message:', error.message, 'details:', error.details, 'hint:', error.hint)
       showToast(error.message ?? 'Erro ao salvar. Tente novamente.', false)
     } else if (data) {
-      console.log('[perfil] saved successfully, escritorio id:', data.id)
+      console.log('[perfil] saved successfully, id:', data.id)
       if (!escritorioId) setEscritorioId(data.id)
+      // Sync display state with what was actually saved in DB
+      if (data.image_url && !perfilFile) {
+        setFotoPerfil(`${data.image_url}?t=${Date.now()}`)
+        setOrigImageUrl(data.image_url)
+      }
+      if (data.cover_url && !capaFile) {
+        setFotoCapa(`${data.cover_url}?t=${Date.now()}`)
+        setOrigCoverUrl(data.cover_url)
+      }
       showToast('Perfil atualizado!')
-      setTimeout(() => router.push('/arquiteto/dashboard'), 1600)
     }
     setSaving(false)
   }
 
   async function handleSaveProj() {
-    if (!novoProj.nome.trim() || !escritorioId || !userId) return
+    if (!novoProj.nome.trim() || !userId) return
+    if (!escritorioId) {
+      showToast('Salve o perfil primeiro antes de adicionar projetos.', false)
+      return
+    }
     setSavingProj(true)
     const supabase = createClient()
 
@@ -264,8 +284,10 @@ export default function ArquitetoPerfilPage() {
       setProjetos(prev => [{ id: proj.id, nome: novoProj.nome, descricao: novoProj.descricao, categoria: novoProj.categoria, imagens: savedImgs }, ...prev])
       setShowModal(false)
       setNovoProj({ nome: '', descricao: '', categoria: '', imagens: [] })
+      showToast('Projeto adicionado ao portfólio!')
     } else {
-      console.error('Project save error:', projErr)
+      console.error('[perfil] portfolio save error:', projErr)
+      showToast(projErr?.message ?? 'Erro ao salvar projeto.', false)
     }
     setSavingProj(false)
   }
