@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Star, MapPin, Globe, Phone, CheckCircle2, Save, Loader2, Upload, X } from 'lucide-react'
+import { Star, MapPin, Globe, Phone, CheckCircle2, Save, Loader2, Camera, X, ImagePlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import ImageCropModal, { type CropConfig } from '@/components/shared/ImageCropModal'
 
 function slugify(text: string): string {
   return text
@@ -18,39 +19,40 @@ function slugify(text: string): string {
 const SEGMENTS = ['Marcenaria', 'Elétrica', 'Vidraçaria', 'Gesseiro', 'Pintura', 'Iluminação', 'Outro']
 
 const SEG_COLOR: Record<string, string> = {
-  Marcenaria: '#007AFF',
-  Elétrica: '#34d399',
-  Vidraçaria: '#a78bfa',
-  Gesseiro: '#f97316',
-  Pintura: '#ef4444',
-  Iluminação: '#007AFF',
-  Outro: '#6b6b6b',
+  Marcenaria: '#007AFF', Elétrica: '#34d399', Vidraçaria: '#a78bfa',
+  Gesseiro: '#f97316', Pintura: '#ef4444', Iluminação: '#007AFF', Outro: '#6b6b6b',
 }
 
 interface FormState {
-  name: string
-  segment: string
-  city: string
-  bio: string
-  instagram: string
-  whatsapp: string
-  email: string
-  cover_url: string
-  image_url: string
-  founded: string
+  name: string; segment: string; city: string; bio: string
+  instagram: string; whatsapp: string; email: string; website: string
+  cover_url: string; image_url: string; founded: string
+}
+
+const INP: React.CSSProperties = {
+  width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)',
+  borderRadius: 10, padding: '10px 14px', color: '#1a1a1a', fontSize: 13.5,
+  outline: 'none', transition: 'border-color 0.15s', boxSizing: 'border-box',
+  fontFamily: 'inherit',
+}
+const LBL: React.CSSProperties = {
+  fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 7, fontWeight: 600,
 }
 
 export default function FornecedorPerfilPage() {
   const [form, setForm] = useState<FormState>({
     name: '', segment: 'Marcenaria', city: '', bio: '',
-    instagram: '', whatsapp: '', email: '', cover_url: '', image_url: '', founded: '',
+    instagram: '', whatsapp: '', email: '', website: '',
+    cover_url: '', image_url: '', founded: '',
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const [fornecedorId, setFornecedorId] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
-  const [uploadingCover, setUploadingCover] = useState(false)
+  const [cropConfig, setCropConfig] = useState<CropConfig | null>(null)
+
+  const logoInputRef = useRef<HTMLInputElement>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -61,24 +63,22 @@ export default function FornecedorPerfilPage() {
       setUserId(user.id)
 
       const { data } = await supabase
-        .from('fornecedores')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
+        .from('fornecedores').select('*').eq('user_id', user.id).maybeSingle()
 
       if (data) {
         setFornecedorId(data.id)
         setForm({
-          name: data.nome ?? '',
-          segment: data.segmento ?? 'Marcenaria',
-          city: data.cidade ?? '',
-          bio: data.bio ?? '',
-          instagram: data.instagram ?? '',
-          whatsapp: data.whatsapp ?? '',
-          email: data.email ?? '',
-          cover_url: data.cover_url ?? '',
-          image_url: data.image_url ?? '',
-          founded: data.founded ?? '',
+          name:      data.nome       ?? '',
+          segment:   data.segmento   ?? 'Marcenaria',
+          city:      data.cidade     ?? '',
+          bio:       data.bio        ?? '',
+          instagram: data.instagram  ?? '',
+          whatsapp:  data.whatsapp   ?? '',
+          email:     data.email      ?? '',
+          website:   data.website    ?? '',
+          cover_url: data.cover_url  ?? '',
+          image_url: data.image_url  ?? '',
+          founded:   data.founded    ?? '',
         })
       }
       setLoading(false)
@@ -86,21 +86,60 @@ export default function FornecedorPerfilPage() {
     load()
   }, [])
 
-  const set = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-    setForm((f) => ({ ...f, [key]: e.target.value }))
+  function showToast(msg: string, ok = true) {
+    setToast({ msg, ok })
+    setTimeout(() => setToast(null), 3500)
+  }
 
-  async function uploadCover(file: File) {
-    if (!userId) return
-    setUploadingCover(true)
+  const set = (key: keyof FormState) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      setForm(f => ({ ...f, [key]: e.target.value }))
+
+  async function uploadToStorage(blob: Blob, path: string): Promise<string | null> {
     const supabase = createClient()
-    const ext = file.name.split('.').pop()
-    const path = `${userId}/cover.${ext}`
-    const { error } = await supabase.storage.from('fornecedores').upload(path, file, { upsert: true })
-    if (!error) {
-      const { data: { publicUrl } } = supabase.storage.from('fornecedores').getPublicUrl(path)
-      setForm(f => ({ ...f, cover_url: publicUrl }))
+    const { error } = await supabase.storage
+      .from('fornecedores').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
+    if (error) {
+      // Auto-create bucket if missing and retry
+      if (error.message.includes('not found') || error.message.includes('Bucket')) {
+        await supabase.storage.createBucket('fornecedores', { public: true })
+        const retry = await supabase.storage
+          .from('fornecedores').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
+        if (retry.error) return null
+      } else {
+        return null
+      }
     }
-    setUploadingCover(false)
+    const { data: { publicUrl } } = supabase.storage.from('fornecedores').getPublicUrl(path)
+    return publicUrl
+  }
+
+  function openLogoCrop(file: File) {
+    const src = URL.createObjectURL(file)
+    setCropConfig({
+      src, aspect: 1, circular: true,
+      onConfirm: async blob => {
+        setCropConfig(null)
+        if (!userId) return
+        const url = await uploadToStorage(blob, `${userId}/logo_${Date.now()}.jpg`)
+        if (url) setForm(f => ({ ...f, image_url: url }))
+      },
+      onCancel: () => setCropConfig(null),
+    })
+  }
+
+  function openCoverCrop(file: File) {
+    const src = URL.createObjectURL(file)
+    setCropConfig({
+      src, aspect: 16 / 5, circular: false,
+      onConfirm: async blob => {
+        setCropConfig(null)
+        if (!userId) return
+        const url = await uploadToStorage(blob, `${userId}/cover_${Date.now()}.jpg`)
+        if (url) setForm(f => ({ ...f, cover_url: url }))
+      },
+      onCancel: () => setCropConfig(null),
+    })
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -111,17 +150,18 @@ export default function FornecedorPerfilPage() {
     const supabase = createClient()
     const slug = slugify(form.name)
     const payload = {
-      user_id: userId,
-      nome: form.name,
-      segmento: form.segment,
-      cidade: form.city,
-      bio: form.bio,
+      user_id:   userId,
+      nome:      form.name,
+      segmento:  form.segment,
+      cidade:    form.city,
+      bio:       form.bio,
       instagram: form.instagram,
-      whatsapp: form.whatsapp,
-      email: form.email,
-      cover_url: form.cover_url,
-      image_url: form.image_url,
-      founded: form.founded,
+      whatsapp:  form.whatsapp,
+      email:     form.email,
+      website:   form.website,
+      cover_url: form.cover_url || null,
+      image_url: form.image_url || null,
+      founded:   form.founded  || null,
       slug,
     }
 
@@ -130,9 +170,11 @@ export default function FornecedorPerfilPage() {
       : await supabase.from('fornecedores').insert(payload).select('id').single()
 
     if (!error && data) {
-      setFornecedorId(data.id)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
+      if (!fornecedorId) setFornecedorId(data.id)
+      showToast('Perfil atualizado com sucesso!')
+    } else {
+      console.error('[fornecedor perfil] save error:', error)
+      showToast(error?.message ?? 'Erro ao salvar. Tente novamente.', false)
     }
     setSaving(false)
   }
@@ -149,34 +191,38 @@ export default function FornecedorPerfilPage() {
   }
 
   return (
-    <div
-      style={{
-        padding: '32px 36px',
-        minHeight: '100vh',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        color: '#1a1a1a',
-        background: '#f2f2f7',
-      }}
-    >
+    <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1a1a1a', background: '#f2f2f7' }}>
       <style>{`
-        .pf-inp {
-          width: 100%;
-          background: #f2f2f7;
-          border: 1px solid rgba(0,0,0,0.1);
-          border-radius: 10px;
-          padding: 10px 14px;
-          color: #1a1a1a;
-          font-size: 13.5px;
-          outline: none;
-          transition: border-color 0.15s;
-          box-sizing: border-box;
-          font-family: inherit;
-        }
-        .pf-inp:focus { border-color: #007AFF; }
+        .pf-inp:focus { border-color: #007AFF !important; }
         .pf-inp::placeholder { color: #8e8e93; }
-        .pf-label { font-size: 11.5px; color: #6b6b6b; display: block; margin-bottom: 7px; font-weight: 600; }
         @keyframes spin { to { transform: rotate(360deg) } }
+        @keyframes slideDown { from { opacity:0; transform:translateY(-10px) } to { opacity:1; transform:translateY(0) } }
       `}</style>
+
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)',
+          background: '#1c1c1e', color: '#fff', padding: '12px 20px', borderRadius: 12,
+          fontSize: 13, zIndex: 9999, animation: 'slideDown 0.2s ease',
+          display: 'flex', alignItems: 'center', gap: 8,
+          boxShadow: '0 8px 30px rgba(0,0,0,0.3)', whiteSpace: 'nowrap',
+        }}>
+          {toast.ok
+            ? <CheckCircle2 size={15} color="#34d399" />
+            : <X size={15} color="#ff3b30" />}
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Crop Modal */}
+      {cropConfig && <ImageCropModal {...cropConfig} />}
+
+      {/* Hidden file inputs */}
+      <input ref={logoInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+        onChange={e => { const f = e.target.files?.[0]; if (f) openLogoCrop(f); e.target.value = '' }} />
+      <input ref={coverInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+        onChange={e => { const f = e.target.files?.[0]; if (f) openCoverCrop(f); e.target.value = '' }} />
 
       {/* Header */}
       <div style={{ marginBottom: 30 }}>
@@ -187,217 +233,200 @@ export default function FornecedorPerfilPage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 32, alignItems: 'flex-start' }}>
+
         {/* ── Form ── */}
-        <form onSubmit={handleSave}>
-          <div
-            style={{
-              background: '#ffffff',
-              border: '1px solid rgba(0,0,0,0.08)',
-              borderRadius: 16,
-              padding: '28px 28px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 20,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-            }}
-          >
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: '#8e8e93', textTransform: 'uppercase' as const, paddingBottom: 12, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-              Informações da empresa
+        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+          {/* Cover + Logo */}
+          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            {/* Cover area */}
+            <div
+              onClick={() => coverInputRef.current?.click()}
+              style={{ position: 'relative', height: 140, cursor: 'pointer', background: form.cover_url ? 'transparent' : 'linear-gradient(135deg, #e8e8f0, #d0d0dc)', overflow: 'hidden' }}
+            >
+              {form.cover_url
+                ? <img src={form.cover_url} alt="Capa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <ImagePlus size={22} color="#8e8e93" />
+                    <span style={{ fontSize: 12, color: '#8e8e93' }}>Clique para adicionar foto de capa</span>
+                  </div>}
+              <div style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', borderRadius: 8, padding: '5px 11px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                <Camera size={11} color="#fff" />
+                <span style={{ fontSize: 11, color: '#fff' }}>Trocar capa</span>
+              </div>
             </div>
+
+            {/* Logo + name row */}
+            <div style={{ padding: '0 20px 20px', display: 'flex', alignItems: 'flex-end', gap: 14, marginTop: -36 }}>
+              <div
+                onClick={() => logoInputRef.current?.click()}
+                title="Trocar logo"
+                style={{ width: 72, height: 72, borderRadius: '50%', border: '3px solid #fff', background: form.image_url ? 'transparent' : '#e5e5ea', overflow: 'hidden', cursor: 'pointer', flexShrink: 0, position: 'relative', boxShadow: '0 2px 10px rgba(0,0,0,0.18)' }}
+              >
+                {form.image_url
+                  ? <img src={form.image_url} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Camera size={20} color="#8e8e93" />
+                    </div>}
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.18s', borderRadius: '50%' }}
+                  onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = '0')}>
+                  <Camera size={15} color="#fff" />
+                </div>
+              </div>
+              <div style={{ paddingBottom: 4 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>{form.name || <span style={{ color: '#c7c7cc' }}>Nome da empresa</span>}</div>
+                {form.city && <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 2 }}>{form.city}</div>}
+              </div>
+            </div>
+          </div>
+
+          {/* Informações */}
+          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: '#8e8e93', textTransform: 'uppercase' }}>Informações da empresa</div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
-                <label className="pf-label">Nome da empresa *</label>
-                <input className="pf-inp" required value={form.name} onChange={set('name')} />
+                <label style={LBL}>Nome da empresa *</label>
+                <input style={INP} className="pf-inp" required value={form.name} onChange={set('name')} placeholder="Ex: Marcenaria Silva" />
               </div>
               <div>
-                <label className="pf-label">Segmento *</label>
-                <select className="pf-inp" value={form.segment} onChange={set('segment')}>
-                  {SEGMENTS.map((s) => <option key={s} value={s}>{s}</option>)}
+                <label style={LBL}>Segmento *</label>
+                <select style={INP} className="pf-inp" value={form.segment} onChange={set('segment')}>
+                  {SEGMENTS.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
-                <label className="pf-label">Cidade / Estado *</label>
-                <input className="pf-inp" required value={form.city} onChange={set('city')} placeholder="São Paulo, SP" />
+                <label style={LBL}>Cidade / Estado *</label>
+                <input style={INP} className="pf-inp" required value={form.city} onChange={set('city')} placeholder="São Paulo, SP" />
               </div>
               <div>
-                <label className="pf-label">Ano de fundação</label>
-                <input className="pf-inp" value={form.founded} onChange={set('founded')} placeholder="2010" />
+                <label style={LBL}>Ano de fundação</label>
+                <input style={INP} className="pf-inp" value={form.founded} onChange={set('founded')} placeholder="2010" />
               </div>
             </div>
 
             <div>
-              <label className="pf-label">Bio / Apresentação *</label>
-              <textarea
-                className="pf-inp"
-                required
-                rows={4}
-                value={form.bio}
-                onChange={set('bio')}
-                placeholder="Descreva sua empresa, diferenciais e especialidades..."
-                style={{ resize: 'vertical' as const }}
-              />
-              <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 4, textAlign: 'right' as const }}>
-                {form.bio.length}/500 caracteres
-              </div>
+              <label style={LBL}>Bio / Apresentação <span style={{ color: form.bio.length > 460 ? '#ff9500' : '#c7c7cc' }}>{form.bio.length}/500</span></label>
+              <textarea style={{ ...INP, resize: 'vertical', lineHeight: 1.65 }} className="pf-inp" rows={4}
+                value={form.bio} onChange={set('bio')}
+                placeholder="Descreva sua empresa, diferenciais e especialidades..." />
             </div>
+          </div>
 
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: '#8e8e93', textTransform: 'uppercase' as const, paddingTop: 8, paddingBottom: 12, borderTop: '1px solid rgba(0,0,0,0.06)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-              Contato e redes sociais
+          {/* Contato */}
+          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: '#8e8e93', textTransform: 'uppercase' }}>Contato e redes sociais</div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div>
+                <label style={LBL}>Instagram</label>
+                <input style={INP} className="pf-inp" value={form.instagram} onChange={set('instagram')} placeholder="@empresa.exemplo" />
+              </div>
+              <div>
+                <label style={LBL}>WhatsApp</label>
+                <input style={INP} className="pf-inp" value={form.whatsapp} onChange={set('whatsapp')} placeholder="(11) 99999-9999" />
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
-                <label className="pf-label">Instagram</label>
-                <input className="pf-inp" value={form.instagram} onChange={set('instagram')} placeholder="@empresa.exemplo" />
+                <label style={LBL}>E-mail de contato</label>
+                <input style={{ ...INP }} className="pf-inp" type="email" value={form.email} onChange={set('email')} placeholder="contato@empresa.com.br" />
               </div>
               <div>
-                <label className="pf-label">WhatsApp</label>
-                <input className="pf-inp" value={form.whatsapp} onChange={set('whatsapp')} placeholder="(11) 99999-9999" />
+                <label style={LBL}>Website</label>
+                <input style={INP} className="pf-inp" type="url" value={form.website} onChange={set('website')} placeholder="https://empresa.com.br" />
               </div>
             </div>
-
-            <div>
-              <label className="pf-label">E-mail de contato</label>
-              <input className="pf-inp" type="email" value={form.email} onChange={set('email')} placeholder="contato@empresa.com.br" />
-            </div>
-
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: '#8e8e93', textTransform: 'uppercase' as const, paddingTop: 8, paddingBottom: 12, borderTop: '1px solid rgba(0,0,0,0.06)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-              Foto de capa
-            </div>
-
-            <div>
-              <label className="pf-label">Imagem de capa</label>
-              <input
-                ref={coverInputRef}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={e => {
-                  const file = e.target.files?.[0]
-                  if (file) uploadCover(file)
-                }}
-              />
-              {form.cover_url ? (
-                <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', height: 100, border: '1px solid rgba(0,0,0,0.08)', marginBottom: 8 }}>
-                  <img src={form.cover_url} alt="Capa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                    <button type="button" onClick={() => coverInputRef.current?.click()}
-                      style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 8, padding: '5px 12px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <Upload size={12} /> Trocar
-                    </button>
-                    <button type="button" onClick={() => setForm(f => ({ ...f, cover_url: '' }))}
-                      style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 8, padding: '5px 12px', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, color: '#ef4444' }}>
-                      <X size={12} /> Remover
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => coverInputRef.current?.click()}
-                  disabled={uploadingCover}
-                  style={{
-                    width: '100%', border: '1.5px dashed rgba(0,0,0,0.15)', borderRadius: 10,
-                    padding: '18px', background: '#f2f2f7', cursor: 'pointer',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                  }}
-                >
-                  {uploadingCover ? <Loader2 size={18} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={18} color="#8e8e93" />}
-                  <span style={{ fontSize: 12, color: '#8e8e93' }}>{uploadingCover ? 'Enviando...' : 'Clique para enviar imagem de capa'}</span>
-                </button>
-              )}
-            </div>
-
-            {/* Save button */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingTop: 4 }}>
-              <button
-                type="submit"
-                disabled={saving || !form.name}
-                style={{
-                  background: saved ? 'rgba(52,211,153,0.12)' : saving ? 'rgba(0,122,255,0.4)' : '#007AFF',
-                  color: saved ? '#34d399' : '#ffffff',
-                  border: saved ? '1px solid rgba(52,211,153,0.25)' : 'none',
-                  borderRadius: 10, padding: '12px 28px', fontSize: 14, fontWeight: 700,
-                  cursor: saving || !form.name ? 'not-allowed' : 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.15s',
-                }}
-              >
-                {saved ? (
-                  <><CheckCircle2 size={16} /> Perfil atualizado!</>
-                ) : saving ? (
-                  <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</>
-                ) : (
-                  <><Save size={16} /> Salvar Alterações</>
-                )}
-              </button>
-            </div>
           </div>
+
+          {/* Save */}
+          <button
+            type="submit"
+            disabled={saving || !form.name}
+            style={{
+              background: saving ? 'rgba(0,122,255,0.5)' : '#007AFF',
+              color: '#fff', border: 'none', borderRadius: 12,
+              padding: '14px', fontSize: 14, fontWeight: 700,
+              cursor: saving || !form.name ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              transition: 'opacity 0.15s', opacity: !form.name ? 0.5 : 1,
+            }}
+            onMouseEnter={e => { if (!saving && form.name) e.currentTarget.style.opacity = '0.88' }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+          >
+            {saving
+              ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</>
+              : <><Save size={16} /> Salvar Alterações</>}
+          </button>
         </form>
 
         {/* ── Preview card ── */}
         <div style={{ position: 'sticky', top: 24 }}>
-          <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: 12 }}>
-            Pré-visualização do perfil
+          <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
+            Pré-visualização
           </div>
-          <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
             {/* Cover */}
             <div style={{ position: 'relative', height: 130 }}>
-              {form.cover_url ? (
-                <img src={form.cover_url} alt="Capa" style={{ width: '100%', height: '100%', objectFit: 'cover' as const, display: 'block' }} />
-              ) : (
-                <div style={{ width: '100%', height: '100%', background: '#f2f2f7' }} />
-              )}
+              {form.cover_url
+                ? <img src={form.cover_url} alt="Capa" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #e8e8f0, #d0d0dc)' }} />}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 60%)' }} />
-              <div style={{ position: 'absolute', bottom: 12, left: 14, right: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                  <div style={{ background: 'rgba(255,255,255,0.85)', border: `1px solid ${segColor}44`, color: segColor, fontSize: 9.5, fontWeight: 700, padding: '2px 8px', borderRadius: 20, backdropFilter: 'blur(4px)' } as React.CSSProperties}>
-                    {form.segment}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, color: 'rgba(255,255,255,0.85)', fontSize: 10 }}>
-                    <MapPin size={9} />
-                    {form.city || 'Cidade, Estado'}
-                  </div>
-                </div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#ffffff', lineHeight: 1.2 }}>
-                  {form.name || 'Nome da empresa'}
-                </div>
+
+              {/* Logo over cover */}
+              <div style={{ position: 'absolute', bottom: -24, left: 14, width: 48, height: 48, borderRadius: '50%', border: '3px solid #fff', background: form.image_url ? 'transparent' : '#e5e5ea', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
+                {form.image_url
+                  ? <img src={form.image_url} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Camera size={16} color="#8e8e93" />
+                    </div>}
               </div>
             </div>
 
             {/* Body */}
-            <div style={{ padding: '14px 16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 10 }}>
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} size={11} fill="#f97316" color="#f97316" />
-                ))}
-                <span style={{ fontSize: 12, color: '#f97316', fontWeight: 700, marginLeft: 2 }}>—</span>
-                <span style={{ fontSize: 11, color: '#8e8e93' }}>sem avaliações</span>
+            <div style={{ padding: '30px 16px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <div style={{ background: `${segColor}15`, border: `1px solid ${segColor}44`, color: segColor, fontSize: 9.5, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>
+                  {form.segment}
+                </div>
+                {form.city && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#8e8e93', fontSize: 10 }}>
+                    <MapPin size={9} /> {form.city}
+                  </div>
+                )}
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#1a1a1a', marginBottom: 8 }}>
+                {form.name || 'Nome da empresa'}
               </div>
 
-              <p style={{ fontSize: 12, color: '#6b6b6b', lineHeight: 1.6, margin: '0 0 12px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 10 }}>
+                {[1,2,3,4,5].map(s => <Star key={s} size={11} fill="#f97316" color="#f97316" />)}
+                <span style={{ fontSize: 11, color: '#8e8e93', marginLeft: 2 }}>sem avaliações</span>
+              </div>
+
+              <p style={{ fontSize: 12, color: '#6b6b6b', lineHeight: 1.6, margin: '0 0 12px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                 {form.bio || 'Sua bio aparecerá aqui...'}
               </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 14 }}>
                 {form.instagram && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: '#6b6b6b' }}>
-                    <Globe size={11} color="#8e8e93" />
-                    {form.instagram}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6b6b6b' }}>
+                    <Globe size={11} color="#8e8e93" /> {form.instagram}
                   </div>
                 )}
                 {form.whatsapp && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: '#6b6b6b' }}>
-                    <Phone size={11} color="#8e8e93" />
-                    {form.whatsapp}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6b6b6b' }}>
+                    <Phone size={11} color="#8e8e93" /> {form.whatsapp}
                   </div>
                 )}
               </div>
 
-              <div style={{ marginTop: 14, background: '#007AFF', color: '#ffffff', borderRadius: 10, padding: '9px', fontSize: 12, fontWeight: 700, textAlign: 'center' as const }}>
+              <div style={{ background: '#007AFF', color: '#fff', borderRadius: 10, padding: '9px', fontSize: 12, fontWeight: 700, textAlign: 'center' }}>
                 Solicitar Orçamento
               </div>
             </div>

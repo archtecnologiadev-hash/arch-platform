@@ -51,6 +51,8 @@ interface AnotacaoProjeto {
 interface DirSupplier {
   id: number; slug: string; name: string; segment: string; city: string
   rating: number; reviewCount: number; description: string; cover: string; color: string
+  logo?: string | null
+  isReal?: boolean
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -69,7 +71,12 @@ const SUPPLIER_DIRECTORY: DirSupplier[] = [
   { id: 5, slug: 'pintura-arte-final',   name: 'Pintura Arte Final',        segment: 'Pintura',    city: 'São Paulo, SP', rating: 4.9, reviewCount: 112, description: 'Pintura premium, texturas especiais e acabamentos diferenciados.',     cover: 'https://images.unsplash.com/photo-1562259929-b4e1fd3aef09?w=400&q=80', color: '#ef4444' },
 ]
 
-const DIR_SEGMENTS = ['Todos', 'Marcenaria', 'Elétrica', 'Vidraçaria', 'Gesseiro', 'Pintura']
+const DIR_SEGMENTS = ['Todos', 'Marcenaria', 'Elétrica', 'Vidraçaria', 'Gesseiro', 'Pintura', 'Iluminação', 'Outro']
+
+const SEG_COLOR: Record<string, string> = {
+  Marcenaria: '#4f9cf9', Elétrica: '#34d399', Vidraçaria: '#a78bfa',
+  Gesseiro: '#f97316', Pintura: '#ef4444', Iluminação: '#007AFF', Outro: '#6b6b6b',
+}
 
 const COVER_FALLBACK = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&q=80'
 
@@ -151,6 +158,8 @@ export default function ProjetoDetailPage() {
   const [cropConfig, setCropConfig] = useState<CropConfig | null>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
 
+  const [dbSuppliers, setDbSuppliers] = useState<DirSupplier[]>([])
+
   useEffect(() => {
     if (!projectId) return
     async function loadData() {
@@ -166,11 +175,13 @@ export default function ProjetoDetailPage() {
         { data: evs },
         { data: arqs },
         { data: anots },
+        { data: forn },
       ] = await Promise.all([
         supabase.from('projetos').select('*').eq('id', projectId).single(),
         supabase.from('eventos').select('*').eq('projeto_id', projectId).order('data_inicio'),
         supabase.from('arquivos_projeto').select('*').eq('projeto_id', projectId).order('created_at', { ascending: false }),
         supabase.from('anotacoes_projeto').select('*').eq('projeto_id', projectId).order('created_at', { ascending: false }),
+        supabase.from('fornecedores').select('id, slug, nome, segmento, cidade, bio, image_url, cover_url').order('created_at', { ascending: false }),
       ])
 
       if (proj) {
@@ -200,6 +211,22 @@ export default function ProjetoDetailPage() {
       }
       if (arqs) setArquivos(arqs as ArquivoProjeto[])
       if (anots) setAnotacoes(anots as AnotacaoProjeto[])
+      if (forn && forn.length > 0) {
+        setDbSuppliers(forn.map((f: Record<string, unknown>, i: number) => ({
+          id: i + 1,
+          slug: (f.slug as string) ?? '',
+          name: (f.nome as string) ?? '—',
+          segment: (f.segmento as string) ?? 'Outro',
+          city: (f.cidade as string) ?? '—',
+          rating: 0,
+          reviewCount: 0,
+          description: (f.bio as string) ?? '',
+          cover: (f.cover_url as string) ?? '',
+          color: SEG_COLOR[(f.segmento as string) ?? ''] ?? '#6b6b6b',
+          logo: f.image_url as string | null,
+          isReal: true,
+        })))
+      }
       setLoading(false)
     }
     loadData()
@@ -574,36 +601,62 @@ export default function ProjetoDetailPage() {
                     })}
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-                  {SUPPLIER_DIRECTORY.filter(s => dirFilter === 'Todos' || s.segment === dirFilter).map(sup => (
-                    <div key={sup.id} className="dir-card">
-                      <div style={{ position: 'relative', overflow: 'hidden' }}>
-                        <img src={sup.cover} alt={sup.name} className="dir-card-img" />
-                        <div style={{ position: 'absolute', top: 8, right: 8, background: `${sup.color}22`, border: `1px solid ${sup.color}44`, color: sup.color, fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 20, backdropFilter: 'blur(4px)' }}>{sup.segment}</div>
-                      </div>
-                      <div style={{ padding: '12px 14px' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a', marginBottom: 4 }}>{sup.name}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
-                          <div style={{ display: 'flex', gap: 1 }}>{[1,2,3,4,5].map(s => <Star key={s} size={9} fill={s <= Math.round(sup.rating) ? '#007AFF' : 'none'} color="#007AFF" />)}</div>
-                          <span style={{ fontSize: 11, color: '#007AFF', fontWeight: 700 }}>{sup.rating}</span>
-                          <span style={{ fontSize: 10, color: '#8e8e93' }}>({sup.reviewCount})</span>
-                          <span style={{ fontSize: 10, color: 'rgba(0,0,0,0.15)' }}>·</span>
-                          <MapPin size={9} color="#6b6b6b" />
-                          <span style={{ fontSize: 10, color: '#6b6b6b' }}>{sup.city}</span>
+                {(() => {
+                  const sourceList = dbSuppliers.length > 0 ? dbSuppliers : SUPPLIER_DIRECTORY
+                  const filtered = sourceList.filter(s => dirFilter === 'Todos' || s.segment === dirFilter)
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+                      {filtered.length === 0 && (
+                        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px 0', color: '#8e8e93', fontSize: 13 }}>
+                          Nenhum fornecedor encontrado para &quot;{dirFilter}&quot;
                         </div>
-                        <p style={{ fontSize: 11.5, color: '#6b6b6b', lineHeight: 1.55, margin: '0 0 10px' }}>{sup.description}</p>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <Link href={`/fornecedor/${sup.slug}`} target="_blank" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, padding: '6px', borderRadius: 6, background: 'transparent', border: '1px solid rgba(0,0,0,0.08)', color: '#6b6b6b', textDecoration: 'none', fontWeight: 600 }}>
-                            <ExternalLink size={10} /> Ver Perfil
-                          </Link>
-                          <button onClick={() => { setDirQuoteTarget(sup); setDirQuoteForm({ descricao: '', data: '' }); setDirQuoteFile(null); setDirQuoteSent(false) }} style={{ flex: 1, fontSize: 11, padding: '6px', borderRadius: 6, background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.22)', color: '#007AFF', cursor: 'pointer', fontWeight: 600 }}>
-                            Solicitar Orçamento
-                          </button>
+                      )}
+                      {filtered.map(sup => (
+                        <div key={sup.id} className="dir-card">
+                          <div style={{ position: 'relative', overflow: 'hidden', background: '#f2f2f7' }}>
+                            {sup.cover
+                              ? <img src={sup.cover} alt={sup.name} className="dir-card-img" />
+                              : <div style={{ height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #e8e8f0, #d4d4dc)' }}>
+                                  {sup.logo
+                                    ? <img src={sup.logo} alt={sup.name} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }} />
+                                    : <Package size={24} color="#c7c7cc" />}
+                                </div>}
+                            {sup.logo && sup.cover && (
+                              <div style={{ position: 'absolute', bottom: 8, left: 10, width: 34, height: 34, borderRadius: '50%', border: '2px solid #fff', overflow: 'hidden', background: '#e5e5ea', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }}>
+                                <img src={sup.logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              </div>
+                            )}
+                            <div style={{ position: 'absolute', top: 8, right: 8, background: `${sup.color}22`, border: `1px solid ${sup.color}44`, color: sup.color, fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 20, backdropFilter: 'blur(4px)' }}>{sup.segment}</div>
+                          </div>
+                          <div style={{ padding: '12px 14px' }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a', marginBottom: 4 }}>{sup.name}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+                              {sup.rating > 0
+                                ? <><div style={{ display: 'flex', gap: 1 }}>{[1,2,3,4,5].map(s => <Star key={s} size={9} fill={s <= Math.round(sup.rating) ? '#007AFF' : 'none'} color="#007AFF" />)}</div>
+                                    <span style={{ fontSize: 11, color: '#007AFF', fontWeight: 700 }}>{sup.rating}</span>
+                                    <span style={{ fontSize: 10, color: '#8e8e93' }}>({sup.reviewCount})</span>
+                                    <span style={{ fontSize: 10, color: 'rgba(0,0,0,0.15)' }}>·</span></>
+                                : null}
+                              <MapPin size={9} color="#6b6b6b" />
+                              <span style={{ fontSize: 10, color: '#6b6b6b' }}>{sup.city}</span>
+                            </div>
+                            {sup.description && <p style={{ fontSize: 11.5, color: '#6b6b6b', lineHeight: 1.55, margin: '0 0 10px' }}>{sup.description}</p>}
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              {sup.slug && (
+                                <Link href={`/fornecedor/${sup.slug}`} target="_blank" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, padding: '6px', borderRadius: 6, background: 'transparent', border: '1px solid rgba(0,0,0,0.08)', color: '#6b6b6b', textDecoration: 'none', fontWeight: 600 }}>
+                                  <ExternalLink size={10} /> Ver Perfil
+                                </Link>
+                              )}
+                              <button onClick={() => { setDirQuoteTarget(sup); setDirQuoteForm({ descricao: '', data: '' }); setDirQuoteFile(null); setDirQuoteSent(false) }} style={{ flex: 1, fontSize: 11, padding: '6px', borderRadius: 6, background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.22)', color: '#007AFF', cursor: 'pointer', fontWeight: 600 }}>
+                                Solicitar Orçamento
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  )
+                })()}
               </div>
 
               {/* Quote modal */}
