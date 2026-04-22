@@ -10,6 +10,7 @@ type OrcStatus = 'pendente' | 'em_analise' | 'respondido' | 'aprovado' | 'recusa
 interface OrcCard {
   id: string
   projeto_nome: string | null
+  escritorio_nome: string | null
   arquiteto_nome: string | null
   status: OrcStatus
   created_at: string
@@ -57,10 +58,14 @@ function OrcCard({ orc }: { orc: OrcCard }) {
             {initials}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
+            {orc.escritorio_nome && (
+              <div style={{ fontSize: 10.5, color: '#8b5cf6', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {orc.escritorio_nome}
+              </div>
+            )}
             <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {orc.projeto_nome ?? 'Projeto sem nome'}
             </div>
-            <div style={{ fontSize: 11, color: '#8e8e93' }}>{orc.arquiteto_nome ?? 'Arquiteto'}</div>
           </div>
         </div>
 
@@ -121,24 +126,41 @@ export default function FornecedorDashboardPage() {
         const arquIds = Array.from(new Set(rows.map((r: Record<string, unknown>) => r.arquiteto_id as string).filter(Boolean)))
 
         const [{ data: projs }, { data: arqus }] = await Promise.all([
-          projIds.length > 0 ? supabase.from('projetos').select('id, nome').in('id', projIds) : Promise.resolve({ data: [] }),
+          projIds.length > 0 ? supabase.from('projetos').select('id, nome, escritorio_id').in('id', projIds) : Promise.resolve({ data: [] }),
           arquIds.length > 0 ? supabase.from('users').select('id, nome').in('id', arquIds) : Promise.resolve({ data: [] }),
         ])
 
-        const projMap: Record<string, string> = {}
-        for (const p of (projs ?? [])) projMap[(p as { id: string; nome: string }).id] = (p as { id: string; nome: string }).nome
+        type ProjRow = { id: string; nome: string; escritorio_id: string | null }
+        const projMap: Record<string, ProjRow> = {}
+        for (const p of (projs ?? [])) {
+          const pr = p as ProjRow
+          projMap[pr.id] = pr
+        }
         const arquMap: Record<string, string> = {}
         for (const a of (arqus ?? [])) arquMap[(a as { id: string; nome: string }).id] = (a as { id: string; nome: string }).nome
 
-        setOrcamentos(rows.map((r: Record<string, unknown>) => ({
-          id: r.id as string,
-          projeto_nome: r.projeto_id ? (projMap[r.projeto_id as string] ?? null) : null,
-          arquiteto_nome: r.arquiteto_id ? (arquMap[r.arquiteto_id as string] ?? null) : null,
-          status: (r.status as OrcStatus) ?? 'pendente',
-          created_at: r.created_at as string,
-          mensagem: r.mensagem as string | null,
-          arquivo_url: r.arquivo_url as string | null,
-        })))
+        // Fetch escritorios
+        const escIds = Array.from(new Set(Object.values(projMap).map(p => p.escritorio_id).filter(Boolean) as string[]))
+        const { data: escs } = escIds.length > 0
+          ? await supabase.from('escritorios').select('id, nome').in('id', escIds)
+          : { data: [] }
+        const escMap: Record<string, string> = {}
+        for (const e of (escs ?? [])) escMap[(e as { id: string; nome: string }).id] = (e as { id: string; nome: string }).nome
+
+        setOrcamentos(rows.map((r: Record<string, unknown>) => {
+          const proj = r.projeto_id ? projMap[r.projeto_id as string] : null
+          const escNome = proj?.escritorio_id ? (escMap[proj.escritorio_id] ?? null) : null
+          return {
+            id: r.id as string,
+            projeto_nome: proj?.nome ?? null,
+            escritorio_nome: escNome,
+            arquiteto_nome: r.arquiteto_id ? (arquMap[r.arquiteto_id as string] ?? null) : null,
+            status: (r.status as OrcStatus) ?? 'pendente',
+            created_at: r.created_at as string,
+            mensagem: r.mensagem as string | null,
+            arquivo_url: r.arquivo_url as string | null,
+          }
+        }))
       }
       setLoading(false)
     }
@@ -284,7 +306,7 @@ export default function FornecedorDashboardPage() {
                         <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {orc.projeto_nome ?? 'Projeto sem nome'}
                         </div>
-                        <div style={{ fontSize: 11, color: '#8e8e93' }}>{orc.arquiteto_nome ?? 'Arquiteto'} · {dateStr}</div>
+                        <div style={{ fontSize: 11, color: '#8e8e93' }}>{orc.escritorio_nome ?? orc.arquiteto_nome ?? 'Arquiteto'} · {dateStr}</div>
                       </div>
                       <div style={{ fontSize: 10.5, padding: '3px 10px', borderRadius: 20, background: meta.bg, border: `1px solid ${meta.border}`, color: meta.color, fontWeight: 700, flexShrink: 0 }}>
                         {meta.label}

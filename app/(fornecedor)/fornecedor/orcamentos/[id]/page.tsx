@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, FileText, Download, Send, Upload, X,
-  CheckCircle2, Loader2, ChevronRight, Clock, AlertCircle
+  CheckCircle2, Loader2, ChevronRight, ChevronLeft, Clock, AlertCircle, Building2
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
@@ -26,8 +26,16 @@ interface OrcDetail {
   created_at: string
   updated_at: string | null
   projeto_nome: string | null
+  escritorio_nome: string | null
   arquiteto_nome: string | null
   arquiteto_email: string | null
+}
+
+interface HistItem {
+  id: string
+  etapa_anterior: string | null
+  etapa_nova: string
+  created_at: string
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -42,6 +50,8 @@ const PIPELINE: Array<{ key: OrcStatus; label: string; short: string }> = [
   { key: 'concluido',   label: 'Concluído',            short: 'Concluído' },
 ]
 
+const LABEL: Record<string, string> = Object.fromEntries(PIPELINE.map(p => [p.key, p.label]))
+
 const STATUS_COLOR: Record<OrcStatus, string> = {
   pendente:    '#007AFF',
   em_analise:  '#8b5cf6',
@@ -53,24 +63,14 @@ const STATUS_COLOR: Record<OrcStatus, string> = {
   concluido:   '#10b981',
 }
 
-function nextStatusFor(s: OrcStatus): OrcStatus | null {
-  switch (s) {
-    case 'pendente':    return 'em_analise'
-    case 'aprovado':    return 'agendado'
-    case 'agendado':    return 'em_execucao'
-    case 'em_execucao': return 'concluido'
-    default: return null
-  }
+function nextFor(s: OrcStatus): OrcStatus | null {
+  const idx = PIPELINE.findIndex(p => p.key === s)
+  return idx !== -1 && idx < PIPELINE.length - 1 ? PIPELINE[idx + 1].key : null
 }
 
-function nextLabelFor(s: OrcStatus): string | null {
-  switch (s) {
-    case 'pendente':    return 'Iniciar análise'
-    case 'aprovado':    return 'Marcar como agendado'
-    case 'agendado':    return 'Iniciar execução'
-    case 'em_execucao': return 'Marcar como concluído'
-    default: return null
-  }
+function prevFor(s: OrcStatus): OrcStatus | null {
+  const idx = PIPELINE.findIndex(p => p.key === s)
+  return idx > 0 ? PIPELINE[idx - 1].key : null
 }
 
 function fmt(iso: string) {
@@ -89,7 +89,9 @@ export default function OrcamentoDetailPage() {
 
   const [loading, setLoading] = useState(true)
   const [orc, setOrc] = useState<OrcDetail | null>(null)
-  const [advancing, setAdvancing] = useState(false)
+  const [historico, setHistorico] = useState<HistItem[]>([])
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [moving, setMoving] = useState<'fwd' | 'bck' | null>(null)
 
   const [replyText, setReplyText] = useState('')
   const [replyFile, setReplyFile] = useState<File | null>(null)
@@ -100,23 +102,46 @@ export default function OrcamentoDetailPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      const { data: row } = await supabase
-        .from('orcamentos').select('*').eq('id', id).single()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) setCurrentUserId(user.id)
+
+      const [{ data: row }, { data: hist }] = await Promise.all([
+        supabase.from('orcamentos').select('*').eq('id', id).single(),
+        supabase.from('orcamento_historico')
+          .select('id, etapa_anterior, etapa_nova, created_at')
+          .eq('orcamento_id', id)
+          .order('created_at', { ascending: true }),
+      ])
 
       if (!row) { setLoading(false); return }
 
+      if (hist) setHistorico(hist as HistItem[])
+
+      // Parallel: projeto + arquiteto
       const [{ data: proj }, { data: arq }] = await Promise.all([
         row.projeto_id
-          ? supabase.from('projetos').select('nome').eq('id', row.projeto_id).single()
+          ? supabase.from('projetos').select('nome, escritorio_id').eq('id', row.projeto_id).single()
           : Promise.resolve({ data: null }),
         row.arquiteto_id
           ? supabase.from('users').select('nome, email').eq('id', row.arquiteto_id).single()
           : Promise.resolve({ data: null }),
       ])
 
+      // Escritório via projeto.escritorio_id
+      let escritorio_nome: string | null = null
+      if ((proj as { nome: string; escritorio_id: string } | null)?.escritorio_id) {
+        const { data: esc } = await supabase
+          .from('escritorios')
+          .select('nome')
+          .eq('id', (proj as { nome: string; escritorio_id: string }).escritorio_id)
+          .single()
+        escritorio_nome = (esc as { nome: string } | null)?.nome ?? null
+      }
+
       setOrc({
         ...row,
         projeto_nome: (proj as { nome: string } | null)?.nome ?? null,
+        escritorio_nome,
         arquiteto_nome: (arq as { nome: string; email: string } | null)?.nome ?? null,
         arquiteto_email: (arq as { nome: string; email: string } | null)?.email ?? null,
       })
@@ -125,19 +150,38 @@ export default function OrcamentoDetailPage() {
     load()
   }, [id])
 
-  async function advanceStage() {
-    if (!orc) return
-    const next = nextStatusFor(orc.status)
-    if (!next) return
-    setAdvancing(true)
+  async function moveStage(dir: 'fwd' | 'bck') {
+    if (!orc || !currentUserId) return
+    const targetStatus = dir === 'fwd' ? nextFor(orc.status) : prevFor(orc.status)
+    if (!targetStatus) return
+
+    setMoving(dir)
     const supabase = createClient()
     const now = new Date().toISOString()
+    const prev = orc.status
+
     const { error } = await supabase
       .from('orcamentos')
-      .update({ status: next, updated_at: now })
+      .update({ status: targetStatus, updated_at: now })
       .eq('id', orc.id)
-    if (!error) setOrc(prev => prev ? { ...prev, status: next, updated_at: now } : prev)
-    setAdvancing(false)
+
+    if (!error) {
+      // Insert history entry
+      const { data: newHist } = await supabase
+        .from('orcamento_historico')
+        .insert({
+          orcamento_id: orc.id,
+          etapa_anterior: prev,
+          etapa_nova: targetStatus,
+          usuario_id: currentUserId,
+        })
+        .select('id, etapa_anterior, etapa_nova, created_at')
+        .single()
+
+      setOrc(o => o ? { ...o, status: targetStatus, updated_at: now } : o)
+      if (newHist) setHistorico(h => [...h, newHist as HistItem])
+    }
+    setMoving(null)
   }
 
   async function handleReply(e: React.FormEvent) {
@@ -158,18 +202,33 @@ export default function OrcamentoDetailPage() {
     }
 
     const now = new Date().toISOString()
+    const prev = orc.status
     const { error } = await supabase.from('orcamentos')
       .update({ resposta: replyText.trim(), resposta_arquivo_url: respostaArquivoUrl, status: 'respondido', updated_at: now })
       .eq('id', orc.id)
 
-    if (!error) {
-      setOrc(prev => prev ? { ...prev, resposta: replyText.trim(), resposta_arquivo_url: respostaArquivoUrl, status: 'respondido', updated_at: now } : prev)
+    if (!error && currentUserId) {
+      const { data: newHist } = await supabase
+        .from('orcamento_historico')
+        .insert({
+          orcamento_id: orc.id,
+          etapa_anterior: prev,
+          etapa_nova: 'respondido',
+          usuario_id: currentUserId,
+        })
+        .select('id, etapa_anterior, etapa_nova, created_at')
+        .single()
+
+      setOrc(o => o ? { ...o, resposta: replyText.trim(), resposta_arquivo_url: respostaArquivoUrl, status: 'respondido', updated_at: now } : o)
+      if (newHist) setHistorico(h => [...h, newHist as HistItem])
     }
     setReplySending(false)
     setReplySent(true)
     setReplyText('')
     setReplyFile(null)
   }
+
+  // ─── Loading / not found ───────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -185,7 +244,8 @@ export default function OrcamentoDetailPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f2f2f7', flexDirection: 'column', gap: 12 }}>
         <AlertCircle size={32} color="#c7c7cc" />
         <div style={{ fontSize: 14, color: '#6b6b6b' }}>Orçamento não encontrado.</div>
-        <button onClick={() => router.push('/fornecedor/orcamentos')} style={{ fontSize: 12.5, color: '#007AFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+        <button onClick={() => router.push('/fornecedor/orcamentos')}
+          style={{ fontSize: 12.5, color: '#007AFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
           Voltar para orçamentos
         </button>
       </div>
@@ -195,15 +255,9 @@ export default function OrcamentoDetailPage() {
   const currentStep = PIPELINE.findIndex(p => p.key === orc.status)
   const isRecusado = orc.status === 'recusado'
   const activeColor = isRecusado ? '#ef4444' : STATUS_COLOR[orc.status]
-  const advLabel = nextLabelFor(orc.status)
+  const canAdvance = !isRecusado && nextFor(orc.status) !== null
+  const canRetreat = !isRecusado && prevFor(orc.status) !== null
   const canReply = orc.status === 'em_analise'
-
-  const events = [
-    { label: 'Solicitação recebida', date: orc.created_at, icon: 'in' },
-    ...(orc.updated_at && orc.updated_at !== orc.created_at
-      ? [{ label: `Status: ${PIPELINE.find(p => p.key === orc.status)?.label ?? orc.status}`, date: orc.updated_at, icon: 'upd' }]
-      : []),
-  ]
 
   return (
     <div style={{ minHeight: '100vh', background: '#f2f2f7', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1a1a1a' }}>
@@ -211,7 +265,8 @@ export default function OrcamentoDetailPage() {
         @keyframes spin { to { transform: rotate(360deg) } }
         .od-inp { width:100%; background:#f2f2f7; border:1px solid rgba(0,0,0,0.1); border-radius:10px; padding:10px 14px; color:#1a1a1a; font-size:13px; outline:none; transition:border-color 0.15s; box-sizing:border-box; font-family:inherit; resize:vertical; }
         .od-inp:focus { border-color:#007AFF; }
-        .od-adv:hover { opacity:0.88; }
+        .od-btn-fwd:hover:not(:disabled) { opacity:0.87; transform:translateY(-1px); }
+        .od-btn-bck:hover:not(:disabled) { background:rgba(0,0,0,0.06) !important; }
       `}</style>
 
       {/* Top bar */}
@@ -221,41 +276,96 @@ export default function OrcamentoDetailPage() {
           <ArrowLeft size={15} /> Orçamentos
         </button>
         <div style={{ width: 1, height: 16, background: 'rgba(0,0,0,0.1)' }} />
-        <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {orc.projeto_nome ?? 'Projeto sem nome'}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {orc.escritorio_nome && (
+            <div style={{ fontSize: 11, color: '#8e8e93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {orc.escritorio_nome}
+            </div>
+          )}
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {orc.projeto_nome ?? 'Projeto sem nome'}
+          </div>
         </div>
-        <div style={{ marginLeft: 'auto', fontSize: 11, padding: '3px 10px', borderRadius: 20, background: isRecusado ? 'rgba(239,68,68,0.1)' : `${activeColor}14`, border: `1px solid ${activeColor}30`, color: activeColor, fontWeight: 700 }}>
+        <div style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: `${activeColor}14`, border: `1px solid ${activeColor}30`, color: activeColor, fontWeight: 700, flexShrink: 0 }}>
           {isRecusado ? 'Recusado' : (PIPELINE[currentStep]?.label ?? orc.status)}
         </div>
       </div>
 
-      <div style={{ padding: '28px 32px', maxWidth: 860, margin: '0 auto' }}>
+      <div style={{ padding: '28px 32px', maxWidth: 900, margin: '0 auto' }}>
 
         {/* Header card */}
         <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '22px 24px', marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
             <div>
+              {/* Escritório (primary) */}
+              {orc.escritorio_nome && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                  <Building2 size={14} color="#8b5cf6" />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#8b5cf6' }}>{orc.escritorio_nome}</span>
+                </div>
+              )}
+              {/* Project name */}
               <div style={{ fontSize: 20, fontWeight: 800, color: '#1a1a1a', marginBottom: 6 }}>
                 {orc.projeto_nome ?? 'Projeto sem nome'}
               </div>
-              <div style={{ fontSize: 13, color: '#6b6b6b', display: 'flex', gap: 16 }}>
-                {orc.arquiteto_nome && <span>Arquiteto: <strong style={{ color: '#1a1a1a' }}>{orc.arquiteto_nome}</strong></span>}
-                {orc.arquiteto_email && <span style={{ color: '#8e8e93' }}>{orc.arquiteto_email}</span>}
+              <div style={{ fontSize: 13, color: '#6b6b6b', display: 'flex', gap: 14, flexWrap: 'wrap' as const }}>
+                {orc.arquiteto_nome && (
+                  <span>Arquiteto: <strong style={{ color: '#1a1a1a' }}>{orc.arquiteto_nome}</strong></span>
+                )}
+                {orc.arquiteto_email && (
+                  <span style={{ color: '#8e8e93' }}>{orc.arquiteto_email}</span>
+                )}
               </div>
-              <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 5 }}>
-                <Clock size={11} style={{ display: 'inline', marginRight: 4 }} />
+              <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Clock size={11} />
                 Recebido em {fmt(orc.created_at)}
               </div>
             </div>
 
-            {/* Advance button */}
-            {advLabel && !isRecusado && (
-              <button onClick={advanceStage} disabled={advancing} className="od-adv"
-                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 10, background: activeColor, color: '#fff', border: 'none', cursor: advancing ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 700, flexShrink: 0, transition: 'opacity 0.15s' }}>
-                {advancing
-                  ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Avançando...</>
-                  : <><ChevronRight size={13} /> {advLabel}</>}
-              </button>
+            {/* Stage buttons */}
+            {!isRecusado && (
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                {canRetreat && (
+                  <button
+                    onClick={() => moveStage('bck')}
+                    disabled={moving !== null}
+                    className="od-btn-bck"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '10px 16px', borderRadius: 10,
+                      background: '#f2f2f7', color: '#6b6b6b',
+                      border: '1px solid rgba(0,0,0,0.12)',
+                      cursor: moving ? 'not-allowed' : 'pointer',
+                      fontSize: 13, fontWeight: 600,
+                      transition: 'all 0.15s', opacity: moving === 'bck' ? 0.7 : 1,
+                    }}>
+                    {moving === 'bck'
+                      ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
+                      : <ChevronLeft size={13} />}
+                    Retroceder
+                  </button>
+                )}
+                {canAdvance && (
+                  <button
+                    onClick={() => moveStage('fwd')}
+                    disabled={moving !== null}
+                    className="od-btn-fwd"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '10px 18px', borderRadius: 10,
+                      background: '#007AFF', color: '#fff',
+                      border: 'none',
+                      cursor: moving ? 'not-allowed' : 'pointer',
+                      fontSize: 13, fontWeight: 700,
+                      transition: 'all 0.15s', opacity: moving === 'fwd' ? 0.7 : 1,
+                      boxShadow: '0 2px 8px rgba(0,122,255,0.3)',
+                    }}>
+                    {moving === 'fwd'
+                      ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Avançando...</>
+                      : <><ChevronRight size={13} /> Avançar etapa</>}
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -263,8 +373,8 @@ export default function OrcamentoDetailPage() {
         {/* Timeline */}
         {!isRecusado && (
           <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '22px 28px', marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflowX: 'auto' }}>
-            <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 18 }}>Progresso</div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0, minWidth: 560 }}>
+            <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 20 }}>Progresso</div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', minWidth: 580 }}>
               {PIPELINE.map((step, i) => {
                 const done = i < currentStep
                 const current = i === currentStep
@@ -273,24 +383,24 @@ export default function OrcamentoDetailPage() {
                   <div key={step.key} style={{ display: 'flex', alignItems: 'center', flex: i < PIPELINE.length - 1 ? 1 : 0 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                       <div style={{
-                        width: current ? 32 : 24, height: current ? 32 : 24,
+                        width: current ? 34 : 26, height: current ? 34 : 26,
                         borderRadius: '50%',
                         background: done ? '#34d399' : current ? activeColor : '#f2f2f7',
                         border: `2px solid ${color}`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'all 0.2s',
-                        boxShadow: current ? `0 0 0 4px ${activeColor}20` : 'none',
+                        transition: 'all 0.25s',
+                        boxShadow: current ? `0 0 0 5px ${activeColor}1a` : 'none',
                       }}>
                         {done
-                          ? <CheckCircle2 size={12} color="#fff" fill="#34d399" />
-                          : <div style={{ width: current ? 8 : 6, height: current ? 8 : 6, borderRadius: '50%', background: current ? '#fff' : '#c7c7cc' }} />}
+                          ? <CheckCircle2 size={13} color="#fff" />
+                          : <div style={{ width: current ? 9 : 7, height: current ? 9 : 7, borderRadius: '50%', background: current ? '#fff' : '#c7c7cc' }} />}
                       </div>
-                      <div style={{ fontSize: 10, fontWeight: current ? 700 : 500, color: current ? activeColor : done ? '#34d399' : '#8e8e93', textAlign: 'center', maxWidth: 60 }}>
+                      <div style={{ fontSize: 9.5, fontWeight: current ? 700 : 500, color: current ? activeColor : done ? '#34d399' : '#8e8e93', textAlign: 'center', maxWidth: 58 }}>
                         {step.short}
                       </div>
                     </div>
                     {i < PIPELINE.length - 1 && (
-                      <div style={{ flex: 1, height: 2, background: done ? '#34d399' : 'rgba(0,0,0,0.08)', margin: '0 4px', marginBottom: 28, borderRadius: 2, transition: 'background 0.3s' }} />
+                      <div style={{ flex: 1, height: 2.5, background: done ? '#34d399' : 'rgba(0,0,0,0.07)', margin: '0 3px', marginBottom: 30, borderRadius: 2, transition: 'background 0.3s' }} />
                     )}
                   </div>
                 )
@@ -309,7 +419,7 @@ export default function OrcamentoDetailPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20, alignItems: 'flex-start' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-            {/* Message */}
+            {/* Message + files */}
             <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '20px 22px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
               <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 12 }}>Descrição do Pedido</div>
               {orc.mensagem
@@ -323,11 +433,11 @@ export default function OrcamentoDetailPage() {
               )}
             </div>
 
-            {/* Reply / Sent response */}
+            {/* Reply area */}
             {orc.resposta ? (
               <div style={{ background: '#fff', border: '1px solid rgba(52,211,153,0.25)', borderRadius: 14, padding: '20px 22px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
                 <div style={{ fontSize: 11, color: '#34d399', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 12 }}>Sua Proposta Enviada</div>
-                {replySent && <div style={{ fontSize: 12, color: '#34d399', marginBottom: 10 }}>✓ Proposta atualizada com sucesso.</div>}
+                {replySent && <div style={{ fontSize: 12, color: '#34d399', marginBottom: 10 }}>✓ Proposta atualizada.</div>}
                 <p style={{ fontSize: 14, color: '#1a1a1a', lineHeight: 1.7, margin: '0 0 14px' }}>{orc.resposta}</p>
                 {orc.resposta_arquivo_url && (
                   <a href={orc.resposta_arquivo_url} target="_blank" rel="noopener noreferrer"
@@ -377,38 +487,77 @@ export default function OrcamentoDetailPage() {
             ) : null}
           </div>
 
-          {/* Right sidebar: history */}
-          <div>
+          {/* Sidebar */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+            {/* History */}
             <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-              <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 16 }}>Histórico</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                {events.map((ev, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 12, paddingBottom: i < events.length - 1 ? 16 : 0, position: 'relative' }}>
-                    {i < events.length - 1 && (
-                      <div style={{ position: 'absolute', left: 7, top: 16, bottom: 0, width: 1, background: 'rgba(0,0,0,0.08)' }} />
+              <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 16 }}>Histórico de movimentos</div>
+
+              {/* Initial event */}
+              <div style={{ display: 'flex', gap: 12, paddingBottom: historico.length > 0 ? 16 : 0, position: 'relative' }}>
+                {historico.length > 0 && (
+                  <div style={{ position: 'absolute', left: 7, top: 16, bottom: 0, width: 1, background: 'rgba(0,0,0,0.07)' }} />
+                )}
+                <div style={{ width: 15, height: 15, borderRadius: '50%', background: '#e5e5ea', border: '2px solid #d1d1d6', flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1a1a1a' }}>Solicitação recebida</div>
+                  <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{fmt(orc.created_at)}</div>
+                </div>
+              </div>
+
+              {historico.map((h, i) => {
+                const isLast = i === historico.length - 1
+                const fromLabel = h.etapa_anterior ? (LABEL[h.etapa_anterior] ?? h.etapa_anterior) : '—'
+                const toLabel = LABEL[h.etapa_nova] ?? h.etapa_nova
+                return (
+                  <div key={h.id} style={{ display: 'flex', gap: 12, paddingBottom: isLast ? 0 : 16, position: 'relative' }}>
+                    {!isLast && (
+                      <div style={{ position: 'absolute', left: 7, top: 16, bottom: 0, width: 1, background: 'rgba(0,0,0,0.07)' }} />
                     )}
-                    <div style={{ width: 15, height: 15, borderRadius: '50%', background: i === events.length - 1 ? activeColor : '#e5e5ea', border: `2px solid ${i === events.length - 1 ? activeColor : '#d1d1d6'}`, flexShrink: 0, marginTop: 2 }} />
+                    <div style={{
+                      width: 15, height: 15, borderRadius: '50%',
+                      background: isLast ? activeColor : '#e5e5ea',
+                      border: `2px solid ${isLast ? activeColor : '#d1d1d6'}`,
+                      flexShrink: 0, marginTop: 2,
+                    }} />
                     <div>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1a1a1a' }}>{ev.label}</div>
-                      <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{fmt(ev.date)}</div>
+                      <div style={{ fontSize: 12, color: '#6b6b6b' }}>
+                        <span style={{ color: '#8e8e93' }}>{fromLabel}</span>
+                        <span style={{ margin: '0 5px', color: '#c7c7cc' }}>→</span>
+                        <span style={{ fontWeight: 700, color: isLast ? activeColor : '#1a1a1a' }}>{toLabel}</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{fmt(h.created_at)}</div>
                     </div>
                   </div>
-                ))}
-              </div>
+                )
+              })}
+
+              {historico.length === 0 && (
+                <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 4, fontStyle: 'italic' }}>Nenhum movimento ainda.</div>
+              )}
             </div>
 
-            {/* Quick info */}
-            <div style={{ marginTop: 14, background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            {/* Details */}
+            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
               <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 12 }}>Detalhes</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {orc.escritorio_nome && (
+                  <div>
+                    <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 2 }}>Escritório</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{orc.escritorio_nome}</div>
+                  </div>
+                )}
                 <div>
                   <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 2 }}>Projeto</div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{orc.projeto_nome ?? '—'}</div>
                 </div>
-                <div>
-                  <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 2 }}>Arquiteto</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{orc.arquiteto_nome ?? '—'}</div>
-                </div>
+                {orc.arquiteto_nome && (
+                  <div>
+                    <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 2 }}>Arquiteto</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{orc.arquiteto_nome}</div>
+                  </div>
+                )}
                 {orc.arquiteto_email && (
                   <div>
                     <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 2 }}>Email</div>
