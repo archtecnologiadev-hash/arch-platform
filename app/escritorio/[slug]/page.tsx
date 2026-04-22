@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
 import {
   Star, MapPin, ArrowLeft, CheckCircle2,
   Award, FolderOpen, Calendar, Globe, AtSign, Phone,
+  ChevronLeft, ChevronRight, X,
 } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -144,6 +145,36 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
   const [portfolio, setPortfolio] = useState<PortfolioProject[]>([])
   const [activeTab, setActiveTab] = useState<Tab>('portfolio')
   const [loading, setLoading] = useState(true)
+  const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(null)
+  const [imgIdx, setImgIdx] = useState(0)
+
+  const openProject = useCallback((project: PortfolioProject) => {
+    setSelectedProject(project)
+    setImgIdx(0)
+  }, [])
+
+  const closeModal = useCallback(() => setSelectedProject(null), [])
+
+  const prevImg = useCallback(() => {
+    if (!selectedProject) return
+    setImgIdx(i => (i - 1 + selectedProject.imagens.length) % selectedProject.imagens.length)
+  }, [selectedProject])
+
+  const nextImg = useCallback(() => {
+    if (!selectedProject) return
+    setImgIdx(i => (i + 1) % selectedProject.imagens.length)
+  }, [selectedProject])
+
+  useEffect(() => {
+    if (!selectedProject) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeModal()
+      if (e.key === 'ArrowLeft') prevImg()
+      if (e.key === 'ArrowRight') nextImg()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedProject, closeModal, prevImg, nextImg])
 
   useEffect(() => {
     async function load() {
@@ -323,6 +354,7 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                       const tall = project.imagens.length > 2
                       return (
                         <div key={project.id}
+                          onClick={() => openProject(project)}
                           className="group relative mb-4 cursor-pointer overflow-hidden break-inside-avoid rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
                           {firstImg ? (
                             <img src={firstImg} alt={project.nome}
@@ -487,6 +519,84 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
           </div>
         )}
       </div>
+
+      {/* ── PORTFOLIO MODAL ─────────────────────────────────────────── */}
+      {selectedProject && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+          onClick={e => { if (e.target === e.currentTarget) closeModal() }}>
+          <div className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-[#111] shadow-[0_32px_80px_rgba(0,0,0,0.6)]"
+            style={{ maxHeight: '92vh' }}>
+
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4 px-5 py-4">
+              <div>
+                {selectedProject.categoria && (
+                  <p className="mb-0.5 text-[10px] font-semibold tracking-[0.35em] text-[#007AFF]">
+                    {selectedProject.categoria.toUpperCase()}
+                  </p>
+                )}
+                <h3 className="text-base font-bold text-white">{selectedProject.nome}</h3>
+                {selectedProject.descricao && (
+                  <p className="mt-1 text-xs text-white/50 line-clamp-2">{selectedProject.descricao}</p>
+                )}
+              </div>
+              <button onClick={closeModal}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white">
+                <X size={15} />
+              </button>
+            </div>
+
+            {/* Image */}
+            <div className="relative flex-1 overflow-hidden bg-black" style={{ minHeight: 240 }}>
+              {selectedProject.imagens.length > 0 ? (
+                <>
+                  <img
+                    key={imgIdx}
+                    src={selectedProject.imagens[imgIdx].url}
+                    alt={`${selectedProject.nome} — foto ${imgIdx + 1}`}
+                    className="h-full w-full object-contain"
+                    style={{ maxHeight: '65vh' }}
+                  />
+                  {selectedProject.imagens.length > 1 && (
+                    <>
+                      <button onClick={prevImg}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/70">
+                        <ChevronLeft size={20} />
+                      </button>
+                      <button onClick={nextImg}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/70">
+                        <ChevronRight size={20} />
+                      </button>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="flex h-60 items-center justify-center text-xs text-white/30">
+                  Sem fotos neste projeto
+                </div>
+              )}
+            </div>
+
+            {/* Thumbnails + counter */}
+            {selectedProject.imagens.length > 1 && (
+              <div className="flex items-center gap-2 overflow-x-auto px-5 py-3">
+                <span className="mr-2 shrink-0 text-[10px] text-white/30">
+                  {imgIdx + 1}/{selectedProject.imagens.length}
+                </span>
+                {selectedProject.imagens.map((img, i) => (
+                  <button key={i} onClick={() => setImgIdx(i)}
+                    className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                      i === imgIdx ? 'border-[#007AFF] opacity-100' : 'border-transparent opacity-40 hover:opacity-70'
+                    }`}>
+                    <img src={img.url} alt="" className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── FOOTER ──────────────────────────────────────────────────── */}
       <footer className="mt-8 border-t border-black/[0.08] bg-white px-6 py-10">
