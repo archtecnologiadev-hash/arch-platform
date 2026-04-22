@@ -155,15 +155,29 @@ export default function ArquitetoPerfilPage() {
 
   async function uploadImg(file: File, path: string): Promise<string | null> {
     const supabase = createClient()
-    console.log('[perfil] upload start:', path)
-    const { error } = await supabase.storage.from('escritorios').upload(path, file, { upsert: true })
+    console.log('[perfil] upload start:', path, 'size:', file.size, 'type:', file.type)
+
+    let { error } = await supabase.storage.from('escritorios').upload(path, file, { upsert: true })
+
+    // If bucket doesn't exist yet, create it and retry once
+    if (error && (error.message.includes('not found') || error.message.includes('Bucket not found') || error.statusCode === '404' || (error as { statusCode?: string | number }).statusCode === 404)) {
+      console.warn('[perfil] bucket not found — attempting createBucket')
+      const { error: bucketErr } = await supabase.storage.createBucket('escritorios', { public: true })
+      if (bucketErr && !bucketErr.message.includes('already exists')) {
+        console.error('[perfil] createBucket error:', bucketErr)
+        return null
+      }
+      const retry = await supabase.storage.from('escritorios').upload(path, file, { upsert: true })
+      error = retry.error
+    }
+
     if (error) {
-      console.error('[perfil] upload error:', error.message, error)
+      console.error('[perfil] upload FAILED:', JSON.stringify({ message: error.message, statusCode: (error as { statusCode?: unknown }).statusCode, name: error.name, cause: (error as { cause?: unknown }).cause }, null, 2))
       return null
     }
-    // Return clean URL without cache-bust — UI adds ?t= for display only
+
     const { data: { publicUrl } } = supabase.storage.from('escritorios').getPublicUrl(path)
-    console.log('[perfil] upload success:', publicUrl)
+    console.log('[perfil] upload OK → publicUrl:', publicUrl)
     return publicUrl
   }
 
