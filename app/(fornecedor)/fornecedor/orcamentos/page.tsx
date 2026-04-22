@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { X, Send, CheckCircle2, Upload, Loader2, FileText, Download, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
@@ -69,6 +70,7 @@ function nextStatus(status: OrcStatus): OrcStatus | null {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function FornecedorOrcamentosPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([])
   const [fornecedorId, setFornecedorId] = useState<string | null>(null)
@@ -282,7 +284,8 @@ export default function FornecedorOrcamentosPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                       <div>
-                        <div style={{ fontSize: 14.5, fontWeight: 700, color: '#1a1a1a' }}>
+                        <div onClick={() => router.push(`/fornecedor/orcamentos/${orc.id}`)}
+                          style={{ fontSize: 14.5, fontWeight: 700, color: '#1a1a1a', cursor: 'pointer' }}>
                           {orc.projeto_nome ?? 'Projeto sem nome'}
                         </div>
                         <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 3 }}>
@@ -328,9 +331,13 @@ export default function FornecedorOrcamentosPage() {
 
                     {/* Action buttons */}
                     <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' as const }}>
+                      <button onClick={() => router.push(`/fornecedor/orcamentos/${orc.id}`)}
+                        style={{ fontSize: 11.5, padding: '5px 12px', borderRadius: 8, background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', cursor: 'pointer', fontWeight: 600 }}>
+                        Abrir →
+                      </button>
                       <button onClick={() => setExpandedId(isExpanded ? null : orc.id)}
                         style={{ fontSize: 11.5, padding: '5px 12px', borderRadius: 8, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', cursor: 'pointer', fontWeight: 600 }}>
-                        {isExpanded ? 'Menos detalhes' : 'Ver detalhes'}
+                        {isExpanded ? 'Menos' : 'Resumo'}
                       </button>
 
                       {canReply && (

@@ -19,17 +19,26 @@ function FornecedorSidebar() {
   const router = useRouter()
   const [userName, setUserName] = useState('Fornecedor')
   const [userInitials, setUserInitials] = useState('F')
+  const [pendingCount, setPendingCount] = useState(0)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        const nome = data.user.user_metadata?.nome ?? data.user.email ?? 'Fornecedor'
-        setUserName(nome)
-        setUserInitials(
-          nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase()
-        )
-      }
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return
+      const nome = data.user.user_metadata?.nome ?? data.user.email ?? 'Fornecedor'
+      setUserName(nome)
+      setUserInitials(nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase())
+
+      const { data: forn } = await supabase
+        .from('fornecedores').select('id').eq('user_id', data.user.id).single()
+      if (!forn) return
+
+      const { count } = await supabase
+        .from('orcamentos')
+        .select('id', { count: 'exact', head: true })
+        .eq('fornecedor_id', forn.id)
+        .eq('status', 'pendente')
+      setPendingCount(count ?? 0)
     })
   }, [])
 
@@ -97,6 +106,7 @@ function FornecedorSidebar() {
           const isActive =
             pathname === item.href ||
             (item.href !== '/fornecedor/dashboard' && pathname.startsWith(item.href))
+          const showBadge = item.href === '/fornecedor/orcamentos' && pendingCount > 0
           return (
             <Link
               key={item.href}
@@ -116,7 +126,16 @@ function FornecedorSidebar() {
               }}
             >
               <Icon size={16} strokeWidth={isActive ? 2 : 1.5} />
-              <span>{item.label}</span>
+              <span style={{ flex: 1 }}>{item.label}</span>
+              {showBadge && (
+                <span style={{
+                  fontSize: 10, fontWeight: 700, color: '#fff',
+                  background: '#ef4444', borderRadius: 10,
+                  padding: '1px 6px', lineHeight: '16px',
+                }}>
+                  {pendingCount}
+                </span>
+              )}
             </Link>
           )
         })}
