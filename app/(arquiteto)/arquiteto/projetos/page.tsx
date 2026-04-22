@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { FolderOpen, Plus, ArrowRight } from 'lucide-react'
+import { FolderOpen, Plus, ArrowRight, X, AlertCircle } from 'lucide-react'
 
 const PIPELINE_STAGES = ['Atendimento', 'Reunião', 'Briefing', '3D', 'Alt. 3D', 'Detalhamento', 'Orçamento', 'Execução']
 
@@ -37,11 +36,22 @@ interface Projeto {
   created_at: string
 }
 
+interface Escritorio {
+  id: string
+  nome: string
+  cidade: string | null
+}
+
 export default function ProjetosPage() {
-  const router = useRouter()
   const [projetos, setProjetos] = useState<Projeto[]>([])
   const [loading, setLoading] = useState(true)
-  const [escritorioId, setEscritorioId] = useState<string | null>(null)
+  const [escritorio, setEscritorio] = useState<Escritorio | null>(null)
+
+  const [modalOpen, setModalOpen] = useState(false)
+  const [form, setForm] = useState({ nome: '', tipo: 'residencial', descricao: '' })
+  const [saving, setSaving] = useState(false)
+
+  const perfilCompleto = !!(escritorio?.nome && escritorio?.cidade)
 
   useEffect(() => {
     async function load() {
@@ -49,14 +59,14 @@ export default function ProjetosPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
 
-      const { data: escritorio } = await supabase
-        .from('escritorios').select('id').eq('user_id', user.id).maybeSingle()
+      const { data: esc } = await supabase
+        .from('escritorios').select('id, nome, cidade').eq('user_id', user.id).maybeSingle()
 
-      if (escritorio) {
-        setEscritorioId(escritorio.id)
+      if (esc) {
+        setEscritorio(esc)
         const { data: projs } = await supabase
           .from('projetos').select('*')
-          .eq('escritorio_id', escritorio.id)
+          .eq('escritorio_id', esc.id)
           .order('created_at', { ascending: false })
         setProjetos(projs ?? [])
       }
@@ -64,6 +74,24 @@ export default function ProjetosPage() {
     }
     load()
   }, [])
+
+  async function handleCriarProjeto(e: React.FormEvent) {
+    e.preventDefault()
+    if (!escritorio || !form.nome) return
+    setSaving(true)
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('projetos')
+      .insert({ escritorio_id: escritorio.id, nome: form.nome, tipo: form.tipo, descricao: form.descricao })
+      .select('*').single()
+
+    if (!error && data) {
+      setProjetos(prev => [data, ...prev])
+      setModalOpen(false)
+      setForm({ nome: '', tipo: 'residencial', descricao: '' })
+    }
+    setSaving(false)
+  }
 
   if (loading) {
     return (
@@ -94,36 +122,77 @@ export default function ProjetosPage() {
             )}
           </h1>
         </div>
-        {escritorioId && (
-          <button
-            onClick={() => router.push('/arquiteto/dashboard')}
-            style={{
+        {escritorio && (
+          perfilCompleto ? (
+            <button
+              onClick={() => setModalOpen(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: '#007AFF', color: '#fff', border: 'none',
+                borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              <Plus size={14} /> Novo Projeto
+            </button>
+          ) : (
+            <Link href="/arquiteto/perfil" style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              background: '#007AFF', color: '#fff', border: 'none',
-              borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-            }}
-          >
-            <Plus size={14} /> Novo Projeto
-          </button>
+              background: 'rgba(249,115,22,0.1)', color: '#f97316',
+              border: '1px solid rgba(249,115,22,0.3)',
+              borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 600,
+              textDecoration: 'none',
+            }}>
+              <AlertCircle size={14} /> Completar perfil
+            </Link>
+          )
         )}
       </div>
 
-      {projetos.length === 0 ? (
+      {!escritorio ? (
         <div style={{
           background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14,
           padding: '60px 20px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
         }}>
           <FolderOpen size={40} color="#8e8e93" style={{ marginBottom: 14 }} />
           <p style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 6 }}>
-            {!escritorioId ? 'Configure seu perfil antes de criar projetos.' : 'Nenhum projeto ainda.'}
+            Configure seu perfil antes de criar projetos.
           </p>
-          {!escritorioId ? (
-            <Link href="/arquiteto/perfil" style={{ fontSize: 13, color: '#007AFF', textDecoration: 'none' }}>
-              Ir para Meu Perfil →
-            </Link>
-          ) : (
-            <p style={{ fontSize: 12, color: '#8e8e93' }}>Crie seu primeiro projeto no Dashboard.</p>
-          )}
+          <Link href="/arquiteto/perfil" style={{ fontSize: 13, color: '#007AFF', textDecoration: 'none' }}>
+            Ir para Meu Perfil →
+          </Link>
+        </div>
+      ) : !perfilCompleto ? (
+        <div style={{
+          background: '#fff', border: '1px solid rgba(249,115,22,0.2)', borderRadius: 14,
+          padding: '40px 20px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          marginBottom: 20,
+        }}>
+          <AlertCircle size={32} color="#f97316" style={{ marginBottom: 12 }} />
+          <p style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 6 }}>
+            Preencha o nome e a cidade do escritório para criar projetos.
+          </p>
+          <Link href="/arquiteto/perfil" style={{ fontSize: 13, color: '#007AFF', textDecoration: 'none' }}>
+            Completar perfil →
+          </Link>
+        </div>
+      ) : projetos.length === 0 ? (
+        <div style={{
+          background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14,
+          padding: '60px 20px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+        }}>
+          <FolderOpen size={40} color="#8e8e93" style={{ marginBottom: 14 }} />
+          <p style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 14 }}>Nenhum projeto ainda.</p>
+          <button
+            onClick={() => setModalOpen(true)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              padding: '10px 18px', borderRadius: 10, cursor: 'pointer',
+              background: '#007AFF', color: '#fff', border: 'none',
+              fontSize: 13, fontWeight: 600,
+            }}
+          >
+            <Plus size={14} /> Criar primeiro projeto
+          </button>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
@@ -172,6 +241,111 @@ export default function ProjetosPage() {
               </Link>
             )
           })}
+        </div>
+      )}
+
+      {/* ── Modal: Novo Projeto ── */}
+      {modalOpen && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+          }}
+          onClick={() => setModalOpen(false)}
+        >
+          <div
+            style={{
+              background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16,
+              padding: 32, width: '100%', maxWidth: 480, position: 'relative',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button onClick={() => setModalOpen(false)} style={{
+              position: 'absolute', top: 16, right: 16,
+              background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4,
+            }}>
+              <X size={18} />
+            </button>
+
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>Novo Projeto</h2>
+            <p style={{ fontSize: 12, color: '#8e8e93', marginBottom: 24 }}>Adicione um novo projeto ao seu pipeline</p>
+
+            <form onSubmit={handleCriarProjeto} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em' }}>
+                  Nome do projeto *
+                </label>
+                <input
+                  value={form.nome}
+                  onChange={e => setForm(p => ({ ...p, nome: e.target.value }))}
+                  placeholder="Ex: Residência Costa"
+                  required
+                  style={{
+                    width: '100%', padding: '10px 14px', background: '#f2f2f7',
+                    border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', fontSize: 13.5,
+                    outline: 'none', boxSizing: 'border-box', borderRadius: 10,
+                  }}
+                  onFocus={e => (e.target.style.borderColor = '#007AFF')}
+                  onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em' }}>
+                  Tipo
+                </label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {['residencial', 'comercial', 'institucional'].map(t => (
+                    <button key={t} type="button" onClick={() => setForm(p => ({ ...p, tipo: t }))} style={{
+                      flex: 1, padding: '9px 4px', fontSize: 12, fontWeight: 400,
+                      borderRadius: 8, cursor: 'pointer', transition: 'all 0.15s',
+                      background: form.tipo === t ? 'rgba(0,122,255,0.1)' : '#f2f2f7',
+                      border: `1px solid ${form.tipo === t ? '#007AFF' : 'rgba(0,0,0,0.08)'}`,
+                      color: form.tipo === t ? '#007AFF' : '#6b6b6b', textTransform: 'capitalize',
+                    }}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em' }}>
+                  Descrição (opcional)
+                </label>
+                <textarea
+                  value={form.descricao}
+                  onChange={e => setForm(p => ({ ...p, descricao: e.target.value }))}
+                  placeholder="Breve descrição do projeto..."
+                  rows={3}
+                  style={{
+                    width: '100%', padding: '10px 14px', background: '#f2f2f7',
+                    border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', fontSize: 13.5,
+                    outline: 'none', boxSizing: 'border-box', borderRadius: 10, resize: 'none',
+                  }}
+                  onFocus={e => (e.target.style.borderColor = '#007AFF')}
+                  onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={saving || !form.nome.trim()}
+                style={{
+                  width: '100%', padding: '12px',
+                  background: saving || !form.nome.trim() ? 'rgba(0,122,255,0.4)' : '#007AFF',
+                  color: '#fff', border: 'none', borderRadius: 10,
+                  fontSize: 13, fontWeight: 600,
+                  cursor: saving || !form.nome.trim() ? 'not-allowed' : 'pointer',
+                  marginTop: 4,
+                }}
+              >
+                {saving ? 'Criando...' : 'Criar Projeto'}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>

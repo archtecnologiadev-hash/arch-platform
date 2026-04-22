@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase'
 import {
   LogOut,
   Download,
@@ -161,6 +163,7 @@ function fileBadge(type: string) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ClienteProjetoPage() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabId>('andamento')
   const [chatOpen, setChatOpen] = useState(false)
   const [chatMsg, setChatMsg] = useState('')
@@ -168,6 +171,13 @@ export default function ClienteProjetoPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const progress = Math.round(((PROJECT.stageIndex + 1) / STAGES.length) * 100)
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   const sendMsg = () => {
     const text = chatMsg.trim()
@@ -263,6 +273,7 @@ export default function ClienteProjetoPage() {
 
         {/* Logout */}
         <button
+          onClick={handleLogout}
           style={{
             display: 'flex',
             alignItems: 'center',
