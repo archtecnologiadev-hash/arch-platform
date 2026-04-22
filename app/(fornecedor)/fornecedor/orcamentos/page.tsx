@@ -1,472 +1,446 @@
 'use client'
 
-import { useState } from 'react'
-import { X, Send, CheckCircle2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { X, Send, CheckCircle2, Upload, Loader2, FileText, Download, ChevronRight } from 'lucide-react'
+import { createClient } from '@/lib/supabase'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type QuoteStatus = 'Pendente' | 'Em análise' | 'Aprovado' | 'Recusado'
+type OrcStatus = 'pendente' | 'em_analise' | 'respondido' | 'aprovado' | 'recusado' | 'agendado' | 'em_execucao' | 'concluido'
 
-interface QuoteRequest {
-  id: number
-  project: string
-  projectImg: string
-  arquiteto: string
-  avatar: string
-  service: string
-  date: string
-  value: string
-  status: QuoteStatus
-  details: string
+interface Orcamento {
+  id: string
+  projeto_id: string | null
+  arquiteto_id: string | null
+  mensagem: string | null
+  arquivo_url: string | null
+  arquivo_nome: string | null
+  status: OrcStatus
+  resposta: string | null
+  resposta_arquivo_url: string | null
+  created_at: string
+  projeto_nome: string | null
+  arquiteto_nome: string | null
+  arquiteto_email: string | null
 }
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-const ALL_QUOTES: QuoteRequest[] = [
-  {
-    id: 1,
-    project: 'Residência Costa',
-    projectImg: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=120&q=80',
-    arquiteto: 'Arq. Serafim Figueiredo',
-    avatar: 'SF',
-    service: 'Armários planejados para cozinha e closet master',
-    date: '18 Abr 2026',
-    value: 'R$ 18.500',
-    status: 'Pendente',
-    details:
-      'Necessário orçamento para armários da cozinha (linha MDF lacado branco) + closet master em nogueira com espelho. Medidas enviadas por email. Prazo de entrega ideal: 30 dias.',
-  },
-  {
-    id: 2,
-    project: 'Cobertura Moderna',
-    projectImg: 'https://images.unsplash.com/photo-1560185127-6a35cba96e9a?w=120&q=80',
-    arquiteto: 'Arq. Marina Castro',
-    avatar: 'MC',
-    service: 'Marcenaria completa — sala, quartos e banheiros',
-    date: '16 Abr 2026',
-    value: 'R$ 45.000',
-    status: 'Em análise',
-    details:
-      'Projeto completo de marcenaria para cobertura 280m². Inclui painel TV com ripado, armários embutidos em 3 quartos, bancadas de banheiro e estante de escritório. MDF lacado branco fosco.',
-  },
-  {
-    id: 3,
-    project: 'Escritório Zen',
-    projectImg: 'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=120&q=80',
-    arquiteto: 'Arq. Ricardo Leal',
-    avatar: 'RL',
-    service: 'Bancadas e prateleiras modulares para sala de reunião',
-    date: '10 Abr 2026',
-    value: 'R$ 12.800',
-    status: 'Aprovado',
-    details:
-      'Bancada corrida 4,2m em laminato amadeirado para sala de reunião, mais estante modular com nichos abertos na recepção. Prazo de entrega: 21 dias. Contrato já assinado.',
-  },
-  {
-    id: 4,
-    project: 'Vila Contemporânea',
-    projectImg: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=120&q=80',
-    arquiteto: 'Arq. Fernanda Lima',
-    avatar: 'FL',
-    service: 'Closet planejado em carvalho americano com espelhos',
-    date: '05 Abr 2026',
-    value: 'R$ 22.000',
-    status: 'Aprovado',
-    details:
-      'Closet casal 8m² em carvalho americano com iluminação LED integrada, cabideiro duplo, gaveteiros e painel de espelho na parede fundos. Entregue e instalado com sucesso.',
-  },
-  {
-    id: 5,
-    project: 'Residência Jardins',
-    projectImg: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=120&q=80',
-    arquiteto: 'Arq. Paulo Mendes',
-    avatar: 'PM',
-    service: 'Cozinha planejada completa com ilha central',
-    date: '28 Mar 2026',
-    value: 'R$ 38.500',
-    status: 'Recusado',
-    details:
-      'Cozinha com ilha central 2,0x1,2m em laminato carvalho com tampa em porcelanato. Orçamento não aprovado pelo cliente por questões de prazo e custo total do projeto.',
-  },
-  {
-    id: 6,
-    project: 'Studio Minimalista',
-    projectImg: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=120&q=80',
-    arquiteto: 'Arq. Cláudia Rebelo',
-    avatar: 'CR',
-    service: 'Móveis multifuncionais para studio 45m²',
-    date: '22 Mar 2026',
-    value: 'R$ 9.200',
-    status: 'Aprovado',
-    details:
-      'Cama retrátil com sofá integrado, mesa de jantar dobrável e nicho TV com gavetas ocultas. Projeto aprovado, entregue em 18 dias dentro do prazo.',
-  },
-]
-
-const STATUS_META: Record<QuoteStatus, { color: string; bg: string; border: string }> = {
-  Pendente:     { color: '#007AFF', bg: 'rgba(0,122,255,0.08)', border: 'rgba(0,122,255,0.2)' },
-  'Em análise': { color: '#007AFF', bg: 'rgba(0,122,255,0.08)', border: 'rgba(0,122,255,0.2)' },
-  Aprovado:     { color: '#34d399', bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.22)' },
-  Recusado:     { color: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.22)' },
+const STATUS_META: Record<OrcStatus, { label: string; color: string; bg: string; border: string }> = {
+  pendente:    { label: 'Pendente',    color: '#007AFF', bg: 'rgba(0,122,255,0.08)',   border: 'rgba(0,122,255,0.2)' },
+  em_analise:  { label: 'Em análise',  color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.22)' },
+  respondido:  { label: 'Respondido',  color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)' },
+  aprovado:    { label: 'Aprovado',    color: '#34d399', bg: 'rgba(52,211,153,0.1)',   border: 'rgba(52,211,153,0.22)' },
+  recusado:    { label: 'Recusado',    color: '#ef4444', bg: 'rgba(239,68,68,0.1)',    border: 'rgba(239,68,68,0.22)' },
+  agendado:    { label: 'Agendado',    color: '#06b6d4', bg: 'rgba(6,182,212,0.08)',  border: 'rgba(6,182,212,0.22)' },
+  em_execucao: { label: 'Em execução', color: '#f97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.22)' },
+  concluido:   { label: 'Concluído',   color: '#10b981', bg: 'rgba(16,185,129,0.1)',  border: 'rgba(16,185,129,0.25)' },
 }
 
-const FILTERS: Array<QuoteStatus | 'Todos'> = [
-  'Todos', 'Pendente', 'Em análise', 'Aprovado', 'Recusado',
-]
+const PIPELINE: OrcStatus[] = ['pendente', 'em_analise', 'respondido', 'aprovado', 'agendado', 'em_execucao', 'concluido']
 
-// ─── Component ────────────────────────────────────────────────────────────────
+const FILTERS: Array<OrcStatus | 'todos'> = ['todos', 'pendente', 'em_analise', 'respondido', 'aprovado', 'agendado', 'em_execucao', 'concluido', 'recusado']
+
+function pipelineStep(status: OrcStatus): number {
+  const idx = PIPELINE.indexOf(status)
+  return idx === -1 ? 0 : idx
+}
+
+function nextStepLabel(status: OrcStatus): string | null {
+  switch (status) {
+    case 'pendente':    return 'Iniciar análise'
+    case 'aprovado':    return 'Agendar'
+    case 'agendado':    return 'Iniciar execução'
+    case 'em_execucao': return 'Concluir'
+    default: return null
+  }
+}
+
+function nextStatus(status: OrcStatus): OrcStatus | null {
+  switch (status) {
+    case 'pendente':    return 'em_analise'
+    case 'aprovado':    return 'agendado'
+    case 'agendado':    return 'em_execucao'
+    case 'em_execucao': return 'concluido'
+    default: return null
+  }
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function FornecedorOrcamentosPage() {
-  const [filter, setFilter] = useState<QuoteStatus | 'Todos'>('Todos')
-  const [expandedId, setExpandedId] = useState<number | null>(null)
-  const [replyId, setReplyId] = useState<number | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [orcamentos, setOrcamentos] = useState<Orcamento[]>([])
+  const [fornecedorId, setFornecedorId] = useState<string | null>(null)
+
+  const [filter, setFilter] = useState<OrcStatus | 'todos'>('todos')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [replyTarget, setReplyTarget] = useState<Orcamento | null>(null)
   const [replyText, setReplyText] = useState('')
+  const [replyFile, setReplyFile] = useState<File | null>(null)
+  const [replySending, setReplySending] = useState(false)
   const [replySent, setReplySent] = useState(false)
+  const [advancing, setAdvancing] = useState<string | null>(null)
+  const replyFileRef = useRef<HTMLInputElement>(null)
 
-  const filtered =
-    filter === 'Todos' ? ALL_QUOTES : ALL_QUOTES.filter((q) => q.status === filter)
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
 
-  const handleReply = (e: React.FormEvent) => {
+      const { data: forn } = await supabase
+        .from('fornecedores').select('id').eq('user_id', user.id).single()
+      if (!forn) { setLoading(false); return }
+
+      setFornecedorId(forn.id)
+
+      const { data: rows } = await supabase
+        .from('orcamentos')
+        .select('*')
+        .eq('fornecedor_id', forn.id)
+        .order('created_at', { ascending: false })
+
+      if (!rows || rows.length === 0) { setLoading(false); return }
+
+      const projetoIds = Array.from(new Set(rows.map((r: Record<string, unknown>) => r.projeto_id as string).filter(Boolean)))
+      const arquitetoIds = Array.from(new Set(rows.map((r: Record<string, unknown>) => r.arquiteto_id as string).filter(Boolean)))
+
+      const [{ data: projetos }, { data: arquitetos }] = await Promise.all([
+        projetoIds.length > 0
+          ? supabase.from('projetos').select('id, nome').in('id', projetoIds)
+          : Promise.resolve({ data: [] }),
+        arquitetoIds.length > 0
+          ? supabase.from('users').select('id, nome, email').in('id', arquitetoIds)
+          : Promise.resolve({ data: [] }),
+      ])
+
+      const projMap: Record<string, string> = {}
+      for (const p of (projetos ?? [])) projMap[(p as { id: string; nome: string }).id] = (p as { id: string; nome: string }).nome
+
+      const arquMap: Record<string, { nome: string; email: string }> = {}
+      for (const a of (arquitetos ?? [])) {
+        const rec = a as { id: string; nome: string; email: string }
+        arquMap[rec.id] = { nome: rec.nome, email: rec.email }
+      }
+
+      setOrcamentos(rows.map((r: Record<string, unknown>) => ({
+        id: r.id as string,
+        projeto_id: r.projeto_id as string | null,
+        arquiteto_id: r.arquiteto_id as string | null,
+        mensagem: r.mensagem as string | null,
+        arquivo_url: r.arquivo_url as string | null,
+        arquivo_nome: r.arquivo_nome as string | null,
+        status: (r.status as OrcStatus) ?? 'pendente',
+        resposta: r.resposta as string | null,
+        resposta_arquivo_url: r.resposta_arquivo_url as string | null,
+        created_at: r.created_at as string,
+        projeto_nome: r.projeto_id ? (projMap[r.projeto_id as string] ?? null) : null,
+        arquiteto_nome: r.arquiteto_id ? (arquMap[r.arquiteto_id as string]?.nome ?? null) : null,
+        arquiteto_email: r.arquiteto_id ? (arquMap[r.arquiteto_id as string]?.email ?? null) : null,
+      })))
+
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  async function advanceStage(orc: Orcamento) {
+    const next = nextStatus(orc.status)
+    if (!next) return
+    setAdvancing(orc.id)
+    const supabase = createClient()
+    const { error } = await supabase.from('orcamentos').update({ status: next }).eq('id', orc.id)
+    if (!error) {
+      setOrcamentos(prev => prev.map(o => o.id === orc.id ? { ...o, status: next } : o))
+    }
+    setAdvancing(null)
+  }
+
+  async function handleReply(e: React.FormEvent) {
     e.preventDefault()
+    if (!replyTarget || !fornecedorId) return
+    setReplySending(true)
+
+    const supabase = createClient()
+    let respostaArquivoUrl: string | null = null
+
+    if (replyFile) {
+      const safeName = replyFile.name.replace(/[^a-zA-Z0-9._\-]/g, '_')
+      const path = `${fornecedorId}/${replyTarget.id}/${Date.now()}_${safeName}`
+      const { error: upErr } = await supabase.storage.from('orcamentos').upload(path, replyFile)
+      if (!upErr) {
+        const { data: { publicUrl } } = supabase.storage.from('orcamentos').getPublicUrl(path)
+        respostaArquivoUrl = publicUrl
+      }
+    }
+
+    const { error } = await supabase.from('orcamentos')
+      .update({ resposta: replyText.trim(), resposta_arquivo_url: respostaArquivoUrl, status: 'respondido' })
+      .eq('id', replyTarget.id)
+
+    if (!error) {
+      setOrcamentos(prev => prev.map(o =>
+        o.id === replyTarget.id
+          ? { ...o, resposta: replyText.trim(), resposta_arquivo_url: respostaArquivoUrl, status: 'respondido' }
+          : o
+      ))
+    }
+
+    setReplySending(false)
     setReplySent(true)
     setTimeout(() => {
-      setReplyId(null)
+      setReplyTarget(null)
       setReplySent(false)
       setReplyText('')
+      setReplyFile(null)
     }, 2200)
   }
 
-  const replyQuote = ALL_QUOTES.find((q) => q.id === replyId)
+  const filtered = filter === 'todos' ? orcamentos : orcamentos.filter(o => o.status === filter)
+  const countByStatus = (s: OrcStatus) => orcamentos.filter(o => o.status === s).length
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f2f2f7' }}>
+        <Loader2 size={26} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      </div>
+    )
+  }
 
   return (
-    <div
-      style={{
-        padding: '32px 36px',
-        minHeight: '100vh',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        color: '#1a1a1a',
-        background: '#f2f2f7',
-      }}
-    >
+    <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1a1a1a', background: '#f2f2f7' }}>
       <style>{`
-        .orc-card {
-          background: #ffffff;
-          border: 1px solid rgba(0,0,0,0.08);
-          border-radius: 14px;
-          overflow: hidden;
-          transition: box-shadow 0.18s;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-        .orc-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .orc-filter-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-        .orc-inp {
-          width: 100%;
-          background: #f2f2f7;
-          border: 1px solid rgba(0,0,0,0.1);
-          border-radius: 10px;
-          padding: 10px 14px;
-          color: #1a1a1a;
-          font-size: 13px;
-          outline: none;
-          transition: border-color 0.15s;
-          box-sizing: border-box;
-          font-family: inherit;
-          resize: vertical;
-        }
-        .orc-inp:focus { border-color: #007AFF; }
-        .orc-inp::placeholder { color: #8e8e93; }
-        @keyframes orc-modal-in { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        .orc-modal-box { animation: orc-modal-in 0.2s ease; }
+        @keyframes spin { to { transform: rotate(360deg) } }
+        .orc-card { background:#fff; border:1px solid rgba(0,0,0,0.08); border-radius:14px; overflow:hidden; transition:box-shadow 0.18s; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+        .orc-card:hover { box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+        .orc-filter-btn { padding:6px 14px; border-radius:20px; font-size:11.5px; font-weight:600; cursor:pointer; transition:all 0.15s; }
+        .orc-inp { width:100%; background:#f2f2f7; border:1px solid rgba(0,0,0,0.1); border-radius:10px; padding:10px 14px; color:#1a1a1a; font-size:13px; outline:none; transition:border-color 0.15s; box-sizing:border-box; font-family:inherit; resize:vertical; }
+        .orc-inp:focus { border-color:#007AFF; }
+        .orc-inp::placeholder { color:#8e8e93; }
+        @keyframes orc-in { from{opacity:0;transform:scale(0.96) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        .orc-modal-box { animation:orc-in 0.2s ease; }
+        .orc-adv-btn:hover { opacity:0.85; }
       `}</style>
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a', margin: 0 }}>Orçamentos</h1>
         <p style={{ fontSize: 13, color: '#6b6b6b', margin: '5px 0 0' }}>
-          Gerencie todas as solicitações recebidas
+          Gerencie todas as solicitações recebidas · {orcamentos.length} total
         </p>
       </div>
 
       {/* Filter pills */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 22, flexWrap: 'wrap' as const }}>
-        {FILTERS.map((f) => {
+      <div style={{ display: 'flex', gap: 7, marginBottom: 22, flexWrap: 'wrap' as const }}>
+        {FILTERS.map(f => {
+          const count = f !== 'todos' ? countByStatus(f as OrcStatus) : orcamentos.length
+          if (f !== 'todos' && count === 0) return null
           const isActive = filter === f
-          const meta = f !== 'Todos' ? STATUS_META[f] : null
+          const meta = f !== 'todos' ? STATUS_META[f as OrcStatus] : null
           return (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className="orc-filter-btn"
+            <button key={f} onClick={() => setFilter(f)} className="orc-filter-btn"
               style={{
-                background: isActive
-                  ? meta
-                    ? meta.bg
-                    : 'rgba(0,122,255,0.1)'
-                  : '#ffffff',
-                border: isActive
-                  ? `1px solid ${meta ? meta.border : 'rgba(0,122,255,0.25)'}`
-                  : '1px solid rgba(0,0,0,0.1)',
+                background: isActive ? (meta ? meta.bg : 'rgba(0,122,255,0.1)') : '#fff',
+                border: isActive ? `1px solid ${meta ? meta.border : 'rgba(0,122,255,0.25)'}` : '1px solid rgba(0,0,0,0.1)',
                 color: isActive ? (meta ? meta.color : '#007AFF') : '#6b6b6b',
                 boxShadow: isActive ? 'none' : '0 1px 2px rgba(0,0,0,0.06)',
-              }}
-            >
-              {f}
-              {f !== 'Todos' && (
-                <span style={{ marginLeft: 5, opacity: 0.7 }}>
-                  ({ALL_QUOTES.filter((q) => q.status === f).length})
-                </span>
-              )}
+              }}>
+              {f === 'todos' ? 'Todos' : STATUS_META[f as OrcStatus].label}
+              <span style={{ marginLeft: 4, opacity: 0.65 }}>({count})</span>
             </button>
           )
         })}
       </div>
 
-      {/* Quote list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {filtered.map((q) => {
-          const meta = STATUS_META[q.status]
-          const isExpanded = expandedId === q.id
-          const canReply = q.status === 'Pendente' || q.status === 'Em análise'
-          return (
-            <div key={q.id} className="orc-card">
-              {/* Main row */}
-              <div style={{ padding: '18px 20px', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-                <img
-                  src={q.projectImg}
-                  alt={q.project}
-                  style={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: 10,
-                    objectFit: 'cover' as const,
-                    flexShrink: 0,
-                    border: '1px solid rgba(0,0,0,0.08)',
-                  }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      gap: 12,
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: 14.5, fontWeight: 700, color: '#1a1a1a' }}>
-                        {q.project}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
-                        <div
-                          style={{
-                            width: 22,
-                            height: 22,
-                            borderRadius: '50%',
-                            background: 'rgba(0,122,255,0.1)',
-                            border: '1px solid rgba(0,122,255,0.2)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: 8,
-                            fontWeight: 700,
-                            color: '#007AFF',
-                          }}
-                        >
-                          {q.avatar}
+      {/* List */}
+      {filtered.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#8e8e93', fontSize: 14 }}>
+          {orcamentos.length === 0 ? 'Nenhuma solicitação recebida ainda.' : 'Nenhuma solicitação com esse status.'}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {filtered.map(orc => {
+            const meta = STATUS_META[orc.status]
+            const isExpanded = expandedId === orc.id
+            const step = pipelineStep(orc.status)
+            const canReply = orc.status === 'em_analise'
+            const advLabel = nextStepLabel(orc.status)
+            const isAdvancing = advancing === orc.id
+            const initials = (orc.arquiteto_nome ?? 'A').split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
+            const dateStr = new Date(orc.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+
+            return (
+              <div key={orc.id} className="orc-card">
+                <div style={{ padding: '18px 20px', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                  {/* Avatar */}
+                  <div style={{ width: 52, height: 52, borderRadius: 12, background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: '#007AFF', flexShrink: 0 }}>
+                    {initials}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 14.5, fontWeight: 700, color: '#1a1a1a' }}>
+                          {orc.projeto_nome ?? 'Projeto sem nome'}
                         </div>
-                        <span style={{ fontSize: 12, color: '#6b6b6b' }}>
-                          {q.arquiteto} · {q.date}
+                        <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 3 }}>
+                          {orc.arquiteto_nome ?? 'Arquiteto'} · {dateStr}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 10.5, padding: '3px 10px', borderRadius: 20, background: meta.bg, border: `1px solid ${meta.border}`, color: meta.color, fontWeight: 700, whiteSpace: 'nowrap' as const, flexShrink: 0 }}>
+                        {meta.label}
+                      </div>
+                    </div>
+
+                    {/* Pipeline progress (only non-terminal statuses) */}
+                    {orc.status !== 'recusado' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 10 }}>
+                        {PIPELINE.map((s, i) => {
+                          const done = i <= step
+                          const sm = STATUS_META[s]
+                          return (
+                            <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <div title={sm.label} style={{
+                                width: 8, height: 8, borderRadius: '50%',
+                                background: done ? meta.color : 'rgba(0,0,0,0.12)',
+                                opacity: i === step ? 1 : done ? 0.6 : 0.3,
+                                transition: 'all 0.2s',
+                              }} />
+                              {i < PIPELINE.length - 1 && (
+                                <div style={{ width: 18, height: 1.5, background: done && i < step ? meta.color : 'rgba(0,0,0,0.1)', opacity: done && i < step ? 0.5 : 1, borderRadius: 2 }} />
+                              )}
+                            </div>
+                          )
+                        })}
+                        <span style={{ fontSize: 10, color: meta.color, fontWeight: 600, marginLeft: 6 }}>
+                          etapa {step + 1}/{PIPELINE.length}
                         </span>
                       </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                      <div
-                        style={{
-                          fontSize: 10.5,
-                          padding: '3px 10px',
-                          borderRadius: 20,
-                          background: meta.bg,
-                          border: `1px solid ${meta.border}`,
-                          color: meta.color,
-                          fontWeight: 700,
-                          whiteSpace: 'nowrap' as const,
-                        }}
-                      >
-                        {q.status}
-                      </div>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: '#007AFF' }}>{q.value}</div>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 13, color: '#6b6b6b', marginTop: 8, lineHeight: 1.5 }}>
-                    {q.service}
-                  </div>
-                  <div
-                    style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}
-                  >
-                    <button
-                      onClick={() => setExpandedId(isExpanded ? null : q.id)}
-                      style={{
-                        fontSize: 11.5,
-                        padding: '5px 12px',
-                        borderRadius: 8,
-                        background: '#f2f2f7',
-                        border: '1px solid rgba(0,0,0,0.1)',
-                        color: '#6b6b6b',
-                        cursor: 'pointer',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {isExpanded ? 'Menos detalhes' : 'Ver detalhes'}
-                    </button>
-                    {canReply && (
-                      <button
-                        onClick={() => setReplyId(q.id)}
-                        style={{
-                          fontSize: 11.5,
-                          padding: '5px 12px',
-                          borderRadius: 8,
-                          background: 'rgba(0,122,255,0.08)',
-                          border: '1px solid rgba(0,122,255,0.2)',
-                          color: '#007AFF',
-                          cursor: 'pointer',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Responder
+                    )}
+
+                    {orc.mensagem && (
+                      <p style={{ fontSize: 13, color: '#6b6b6b', marginTop: 8, lineHeight: 1.55, margin: '8px 0 0' }}>
+                        {orc.mensagem.length > 120 ? orc.mensagem.slice(0, 120) + '…' : orc.mensagem}
+                      </p>
+                    )}
+
+                    {/* Action buttons */}
+                    <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' as const }}>
+                      <button onClick={() => setExpandedId(isExpanded ? null : orc.id)}
+                        style={{ fontSize: 11.5, padding: '5px 12px', borderRadius: 8, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', cursor: 'pointer', fontWeight: 600 }}>
+                        {isExpanded ? 'Menos detalhes' : 'Ver detalhes'}
                       </button>
+
+                      {canReply && (
+                        <button onClick={() => { setReplyTarget(orc); setReplyText(''); setReplyFile(null); setReplySent(false) }}
+                          style={{ fontSize: 11.5, padding: '5px 12px', borderRadius: 8, background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', cursor: 'pointer', fontWeight: 600 }}>
+                          Enviar proposta
+                        </button>
+                      )}
+
+                      {advLabel && (
+                        <button onClick={() => advanceStage(orc)} disabled={isAdvancing} className="orc-adv-btn"
+                          style={{ fontSize: 11.5, padding: '5px 12px', borderRadius: 8, background: meta.bg, border: `1px solid ${meta.border}`, color: meta.color, cursor: isAdvancing ? 'not-allowed' : 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+                          {isAdvancing
+                            ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} />
+                            : <ChevronRight size={11} />}
+                          {advLabel}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expanded details */}
+                {isExpanded && (
+                  <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', padding: '14px 20px', background: '#f9f9fb' }}>
+                    {orc.mensagem && (
+                      <>
+                        <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>Mensagem do arquiteto</div>
+                        <p style={{ fontSize: 13, color: '#6b6b6b', lineHeight: 1.65, margin: '0 0 12px' }}>{orc.mensagem}</p>
+                      </>
+                    )}
+                    {orc.arquivo_url && (
+                      <a href={orc.arquivo_url} target="_blank" rel="noopener noreferrer"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#007AFF', background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.18)', borderRadius: 7, padding: '5px 11px', textDecoration: 'none', fontWeight: 600, marginBottom: 12 }}>
+                        <FileText size={12} /> {orc.arquivo_nome ?? 'Arquivo anexado'} <Download size={11} />
+                      </a>
+                    )}
+                    {orc.resposta && (
+                      <>
+                        <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>Sua proposta</div>
+                        <p style={{ fontSize: 13, color: '#1a1a1a', lineHeight: 1.65, margin: '0 0 8px', background: 'rgba(0,122,255,0.05)', border: '1px solid rgba(0,122,255,0.12)', borderRadius: 8, padding: '10px 13px' }}>{orc.resposta}</p>
+                        {orc.resposta_arquivo_url && (
+                          <a href={orc.resposta_arquivo_url} target="_blank" rel="noopener noreferrer"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#007AFF', background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.18)', borderRadius: 7, padding: '5px 11px', textDecoration: 'none', fontWeight: 600 }}>
+                            <FileText size={12} /> Seu arquivo <Download size={11} />
+                          </a>
+                        )}
+                      </>
+                    )}
+                    {orc.arquiteto_email && (
+                      <div style={{ marginTop: 10, fontSize: 11.5, color: '#8e8e93' }}>
+                        Email: <span style={{ color: '#1a1a1a' }}>{orc.arquiteto_email}</span>
+                      </div>
                     )}
                   </div>
-                </div>
+                )}
               </div>
-
-              {/* Expanded details */}
-              {isExpanded && (
-                <div
-                  style={{
-                    borderTop: '1px solid rgba(0,0,0,0.06)',
-                    padding: '14px 20px',
-                    background: '#f9f9fb',
-                  }}
-                >
-                  <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 600, marginBottom: 6 }}>
-                    Detalhes da solicitação
-                  </div>
-                  <p style={{ fontSize: 13, color: '#6b6b6b', lineHeight: 1.65, margin: 0 }}>
-                    {q.details}
-                  </p>
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Reply Modal */}
-      {replyId !== null && (
-        <div
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setReplyId(null)
-          }}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            backdropFilter: 'blur(5px)',
-            zIndex: 200,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
-          }}
-        >
-          <div
-            className="orc-modal-box"
-            style={{
-              background: '#ffffff',
-              border: '1px solid rgba(0,0,0,0.08)',
-              borderRadius: 16,
-              width: '100%',
-              maxWidth: 480,
-              padding: 28,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-            }}
-          >
+      {replyTarget !== null && (
+        <div onClick={e => { if (e.target === e.currentTarget) setReplyTarget(null) }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(5px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div className="orc-modal-box"
+            style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, width: '100%', maxWidth: 480, padding: 28, boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
             {replySent ? (
               <div style={{ textAlign: 'center' as const, padding: '22px 0' }}>
                 <CheckCircle2 size={52} color="#34d399" style={{ marginBottom: 16 }} />
-                <div style={{ fontSize: 19, fontWeight: 700, color: '#1a1a1a', marginBottom: 8 }}>
-                  Resposta enviada!
-                </div>
-                <div style={{ fontSize: 13, color: '#6b6b6b' }}>
-                  {replyQuote?.arquiteto} será notificado.
-                </div>
+                <div style={{ fontSize: 19, fontWeight: 700, color: '#1a1a1a', marginBottom: 8 }}>Proposta enviada!</div>
+                <div style={{ fontSize: 13, color: '#6b6b6b' }}>{replyTarget.arquiteto_nome ?? 'O arquiteto'} será notificado.</div>
               </div>
             ) : (
               <>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    marginBottom: 20,
-                  }}
-                >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                   <div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>
-                      Responder Solicitação
-                    </div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>Enviar Proposta</div>
                     <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 3 }}>
-                      {replyQuote?.project} · {replyQuote?.arquiteto}
+                      {replyTarget.projeto_nome ?? 'Projeto'} · {replyTarget.arquiteto_nome ?? 'Arquiteto'}
                     </div>
                   </div>
-                  <button
-                    onClick={() => setReplyId(null)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}
-                  >
+                  <button onClick={() => setReplyTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}>
                     <X size={18} />
                   </button>
                 </div>
+
+                <input ref={replyFileRef} type="file" style={{ display: 'none' }} onChange={e => setReplyFile(e.target.files?.[0] ?? null)} />
+
                 <form onSubmit={handleReply} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div>
-                    <label
-                      style={{
-                        fontSize: 11.5,
-                        color: '#6b6b6b',
-                        display: 'block',
-                        marginBottom: 6,
-                        fontWeight: 600,
-                      }}
-                    >
-                      Sua proposta *
-                    </label>
-                    <textarea
-                      className="orc-inp"
-                      required
-                      rows={5}
+                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>Sua proposta *</label>
+                    <textarea className="orc-inp" required rows={5}
                       placeholder="Descreva sua proposta, prazo, condições e detalhes técnicos..."
                       value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                    />
+                      onChange={e => setReplyText(e.target.value)} />
                   </div>
-                  <button
-                    type="submit"
-                    style={{
-                      background: '#007AFF',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: 10,
-                      padding: '12px',
-                      fontSize: 14,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 8,
-                    }}
-                  >
-                    <Send size={14} />
-                    Enviar Resposta
+                  <div>
+                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>Anexar arquivo (opcional)</label>
+                    <div onClick={() => replyFileRef.current?.click()}
+                      style={{ padding: '9px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 7, fontSize: 12, color: replyFile ? '#1a1a1a' : '#8e8e93', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Upload size={13} color="#8e8e93" />
+                      {replyFile ? replyFile.name : 'Clique para selecionar um arquivo'}
+                      {replyFile && <X size={13} color="#8e8e93" style={{ marginLeft: 'auto' }} onClick={ev => { ev.stopPropagation(); setReplyFile(null) }} />}
+                    </div>
+                  </div>
+                  <button type="submit" disabled={replySending}
+                    style={{ background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 700, cursor: replySending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: replySending ? 0.7 : 1 }}>
+                    {replySending ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Enviando...</> : <><Send size={14} /> Enviar Proposta</>}
                   </button>
                 </form>
               </>

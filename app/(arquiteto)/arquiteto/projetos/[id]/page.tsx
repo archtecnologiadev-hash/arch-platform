@@ -7,7 +7,7 @@ import {
   ArrowLeft, Upload, FileText, ImageIcon, File, MessageCircle,
   Mail, Calendar, Plus, Package, DollarSign, Check, Pencil,
   Star, ExternalLink, Send, X, CheckCircle2, MapPin, Loader2,
-  Download, AlertCircle, Camera,
+  Download, AlertCircle, Camera, Heart,
 } from 'lucide-react'
 import CalendarioObra, { CalendarioEvent, EVENT_META, EventType } from '@/components/shared/CalendarioObra'
 import ImageCropModal, { type CropConfig } from '@/components/shared/ImageCropModal'
@@ -53,6 +53,7 @@ interface DirSupplier {
   rating: number; reviewCount: number; description: string; cover: string; color: string
   logo?: string | null
   isReal?: boolean
+  dbId?: string
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -159,6 +160,7 @@ export default function ProjetoDetailPage() {
   const coverInputRef = useRef<HTMLInputElement>(null)
 
   const [dbSuppliers, setDbSuppliers] = useState<DirSupplier[]>([])
+  const [favorites, setFavorites] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!projectId) return
@@ -169,6 +171,7 @@ export default function ProjetoDetailPage() {
         const nome = user.user_metadata?.nome ?? user.email ?? 'Arquiteto'
         setCurrentUser({ id: user.id, nome })
       }
+      const currentUid = user?.id ?? ''
 
       const [
         { data: proj },
@@ -176,12 +179,14 @@ export default function ProjetoDetailPage() {
         { data: arqs },
         { data: anots },
         { data: forn },
+        { data: favs },
       ] = await Promise.all([
         supabase.from('projetos').select('*').eq('id', projectId).single(),
         supabase.from('eventos').select('*').eq('projeto_id', projectId).order('data_inicio'),
         supabase.from('arquivos_projeto').select('*').eq('projeto_id', projectId).order('created_at', { ascending: false }),
         supabase.from('anotacoes_projeto').select('*').eq('projeto_id', projectId).order('created_at', { ascending: false }),
         supabase.from('fornecedores').select('id, slug, nome, segmento, cidade, bio, image_url, cover_url').order('created_at', { ascending: false }),
+        currentUid ? supabase.from('fornecedores_favoritos').select('fornecedor_id').eq('arquiteto_id', currentUid) : Promise.resolve({ data: [] as Array<{ fornecedor_id: string }> }),
       ])
 
       if (proj) {
@@ -211,6 +216,10 @@ export default function ProjetoDetailPage() {
       }
       if (arqs) setArquivos(arqs as ArquivoProjeto[])
       if (anots) setAnotacoes(anots as AnotacaoProjeto[])
+      if (favs) {
+        const favSet = new Set((favs as Array<{ fornecedor_id: string }>).map(r => r.fornecedor_id))
+        setFavorites(favSet)
+      }
       if (forn && forn.length > 0) {
         setDbSuppliers(forn.map((f: Record<string, unknown>, i: number) => ({
           id: i + 1,
@@ -225,6 +234,7 @@ export default function ProjetoDetailPage() {
           color: SEG_COLOR[(f.segmento as string) ?? ''] ?? '#6b6b6b',
           logo: f.image_url as string | null,
           isReal: true,
+          dbId: f.id as string,
         })))
       }
       setLoading(false)
@@ -245,6 +255,23 @@ export default function ProjetoDetailPage() {
       setProjeto(prev => prev ? { ...prev, cover_url: publicUrl } : prev)
     }
     setCoverUploading(false)
+  }
+
+  async function toggleFavorite(fornecedorDbId: string) {
+    if (!currentUser) return
+    const supabase = createClient()
+    const isFav = favorites.has(fornecedorDbId)
+    if (isFav) {
+      await supabase.from('fornecedores_favoritos')
+        .delete()
+        .eq('arquiteto_id', currentUser.id)
+        .eq('fornecedor_id', fornecedorDbId)
+      setFavorites(prev => { const s = new Set(prev); s.delete(fornecedorDbId); return s })
+    } else {
+      await supabase.from('fornecedores_favoritos')
+        .insert({ arquiteto_id: currentUser.id, fornecedor_id: fornecedorDbId })
+      setFavorites(prev => new Set(Array.from(prev).concat(fornecedorDbId)))
+    }
   }
 
   async function handleFiles(files: FileList | null) {
@@ -316,15 +343,26 @@ export default function ProjetoDetailPage() {
       }
     }
 
-    await supabase.from('solicitacoes_orcamento').insert({
-      projeto_id: projeto.id,
-      fornecedor_slug: dirQuoteTarget.slug,
-      fornecedor_nome: dirQuoteTarget.name,
-      descricao: dirQuoteForm.descricao,
-      data_prevista: dirQuoteForm.data || null,
-      arquivo_url: arquivoUrl,
-      solicitante_id: currentUser.id,
-    })
+    if (dirQuoteTarget.dbId) {
+      await supabase.from('orcamentos').insert({
+        projeto_id: projeto.id,
+        fornecedor_id: dirQuoteTarget.dbId,
+        arquiteto_id: currentUser.id,
+        mensagem: dirQuoteForm.descricao,
+        arquivo_url: arquivoUrl,
+        status: 'pendente',
+      })
+    } else {
+      await supabase.from('solicitacoes_orcamento').insert({
+        projeto_id: projeto.id,
+        fornecedor_slug: dirQuoteTarget.slug,
+        fornecedor_nome: dirQuoteTarget.name,
+        descricao: dirQuoteForm.descricao,
+        data_prevista: dirQuoteForm.data || null,
+        arquivo_url: arquivoUrl,
+        solicitante_id: currentUser.id,
+      })
+    }
 
     setDirQuoteSending(false)
     setDirQuoteSent(true)
@@ -603,7 +641,13 @@ export default function ProjetoDetailPage() {
                 </div>
                 {(() => {
                   const sourceList = dbSuppliers.length > 0 ? dbSuppliers : SUPPLIER_DIRECTORY
-                  const filtered = sourceList.filter(s => dirFilter === 'Todos' || s.segment === dirFilter)
+                  const filtered = sourceList
+                    .filter(s => dirFilter === 'Todos' || s.segment === dirFilter)
+                    .sort((a, b) => {
+                      const aFav = a.dbId ? favorites.has(a.dbId) : false
+                      const bFav = b.dbId ? favorites.has(b.dbId) : false
+                      return (bFav ? 1 : 0) - (aFav ? 1 : 0)
+                    })
                   return (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
                       {filtered.length === 0 && (
@@ -642,6 +686,15 @@ export default function ProjetoDetailPage() {
                             </div>
                             {sup.description && <p style={{ fontSize: 11.5, color: '#6b6b6b', lineHeight: 1.55, margin: '0 0 10px' }}>{sup.description}</p>}
                             <div style={{ display: 'flex', gap: 6 }}>
+                              {sup.dbId && (
+                                <button
+                                  onClick={() => toggleFavorite(sup.dbId!)}
+                                  style={{ width: 28, height: 28, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 6, background: favorites.has(sup.dbId) ? 'rgba(239,68,68,0.08)' : 'transparent', border: `1px solid ${favorites.has(sup.dbId) ? 'rgba(239,68,68,0.25)' : 'rgba(0,0,0,0.08)'}`, cursor: 'pointer' }}
+                                  title={favorites.has(sup.dbId) ? 'Remover dos favoritos' : 'Favoritar'}
+                                >
+                                  <Heart size={11} fill={favorites.has(sup.dbId) ? '#ef4444' : 'none'} color={favorites.has(sup.dbId) ? '#ef4444' : '#8e8e93'} />
+                                </button>
+                              )}
                               {sup.slug && (
                                 <Link href={`/fornecedor/${sup.slug}`} target="_blank" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, padding: '6px', borderRadius: 6, background: 'transparent', border: '1px solid rgba(0,0,0,0.08)', color: '#6b6b6b', textDecoration: 'none', fontWeight: 600 }}>
                                   <ExternalLink size={10} /> Ver Perfil
