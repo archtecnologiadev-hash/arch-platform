@@ -50,8 +50,10 @@ export default function ProjetosPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState({ nome: '', tipo: 'residencial', descricao: '' })
   const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
 
-  const perfilCompleto = !!(escritorio?.nome && escritorio?.cidade)
+  // Only nome is strictly required to create a project
+  const perfilCompleto = !!(escritorio?.nome)
 
   useEffect(() => {
     async function load() {
@@ -77,16 +79,20 @@ export default function ProjetosPage() {
 
   async function handleCriarProjeto(e: React.FormEvent) {
     e.preventDefault()
-    if (!escritorio || !form.nome) return
+    if (!escritorio || !form.nome.trim()) return
     setSaving(true)
+    setFormError(null)
     const supabase = createClient()
     const { data, error } = await supabase
       .from('projetos')
-      .insert({ escritorio_id: escritorio.id, nome: form.nome, tipo: form.tipo, descricao: form.descricao })
+      .insert({ escritorio_id: escritorio.id, nome: form.nome.trim(), tipo: form.tipo, descricao: form.descricao || null })
       .select('*').single()
 
-    if (!error && data) {
-      setProjetos(prev => [data, ...prev])
+    if (error) {
+      console.error('[projetos] insert error:', JSON.stringify({ code: error.code, message: error.message, details: error.details, hint: error.hint }))
+      setFormError(error.message ?? 'Erro ao criar projeto. Tente novamente.')
+    } else if (data) {
+      setProjetos(prev => [data as Projeto, ...prev])
       setModalOpen(false)
       setForm({ nome: '', tipo: 'residencial', descricao: '' })
     }
@@ -125,7 +131,7 @@ export default function ProjetosPage() {
         {escritorio && (
           perfilCompleto ? (
             <button
-              onClick={() => setModalOpen(true)}
+              onClick={() => { setModalOpen(true); setFormError(null) }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 background: '#007AFF', color: '#fff', border: 'none',
@@ -169,7 +175,7 @@ export default function ProjetosPage() {
         }}>
           <AlertCircle size={32} color="#f97316" style={{ marginBottom: 12 }} />
           <p style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 6 }}>
-            Preencha o nome e a cidade do escritório para criar projetos.
+            Preencha o nome do escritório no perfil para criar projetos.
           </p>
           <Link href="/arquiteto/perfil" style={{ fontSize: 13, color: '#007AFF', textDecoration: 'none' }}>
             Completar perfil →
@@ -183,7 +189,7 @@ export default function ProjetosPage() {
           <FolderOpen size={40} color="#8e8e93" style={{ marginBottom: 14 }} />
           <p style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 14 }}>Nenhum projeto ainda.</p>
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={() => { setModalOpen(true); setFormError(null) }}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 7,
               padding: '10px 18px', borderRadius: 10, cursor: 'pointer',
@@ -329,6 +335,16 @@ export default function ProjetosPage() {
                   onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')}
                 />
               </div>
+
+              {formError && (
+                <div style={{
+                  padding: '10px 14px', background: 'rgba(239,68,68,0.06)',
+                  border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8,
+                  fontSize: 12, color: '#ef4444',
+                }}>
+                  {formError}
+                </div>
+              )}
 
               <button
                 type="submit"
