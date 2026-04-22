@@ -33,13 +33,13 @@ interface CalendarioObraProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-export const EVENT_META: Record<EventType, { color: string; label: string }> = {
-  arquiteto:   { color: '#c8a96e', label: 'Arquiteto / Reunião' },
-  marceneiro:  { color: '#4f9cf9', label: 'Marceneiro' },
-  eletricista: { color: '#34d399', label: 'Eletricista' },
-  vidracaria:  { color: '#a78bfa', label: 'Vidraçaria' },
-  pintor:      { color: '#ef4444', label: 'Pintor' },
-  gesseiro:    { color: '#f97316', label: 'Gesseiro' },
+export const EVENT_META: Record<EventType, { color: string; bg: string; label: string }> = {
+  arquiteto:   { color: '#b45309', bg: '#fef3c7', label: 'Arquiteto / Reunião' },
+  marceneiro:  { color: '#1d4ed8', bg: '#dbeafe', label: 'Marceneiro' },
+  eletricista: { color: '#065f46', bg: '#d1fae5', label: 'Eletricista' },
+  vidracaria:  { color: '#6d28d9', bg: '#ede9fe', label: 'Vidraçaria' },
+  pintor:      { color: '#b91c1c', bg: '#fee2e2', label: 'Pintor' },
+  gesseiro:    { color: '#c2410c', bg: '#ffedd5', label: 'Gesseiro' },
 }
 
 const EVENT_TYPES = Object.keys(EVENT_META) as EventType[]
@@ -112,30 +112,33 @@ export default function CalendarioObra({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       <style>{`
-        .cal-day { transition: background 0.12s; }
-        .cal-day:hover { background: #111 !important; }
+        .cal-day:hover { background: #f2f2f7 !important; }
         .cal-chip { transition: opacity 0.12s; cursor: default; }
-        .cal-chip:hover { opacity: 0.8; }
-        .cal-nav:hover { border-color: #333 !important; color: #ccc !important; }
+        .cal-chip:hover { opacity: 0.75; }
+        .cal-nav:hover { background: #e5e5ea !important; }
         .cal-pill { cursor: pointer; transition: all 0.15s; }
-        .cal-pill:hover { filter: brightness(1.1); }
+        .cal-pill:hover { filter: brightness(0.95); }
         .cal-inp {
           width: 100%;
-          background: #141414;
-          border: 1px solid #222;
-          border-radius: 7px;
-          padding: 8px 11px;
-          color: #e0e0e0;
-          font-size: 12.5px;
+          background: #f2f2f7;
+          border: 1px solid #e5e5ea;
+          border-radius: 10px;
+          padding: 10px 13px;
+          color: #1c1c1e;
+          font-size: 13px;
           outline: none;
           box-sizing: border-box;
           font-family: inherit;
-          transition: border-color 0.15s;
+          transition: border-color 0.15s, box-shadow 0.15s;
         }
-        .cal-inp:focus { border-color: rgba(200,169,110,0.45); }
-        .cal-inp::placeholder { color: #2e2e2e; }
+        .cal-inp:focus {
+          border-color: #007AFF;
+          box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
+          background: #fff;
+        }
+        .cal-inp::placeholder { color: #aeaeb2; }
         .cal-inp[type="date"],
-        .cal-inp[type="time"] { color-scheme: dark; }
+        .cal-inp[type="time"] { color-scheme: light; }
       `}</style>
 
       {/* ── Legenda ── */}
@@ -145,15 +148,16 @@ export default function CalendarioObra({
           flexWrap: 'wrap',
           gap: '8px 20px',
           padding: '12px 16px',
-          background: '#0f0f0f',
-          border: '1px solid #1c1c1c',
-          borderRadius: 10,
+          background: '#ffffff',
+          border: '1px solid #e5e5ea',
+          borderRadius: 12,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.07)',
         }}
       >
         {EVENT_TYPES.map((t) => {
           const meta = EVENT_META[t]
           return (
-            <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <div
                 style={{
                   width: 9,
@@ -161,10 +165,9 @@ export default function CalendarioObra({
                   borderRadius: '50%',
                   background: meta.color,
                   flexShrink: 0,
-                  boxShadow: `0 0 6px ${meta.color}55`,
                 }}
               />
-              <span style={{ fontSize: 11.5, color: '#555', fontWeight: 500 }}>{meta.label}</span>
+              <span style={{ fontSize: 12, color: '#3a3a3c', fontWeight: 500 }}>{meta.label}</span>
             </div>
           )
         })}
@@ -177,29 +180,30 @@ export default function CalendarioObra({
             className="cal-nav"
             onClick={goPrev}
             style={{
-              width: 30,
-              height: 30,
-              borderRadius: 7,
-              background: '#0f0f0f',
-              border: '1px solid #1c1c1c',
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: '#f2f2f7',
+              border: '1px solid #e5e5ea',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              color: '#444',
-              transition: 'border-color 0.15s, color 0.15s',
+              color: '#3a3a3c',
+              transition: 'background 0.15s',
             }}
           >
-            <ChevronLeft size={14} />
+            <ChevronLeft size={15} />
           </button>
 
           <span
             style={{
               fontSize: 15,
               fontWeight: 700,
-              color: '#e0e0e0',
+              color: '#1c1c1e',
               minWidth: 176,
               textAlign: 'center',
+              letterSpacing: '-0.01em',
             }}
           >
             {MONTHS[month]} {year}
@@ -209,20 +213,20 @@ export default function CalendarioObra({
             className="cal-nav"
             onClick={goNext}
             style={{
-              width: 30,
-              height: 30,
-              borderRadius: 7,
-              background: '#0f0f0f',
-              border: '1px solid #1c1c1c',
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: '#f2f2f7',
+              border: '1px solid #e5e5ea',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              color: '#444',
-              transition: 'border-color 0.15s, color 0.15s',
+              color: '#3a3a3c',
+              transition: 'background 0.15s',
             }}
           >
-            <ChevronRight size={14} />
+            <ChevronRight size={15} />
           </button>
         </div>
 
@@ -233,20 +237,20 @@ export default function CalendarioObra({
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              padding: '7px 14px',
-              borderRadius: 7,
-              background: 'rgba(200,169,110,0.09)',
-              border: '1px solid rgba(200,169,110,0.22)',
-              color: '#c8a96e',
-              fontSize: 12.5,
+              padding: '8px 16px',
+              borderRadius: 10,
+              background: '#007AFF',
+              border: 'none',
+              color: '#ffffff',
+              fontSize: 13,
               fontWeight: 600,
               cursor: 'pointer',
-              transition: 'background 0.15s',
+              transition: 'opacity 0.15s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(200,169,110,0.18)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(200,169,110,0.09)')}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
           >
-            <Plus size={12} />
+            <Plus size={13} />
             Adicionar evento
           </button>
         )}
@@ -255,10 +259,11 @@ export default function CalendarioObra({
       {/* ── Grade do calendário ── */}
       <div
         style={{
-          background: '#0f0f0f',
-          border: '1px solid #1c1c1c',
+          background: '#ffffff',
+          border: '1px solid #e5e5ea',
           borderRadius: 12,
           overflow: 'hidden',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.07)',
         }}
       >
         {/* Cabeçalho dos dias da semana */}
@@ -266,7 +271,8 @@ export default function CalendarioObra({
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(7, 1fr)',
-            borderBottom: '1px solid #1a1a1a',
+            borderBottom: '1px solid #e5e5ea',
+            background: '#f9f9fb',
           }}
         >
           {WEEKDAYS.map((wd, i) => (
@@ -275,12 +281,12 @@ export default function CalendarioObra({
               style={{
                 padding: '9px 0',
                 textAlign: 'center',
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: 600,
                 letterSpacing: '0.05em',
                 textTransform: 'uppercase',
-                color: i === 0 || i === 6 ? '#252525' : '#2e2e2e',
-                borderRight: i < 6 ? '1px solid #141414' : 'none',
+                color: i === 0 || i === 6 ? '#aeaeb2' : '#8e8e93',
+                borderRight: i < 6 ? '1px solid #e5e5ea' : 'none',
               }}
             >
               {wd}
@@ -308,9 +314,9 @@ export default function CalendarioObra({
                 style={{
                   minHeight: 92,
                   padding: '7px 6px 5px',
-                  borderRight: col < 6 ? '1px solid #141414' : 'none',
-                  borderBottom: lastRow ? 'none' : '1px solid #141414',
-                  background: valid ? 'transparent' : '#080808',
+                  borderRight: col < 6 ? '1px solid #e5e5ea' : 'none',
+                  borderBottom: lastRow ? 'none' : '1px solid #e5e5ea',
+                  background: valid ? '#ffffff' : '#f9f9fb',
                   transition: 'background 0.12s',
                 }}
               >
@@ -322,13 +328,13 @@ export default function CalendarioObra({
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        width: 22,
-                        height: 22,
+                        width: 24,
+                        height: 24,
                         borderRadius: '50%',
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: isToday ? 700 : 400,
-                        color: isToday ? '#080808' : weekend ? '#242424' : '#525252',
-                        background: isToday ? '#c8a96e' : 'transparent',
+                        color: isToday ? '#ffffff' : weekend ? '#aeaeb2' : '#1c1c1e',
+                        background: isToday ? '#007AFF' : 'transparent',
                         marginBottom: 4,
                       }}
                     >
@@ -338,7 +344,7 @@ export default function CalendarioObra({
                     {/* Chips de eventos */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       {dayEvs.map((ev) => {
-                        const color = EVENT_META[ev.type].color
+                        const meta = EVENT_META[ev.type]
                         const isStart = ev.startDate === dStr
                         return (
                           <div
@@ -346,18 +352,18 @@ export default function CalendarioObra({
                             className="cal-chip"
                             title={`${ev.title} · ${ev.provider}${ev.startTime ? ` · ${ev.startTime}` : ''}`}
                             style={{
-                              borderLeft: `3px solid ${color}`,
-                              background: `${color}12`,
-                              borderRadius: '0 3px 3px 0',
-                              padding: '2px 4px',
+                              borderLeft: `3px solid ${meta.color}`,
+                              background: meta.bg,
+                              borderRadius: '0 4px 4px 0',
+                              padding: '2px 5px',
                               overflow: 'hidden',
                             }}
                           >
                             <div
                               style={{
-                                fontSize: 9.5,
+                                fontSize: 10,
                                 fontWeight: 600,
-                                color,
+                                color: meta.color,
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
@@ -368,8 +374,9 @@ export default function CalendarioObra({
                             {isStart && ev.startTime && (
                               <div
                                 style={{
-                                  fontSize: 8.5,
-                                  color: `${color}88`,
+                                  fontSize: 9,
+                                  color: meta.color,
+                                  opacity: 0.7,
                                   whiteSpace: 'nowrap',
                                 }}
                               >
@@ -394,25 +401,25 @@ export default function CalendarioObra({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.76)',
+            background: 'rgba(0,0,0,0.45)',
             zIndex: 200,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backdropFilter: 'blur(4px)',
+            backdropFilter: 'blur(6px)',
           }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false) }}
         >
           <div
             style={{
-              background: '#111',
-              border: '1px solid #1e1e1e',
-              borderRadius: 14,
+              background: '#ffffff',
+              border: '1px solid #e5e5ea',
+              borderRadius: 16,
               width: '100%',
               maxWidth: 500,
               maxHeight: '90vh',
               overflowY: 'auto',
-              boxShadow: '0 32px 80px rgba(0,0,0,0.85)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.18)',
               margin: '0 16px',
             }}
           >
@@ -420,40 +427,34 @@ export default function CalendarioObra({
             <div
               style={{
                 padding: '18px 22px',
-                borderBottom: '1px solid #1a1a1a',
+                borderBottom: '1px solid #f2f2f7',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
               }}
             >
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#e8e8e8' }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#1c1c1e' }}>
                 Novo Evento
               </div>
               <button
                 onClick={() => setShowModal(false)}
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 6,
-                  background: 'transparent',
-                  border: '1px solid #222',
+                  width: 30,
+                  height: 30,
+                  borderRadius: 8,
+                  background: '#f2f2f7',
+                  border: 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  color: '#555',
-                  transition: 'background 0.15s, color 0.15s',
+                  color: '#8e8e93',
+                  transition: 'background 0.15s',
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#1a1a1a'
-                  e.currentTarget.style.color = '#999'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = '#555'
-                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#e5e5ea')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#f2f2f7')}
               >
-                <X size={13} />
+                <X size={14} />
               </button>
             </div>
 
@@ -463,7 +464,7 @@ export default function CalendarioObra({
                 padding: '20px 22px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 16,
+                gap: 18,
               }}
             >
               {/* Tipo de serviço */}
@@ -482,12 +483,12 @@ export default function CalendarioObra({
                           display: 'flex',
                           alignItems: 'center',
                           gap: 5,
-                          padding: '5px 11px',
+                          padding: '6px 12px',
                           borderRadius: 20,
-                          border: `1px solid ${sel ? meta.color : '#222'}`,
-                          background: sel ? `${meta.color}15` : '#0f0f0f',
-                          color: sel ? meta.color : '#444',
-                          fontSize: 11.5,
+                          border: `1.5px solid ${sel ? meta.color : '#e5e5ea'}`,
+                          background: sel ? meta.bg : '#f9f9fb',
+                          color: sel ? meta.color : '#6c6c70',
+                          fontSize: 12,
                           fontWeight: sel ? 600 : 400,
                         }}
                       >
@@ -604,45 +605,36 @@ export default function CalendarioObra({
                 <button
                   onClick={() => setShowModal(false)}
                   style={{
-                    padding: '8px 16px',
-                    borderRadius: 7,
-                    background: 'transparent',
-                    border: '1px solid #222',
-                    color: '#555',
-                    fontSize: 12.5,
+                    padding: '9px 18px',
+                    borderRadius: 10,
+                    background: '#f2f2f7',
+                    border: 'none',
+                    color: '#3a3a3c',
+                    fontSize: 13,
+                    fontWeight: 500,
                     cursor: 'pointer',
-                    transition: 'color 0.15s, border-color 0.15s',
+                    transition: 'background 0.15s',
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = '#888'
-                    e.currentTarget.style.borderColor = '#333'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = '#555'
-                    e.currentTarget.style.borderColor = '#222'
-                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#e5e5ea')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#f2f2f7')}
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={submit}
                   style={{
-                    padding: '8px 18px',
-                    borderRadius: 7,
-                    background: 'rgba(200,169,110,0.12)',
-                    border: '1px solid rgba(200,169,110,0.3)',
-                    color: '#c8a96e',
-                    fontSize: 12.5,
+                    padding: '9px 20px',
+                    borderRadius: 10,
+                    background: '#007AFF',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontSize: 13,
                     fontWeight: 600,
                     cursor: 'pointer',
-                    transition: 'background 0.15s',
+                    transition: 'opacity 0.15s',
                   }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = 'rgba(200,169,110,0.22)')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = 'rgba(200,169,110,0.12)')
-                  }
+                  onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
+                  onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
                 >
                   Salvar evento
                 </button>
@@ -657,10 +649,10 @@ export default function CalendarioObra({
 
 // Shared label style used inside the component
 const labelStyle: React.CSSProperties = {
-  fontSize: 10.5,
-  color: '#333',
+  fontSize: 11,
+  color: '#8e8e93',
   fontWeight: 600,
-  letterSpacing: '0.07em',
+  letterSpacing: '0.06em',
   textTransform: 'uppercase',
   display: 'block',
 }
