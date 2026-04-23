@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Send, Search, MessageCircle } from 'lucide-react'
+import { Send, Search, MessageCircle, Paperclip, FileText, ImageIcon, File, Download, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 type UserType = 'arquiteto' | 'cliente' | 'fornecedor'
@@ -23,10 +23,14 @@ interface Conversa {
 interface Mensagem {
   id: string
   remetente_id: string
-  texto: string
+  texto: string | null
   created_at: string
   lida: boolean
+  arquivo_url?: string | null
+  arquivo_nome?: string | null
 }
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function fmtTime(iso: string): string {
   const d = new Date(iso)
@@ -37,8 +41,54 @@ function fmtTime(iso: string): string {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 }
 
+function formatDateSep(iso: string): string {
+  const d = new Date(iso)
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(today.getDate() - 1)
+  if (d.toDateString() === today.toDateString()) return 'Hoje'
+  if (d.toDateString() === yesterday.toDateString()) return 'Ontem'
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+}
+
 function initials(nome: string) {
   return nome.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
+}
+
+function isGrouped(a: Mensagem, b: Mensagem): boolean {
+  return a.remetente_id === b.remetente_id &&
+    Math.abs(new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) < 60000
+}
+
+function FileAttachment({ url, nome, isMine }: { url: string; nome: string; isMine: boolean }) {
+  const ext = nome.split('.').pop()?.toLowerCase() ?? ''
+  const isImg = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)
+  const isPdf = ext === 'pdf'
+  const Icon = isImg ? ImageIcon : isPdf ? FileText : File
+  const iconColor = isMine ? 'rgba(255,255,255,0.85)' : '#007AFF'
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      download={nome}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '8px 10px',
+        background: isMine ? 'rgba(255,255,255,0.15)' : 'rgba(0,122,255,0.07)',
+        border: `1px solid ${isMine ? 'rgba(255,255,255,0.2)' : 'rgba(0,122,255,0.18)'}`,
+        borderRadius: 8, textDecoration: 'none', cursor: 'pointer',
+        minWidth: 0,
+      }}
+    >
+      <Icon size={16} color={iconColor} style={{ flexShrink: 0 }} />
+      <span style={{ fontSize: 12.5, color: isMine ? '#fff' : '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+        {nome}
+      </span>
+      <Download size={12} color={iconColor} style={{ flexShrink: 0, opacity: 0.7 }} />
+    </a>
+  )
 }
 
 function Avatar({ nome, url, size = 40, color = '#007AFF' }: { nome: string; url: string | null; size?: number; color?: string }) {
@@ -57,6 +107,8 @@ function Avatar({ nome, url, size = 40, color = '#007AFF' }: { nome: string; url
   )
 }
 
+// ─── Chat Inner ───────────────────────────────────────────────────────────────
+
 function ChatInner({ userType }: { userType: UserType }) {
   const searchParams = useSearchParams()
   const initConvId = searchParams.get('c')
@@ -69,8 +121,10 @@ function ChatInner({ userType }: { userType: UserType }) {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [uploadingFile, setUploadingFile] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   const selectedConversa = conversas.find(c => c.id === selectedId) ?? null
 
@@ -87,12 +141,14 @@ function ChatInner({ userType }: { userType: UserType }) {
 
   async function fetchMsgMeta(supabase: ReturnType<typeof createClient>, convId: string, uid: string) {
     const [{ data: msgs }, { count }] = await Promise.all([
-      supabase.from('mensagens').select('texto, created_at').eq('conversa_id', convId)
+      supabase.from('mensagens').select('texto, arquivo_nome, created_at').eq('conversa_id', convId)
         .order('created_at', { ascending: false }).limit(1),
       supabase.from('mensagens').select('id', { count: 'exact', head: true })
         .eq('conversa_id', convId).eq('lida', false).neq('remetente_id', uid),
     ])
-    return { last: msgs?.[0] ?? null, unread: count ?? 0 }
+    const last = msgs?.[0]
+    const preview = last?.arquivo_nome ? `📎 ${last.arquivo_nome}` : (last?.texto ?? '')
+    return { last: last ? { ...last, texto: preview } : null, unread: count ?? 0 }
   }
 
   async function loadConversas(supabase: ReturnType<typeof createClient>, uid: string) {
@@ -112,8 +168,7 @@ function ChatInner({ userType }: { userType: UserType }) {
       const usersMap: Record<string, any> = Object.fromEntries((usersData ?? []).map(u => [u.id, u]))
 
       const fornecedorDbIds = convsData
-        .filter(c => c.tipo === 'fornecedor' && c.fornecedor_id)
-        .map(c => c.fornecedor_id)
+        .filter(c => c.tipo === 'fornecedor' && c.fornecedor_id).map(c => c.fornecedor_id)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let fornsMap: Record<string, any> = {}
       if (fornecedorDbIds.length > 0) {
@@ -151,16 +206,11 @@ function ChatInner({ userType }: { userType: UserType }) {
           participante_avatar = fornsMap[c.fornecedor_id].image_url ?? null
         }
         return {
-          id: c.id,
-          tipo: c.tipo as 'cliente' | 'fornecedor',
-          participante_id: c.participante_id,
-          participante_nome,
-          participante_email: user?.email ?? '',
-          participante_avatar,
+          id: c.id, tipo: c.tipo as 'cliente' | 'fornecedor',
+          participante_id: c.participante_id, participante_nome,
+          participante_email: user?.email ?? '', participante_avatar,
           projeto_nome: c.tipo === 'cliente' ? (projetosMap[c.participante_id] ?? null) : null,
-          unread,
-          ultima_msg: last?.texto ?? '',
-          ultima_msg_at: last?.created_at ?? null,
+          unread, ultima_msg: last?.texto ?? '', ultima_msg_at: last?.created_at ?? null,
         }
       }))
 
@@ -172,8 +222,7 @@ function ChatInner({ userType }: { userType: UserType }) {
       const { data: convsData } = await supabase
         .from('conversas')
         .select('id, tipo, arquiteto_id, participante_id, fornecedor_id')
-        .eq('participante_id', uid)
-        .eq('tipo', tipoField)
+        .eq('participante_id', uid).eq('tipo', tipoField)
         .order('created_at', { ascending: false })
 
       if (!convsData || convsData.length === 0) return
@@ -183,8 +232,6 @@ function ChatInner({ userType }: { userType: UserType }) {
         .from('users').select('id, nome, email').in('id', arquitetoIds)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const arquitetosMap: Record<string, any> = Object.fromEntries((arquitetosData ?? []).map(u => [u.id, u]))
-
-      // Fetch escritorio image for arquiteto avatar
       const { data: escData } = await supabase
         .from('escritorios').select('user_id, image_url').in('user_id', arquitetoIds)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -194,16 +241,13 @@ function ChatInner({ userType }: { userType: UserType }) {
         const { last, unread } = await fetchMsgMeta(supabase, c.id, uid)
         const arq = arquitetosMap[c.arquiteto_id]
         return {
-          id: c.id,
-          tipo: c.tipo as 'cliente' | 'fornecedor',
+          id: c.id, tipo: c.tipo as 'cliente' | 'fornecedor',
           participante_id: c.arquiteto_id,
           participante_nome: arq?.nome?.trim() || arq?.email?.split('@')[0] || 'Arquiteto',
           participante_email: arq?.email ?? '',
           participante_avatar: escMap[c.arquiteto_id]?.image_url ?? null,
-          projeto_nome: null,
-          unread,
-          ultima_msg: last?.texto ?? '',
-          ultima_msg_at: last?.created_at ?? null,
+          projeto_nome: null, unread,
+          ultima_msg: last?.texto ?? '', ultima_msg_at: last?.created_at ?? null,
         }
       }))
 
@@ -213,12 +257,12 @@ function ChatInner({ userType }: { userType: UserType }) {
     }
   }
 
+  // ─── Realtime + load messages ─────────────────────────────────────────────
   useEffect(() => {
     if (!selectedId || !userId) return
     const supabase = createClient()
 
-    supabase
-      .from('mensagens').select('*').eq('conversa_id', selectedId)
+    supabase.from('mensagens').select('*').eq('conversa_id', selectedId)
       .order('created_at', { ascending: true })
       .then(({ data }) => {
         setMensagens(data ?? [])
@@ -229,23 +273,27 @@ function ChatInner({ userType }: { userType: UserType }) {
           })
       })
 
-    const channel = supabase
-      .channel(`msgs-${selectedId}`)
+    const channel = supabase.channel(`msgs-${selectedId}`)
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'mensagens',
         filter: `conversa_id=eq.${selectedId}`,
       }, (payload) => {
         const m = payload.new as Mensagem
-        setMensagens(prev => {
-          if (prev.find(x => x.id === m.id)) return prev
-          return [...prev, m]
-        })
+        setMensagens(prev => prev.find(x => x.id === m.id) ? prev : [...prev, m])
         if (m.remetente_id !== userId) {
           supabase.from('mensagens').update({ lida: true }).eq('id', m.id).then(() => {})
         }
+        const preview = m.arquivo_nome ? `📎 ${m.arquivo_nome}` : (m.texto ?? '')
         setConversas(prev => prev.map(c =>
-          c.id === selectedId ? { ...c, ultima_msg: m.texto, ultima_msg_at: m.created_at } : c
+          c.id === selectedId ? { ...c, ultima_msg: preview, ultima_msg_at: m.created_at } : c
         ))
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'mensagens',
+        filter: `conversa_id=eq.${selectedId}`,
+      }, (payload) => {
+        const m = payload.new as Mensagem
+        setMensagens(prev => prev.map(x => x.id === m.id ? { ...x, lida: m.lida } : x))
       })
       .subscribe()
 
@@ -256,6 +304,7 @@ function ChatInner({ userType }: { userType: UserType }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [mensagens])
 
+  // ─── Send message ─────────────────────────────────────────────────────────
   async function sendMessage() {
     if (!texto.trim() || !selectedId || !userId || sending) return
     setSending(true)
@@ -265,6 +314,26 @@ function ChatInner({ userType }: { userType: UserType }) {
     await supabase.from('mensagens').insert({ conversa_id: selectedId, remetente_id: userId, texto: t })
     setSending(false)
     inputRef.current?.focus()
+  }
+
+  // ─── File upload ──────────────────────────────────────────────────────────
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || !selectedId || !userId) return
+    setUploadingFile(true)
+    const supabase = createClient()
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const path = `${selectedId}/${Date.now()}_${safeName}`
+    const { error } = await supabase.storage.from('chat-arquivos').upload(path, file, { contentType: file.type })
+    if (!error) {
+      const { data: { publicUrl } } = supabase.storage.from('chat-arquivos').getPublicUrl(path)
+      await supabase.from('mensagens').insert({
+        conversa_id: selectedId, remetente_id: userId,
+        texto: file.name, arquivo_url: publicUrl, arquivo_nome: file.name,
+      })
+    }
+    setUploadingFile(false)
   }
 
   function handleKey(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -277,6 +346,7 @@ function ChatInner({ userType }: { userType: UserType }) {
   const filtClientes = filtered.filter(c => c.tipo === 'cliente')
   const filtFornecedores = filtered.filter(c => c.tipo === 'fornecedor')
 
+  // ─── Conversation item ────────────────────────────────────────────────────
   function ConvItem({ c }: { c: Conversa }) {
     const isActive = c.id === selectedId
     return (
@@ -286,14 +356,10 @@ function ChatInner({ userType }: { userType: UserType }) {
         background: isActive ? 'rgba(0,122,255,0.08)' : 'transparent',
         border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background 0.1s',
       }}>
-        <Avatar nome={c.participante_nome} url={c.participante_avatar} size={40}
-          color={isActive ? '#007AFF' : '#6b6b6b'} />
+        <Avatar nome={c.participante_nome} url={c.participante_avatar} size={40} color={isActive ? '#007AFF' : '#6b6b6b'} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 4 }}>
-            <span style={{
-              fontSize: 13.5, fontWeight: c.unread > 0 ? 600 : 400,
-              color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1,
-            }}>
+            <span style={{ fontSize: 13.5, fontWeight: c.unread > 0 ? 600 : 400, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
               {c.participante_nome}
             </span>
             {c.ultima_msg_at && (
@@ -320,14 +386,11 @@ function ChatInner({ userType }: { userType: UserType }) {
     )
   }
 
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#f2f2f7', overflow: 'hidden' }}>
       {/* Left: conversation list */}
-      <div style={{
-        width: 300, minWidth: 300, background: '#fff',
-        borderRight: '1px solid rgba(0,0,0,0.08)',
-        display: 'flex', flexDirection: 'column', height: '100%',
-      }}>
+      <div style={{ width: 300, minWidth: 300, background: '#fff', borderRight: '1px solid rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column', height: '100%' }}>
         <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', flexShrink: 0 }}>
           <span style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1a' }}>Mensagens</span>
         </div>
@@ -338,7 +401,6 @@ function ChatInner({ userType }: { userType: UserType }) {
               style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 13, color: '#1a1a1a' }} />
           </div>
         </div>
-
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {loading ? (
             <div style={{ padding: 24, textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>Carregando...</div>
@@ -379,26 +441,22 @@ function ChatInner({ userType }: { userType: UserType }) {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0 }}>
         {selectedConversa ? (
           <>
-            <div style={{
-              height: 56, display: 'flex', alignItems: 'center',
-              padding: '0 16px', borderBottom: '1px solid rgba(0,0,0,0.08)',
-              background: '#fff', gap: 10, flexShrink: 0,
-            }}>
+            {/* Header */}
+            <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 16px', borderBottom: '1px solid rgba(0,0,0,0.08)', background: '#fff', gap: 10, flexShrink: 0 }}>
               <Avatar nome={selectedConversa.participante_nome} url={selectedConversa.participante_avatar} size={34} />
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>
                   {selectedConversa.participante_nome}
                   {selectedConversa.projeto_nome && (
-                    <span style={{ fontWeight: 400, color: '#8b5cf6' }}>
-                      {' — Projeto: '}{selectedConversa.projeto_nome}
-                    </span>
+                    <span style={{ fontWeight: 400, color: '#8b5cf6' }}>{' — Projeto: '}{selectedConversa.projeto_nome}</span>
                   )}
                 </div>
                 <div style={{ fontSize: 11, color: '#8e8e93' }}>{selectedConversa.participante_email}</div>
               </div>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 8px', display: 'flex', flexDirection: 'column', gap: 2, background: '#f2f2f7' }}>
+            {/* Messages */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 8px', display: 'flex', flexDirection: 'column', gap: 0, background: '#f2f2f7' }}>
               {mensagens.length === 0 ? (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{ textAlign: 'center', color: '#8e8e93' }}>
@@ -409,29 +467,59 @@ function ChatInner({ userType }: { userType: UserType }) {
               ) : (
                 mensagens.map((msg, idx) => {
                   const isMine = msg.remetente_id === userId
-                  const prev = idx > 0 ? mensagens[idx - 1] : null
-                  const showDate = !prev || new Date(msg.created_at).toDateString() !== new Date(prev.created_at).toDateString()
+                  const prevMsg = idx > 0 ? mensagens[idx - 1] : null
+                  const nextMsg = idx < mensagens.length - 1 ? mensagens[idx + 1] : null
+
+                  const showDate = !prevMsg || new Date(msg.created_at).toDateString() !== new Date(prevMsg.created_at).toDateString()
+                  const groupedWithPrev = !!prevMsg && !showDate && isGrouped(prevMsg, msg)
+                  const groupedWithNext = !!nextMsg && isGrouped(msg, nextMsg) && new Date(nextMsg.created_at).toDateString() === new Date(msg.created_at).toDateString()
+                  const isLastInGroup = !groupedWithNext
+
+                  // Tail only on last message of group
+                  const borderRadius = isMine
+                    ? isLastInGroup ? '18px 18px 4px 18px' : '18px 18px 18px 18px'
+                    : isLastInGroup ? '18px 18px 18px 4px' : '18px 18px 18px 18px'
+
+                  const marginTop = groupedWithPrev ? 2 : 8
+                  const isFile = !!(msg.arquivo_url && msg.arquivo_nome)
+
                   return (
                     <div key={msg.id}>
                       {showDate && (
-                        <div style={{ textAlign: 'center', margin: '8px 0 4px', fontSize: 11, color: '#8e8e93' }}>
-                          {new Date(msg.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                        <div style={{ textAlign: 'center', margin: '12px 0 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
+                          <span style={{ fontSize: 11, color: '#8e8e93', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                            {formatDateSep(msg.created_at)}
+                          </span>
+                          <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
                         </div>
                       )}
-                      <div style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', marginBottom: 2 }}>
+                      <div style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', marginTop, marginBottom: 0 }}>
                         <div style={{
                           maxWidth: '70%',
                           background: isMine ? '#007AFF' : '#ffffff',
                           color: isMine ? '#ffffff' : '#1a1a1a',
-                          borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                          padding: '8px 12px', fontSize: 14, lineHeight: 1.4,
+                          borderRadius,
+                          padding: isFile ? '8px' : '8px 12px',
+                          fontSize: 14, lineHeight: 1.4,
                           boxShadow: isMine ? 'none' : '0 1px 2px rgba(0,0,0,0.08)',
                           wordBreak: 'break-word',
                         }}>
-                          {msg.texto}
-                          <div style={{ fontSize: 10, textAlign: 'right', marginTop: 2, opacity: 0.65 }}>
-                            {fmtTime(msg.created_at)}
-                          </div>
+                          {isFile ? (
+                            <FileAttachment url={msg.arquivo_url!} nome={msg.arquivo_nome!} isMine={isMine} />
+                          ) : (
+                            <span>{msg.texto}</span>
+                          )}
+                          {isLastInGroup && (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3, marginTop: 3 }}>
+                              <span style={{ fontSize: 10, opacity: 0.65 }}>{fmtTime(msg.created_at)}</span>
+                              {isMine && (
+                                <span style={{ fontSize: 10, color: msg.lida ? '#90caf9' : 'rgba(255,255,255,0.6)', letterSpacing: '-1px', lineHeight: 1 }}>
+                                  {msg.lida ? '✓✓' : '✓'}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -441,20 +529,30 @@ function ChatInner({ userType }: { userType: UserType }) {
               <div ref={bottomRef} />
             </div>
 
+            {/* Input area */}
             <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(0,0,0,0.08)', background: '#fff', display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
-              <textarea ref={inputRef} value={texto} onChange={e => setTexto(e.target.value)} onKeyDown={handleKey}
-                placeholder="Mensagem..." rows={1}
-                style={{
-                  flex: 1, border: '1px solid rgba(0,0,0,0.12)', borderRadius: 20, padding: '8px 14px',
-                  fontSize: 14, outline: 'none', resize: 'none', background: '#f2f2f7', color: '#1a1a1a',
-                  maxHeight: 120, overflowY: 'auto', lineHeight: 1.4, fontFamily: 'inherit',
-                }} />
-              <button onClick={sendMessage} disabled={!texto.trim() || sending} style={{
-                width: 36, height: 36, borderRadius: '50%',
-                background: texto.trim() && !sending ? '#007AFF' : '#c7c7cc',
-                border: 'none', cursor: texto.trim() && !sending ? 'pointer' : 'default',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.15s',
-              }}>
+              <input ref={fileRef} type="file" onChange={handleFileSelect}
+                accept=".pdf,.dwg,.jpg,.jpeg,.png,.zip,.rar,.docx,.xlsx"
+                style={{ display: 'none' }} />
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={uploadingFile}
+                title="Enviar arquivo"
+                style={{ width: 36, height: 36, borderRadius: '50%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.15s' }}
+              >
+                {uploadingFile
+                  ? <Loader2 size={15} color="#8e8e93" style={{ animation: 'spin 1s linear infinite' }} />
+                  : <Paperclip size={15} color="#8e8e93" />
+                }
+              </button>
+              <textarea
+                ref={inputRef} value={texto} onChange={e => setTexto(e.target.value)}
+                onKeyDown={handleKey} placeholder="Mensagem..." rows={1}
+                style={{ flex: 1, border: '1px solid rgba(0,0,0,0.12)', borderRadius: 20, padding: '8px 14px', fontSize: 14, outline: 'none', resize: 'none', background: '#f2f2f7', color: '#1a1a1a', maxHeight: 120, overflowY: 'auto', lineHeight: 1.4, fontFamily: 'inherit' }}
+              />
+              <button
+                onClick={sendMessage} disabled={!texto.trim() || sending}
+                style={{ width: 36, height: 36, borderRadius: '50%', background: texto.trim() && !sending ? '#007AFF' : '#c7c7cc', border: 'none', cursor: texto.trim() && !sending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.15s' }}>
                 <Send size={15} color="#fff" />
               </button>
             </div>
@@ -469,6 +567,7 @@ function ChatInner({ userType }: { userType: UserType }) {
           </div>
         )}
       </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }

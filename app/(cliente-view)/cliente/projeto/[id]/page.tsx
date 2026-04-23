@@ -256,13 +256,6 @@ export default function ClienteProjetoPage() {
       {/* Content */}
       <div style={{ maxWidth: 880, margin: '0 auto', padding: '28px 20px' }}>
 
-        {/* Project header */}
-        {projeto.cover_url && (
-          <div style={{ height: 200, borderRadius: 16, overflow: 'hidden', marginBottom: 24 }}>
-            <img src={projeto.cover_url} alt={projeto.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          </div>
-        )}
-
         <div style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
             <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1a1a1a', margin: 0 }}>{projeto.nome}</h1>
