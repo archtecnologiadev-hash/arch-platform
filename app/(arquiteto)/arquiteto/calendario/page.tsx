@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { Calendar, ChevronLeft, ChevronRight, Loader2, Plus, X, Trash2, Save } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { EVENT_META } from '@/components/shared/CalendarioObra'
@@ -20,11 +19,6 @@ interface EventRow {
   projeto_nome: string
 }
 
-interface ProjetoSimple {
-  id: string
-  nome: string
-}
-
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 const DAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
 
@@ -34,7 +28,7 @@ function toYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-const emptyForm = { titulo: '', tipo: 'arquiteto', projeto_id: '', data_inicio: '', data_fim: '', hora_inicio: '', hora_fim: '', observacao: '' }
+const emptyForm = { titulo: '', tipo: 'arquiteto', data_inicio: '', data_fim: '', hora_inicio: '', hora_fim: '', observacao: '' }
 
 function getMeta(tipo: string) {
   return EVENT_META[tipo] ?? { color: '#6b6b6b', bg: '#f2f2f7', label: tipo }
@@ -42,7 +36,6 @@ function getMeta(tipo: string) {
 
 export default function CalendarioPage() {
   const [events, setEvents] = useState<EventRow[]>([])
-  const [projetos, setProjetos] = useState<ProjetoSimple[]>([])
   const [escritorioId, setEscritorioId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const today = new Date()
@@ -69,42 +62,14 @@ export default function CalendarioPage() {
 
       setEscritorioId(escritorio.id)
 
-      const { data: projetosList } = await supabase
-        .from('projetos').select('id, nome').eq('escritorio_id', escritorio.id).order('nome')
-
-      const projetoMap: Record<string, string> = {}
-      if (projetosList) {
-        projetosList.forEach((p: { id: string; nome: string }) => { projetoMap[p.id] = p.nome })
-        setProjetos(projetosList as ProjetoSimple[])
-      }
-
-      // Fetch events: both by projeto_id IN [...] and by escritorio_id (events without project)
-      const allEvents: EventRow[] = []
-
-      if (projetosList && projetosList.length > 0) {
-        const projetoIds = projetosList.map((p: { id: string }) => p.id)
-        const { data: evsByProjeto } = await supabase
-          .from('eventos').select('*').in('projeto_id', projetoIds).order('data_inicio', { ascending: true })
-        if (evsByProjeto) {
-          evsByProjeto.forEach((e: EventRow) => {
-            allEvents.push({ ...e, projeto_nome: projetoMap[e.projeto_id ?? ''] ?? 'Projeto' })
-          })
-        }
-      }
-
-      // Also fetch events with null projeto_id that belong to this escritório
-      const { data: evsGeral } = await supabase
+      // Fetch only personal events (no project linked)
+      const { data: evs } = await supabase
         .from('eventos').select('*')
         .eq('escritorio_id', escritorio.id)
         .is('projeto_id', null)
         .order('data_inicio', { ascending: true })
-      if (evsGeral) {
-        evsGeral.forEach((e: EventRow) => {
-          allEvents.push({ ...e, projeto_nome: 'Geral' })
-        })
-      }
 
-      setEvents(allEvents)
+      setEvents((evs ?? []).map((e: EventRow) => ({ ...e, projeto_nome: 'Geral' })))
       setLoading(false)
     }
     load()
@@ -138,7 +103,7 @@ export default function CalendarioPage() {
   function openCreate(day: string) {
     setEditingId(null)
     setSaveError(null)
-    setModalForm({ ...emptyForm, data_inicio: day, data_fim: day, projeto_id: projetos[0]?.id ?? '' })
+    setModalForm({ ...emptyForm, data_inicio: day, data_fim: day })
     setModalOpen(true)
   }
 
@@ -146,7 +111,7 @@ export default function CalendarioPage() {
     setEditingId(ev.id)
     setSaveError(null)
     setModalForm({
-      titulo: ev.titulo, tipo: ev.tipo, projeto_id: ev.projeto_id ?? '',
+      titulo: ev.titulo, tipo: ev.tipo,
       data_inicio: ev.data_inicio, data_fim: ev.data_fim,
       hora_inicio: ev.hora_inicio ?? '', hora_fim: ev.hora_fim ?? '', observacao: ev.observacao ?? '',
     })
@@ -159,7 +124,7 @@ export default function CalendarioPage() {
     setSaveError(null)
     const supabase = createClient()
     const payload = {
-      projeto_id: modalForm.projeto_id || null,
+      projeto_id: null,
       escritorio_id: escritorioId,
       titulo: modalForm.titulo.trim(),
       tipo: modalForm.tipo || 'arquiteto',
@@ -169,7 +134,6 @@ export default function CalendarioPage() {
       hora_fim: modalForm.hora_fim || null,
       observacao: modalForm.observacao || null,
     }
-    const projetoNome = projetos.find(p => p.id === modalForm.projeto_id)?.nome ?? 'Geral'
 
     if (editingId !== null) {
       const { error } = await supabase.from('eventos').update(payload).eq('id', editingId)
@@ -179,7 +143,7 @@ export default function CalendarioPage() {
         setSaving(false)
         return
       }
-      setEvents(prev => prev.map(e => e.id === editingId ? { ...e, ...payload, projeto_nome: projetoNome } : e))
+      setEvents(prev => prev.map(e => e.id === editingId ? { ...e, ...payload, projeto_nome: 'Geral' } : e))
     } else {
       const { data, error } = await supabase.from('eventos').insert(payload).select('*').single()
       if (error) {
@@ -188,7 +152,7 @@ export default function CalendarioPage() {
         setSaving(false)
         return
       }
-      if (data) setEvents(prev => [...prev, { ...(data as EventRow), projeto_nome: projetoNome }])
+      if (data) setEvents(prev => [...prev, { ...(data as EventRow), projeto_nome: 'Geral' }])
     }
     setSaving(false)
     setModalOpen(false)
@@ -223,7 +187,7 @@ export default function CalendarioPage() {
           <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
             <Calendar size={20} color="#007AFF" /> Calendário
           </h1>
-          <p style={{ fontSize: 13, color: '#6b6b6b' }}>Todos os eventos dos seus projetos</p>
+          <p style={{ fontSize: 13, color: '#6b6b6b' }}>Sua agenda pessoal</p>
         </div>
         <button onClick={() => openCreate(selectedDay ?? todayYMD)}
           style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
@@ -321,15 +285,7 @@ export default function CalendarioPage() {
                         {ev.hora_inicio}{ev.hora_fim ? ` → ${ev.hora_fim}` : ''}
                       </div>
                     )}
-                    {ev.projeto_id ? (
-                      <Link href={`/arquiteto/projetos/${ev.projeto_id}`} onClick={e => e.stopPropagation()} style={{ fontSize: 10, color: '#8e8e93', textDecoration: 'none' }}
-                        onMouseEnter={e => (e.currentTarget.style.color = '#007AFF')}
-                        onMouseLeave={e => (e.currentTarget.style.color = '#8e8e93')}>
-                        {ev.projeto_nome} →
-                      </Link>
-                    ) : (
-                      <span style={{ fontSize: 10, color: '#aeaeb2' }}>Geral</span>
-                    )}
+                    <span style={{ fontSize: 10, color: '#aeaeb2' }}>Agenda pessoal</span>
                     {ev.observacao && (
                       <div style={{ fontSize: 11, color: '#6b6b6b', marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(0,0,0,0.08)' }}>{ev.observacao}</div>
                     )}
@@ -365,24 +321,15 @@ export default function CalendarioPage() {
                   onFocus={e => (e.target.style.borderColor = '#007AFF')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
               </div>
 
-              {/* Tipo (datalist) + Projeto */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Tipo / Categoria</label>
-                  <datalist id="cal-tipo-geral">
-                    {EVENT_TYPE_SUGGESTIONS.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
-                  </datalist>
-                  <input list="cal-tipo-geral" value={modalForm.tipo} onChange={e => setModalForm(f => ({ ...f, tipo: e.target.value }))}
-                    placeholder="arquiteto, marceneiro..." style={inp}
-                    onFocus={e => (e.target.style.borderColor = '#007AFF')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Projeto</label>
-                  <select value={modalForm.projeto_id} onChange={e => setModalForm(f => ({ ...f, projeto_id: e.target.value }))} style={{ ...inp }}>
-                    <option value="">— Sem projeto (Geral)</option>
-                    {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                  </select>
-                </div>
+              {/* Tipo (datalist) */}
+              <div>
+                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Tipo / Categoria</label>
+                <datalist id="cal-tipo-geral">
+                  {EVENT_TYPE_SUGGESTIONS.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
+                </datalist>
+                <input list="cal-tipo-geral" value={modalForm.tipo} onChange={e => setModalForm(f => ({ ...f, tipo: e.target.value }))}
+                  placeholder="arquiteto, marceneiro..." style={inp}
+                  onFocus={e => (e.target.style.borderColor = '#007AFF')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
               </div>
 
               {/* Datas */}
