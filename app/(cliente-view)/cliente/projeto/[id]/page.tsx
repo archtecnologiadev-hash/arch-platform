@@ -133,9 +133,10 @@ export default function ClienteProjetoPage() {
       ])
 
       if (arqs) setArquivos(arqs as Arquivo[])
+      console.log('[cliente/projeto] eventos raw:', evs)
       if (evs) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setCalEvents(evs.map((e: any) => ({
+        const mapped = evs.map((e: any) => ({
           id: e.id,
           type: e.tipo as EventType,
           title: e.titulo,
@@ -145,7 +146,9 @@ export default function ClienteProjetoPage() {
           startTime: e.hora_inicio ?? undefined,
           endTime: e.hora_fim ?? undefined,
           note: e.observacao ?? undefined,
-        })))
+        }))
+        console.log('[cliente/projeto] eventos mapeados:', mapped)
+        setCalEvents(mapped)
       }
       if (hist) setHistorico(hist as HistoricoItem[])
       setLoading(false)
@@ -388,16 +391,7 @@ export default function ClienteProjetoPage() {
 
         {/* Tab: Calendário */}
         {activeTab === 'calendario' && (
-          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-            {calEvents.length === 0 ? (
-              <div style={{ padding: '60px 20px', textAlign: 'center', color: '#8e8e93' }}>
-                <CalendarDays size={36} color="#c7c7cc" style={{ margin: '0 auto 12px' }} />
-                <div style={{ fontSize: 14 }}>Nenhum evento agendado ainda</div>
-              </div>
-            ) : (
-              <CalendarioObra events={calEvents} readonly />
-            )}
-          </div>
+          <CalendarioObra events={calEvents} readonly />
         )}
 
         {/* Tab: Arquivos */}

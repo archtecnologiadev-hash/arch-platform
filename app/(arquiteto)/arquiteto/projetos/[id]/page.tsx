@@ -189,6 +189,12 @@ export default function ProjetoDetailPage() {
   // Historico
   const [historico, setHistorico] = useState<HistoricoItem[]>([])
 
+  // Sidebar event edit modal
+  const [sidebarEditTarget, setSidebarEditTarget] = useState<CalendarioEvent | null>(null)
+  const [sidebarEditForm, setSidebarEditForm] = useState({ type: 'arquiteto' as EventType, title: '', provider: '', startDate: '', endDate: '', startTime: '08:00', endTime: '17:00', note: '' })
+  const [sidebarEditSaving, setSidebarEditSaving] = useState(false)
+  const [sidebarEditDeleting, setSidebarEditDeleting] = useState(false)
+
   const [dirFilter, setDirFilter] = useState('Todos')
   const [dirQuoteTarget, setDirQuoteTarget] = useState<DirSupplier | null>(null)
   const [dirQuoteForm, setDirQuoteForm] = useState({ descricao: '', data: '' })
@@ -294,6 +300,39 @@ export default function ProjetoDetailPage() {
     }
     loadData()
   }, [projectId])
+
+  async function handleEventEdit(ev: CalendarioEvent) {
+    const supabase = createClient()
+    await supabase.from('eventos').update({
+      titulo: ev.title, tipo: ev.type,
+      data_inicio: ev.startDate, data_fim: ev.endDate,
+      hora_inicio: ev.startTime ?? null, hora_fim: ev.endTime ?? null, observacao: ev.note ?? null,
+    }).eq('id', ev.id)
+    setCalEvents(prev => prev.map(e => e.id === ev.id ? ev : e))
+  }
+
+  async function handleEventDelete(id: number) {
+    const supabase = createClient()
+    await supabase.from('eventos').delete().eq('id', id)
+    setCalEvents(prev => prev.filter(e => e.id !== id))
+  }
+
+  async function handleSidebarEditSave() {
+    if (!sidebarEditTarget) return
+    setSidebarEditSaving(true)
+    const ev = { ...sidebarEditForm, id: sidebarEditTarget.id }
+    await handleEventEdit(ev)
+    setSidebarEditTarget(null)
+    setSidebarEditSaving(false)
+  }
+
+  async function handleSidebarEditDelete() {
+    if (!sidebarEditTarget) return
+    setSidebarEditDeleting(true)
+    await handleEventDelete(sidebarEditTarget.id)
+    setSidebarEditTarget(null)
+    setSidebarEditDeleting(false)
+  }
 
   async function toggleFavorite(fornecedorDbId: string) {
     if (!currentUser) return
@@ -915,7 +954,10 @@ export default function ProjetoDetailPage() {
                   hora_inicio: ev.startTime ?? null, hora_fim: ev.endTime ?? null, observacao: ev.note ?? null,
                 }).select('id').single()
                 if (data) setCalEvents(prev => prev.map(e => e.id === tempId ? { ...e, id: data.id } : e))
-              }} />
+              }}
+              onEventEdit={handleEventEdit}
+              onEventDelete={handleEventDelete}
+            />
           )}
 
           {/* ══ TAB: Orçamento ══ */}
@@ -1135,7 +1177,9 @@ export default function ProjetoDetailPage() {
                       {!hasEvents ? <div style={{ fontSize: 10.5, color: 'rgba(0,0,0,0.2)', paddingTop: 4 }}>—</div> : dayEvents.map(ev => {
                         const color = EVENT_META[ev.type].color
                         return (
-                          <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+                          <div key={ev.id} onClick={() => { setSidebarEditTarget(ev); setSidebarEditForm({ type: ev.type, title: ev.title, provider: ev.provider ?? '', startDate: ev.startDate, endDate: ev.endDate, startTime: ev.startTime ?? '08:00', endTime: ev.endTime ?? '17:00', note: ev.note ?? '' }) }} style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4, cursor: 'pointer', borderRadius: 5, padding: '2px 3px', margin: '0 -3px 4px' }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                             <div style={{ width: 5, height: 5, borderRadius: '50%', background: color, flexShrink: 0, boxShadow: `0 0 4px ${color}66` }} />
                             <div style={{ fontSize: 11, color, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{ev.title}</div>
                             {ev.startTime && <div style={{ fontSize: 9.5, color: '#8e8e93', flexShrink: 0 }}>{ev.startTime}</div>}
@@ -1292,6 +1336,79 @@ export default function ProjetoDetailPage() {
                 )}
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ══ MODAL: Editar evento da semana ══ */}
+      {sidebarEditTarget && (
+        <div onClick={e => { if (e.target === e.currentTarget) setSidebarEditTarget(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div className="dir-modal-box" style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 480, padding: 24, boxShadow: '0 8px 32px rgba(0,0,0,0.14)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Editar Evento</div>
+              <button onClick={() => setSidebarEditTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}><X size={18} /></button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Tipo</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {(Object.keys(EVENT_META) as EventType[]).map(t => {
+                    const meta = EVENT_META[t]
+                    const sel = sidebarEditForm.type === t
+                    return (
+                      <button key={t} type="button" onClick={() => setSidebarEditForm(f => ({ ...f, type: t }))} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 16, border: `1.5px solid ${sel ? meta.color : 'rgba(0,0,0,0.1)'}`, background: sel ? meta.bg : '#f2f2f7', color: sel ? meta.color : '#6b6b6b', fontSize: 11.5, fontWeight: sel ? 600 : 400, cursor: 'pointer' }}>
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: meta.color, flexShrink: 0 }} />{meta.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Serviço</label>
+                  <input value={sidebarEditForm.title} onChange={e => setSidebarEditForm(f => ({ ...f, title: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12.5, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Fornecedor</label>
+                  <input value={sidebarEditForm.provider} onChange={e => setSidebarEditForm(f => ({ ...f, provider: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12.5, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Data início</label>
+                  <input type="date" value={sidebarEditForm.startDate} onChange={e => setSidebarEditForm(f => ({ ...f, startDate: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12.5, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'light' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Data fim</label>
+                  <input type="date" value={sidebarEditForm.endDate} onChange={e => setSidebarEditForm(f => ({ ...f, endDate: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12.5, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'light' }} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Horário início</label>
+                  <input type="time" value={sidebarEditForm.startTime} onChange={e => setSidebarEditForm(f => ({ ...f, startTime: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12.5, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'light' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Horário fim</label>
+                  <input type="time" value={sidebarEditForm.endTime} onChange={e => setSidebarEditForm(f => ({ ...f, endTime: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12.5, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'light' }} />
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Observação</label>
+                <textarea value={sidebarEditForm.note} onChange={e => setSidebarEditForm(f => ({ ...f, note: e.target.value }))} rows={2} style={{ width: '100%', padding: '9px 11px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12.5, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'vertical' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 }}>
+                <button onClick={handleSidebarEditDelete} disabled={sidebarEditDeleting} style={{ padding: '9px 16px', borderRadius: 9, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {sidebarEditDeleting ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <X size={12} />} Excluir
+                </button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => setSidebarEditTarget(null)} style={{ padding: '9px 16px', borderRadius: 9, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+                  <button onClick={handleSidebarEditSave} disabled={sidebarEditSaving || !sidebarEditForm.title.trim()} style={{ padding: '9px 18px', borderRadius: 9, background: '#007AFF', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: sidebarEditSaving || !sidebarEditForm.title.trim() ? 0.6 : 1 }}>
+                    {sidebarEditSaving ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : null} Salvar
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, X, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -29,6 +29,8 @@ interface CalendarioObraProps {
   events: CalendarioEvent[]
   readonly?: boolean
   onEventAdd?: (event: Omit<CalendarioEvent, 'id'>) => void
+  onEventEdit?: (event: CalendarioEvent) => void
+  onEventDelete?: (id: number) => void
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -79,11 +81,15 @@ export default function CalendarioObra({
   events,
   readonly = false,
   onEventAdd,
+  onEventEdit,
+  onEventDelete,
 }: CalendarioObraProps) {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
   const [showModal, setShowModal] = useState(false)
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
+  const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState({ ...blankForm })
 
   const todayStr = toDateStr(now.getFullYear(), now.getMonth(), now.getDate())
@@ -101,20 +107,59 @@ export default function CalendarioObra({
     else setMonth((m) => m + 1)
   }
 
-  const submit = () => {
-    if (!form.title.trim() || !form.startDate || !form.endDate) return
-    onEventAdd?.({ ...form })
-    setForm({ ...blankForm })
+  function openCreate(dateStr?: string) {
+    setForm({ ...blankForm, startDate: dateStr ?? '', endDate: dateStr ?? '' })
+    setModalMode('create')
+    setEditingId(null)
+    setShowModal(true)
+  }
+
+  function openEdit(ev: CalendarioEvent) {
+    setForm({
+      type: ev.type,
+      title: ev.title,
+      provider: ev.provider ?? '',
+      startDate: ev.startDate,
+      endDate: ev.endDate,
+      startTime: ev.startTime ?? '08:00',
+      endTime: ev.endTime ?? '17:00',
+      note: ev.note ?? '',
+    })
+    setModalMode('edit')
+    setEditingId(ev.id)
+    setShowModal(true)
+  }
+
+  function closeModal() {
     setShowModal(false)
+    setEditingId(null)
+  }
+
+  function submit() {
+    if (!form.title.trim() || !form.startDate || !form.endDate) return
+    if (modalMode === 'create') {
+      onEventAdd?.({ ...form })
+    } else if (modalMode === 'edit' && editingId !== null) {
+      onEventEdit?.({ ...form, id: editingId })
+    }
+    closeModal()
+  }
+
+  function handleDelete() {
+    if (editingId !== null) {
+      onEventDelete?.(editingId)
+      closeModal()
+    }
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       <style>{`
-        .cal-day:hover { background: #f2f2f7 !important; }
-        .cal-chip { transition: opacity 0.12s; cursor: default; }
-        .cal-chip:hover { opacity: 0.75; }
+        .cal-day { cursor: ${readonly ? 'default' : 'pointer'}; }
+        .cal-day:hover { background: ${readonly ? '#ffffff' : '#f2f2f7'} !important; }
+        .cal-chip { transition: opacity 0.12s; cursor: ${readonly ? 'default' : 'pointer'}; }
+        .cal-chip:hover { opacity: ${readonly ? '1' : '0.75'}; }
         .cal-nav:hover { background: #e5e5ea !important; }
         .cal-pill { cursor: pointer; transition: all 0.15s; }
         .cal-pill:hover { filter: brightness(0.95); }
@@ -232,7 +277,7 @@ export default function CalendarioObra({
 
         {!readonly && (
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => openCreate(todayStr)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -311,6 +356,7 @@ export default function CalendarioObra({
               <div
                 key={idx}
                 className={valid ? 'cal-day' : ''}
+                onClick={valid && !readonly ? () => openCreate(dStr) : undefined}
                 style={{
                   minHeight: 92,
                   padding: '7px 6px 5px',
@@ -351,6 +397,7 @@ export default function CalendarioObra({
                             key={ev.id}
                             className="cal-chip"
                             title={`${ev.title} · ${ev.provider}${ev.startTime ? ` · ${ev.startTime}` : ''}`}
+                            onClick={!readonly ? (e) => { e.stopPropagation(); openEdit(ev) } : undefined}
                             style={{
                               borderLeft: `3px solid ${meta.color}`,
                               background: meta.bg,
@@ -395,7 +442,7 @@ export default function CalendarioObra({
         </div>
       </div>
 
-      {/* ── Modal ── */}
+      {/* ── Modal (criar / editar) ── */}
       {showModal && !readonly && (
         <div
           style={{
@@ -408,7 +455,7 @@ export default function CalendarioObra({
             justifyContent: 'center',
             backdropFilter: 'blur(6px)',
           }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false) }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeModal() }}
         >
           <div
             style={{
@@ -434,28 +481,53 @@ export default function CalendarioObra({
               }}
             >
               <div style={{ fontSize: 16, fontWeight: 700, color: '#1c1c1e' }}>
-                Novo Evento
+                {modalMode === 'create' ? 'Novo Evento' : 'Editar Evento'}
               </div>
-              <button
-                onClick={() => setShowModal(false)}
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 8,
-                  background: '#f2f2f7',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: '#8e8e93',
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#e5e5ea')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = '#f2f2f7')}
-              >
-                <X size={14} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {modalMode === 'edit' && onEventDelete && (
+                  <button
+                    onClick={handleDelete}
+                    style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: 8,
+                      background: 'rgba(239,68,68,0.08)',
+                      border: '1px solid rgba(239,68,68,0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: '#ef4444',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.18)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
+                    title="Excluir evento"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
+                <button
+                  onClick={closeModal}
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 8,
+                    background: '#f2f2f7',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: '#8e8e93',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#e5e5ea')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#f2f2f7')}
+                >
+                  <X size={14} />
+                </button>
+              </div>
             </div>
 
             {/* Body */}
@@ -603,7 +675,7 @@ export default function CalendarioObra({
                 }}
               >
                 <button
-                  onClick={() => setShowModal(false)}
+                  onClick={closeModal}
                   style={{
                     padding: '9px 18px',
                     borderRadius: 10,
@@ -636,7 +708,7 @@ export default function CalendarioObra({
                   onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
                   onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
                 >
-                  Salvar evento
+                  {modalMode === 'create' ? 'Salvar evento' : 'Salvar alterações'}
                 </button>
               </div>
             </div>
