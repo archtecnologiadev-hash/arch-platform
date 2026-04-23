@@ -454,7 +454,6 @@ export default function ProjetoDetailPage() {
     const q = linkQuery.trim().toLowerCase()
     const { data } = await supabase.from('users')
       .select('id, nome, email')
-      .eq('tipo', 'cliente')
       .or(`email.ilike.%${q}%,nome.ilike.%${q}%`)
       .limit(10)
     setLinkResults((data ?? []) as Array<{ id: string; nome: string; email: string }>)
