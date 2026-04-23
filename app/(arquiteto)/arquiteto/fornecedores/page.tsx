@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { MapPin, ExternalLink, Send, X, CheckCircle2, Heart, Package, Loader2, Upload, FileText } from 'lucide-react'
+import { MapPin, ExternalLink, Send, X, CheckCircle2, Heart, Package, Loader2, Upload, FileText, MessageCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -26,10 +27,12 @@ const SEG_COLOR: Record<string, string> = {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ArquitetoFornecedoresPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [suppliers, setSuppliers] = useState<SupplierCard[]>([])
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [msgLoading, setMsgLoading] = useState<string | null>(null)
   const [segFilter, setSegFilter] = useState('Todos')
   const [segments, setSegments] = useState<string[]>(['Todos'])
 
@@ -98,6 +101,27 @@ export default function ArquitetoFornecedoresPage() {
         .insert({ arquiteto_id: currentUserId, fornecedor_id: supplierId })
       setFavorites(prev => new Set(Array.from(prev).concat(supplierId)))
     }
+  }
+
+  async function handleMensagem(sup: SupplierCard) {
+    if (!currentUserId || msgLoading) return
+    setMsgLoading(sup.id)
+    const supabase = createClient()
+    const { data: forn } = await supabase.from('fornecedores').select('user_id').eq('id', sup.id).single()
+    if (!forn?.user_id) { setMsgLoading(null); return }
+    const { data: existing } = await supabase
+      .from('conversas').select('id')
+      .eq('arquiteto_id', currentUserId).eq('participante_id', forn.user_id).maybeSingle()
+    let convId: string | null = existing?.id ?? null
+    if (!convId) {
+      const { data: created } = await supabase
+        .from('conversas')
+        .insert({ arquiteto_id: currentUserId, participante_id: forn.user_id, tipo: 'fornecedor', fornecedor_id: sup.id })
+        .select('id').single()
+      convId = created?.id ?? null
+    }
+    setMsgLoading(null)
+    router.push(convId ? `/arquiteto/mensagens?c=${convId}` : '/arquiteto/mensagens')
   }
 
   async function handleSend(e: React.FormEvent) {
@@ -280,15 +304,21 @@ export default function ArquitetoFornecedoresPage() {
                   )}
 
                   {/* Buttons */}
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 6 }}>
                     {sup.slug && (
                       <Link href={`/fornecedor/${sup.slug}`} target="_blank"
-                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 12, padding: '8px', borderRadius: 8, background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: '#6b6b6b', textDecoration: 'none', fontWeight: 500 }}>
-                        <ExternalLink size={12} /> Ver Perfil
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, padding: '7px 10px', borderRadius: 8, background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: '#6b6b6b', textDecoration: 'none', fontWeight: 500 }}>
+                        <ExternalLink size={11} />
                       </Link>
                     )}
+                    <button
+                      onClick={() => handleMensagem(sup)}
+                      disabled={msgLoading === sup.id}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, padding: '7px 10px', borderRadius: 8, background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: '#6b6b6b', cursor: 'pointer', fontWeight: 500 }}>
+                      <MessageCircle size={11} />
+                    </button>
                     <button onClick={() => { setQuoteTarget(sup); setForm({ descricao: '' }); setSent(false) }}
-                      style={{ flex: 1, fontSize: 12, padding: '8px', borderRadius: 8, background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', cursor: 'pointer', fontWeight: 600 }}>
+                      style={{ flex: 1, fontSize: 12, padding: '7px', borderRadius: 8, background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', cursor: 'pointer', fontWeight: 600 }}>
                       Solicitar Orçamento
                     </button>
                   </div>

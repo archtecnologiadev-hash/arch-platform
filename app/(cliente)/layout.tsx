@@ -3,14 +3,12 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, FolderOpen, FileText, LogOut, MessageCircle } from 'lucide-react'
+import { FolderOpen, LogOut, MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 const NAV_ITEMS = [
-  { label: 'Dashboard', href: '/cliente/dashboard', icon: LayoutDashboard },
   { label: 'Meus Projetos', href: '/cliente/projetos', icon: FolderOpen },
   { label: 'Mensagens', href: '/cliente/mensagens', icon: MessageCircle },
-  { label: 'Orçamentos', href: '/cliente/orcamentos', icon: FileText },
 ]
 
 function ClienteSidebar() {
@@ -96,7 +94,7 @@ function ClienteSidebar() {
           const Icon = item.icon
           const isActive =
             pathname === item.href ||
-            (item.href !== '/cliente/dashboard' && pathname.startsWith(item.href))
+            pathname.startsWith(item.href + '/')
           const showBadge = item.href === '/cliente/mensagens' && unreadMsgs > 0
           return (
             <Link

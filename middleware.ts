@@ -101,12 +101,33 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  const userTipo = session.user.user_metadata?.tipo ?? 'cliente'
+
   if (isAuthPage) {
-    const tipo = session.user.user_metadata?.tipo ?? 'cliente'
-    return NextResponse.redirect(new URL(`/${tipo}/dashboard`, request.url))
+    const home = userTipo === 'cliente'
+      ? '/cliente/projetos'
+      : `/${userTipo}/dashboard`
+    return NextResponse.redirect(new URL(home, request.url))
   }
 
-  // Protected path with valid session: allow through
+  // ── 4. Cross-role isolation ───────────────────────────────────────────────
+  if (isProtected) {
+    const pathTipo =
+      pathname.startsWith('/arquiteto') ? 'arquiteto' :
+      pathname.startsWith('/cliente') ? 'cliente' :
+      pathname.startsWith('/fornecedor') ? 'fornecedor' : null
+
+    if (pathTipo && pathTipo !== userTipo) {
+      const homeMap: Record<string, string> = {
+        arquiteto: '/arquiteto/dashboard',
+        cliente: '/cliente/projetos',
+        fornecedor: '/fornecedor/dashboard',
+      }
+      return NextResponse.redirect(new URL(homeMap[userTipo] ?? '/login', request.url))
+    }
+  }
+
+  // Protected path with valid session and correct role: allow through
   return response
 }
 
