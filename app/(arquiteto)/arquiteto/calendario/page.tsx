@@ -15,7 +15,8 @@ interface EventRow {
   hora_inicio: string | null
   hora_fim: string | null
   observacao: string | null
-  projeto_id: string
+  projeto_id: string | null
+  escritorio_id: string | null
   projeto_nome: string
 }
 
@@ -27,7 +28,7 @@ interface ProjetoSimple {
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 const DAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
 
-const EVENT_TYPES = Object.entries(EVENT_META).map(([key, val]) => ({ key, label: val.label, color: val.color }))
+const EVENT_TYPE_SUGGESTIONS = Object.entries(EVENT_META).map(([key, val]) => ({ key, label: val.label }))
 
 function toYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -35,9 +36,14 @@ function toYMD(d: Date): string {
 
 const emptyForm = { titulo: '', tipo: 'arquiteto', projeto_id: '', data_inicio: '', data_fim: '', hora_inicio: '', hora_fim: '', observacao: '' }
 
+function getMeta(tipo: string) {
+  return EVENT_META[tipo] ?? { color: '#6b6b6b', bg: '#f2f2f7', label: tipo }
+}
+
 export default function CalendarioPage() {
   const [events, setEvents] = useState<EventRow[]>([])
   const [projetos, setProjetos] = useState<ProjetoSimple[]>([])
+  const [escritorioId, setEscritorioId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const today = new Date()
   const [viewYear, setViewYear] = useState(today.getFullYear())
@@ -48,6 +54,7 @@ export default function CalendarioPage() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [modalForm, setModalForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
@@ -60,28 +67,49 @@ export default function CalendarioPage() {
         .from('escritorios').select('id').eq('user_id', user.id).single()
       if (!escritorio) { setLoading(false); return }
 
+      setEscritorioId(escritorio.id)
+
       const { data: projetosList } = await supabase
-        .from('projetos').select('id, nome').eq('escritorio_id', escritorio.id)
-      if (!projetosList || projetosList.length === 0) { setLoading(false); return }
+        .from('projetos').select('id, nome').eq('escritorio_id', escritorio.id).order('nome')
 
-      setProjetos(projetosList as ProjetoSimple[])
-
-      const projetoIds = projetosList.map((p: { id: string }) => p.id)
       const projetoMap: Record<string, string> = {}
-      projetosList.forEach((p: { id: string; nome: string }) => { projetoMap[p.id] = p.nome })
-
-      const { data: evs } = await supabase
-        .from('eventos').select('*').in('projeto_id', projetoIds).order('data_inicio', { ascending: true })
-
-      if (evs) {
-        setEvents(evs.map((e: EventRow) => ({ ...e, projeto_nome: projetoMap[e.projeto_id] ?? 'Projeto' })))
+      if (projetosList) {
+        projetosList.forEach((p: { id: string; nome: string }) => { projetoMap[p.id] = p.nome })
+        setProjetos(projetosList as ProjetoSimple[])
       }
+
+      // Fetch events: both by projeto_id IN [...] and by escritorio_id (events without project)
+      const allEvents: EventRow[] = []
+
+      if (projetosList && projetosList.length > 0) {
+        const projetoIds = projetosList.map((p: { id: string }) => p.id)
+        const { data: evsByProjeto } = await supabase
+          .from('eventos').select('*').in('projeto_id', projetoIds).order('data_inicio', { ascending: true })
+        if (evsByProjeto) {
+          evsByProjeto.forEach((e: EventRow) => {
+            allEvents.push({ ...e, projeto_nome: projetoMap[e.projeto_id ?? ''] ?? 'Projeto' })
+          })
+        }
+      }
+
+      // Also fetch events with null projeto_id that belong to this escritório
+      const { data: evsGeral } = await supabase
+        .from('eventos').select('*')
+        .eq('escritorio_id', escritorio.id)
+        .is('projeto_id', null)
+        .order('data_inicio', { ascending: true })
+      if (evsGeral) {
+        evsGeral.forEach((e: EventRow) => {
+          allEvents.push({ ...e, projeto_nome: 'Geral' })
+        })
+      }
+
+      setEvents(allEvents)
       setLoading(false)
     }
     load()
   }, [])
 
-  // Calendar grid
   const firstDay = new Date(viewYear, viewMonth, 1).getDay()
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
   const cells: (number | null)[] = [
@@ -109,14 +137,16 @@ export default function CalendarioPage() {
 
   function openCreate(day: string) {
     setEditingId(null)
+    setSaveError(null)
     setModalForm({ ...emptyForm, data_inicio: day, data_fim: day, projeto_id: projetos[0]?.id ?? '' })
     setModalOpen(true)
   }
 
   function openEdit(ev: EventRow) {
     setEditingId(ev.id)
+    setSaveError(null)
     setModalForm({
-      titulo: ev.titulo, tipo: ev.tipo, projeto_id: ev.projeto_id,
+      titulo: ev.titulo, tipo: ev.tipo, projeto_id: ev.projeto_id ?? '',
       data_inicio: ev.data_inicio, data_fim: ev.data_fim,
       hora_inicio: ev.hora_inicio ?? '', hora_fim: ev.hora_fim ?? '', observacao: ev.observacao ?? '',
     })
@@ -124,22 +154,40 @@ export default function CalendarioPage() {
   }
 
   async function saveEvent() {
-    if (!modalForm.titulo.trim() || !modalForm.data_inicio || !modalForm.projeto_id) return
+    if (!modalForm.titulo.trim() || !modalForm.data_inicio) return
     setSaving(true)
+    setSaveError(null)
     const supabase = createClient()
     const payload = {
-      projeto_id: modalForm.projeto_id, titulo: modalForm.titulo.trim(), tipo: modalForm.tipo,
-      data_inicio: modalForm.data_inicio, data_fim: modalForm.data_fim || modalForm.data_inicio,
-      hora_inicio: modalForm.hora_inicio || null, hora_fim: modalForm.hora_fim || null,
+      projeto_id: modalForm.projeto_id || null,
+      escritorio_id: escritorioId,
+      titulo: modalForm.titulo.trim(),
+      tipo: modalForm.tipo || 'arquiteto',
+      data_inicio: modalForm.data_inicio,
+      data_fim: modalForm.data_fim || modalForm.data_inicio,
+      hora_inicio: modalForm.hora_inicio || null,
+      hora_fim: modalForm.hora_fim || null,
       observacao: modalForm.observacao || null,
     }
-    const projetoNome = projetos.find(p => p.id === modalForm.projeto_id)?.nome ?? 'Projeto'
+    const projetoNome = projetos.find(p => p.id === modalForm.projeto_id)?.nome ?? 'Geral'
 
     if (editingId !== null) {
-      await supabase.from('eventos').update(payload).eq('id', editingId)
+      const { error } = await supabase.from('eventos').update(payload).eq('id', editingId)
+      if (error) {
+        console.error('eventos update error:', error)
+        setSaveError(`Erro ao salvar: ${error.message}`)
+        setSaving(false)
+        return
+      }
       setEvents(prev => prev.map(e => e.id === editingId ? { ...e, ...payload, projeto_nome: projetoNome } : e))
     } else {
-      const { data } = await supabase.from('eventos').insert(payload).select('*').single()
+      const { data, error } = await supabase.from('eventos').insert(payload).select('*').single()
+      if (error) {
+        console.error('eventos insert error:', error)
+        setSaveError(`Erro ao salvar: ${error.message}`)
+        setSaving(false)
+        return
+      }
       if (data) setEvents(prev => [...prev, { ...(data as EventRow), projeto_nome: projetoNome }])
     }
     setSaving(false)
@@ -177,12 +225,10 @@ export default function CalendarioPage() {
           </h1>
           <p style={{ fontSize: 13, color: '#6b6b6b' }}>Todos os eventos dos seus projetos</p>
         </div>
-        {projetos.length > 0 && (
-          <button onClick={() => openCreate(selectedDay ?? todayYMD)}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-            <Plus size={14} /> Adicionar Evento
-          </button>
-        )}
+        <button onClick={() => openCreate(selectedDay ?? todayYMD)}
+          style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          <Plus size={14} /> Adicionar Evento
+        </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24, alignItems: 'start' }}>
@@ -229,7 +275,7 @@ export default function CalendarioPage() {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
                     {dayEvents.slice(0, 2).map(ev => {
-                      const meta = EVENT_META[ev.tipo as keyof typeof EVENT_META] ?? { color: '#8e8e93' }
+                      const meta = getMeta(ev.tipo)
                       return <div key={ev.id} style={{ width: 6, height: 6, borderRadius: '50%', background: meta.color }} />
                     })}
                     {dayEvents.length > 2 && <div style={{ fontSize: 8, color: '#8e8e93' }}>+{dayEvents.length - 2}</div>}
@@ -246,42 +292,44 @@ export default function CalendarioPage() {
             <p style={{ fontSize: 11, fontWeight: 400, color: '#8e8e93', letterSpacing: '0.04em', margin: 0 }}>
               {selectedDay ? selectedDay.split('-').reverse().join('/') : 'Selecione um dia'}
             </p>
-            {projetos.length > 0 && (
-              <button onClick={() => openCreate(selectedDay ?? todayYMD)}
-                style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', borderRadius: 7, padding: '4px 10px', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}>
-                <Plus size={11} /> Novo
-              </button>
-            )}
+            <button onClick={() => openCreate(selectedDay ?? todayYMD)}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', borderRadius: 7, padding: '4px 10px', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}>
+              <Plus size={11} /> Novo
+            </button>
           </div>
 
           {selectedEvents.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 0', color: '#8e8e93', fontSize: 13 }}>
               Nenhum evento neste dia
-              {projetos.length > 0 && <div style={{ fontSize: 11, marginTop: 6, color: '#c7c7cc' }}>Clique no dia ou em &quot;Novo&quot; para adicionar</div>}
+              <div style={{ fontSize: 11, marginTop: 6, color: '#c7c7cc' }}>Clique no dia ou em &quot;Novo&quot; para adicionar</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {selectedEvents.map(ev => {
-                const meta = EVENT_META[ev.tipo as keyof typeof EVENT_META] ?? { color: '#8e8e93', label: ev.tipo, icon: '●' }
+                const meta = getMeta(ev.tipo)
                 return (
                   <div key={ev.id} onClick={() => openEdit(ev)} style={{
                     background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, padding: '12px 14px',
                     borderLeft: `3px solid ${meta.color}`, cursor: 'pointer', transition: 'all 0.15s',
                   }}
-                    onMouseEnter={e => { e.currentTarget.style.background = '#ebebf0'; e.currentTarget.style.borderColor = meta.color }}
-                    onMouseLeave={e => { e.currentTarget.style.background = '#f2f2f7'; e.currentTarget.style.borderLeftColor = meta.color; e.currentTarget.style.borderColor = `rgba(0,0,0,0.08)`; e.currentTarget.style.borderLeftColor = meta.color }}>
+                    onMouseEnter={e => { e.currentTarget.style.background = '#ebebf0' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#f2f2f7' }}>
                     <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1a1a1a', marginBottom: 4 }}>{ev.titulo}</div>
-                    <div style={{ fontSize: 10, color: meta.color, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>{meta.label}</div>
+                    <div style={{ fontSize: 10, color: meta.color, marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em' }}>{meta.label ?? ev.tipo}</div>
                     {(ev.hora_inicio || ev.hora_fim) && (
                       <div style={{ fontSize: 11, color: '#6b6b6b', marginBottom: 4 }}>
                         {ev.hora_inicio}{ev.hora_fim ? ` → ${ev.hora_fim}` : ''}
                       </div>
                     )}
-                    <Link href={`/arquiteto/projetos/${ev.projeto_id}`} onClick={e => e.stopPropagation()} style={{ fontSize: 10, color: '#8e8e93', textDecoration: 'none' }}
-                      onMouseEnter={e => (e.currentTarget.style.color = '#007AFF')}
-                      onMouseLeave={e => (e.currentTarget.style.color = '#8e8e93')}>
-                      {ev.projeto_nome} →
-                    </Link>
+                    {ev.projeto_id ? (
+                      <Link href={`/arquiteto/projetos/${ev.projeto_id}`} onClick={e => e.stopPropagation()} style={{ fontSize: 10, color: '#8e8e93', textDecoration: 'none' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = '#007AFF')}
+                        onMouseLeave={e => (e.currentTarget.style.color = '#8e8e93')}>
+                        {ev.projeto_nome} →
+                      </Link>
+                    ) : (
+                      <span style={{ fontSize: 10, color: '#aeaeb2' }}>Geral</span>
+                    )}
                     {ev.observacao && (
                       <div style={{ fontSize: 11, color: '#6b6b6b', marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(0,0,0,0.08)' }}>{ev.observacao}</div>
                     )}
@@ -297,32 +345,41 @@ export default function CalendarioPage() {
       {modalOpen && (
         <div onClick={e => { if (e.target === e.currentTarget) setModalOpen(false) }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 500, padding: 28, boxShadow: '0 8px 24px rgba(0,0,0,0.14)', border: '1px solid rgba(0,0,0,0.08)' }}>
+          <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 500, padding: 28, boxShadow: '0 8px 24px rgba(0,0,0,0.14)', border: '1px solid rgba(0,0,0,0.08)', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>{editingId !== null ? 'Editar Evento' : 'Novo Evento'}</div>
               <button onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}><X size={18} /></button>
             </div>
 
+            {saveError && (
+              <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 12.5, color: '#ef4444' }}>
+                {saveError}
+              </div>
+            )}
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Título */}
               <div>
-                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Título *</label>
-                <input value={modalForm.titulo} onChange={e => setModalForm(f => ({ ...f, titulo: e.target.value }))} placeholder="Nome do evento" style={inp}
+                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Descrição *</label>
+                <input value={modalForm.titulo} onChange={e => setModalForm(f => ({ ...f, titulo: e.target.value }))} placeholder="Ex: Reunião com cliente, instalação elétrica..." style={inp}
                   onFocus={e => (e.target.style.borderColor = '#007AFF')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
               </div>
 
-              {/* Tipo + Projeto */}
+              {/* Tipo (datalist) + Projeto */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Tipo</label>
-                  <select value={modalForm.tipo} onChange={e => setModalForm(f => ({ ...f, tipo: e.target.value }))} style={{ ...inp }}>
-                    {EVENT_TYPES.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
-                  </select>
+                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Tipo / Categoria</label>
+                  <datalist id="cal-tipo-geral">
+                    {EVENT_TYPE_SUGGESTIONS.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
+                  </datalist>
+                  <input list="cal-tipo-geral" value={modalForm.tipo} onChange={e => setModalForm(f => ({ ...f, tipo: e.target.value }))}
+                    placeholder="arquiteto, marceneiro..." style={inp}
+                    onFocus={e => (e.target.style.borderColor = '#007AFF')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Projeto *</label>
+                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Projeto</label>
                   <select value={modalForm.projeto_id} onChange={e => setModalForm(f => ({ ...f, projeto_id: e.target.value }))} style={{ ...inp }}>
-                    <option value="">Selecionar...</option>
+                    <option value="">— Sem projeto (Geral)</option>
                     {projetos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                   </select>
                 </div>
@@ -362,12 +419,12 @@ export default function CalendarioPage() {
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 {editingId !== null && (
                   <button onClick={deleteEvent} disabled={deleting} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '11px 16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#ef4444', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                    <Trash2 size={13} /> Excluir
+                    <Trash2 size={13} /> {deleting ? 'Excluindo...' : 'Excluir'}
                   </button>
                 )}
-                <button onClick={saveEvent} disabled={saving || !modalForm.titulo.trim() || !modalForm.data_inicio || !modalForm.projeto_id}
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '11px', background: saving ? 'rgba(0,122,255,0.4)' : '#007AFF', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                  <Save size={13} /> {saving ? 'Salvando...' : editingId !== null ? 'Salvar alterações' : 'Criar evento'}
+                <button onClick={saveEvent} disabled={saving || !modalForm.titulo.trim() || !modalForm.data_inicio}
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '11px', background: saving ? 'rgba(0,122,255,0.4)' : '#007AFF', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: !modalForm.titulo.trim() || !modalForm.data_inicio ? 0.5 : 1 }}>
+                  {saving ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</> : <><Save size={13} /> {editingId !== null ? 'Salvar alterações' : 'Criar evento'}</>}
                 </button>
               </div>
             </div>

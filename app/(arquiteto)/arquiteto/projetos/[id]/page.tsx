@@ -948,12 +948,17 @@ export default function ProjetoDetailPage() {
                 const tempId = Date.now()
                 setCalEvents(prev => [...prev, { ...ev, id: tempId }])
                 const supabase = createClient()
-                const { data } = await supabase.from('eventos').insert({
-                  projeto_id: projectId, titulo: ev.title, tipo: ev.type,
-                  data_inicio: ev.startDate, data_fim: ev.endDate,
+                const { data, error } = await supabase.from('eventos').insert({
+                  projeto_id: projectId, titulo: ev.title, tipo: ev.type || 'arquiteto',
+                  data_inicio: ev.startDate, data_fim: ev.endDate || ev.startDate,
                   hora_inicio: ev.startTime ?? null, hora_fim: ev.endTime ?? null, observacao: ev.note ?? null,
                 }).select('id').single()
-                if (data) setCalEvents(prev => prev.map(e => e.id === tempId ? { ...e, id: data.id } : e))
+                if (error) {
+                  console.error('eventos insert error:', error)
+                  setCalEvents(prev => prev.filter(e => e.id !== tempId))
+                } else if (data) {
+                  setCalEvents(prev => prev.map(e => e.id === tempId ? { ...e, id: data.id } : e))
+                }
               }}
               onEventEdit={handleEventEdit}
               onEventDelete={handleEventDelete}

@@ -5,13 +5,7 @@ import { Plus, X, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type EventType =
-  | 'arquiteto'
-  | 'marceneiro'
-  | 'eletricista'
-  | 'vidracaria'
-  | 'pintor'
-  | 'gesseiro'
+export type EventType = string
 
 export interface CalendarioEvent {
   id: number
@@ -35,7 +29,7 @@ interface CalendarioObraProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-export const EVENT_META: Record<EventType, { color: string; bg: string; label: string }> = {
+export const EVENT_META: Record<string, { color: string; bg: string; label: string }> = {
   arquiteto:   { color: '#b45309', bg: '#fef3c7', label: 'Arquiteto / Reunião' },
   marceneiro:  { color: '#1d4ed8', bg: '#dbeafe', label: 'Marceneiro' },
   eletricista: { color: '#065f46', bg: '#d1fae5', label: 'Eletricista' },
@@ -44,7 +38,16 @@ export const EVENT_META: Record<EventType, { color: string; bg: string; label: s
   gesseiro:    { color: '#c2410c', bg: '#ffedd5', label: 'Gesseiro' },
 }
 
-const EVENT_TYPES = Object.keys(EVENT_META) as EventType[]
+const EVENT_FALLBACK = { color: '#6b6b6b', bg: '#f2f2f7' }
+
+const EVENT_TYPE_SUGGESTIONS = [
+  { key: 'arquiteto',   label: 'Arquiteto / Reunião' },
+  { key: 'marceneiro',  label: 'Marceneiro' },
+  { key: 'eletricista', label: 'Eletricista' },
+  { key: 'vidracaria',  label: 'Vidraçaria' },
+  { key: 'pintor',      label: 'Pintor' },
+  { key: 'gesseiro',    label: 'Gesseiro' },
+]
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
@@ -64,8 +67,12 @@ function eventsForDay(all: CalendarioEvent[], year: number, month: number, day: 
   return all.filter((e) => e.startDate <= d && e.endDate >= d)
 }
 
+function getMeta(type: string) {
+  return EVENT_META[type] ?? EVENT_FALLBACK
+}
+
 const blankForm = {
-  type: 'arquiteto' as EventType,
+  type: 'arquiteto',
   title: '',
   provider: '',
   startDate: '',
@@ -161,8 +168,6 @@ export default function CalendarioObra({
         .cal-chip { transition: opacity 0.12s; cursor: ${readonly ? 'default' : 'pointer'}; }
         .cal-chip:hover { opacity: ${readonly ? '1' : '0.75'}; }
         .cal-nav:hover { background: #e5e5ea !important; }
-        .cal-pill { cursor: pointer; transition: all 0.15s; }
-        .cal-pill:hover { filter: brightness(0.95); }
         .cal-inp {
           width: 100%;
           background: #f2f2f7;
@@ -187,31 +192,12 @@ export default function CalendarioObra({
       `}</style>
 
       {/* ── Legenda ── */}
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '8px 20px',
-          padding: '12px 16px',
-          background: '#ffffff',
-          border: '1px solid #e5e5ea',
-          borderRadius: 12,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.07)',
-        }}
-      >
-        {EVENT_TYPES.map((t) => {
-          const meta = EVENT_META[t]
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 20px', padding: '12px 16px', background: '#ffffff', border: '1px solid #e5e5ea', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}>
+        {EVENT_TYPE_SUGGESTIONS.map((t) => {
+          const meta = EVENT_META[t.key]
           return (
-            <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <div
-                style={{
-                  width: 9,
-                  height: 9,
-                  borderRadius: '50%',
-                  background: meta.color,
-                  flexShrink: 0,
-                }}
-              />
+            <div key={t.key} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <div style={{ width: 9, height: 9, borderRadius: '50%', background: meta.color, flexShrink: 0 }} />
               <span style={{ fontSize: 12, color: '#3a3a3c', fontWeight: 500 }}>{meta.label}</span>
             </div>
           )
@@ -221,80 +207,21 @@ export default function CalendarioObra({
       {/* ── Nav bar ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
-            className="cal-nav"
-            onClick={goPrev}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              background: '#f2f2f7',
-              border: '1px solid #e5e5ea',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: '#3a3a3c',
-              transition: 'background 0.15s',
-            }}
-          >
+          <button className="cal-nav" onClick={goPrev} style={{ width: 32, height: 32, borderRadius: 8, background: '#f2f2f7', border: '1px solid #e5e5ea', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#3a3a3c', transition: 'background 0.15s' }}>
             <ChevronLeft size={15} />
           </button>
-
-          <span
-            style={{
-              fontSize: 15,
-              fontWeight: 700,
-              color: '#1c1c1e',
-              minWidth: 176,
-              textAlign: 'center',
-              letterSpacing: '-0.01em',
-            }}
-          >
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#1c1c1e', minWidth: 176, textAlign: 'center', letterSpacing: '-0.01em' }}>
             {MONTHS[month]} {year}
           </span>
-
-          <button
-            className="cal-nav"
-            onClick={goNext}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              background: '#f2f2f7',
-              border: '1px solid #e5e5ea',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: '#3a3a3c',
-              transition: 'background 0.15s',
-            }}
-          >
+          <button className="cal-nav" onClick={goNext} style={{ width: 32, height: 32, borderRadius: 8, background: '#f2f2f7', border: '1px solid #e5e5ea', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#3a3a3c', transition: 'background 0.15s' }}>
             <ChevronRight size={15} />
           </button>
         </div>
 
         {!readonly && (
-          <button
-            onClick={() => openCreate(todayStr)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '8px 16px',
-              borderRadius: 10,
-              background: '#007AFF',
-              border: 'none',
-              color: '#ffffff',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'opacity 0.15s',
-            }}
+          <button onClick={() => openCreate(todayStr)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, background: '#007AFF', border: 'none', color: '#ffffff', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'opacity 0.15s' }}
             onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-          >
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}>
             <Plus size={13} />
             Adicionar evento
           </button>
@@ -302,44 +229,15 @@ export default function CalendarioObra({
       </div>
 
       {/* ── Grade do calendário ── */}
-      <div
-        style={{
-          background: '#ffffff',
-          border: '1px solid #e5e5ea',
-          borderRadius: 12,
-          overflow: 'hidden',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.07)',
-        }}
-      >
-        {/* Cabeçalho dos dias da semana */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(7, 1fr)',
-            borderBottom: '1px solid #e5e5ea',
-            background: '#f9f9fb',
-          }}
-        >
+      <div style={{ background: '#ffffff', border: '1px solid #e5e5ea', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid #e5e5ea', background: '#f9f9fb' }}>
           {WEEKDAYS.map((wd, i) => (
-            <div
-              key={wd}
-              style={{
-                padding: '9px 0',
-                textAlign: 'center',
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-                color: i === 0 || i === 6 ? '#aeaeb2' : '#8e8e93',
-                borderRight: i < 6 ? '1px solid #e5e5ea' : 'none',
-              }}
-            >
+            <div key={wd} style={{ padding: '9px 0', textAlign: 'center', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: i === 0 || i === 6 ? '#aeaeb2' : '#8e8e93', borderRight: i < 6 ? '1px solid #e5e5ea' : 'none' }}>
               {wd}
             </div>
           ))}
         </div>
 
-        {/* Células dos dias */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
           {Array.from({ length: totalCells }).map((_, idx) => {
             const day = idx - firstDay + 1
@@ -353,80 +251,28 @@ export default function CalendarioObra({
             const weekend = col === 0 || col === 6
 
             return (
-              <div
-                key={idx}
-                className={valid ? 'cal-day' : ''}
+              <div key={idx} className={valid ? 'cal-day' : ''}
                 onClick={valid && !readonly ? () => openCreate(dStr) : undefined}
-                style={{
-                  minHeight: 92,
-                  padding: '7px 6px 5px',
-                  borderRight: col < 6 ? '1px solid #e5e5ea' : 'none',
-                  borderBottom: lastRow ? 'none' : '1px solid #e5e5ea',
-                  background: valid ? '#ffffff' : '#f9f9fb',
-                  transition: 'background 0.12s',
-                }}
-              >
+                style={{ minHeight: 92, padding: '7px 6px 5px', borderRight: col < 6 ? '1px solid #e5e5ea' : 'none', borderBottom: lastRow ? 'none' : '1px solid #e5e5ea', background: valid ? '#ffffff' : '#f9f9fb', transition: 'background 0.12s' }}>
                 {valid && (
                   <>
-                    {/* Número do dia */}
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 24,
-                        height: 24,
-                        borderRadius: '50%',
-                        fontSize: 12,
-                        fontWeight: isToday ? 700 : 400,
-                        color: isToday ? '#ffffff' : weekend ? '#aeaeb2' : '#1c1c1e',
-                        background: isToday ? '#007AFF' : 'transparent',
-                        marginBottom: 4,
-                      }}
-                    >
+                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', fontSize: 12, fontWeight: isToday ? 700 : 400, color: isToday ? '#ffffff' : weekend ? '#aeaeb2' : '#1c1c1e', background: isToday ? '#007AFF' : 'transparent', marginBottom: 4 }}>
                       {day}
                     </div>
-
-                    {/* Chips de eventos */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       {dayEvs.map((ev) => {
-                        const meta = EVENT_META[ev.type]
+                        const meta = getMeta(ev.type)
                         const isStart = ev.startDate === dStr
                         return (
-                          <div
-                            key={ev.id}
-                            className="cal-chip"
-                            title={`${ev.title} · ${ev.provider}${ev.startTime ? ` · ${ev.startTime}` : ''}`}
+                          <div key={ev.id} className="cal-chip"
+                            title={`${ev.title}${ev.startTime ? ` · ${ev.startTime}` : ''}`}
                             onClick={!readonly ? (e) => { e.stopPropagation(); openEdit(ev) } : undefined}
-                            style={{
-                              borderLeft: `3px solid ${meta.color}`,
-                              background: meta.bg,
-                              borderRadius: '0 4px 4px 0',
-                              padding: '2px 5px',
-                              overflow: 'hidden',
-                            }}
-                          >
-                            <div
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 600,
-                                color: meta.color,
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}
-                            >
+                            style={{ borderLeft: `3px solid ${meta.color}`, background: meta.bg, borderRadius: '0 4px 4px 0', padding: '2px 5px', overflow: 'hidden' }}>
+                            <div style={{ fontSize: 10, fontWeight: 600, color: meta.color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {ev.title}
                             </div>
                             {isStart && ev.startTime && (
-                              <div
-                                style={{
-                                  fontSize: 9,
-                                  color: meta.color,
-                                  opacity: 0.7,
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
+                              <div style={{ fontSize: 9, color: meta.color, opacity: 0.7, whiteSpace: 'nowrap' }}>
                                 {ev.startTime}{ev.endTime ? `–${ev.endTime}` : ''}
                               </div>
                             )}
@@ -444,270 +290,131 @@ export default function CalendarioObra({
 
       {/* ── Modal (criar / editar) ── */}
       {showModal && !readonly && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.45)',
-            zIndex: 200,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backdropFilter: 'blur(6px)',
-          }}
-          onClick={(e) => { if (e.target === e.currentTarget) closeModal() }}
-        >
-          <div
-            style={{
-              background: '#ffffff',
-              border: '1px solid #e5e5ea',
-              borderRadius: 16,
-              width: '100%',
-              maxWidth: 500,
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.18)',
-              margin: '0 16px',
-            }}
-          >
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeModal() }}>
+          <div style={{ background: '#ffffff', border: '1px solid #e5e5ea', borderRadius: 16, width: '100%', maxWidth: 500, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.18)', margin: '0 16px' }}>
+
             {/* Header */}
-            <div
-              style={{
-                padding: '18px 22px',
-                borderBottom: '1px solid #f2f2f7',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
+            <div style={{ padding: '18px 22px', borderBottom: '1px solid #f2f2f7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#1c1c1e' }}>
                 {modalMode === 'create' ? 'Novo Evento' : 'Editar Evento'}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {modalMode === 'edit' && onEventDelete && (
-                  <button
-                    onClick={handleDelete}
-                    style={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: 8,
-                      background: 'rgba(239,68,68,0.08)',
-                      border: '1px solid rgba(239,68,68,0.2)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      color: '#ef4444',
-                      transition: 'background 0.15s',
-                    }}
+                  <button onClick={handleDelete}
+                    style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ef4444', transition: 'background 0.15s' }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.18)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
-                    title="Excluir evento"
-                  >
+                    title="Excluir evento">
                     <Trash2 size={13} />
                   </button>
                 )}
-                <button
-                  onClick={closeModal}
-                  style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: 8,
-                    background: '#f2f2f7',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: '#8e8e93',
-                    transition: 'background 0.15s',
-                  }}
+                <button onClick={closeModal}
+                  style={{ width: 30, height: 30, borderRadius: 8, background: '#f2f2f7', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#8e8e93', transition: 'background 0.15s' }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = '#e5e5ea')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '#f2f2f7')}
-                >
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#f2f2f7')}>
                   <X size={14} />
                 </button>
               </div>
             </div>
 
             {/* Body */}
-            <div
-              style={{
-                padding: '20px 22px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 18,
-              }}
-            >
-              {/* Tipo de serviço */}
+            <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+              {/* Tipo (datalist — text livre com sugestões) */}
               <div>
-                <label style={labelStyle}>Tipo de Serviço</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                  {EVENT_TYPES.map((t) => {
-                    const meta = EVENT_META[t]
-                    const sel = form.type === t
-                    return (
-                      <button
-                        key={t}
-                        className="cal-pill"
-                        onClick={() => setForm((f) => ({ ...f, type: t }))}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 5,
-                          padding: '6px 12px',
-                          borderRadius: 20,
-                          border: `1.5px solid ${sel ? meta.color : '#e5e5ea'}`,
-                          background: sel ? meta.bg : '#f9f9fb',
-                          color: sel ? meta.color : '#6c6c70',
-                          fontSize: 12,
-                          fontWeight: sel ? 600 : 400,
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 7,
-                            height: 7,
-                            borderRadius: '50%',
-                            background: meta.color,
-                            flexShrink: 0,
-                          }}
-                        />
-                        {meta.label}
-                      </button>
-                    )
-                  })}
-                </div>
+                <label style={labelStyle}>Categoria / Tipo</label>
+                <datalist id="cal-tipo-suggestions">
+                  {EVENT_TYPE_SUGGESTIONS.map(s => (
+                    <option key={s.key} value={s.key}>{s.label}</option>
+                  ))}
+                </datalist>
+                <input list="cal-tipo-suggestions" className="cal-inp" style={{ marginTop: 6 }}
+                  placeholder="Ex: arquiteto, marceneiro, pintor, ou qualquer categoria..."
+                  value={form.type}
+                  onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))} />
+                {/* Color preview */}
+                {form.type && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: getMeta(form.type).color }} />
+                    <span style={{ fontSize: 11, color: getMeta(form.type).color, fontWeight: 600 }}>
+                      {EVENT_META[form.type]?.label ?? form.type}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Serviço + Fornecedor */}
+              {/* Descrição (obrigatório) + Fornecedor */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={labelStyle}>Serviço</label>
-                  <input
-                    className="cal-inp"
-                    style={{ marginTop: 6 }}
-                    placeholder="Ex: Marcenaria"
+                  <label style={labelStyle}>Descrição *</label>
+                  <input className="cal-inp" style={{ marginTop: 6 }}
+                    placeholder="Ex: Instalação elétrica sala"
                     value={form.title}
-                    onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  />
+                    onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
                 </div>
                 <div>
                   <label style={labelStyle}>Fornecedor</label>
-                  <input
-                    className="cal-inp"
-                    style={{ marginTop: 6 }}
+                  <input className="cal-inp" style={{ marginTop: 6 }}
                     placeholder="Ex: Madeiras Silva"
                     value={form.provider}
-                    onChange={(e) => setForm((f) => ({ ...f, provider: e.target.value }))}
-                  />
+                    onChange={(e) => setForm((f) => ({ ...f, provider: e.target.value }))} />
                 </div>
               </div>
 
               {/* Datas */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={labelStyle}>Data início</label>
-                  <input
-                    type="date"
-                    className="cal-inp"
-                    style={{ marginTop: 6 }}
+                  <label style={labelStyle}>Data início *</label>
+                  <input type="date" className="cal-inp" style={{ marginTop: 6 }}
                     value={form.startDate}
-                    onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
-                  />
+                    onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} />
                 </div>
                 <div>
                   <label style={labelStyle}>Data fim</label>
-                  <input
-                    type="date"
-                    className="cal-inp"
-                    style={{ marginTop: 6 }}
+                  <input type="date" className="cal-inp" style={{ marginTop: 6 }}
                     value={form.endDate}
-                    onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
-                  />
+                    onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} />
                 </div>
               </div>
 
               {/* Horários */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={labelStyle}>Início</label>
-                  <input
-                    type="time"
-                    className="cal-inp"
-                    style={{ marginTop: 6 }}
+                  <label style={labelStyle}>Horário início</label>
+                  <input type="time" className="cal-inp" style={{ marginTop: 6 }}
                     value={form.startTime}
-                    onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
-                  />
+                    onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} />
                 </div>
                 <div>
-                  <label style={labelStyle}>Fim</label>
-                  <input
-                    type="time"
-                    className="cal-inp"
-                    style={{ marginTop: 6 }}
+                  <label style={labelStyle}>Horário fim</label>
+                  <input type="time" className="cal-inp" style={{ marginTop: 6 }}
                     value={form.endTime}
-                    onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
-                  />
+                    onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} />
                 </div>
               </div>
 
               {/* Observação */}
               <div>
                 <label style={labelStyle}>Observação</label>
-                <textarea
-                  className="cal-inp"
-                  rows={3}
-                  style={{ marginTop: 6, resize: 'vertical' }}
-                  placeholder="Detalhes adicionais do serviço..."
+                <textarea className="cal-inp" rows={3} style={{ marginTop: 6, resize: 'vertical' }}
+                  placeholder="Detalhes adicionais..."
                   value={form.note}
-                  onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-                />
+                  onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} />
               </div>
 
               {/* Ações */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  gap: 10,
-                  paddingTop: 2,
-                }}
-              >
-                <button
-                  onClick={closeModal}
-                  style={{
-                    padding: '9px 18px',
-                    borderRadius: 10,
-                    background: '#f2f2f7',
-                    border: 'none',
-                    color: '#3a3a3c',
-                    fontSize: 13,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    transition: 'background 0.15s',
-                  }}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, paddingTop: 2 }}>
+                <button onClick={closeModal}
+                  style={{ padding: '9px 18px', borderRadius: 10, background: '#f2f2f7', border: 'none', color: '#3a3a3c', fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'background 0.15s' }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = '#e5e5ea')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '#f2f2f7')}
-                >
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#f2f2f7')}>
                   Cancelar
                 </button>
-                <button
-                  onClick={submit}
-                  style={{
-                    padding: '9px 20px',
-                    borderRadius: 10,
-                    background: '#007AFF',
-                    border: 'none',
-                    color: '#ffffff',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'opacity 0.15s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
-                  onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-                >
+                <button onClick={submit} disabled={!form.title.trim() || !form.startDate}
+                  style={{ padding: '9px 20px', borderRadius: 10, background: '#007AFF', border: 'none', color: '#ffffff', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'opacity 0.15s', opacity: !form.title.trim() || !form.startDate ? 0.45 : 1 }}
+                  onMouseEnter={(e) => { if (form.title.trim() && form.startDate) e.currentTarget.style.opacity = '0.85' }}
+                  onMouseLeave={(e) => { if (form.title.trim() && form.startDate) e.currentTarget.style.opacity = '1' }}>
                   {modalMode === 'create' ? 'Salvar evento' : 'Salvar alterações'}
                 </button>
               </div>
@@ -719,7 +426,6 @@ export default function CalendarioObra({
   )
 }
 
-// Shared label style used inside the component
 const labelStyle: React.CSSProperties = {
   fontSize: 11,
   color: '#8e8e93',
