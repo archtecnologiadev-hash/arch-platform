@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, FileText, Download, Send, Upload, X,
-  CheckCircle2, Loader2, ChevronRight, ChevronLeft, Clock, AlertCircle, Building2
+  CheckCircle2, Loader2, ChevronRight, ChevronLeft, Clock, AlertCircle, Building2,
+  Pencil, Check
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
@@ -102,6 +103,16 @@ export default function OrcamentoDetailPage() {
   const [replySending, setReplySending] = useState(false)
   const [replySent, setReplySent] = useState(false)
   const replyFileRef = useRef<HTMLInputElement>(null)
+
+  // Inline edit state
+  const [editingTitulo, setEditingTitulo] = useState(false)
+  const [editTituloVal, setEditTituloVal] = useState('')
+  const [savingTitulo, setSavingTitulo] = useState(false)
+  const [editingValor, setEditingValor] = useState(false)
+  const [editValorVal, setEditValorVal] = useState('')
+  const [savingValor, setSavingValor] = useState(false)
+  const tituloInputRef = useRef<HTMLInputElement>(null)
+  const valorInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     async function load() {
@@ -252,6 +263,32 @@ export default function OrcamentoDetailPage() {
     setReplyFile(null)
   }
 
+  // ─── Inline field save ────────────────────────────────────────────────────
+
+  async function saveTitulo() {
+    if (!orc) return
+    const val = editTituloVal.trim()
+    setSavingTitulo(true)
+    const supabase = createClient()
+    const { error } = await supabase.from('orcamentos').update({ titulo: val || null }).eq('id', orc.id)
+    if (!error) setOrc(o => o ? { ...o, titulo: val || null } : o)
+    setSavingTitulo(false)
+    setEditingTitulo(false)
+  }
+
+  async function saveValor() {
+    if (!orc) return
+    const raw = editValorVal.replace(',', '.').trim()
+    const num = raw ? parseFloat(raw) : null
+    if (raw && (isNaN(num!) || num! < 0)) return
+    setSavingValor(true)
+    const supabase = createClient()
+    const { error } = await supabase.from('orcamentos').update({ valor_orcado: num }).eq('id', orc.id)
+    if (!error) setOrc(o => o ? { ...o, valor_orcado: num } : o)
+    setSavingValor(false)
+    setEditingValor(false)
+  }
+
   // ─── Loading / not found ───────────────────────────────────────────────────
 
   if (loading) {
@@ -291,6 +328,10 @@ export default function OrcamentoDetailPage() {
         .od-inp:focus { border-color:#007AFF; }
         .od-btn-fwd:hover:not(:disabled) { opacity:0.87; transform:translateY(-1px); }
         .od-btn-bck:hover:not(:disabled) { background:rgba(0,0,0,0.06) !important; }
+        .od-edit-btn { background:none; border:none; cursor:pointer; color:#c7c7cc; padding:3px; border-radius:5px; display:inline-flex; align-items:center; transition:color 0.12s; }
+        .od-edit-btn:hover { color:#007AFF; }
+        .od-inline-inp { background:#f2f2f7; border:1.5px solid rgba(0,122,255,0.4); border-radius:7px; padding:5px 10px; font-size:inherit; font-weight:inherit; color:#1a1a1a; outline:none; font-family:inherit; }
+        .od-inline-inp:focus { border-color:#007AFF; }
       `}</style>
 
       {/* Top bar */}
@@ -320,19 +361,107 @@ export default function OrcamentoDetailPage() {
         {/* Header card */}
         <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '22px 24px', marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
-            <div>
-              {/* Escritório (primary) */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Escritório */}
               {orc.escritorio_nome && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                   <Building2 size={14} color="#8b5cf6" />
                   <span style={{ fontSize: 13, fontWeight: 700, color: '#8b5cf6' }}>{orc.escritorio_nome}</span>
                 </div>
               )}
-              {/* Project name */}
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#1a1a1a', marginBottom: 6 }}>
-                {orc.projeto_nome ?? 'Projeto sem nome'}
+
+              {/* Título — inline editable */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                {editingTitulo ? (
+                  <>
+                    <input
+                      ref={tituloInputRef}
+                      autoFocus
+                      className="od-inline-inp"
+                      style={{ fontSize: 18, fontWeight: 700, width: 280 }}
+                      value={editTituloVal}
+                      onChange={e => setEditTituloVal(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') saveTitulo(); if (e.key === 'Escape') setEditingTitulo(false) }}
+                      placeholder="Nome do orçamento..."
+                    />
+                    <button onClick={saveTitulo} disabled={savingTitulo}
+                      style={{ background: '#007AFF', border: 'none', borderRadius: 7, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                      {savingTitulo ? <Loader2 size={12} color="#fff" style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={13} color="#fff" />}
+                    </button>
+                    <button onClick={() => setEditingTitulo(false)}
+                      style={{ background: 'none', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 7, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                      <X size={13} color="#8e8e93" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {orc.titulo ? (
+                      <span style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>{orc.titulo}</span>
+                    ) : (
+                      <span style={{ fontSize: 14, color: '#c7c7cc', fontStyle: 'italic' }}>Adicionar título do orçamento...</span>
+                    )}
+                    <button
+                      className="od-edit-btn"
+                      onClick={() => { setEditTituloVal(orc.titulo ?? ''); setEditingTitulo(true) }}
+                      title="Editar título">
+                      <Pencil size={13} />
+                    </button>
+                  </>
+                )}
               </div>
-              <div style={{ fontSize: 13, color: '#6b6b6b', display: 'flex', gap: 14, flexWrap: 'wrap' as const }}>
+
+              {/* Project name */}
+              <div style={{ fontSize: 13, color: '#6b6b6b', marginBottom: 8 }}>
+                Projeto: <strong style={{ color: '#1a1a1a' }}>{orc.projeto_nome ?? 'Sem nome'}</strong>
+              </div>
+
+              {/* Valor orçado — inline editable */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                {editingValor ? (
+                  <>
+                    <span style={{ fontSize: 13, color: '#6b6b6b', flexShrink: 0 }}>R$</span>
+                    <input
+                      ref={valorInputRef}
+                      autoFocus
+                      className="od-inline-inp"
+                      type="text"
+                      inputMode="decimal"
+                      style={{ fontSize: 16, fontWeight: 700, width: 140 }}
+                      value={editValorVal}
+                      onChange={e => setEditValorVal(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') saveValor(); if (e.key === 'Escape') setEditingValor(false) }}
+                      placeholder="0,00"
+                    />
+                    <button onClick={saveValor} disabled={savingValor}
+                      style={{ background: '#34d399', border: 'none', borderRadius: 7, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                      {savingValor ? <Loader2 size={12} color="#fff" style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={13} color="#fff" />}
+                    </button>
+                    <button onClick={() => setEditingValor(false)}
+                      style={{ background: 'none', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 7, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                      <X size={13} color="#8e8e93" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {orc.valor_orcado != null ? (
+                      <span style={{ fontSize: 16, fontWeight: 800, color: '#34d399' }}>
+                        {orc.valor_orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 13, color: '#c7c7cc', fontStyle: 'italic' }}>Adicionar valor orçado...</span>
+                    )}
+                    <button
+                      className="od-edit-btn"
+                      onClick={() => { setEditValorVal(orc.valor_orcado != null ? String(orc.valor_orcado).replace('.', ',') : ''); setEditingValor(true) }}
+                      title="Editar valor">
+                      <Pencil size={13} />
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Architect info */}
+              <div style={{ fontSize: 12.5, color: '#6b6b6b', display: 'flex', gap: 12, flexWrap: 'wrap' as const }}>
                 {orc.arquiteto_nome && (
                   <span>Arquiteto: <strong style={{ color: '#1a1a1a' }}>{orc.arquiteto_nome}</strong></span>
                 )}
