@@ -74,11 +74,11 @@ function OrcCardItem({ orc }: { orc: OrcCard }) {
               </div>
             )}
             <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {orc.projeto_nome ?? 'Projeto sem nome'}
+              {orc.titulo ?? orc.projeto_nome ?? 'Sem título'}
             </div>
-            {orc.titulo && (
+            {orc.projeto_nome && (
               <div style={{ fontSize: 11.5, color: '#6b6b6b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {orc.titulo}
+                {orc.projeto_nome}
               </div>
             )}
           </div>
