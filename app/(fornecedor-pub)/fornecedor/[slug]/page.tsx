@@ -34,6 +34,17 @@ interface Comentario {
   texto: string
   created_at: string
   user_nome: string | null
+  user_avatar: string | null
+}
+
+function fmtDate(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const min = Math.floor(diff / 60000)
+  if (min < 1) return 'agora'
+  if (min < 60) return `há ${min} min`
+  const h = Math.floor(min / 60)
+  if (h < 24) return `há ${h} hora${h > 1 ? 's' : ''}`
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '')
 }
 
 interface Produto {
@@ -175,11 +186,16 @@ function ProdutoCard({ prod, segColor, currentUserId, onLike, onComment }: {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12, maxHeight: 220, overflowY: 'auto' }}>
               {prod.comentarios.map(c => (
                 <div key={c.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#007AFF', flexShrink: 0 }}>
-                    {(c.user_nome ?? 'U').slice(0, 1).toUpperCase()}
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#007AFF', flexShrink: 0 }}>
+                    {c.user_avatar
+                      ? <img src={c.user_avatar} alt={c.user_nome ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : (c.user_nome ?? 'U').slice(0, 1).toUpperCase()}
                   </div>
                   <div style={{ background: '#f2f2f7', borderRadius: '0 10px 10px 10px', padding: '7px 11px', flex: 1 }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 700, color: '#1a1a1a', marginBottom: 2 }}>{c.user_nome ?? 'Usuário'}</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 2 }}>
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: '#1a1a1a' }}>{c.user_nome ?? 'Usuário'}</span>
+                      <span style={{ fontSize: 10.5, color: '#8e8e93' }}>{fmtDate(c.created_at)}</span>
+                    </div>
                     <div style={{ fontSize: 12.5, color: '#3a3a3a', lineHeight: 1.45 }}>{c.texto}</div>
                   </div>
                 </div>
@@ -265,11 +281,14 @@ export default function FornecedorPublicPage() {
 
       const commenterIds = Array.from(new Set((comentariosRes.data ?? []).map((c: Record<string, unknown>) => c.user_id as string)))
       const { data: usersData } = commenterIds.length > 0
-        ? await supabase.from('users').select('id, nome').in('id', commenterIds)
+        ? await supabase.from('users').select('id, nome, avatar_url').in('id', commenterIds)
         : { data: [] }
 
-      const userMap: Record<string, string> = {}
-      for (const u of (usersData ?? [])) userMap[(u as { id: string; nome: string }).id] = (u as { id: string; nome: string }).nome
+      const userMap: Record<string, { nome: string; avatar: string | null }> = {}
+      for (const u of (usersData ?? [])) {
+        const row = u as { id: string; nome: string; avatar_url: string | null }
+        userMap[row.id] = { nome: row.nome, avatar: row.avatar_url ?? null }
+      }
 
       const likeMap: Record<string, { count: number; liked: boolean }> = {}
       for (const c of (curtidasRes.data ?? [])) {
@@ -283,7 +302,7 @@ export default function FornecedorPublicPage() {
       for (const c of (comentariosRes.data ?? [])) {
         const row = c as { id: string; produto_id: string; user_id: string; texto: string; created_at: string }
         if (!comentMap[row.produto_id]) comentMap[row.produto_id] = []
-        comentMap[row.produto_id].push({ id: row.id, user_id: row.user_id, texto: row.texto, created_at: row.created_at, user_nome: userMap[row.user_id] ?? null })
+        comentMap[row.produto_id].push({ id: row.id, user_id: row.user_id, texto: row.texto, created_at: row.created_at, user_nome: userMap[row.user_id]?.nome ?? null, user_avatar: userMap[row.user_id]?.avatar ?? null })
       }
 
       setProdutos(prods.map((p: Record<string, unknown>) => ({
@@ -327,13 +346,14 @@ export default function FornecedorPublicPage() {
       .single()
 
     if (newComment) {
-      const { data: userData } = await supabase.from('users').select('nome').eq('id', currentUserId).single()
+      const { data: userData } = await supabase.from('users').select('nome, avatar_url').eq('id', currentUserId).single()
       const comentario: Comentario = {
         id: (newComment as Record<string, unknown>).id as string,
         user_id: currentUserId,
         texto,
         created_at: (newComment as Record<string, unknown>).created_at as string,
-        user_nome: (userData as { nome: string } | null)?.nome ?? null,
+        user_nome: (userData as { nome: string; avatar_url: string | null } | null)?.nome ?? null,
+        user_avatar: (userData as { nome: string; avatar_url: string | null } | null)?.avatar_url ?? null,
       }
       setProdutos(ps => ps.map(p => p.id === prodId ? { ...p, comentarios: [...p.comentarios, comentario] } : p))
     }
