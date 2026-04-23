@@ -48,6 +48,14 @@ interface AnotacaoProjeto {
   created_at: string
 }
 
+interface OrcItem {
+  id: string
+  categoria: string
+  descricao: string
+  valor: number
+  created_at: string
+}
+
 interface DirSupplier {
   id: number; slug: string; name: string; segment: string; city: string
   rating: number; reviewCount: number; description: string; cover: string; color: string
@@ -132,6 +140,9 @@ export default function ProjetoDetailPage() {
   const [arquivos, setArquivos] = useState<ArquivoProjeto[]>([])
   const [anotacoes, setAnotacoes] = useState<AnotacaoProjeto[]>([])
   const [calEvents, setCalEvents] = useState<CalendarioEvent[]>([])
+  const [orcItems, setOrcItems] = useState<OrcItem[]>([])
+  const [orcForm, setOrcForm] = useState({ categoria: 'Projeto', descricao: '', valor: '' })
+  const [orcSaving, setOrcSaving] = useState(false)
   const [currentUser, setCurrentUser] = useState<{ id: string; nome: string } | null>(null)
   const [stageIndex, setStageIndex] = useState(0)
 
@@ -180,6 +191,7 @@ export default function ProjetoDetailPage() {
         { data: anots },
         { data: forn },
         { data: favs },
+        { data: orcData },
       ] = await Promise.all([
         supabase.from('projetos').select('*').eq('id', projectId).single(),
         supabase.from('eventos').select('*').eq('projeto_id', projectId).order('data_inicio'),
@@ -187,6 +199,7 @@ export default function ProjetoDetailPage() {
         supabase.from('anotacoes_projeto').select('*').eq('projeto_id', projectId).order('created_at', { ascending: false }),
         supabase.from('fornecedores').select('id, slug, nome, segmento, cidade, bio, image_url, cover_url').order('created_at', { ascending: false }),
         currentUid ? supabase.from('fornecedores_favoritos').select('fornecedor_id').eq('arquiteto_id', currentUid) : Promise.resolve({ data: [] as Array<{ fornecedor_id: string }> }),
+        supabase.from('orcamento_itens').select('*').eq('projeto_id', projectId).order('created_at'),
       ])
 
       if (proj) {
@@ -216,6 +229,7 @@ export default function ProjetoDetailPage() {
       }
       if (arqs) setArquivos(arqs as ArquivoProjeto[])
       if (anots) setAnotacoes(anots as AnotacaoProjeto[])
+      if (orcData) setOrcItems(orcData as OrcItem[])
       if (favs) {
         const favSet = new Set((favs as Array<{ fornecedor_id: string }>).map(r => r.fornecedor_id))
         setFavorites(favSet)
@@ -778,25 +792,121 @@ export default function ProjetoDetailPage() {
           )}
 
           {/* ══ TAB: Orçamento ══ */}
-          {activeTab === 'orcamento' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                {[
-                  { label: 'Orçamento Total', value: '—', color: '#1a1a1a' },
-                  { label: 'Executado',        value: '—', color: '#007AFF' },
-                  { label: 'Saldo Disponível', value: '—', color: '#34d399' },
-                ].map(item => (
-                  <div key={item.label} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, padding: '16px 18px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                    <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 9, textTransform: 'uppercase' as const, letterSpacing: '0.06em', fontWeight: 600 }}>{item.label}</div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: item.color }}>{item.value}</div>
+          {activeTab === 'orcamento' && (() => {
+            const ORC_CATS = ['Projeto', 'Execução', 'Marcenaria', 'Decoração', 'Outros']
+            const ORC_CAT_COLOR: Record<string, string> = {
+              Projeto: '#007AFF', Execução: '#34d399', Marcenaria: '#4f9cf9',
+              Decoração: '#a78bfa', Outros: '#8e8e93',
+            }
+            const grandTotal = orcItems.reduce((s, it) => s + Number(it.valor), 0)
+            const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+            async function addOrcItem() {
+              if (!orcForm.descricao.trim() || !orcForm.valor || !projeto) return
+              const val = parseFloat(orcForm.valor.replace(',', '.'))
+              if (isNaN(val) || val <= 0) return
+              setOrcSaving(true)
+              const supabase = createClient()
+              const { data, error } = await supabase
+                .from('orcamento_itens')
+                .insert({ projeto_id: projeto.id, categoria: orcForm.categoria, descricao: orcForm.descricao.trim(), valor: val })
+                .select('*').single()
+              if (!error && data) {
+                setOrcItems(prev => [...prev, data as OrcItem])
+                setOrcForm(f => ({ ...f, descricao: '', valor: '' }))
+              }
+              setOrcSaving(false)
+            }
+
+            async function deleteOrcItem(id: string) {
+              const supabase = createClient()
+              await supabase.from('orcamento_itens').delete().eq('id', id)
+              setOrcItems(prev => prev.filter(it => it.id !== id))
+            }
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* Grand total */}
+                <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: 10.5, color: '#8e8e93', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 4 }}>Total Geral</div>
+                    <div style={{ fontSize: 26, fontWeight: 800, color: '#1a1a1a', letterSpacing: '-0.02em' }}>{fmtBRL(grandTotal)}</div>
                   </div>
-                ))}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {ORC_CATS.map(cat => {
+                      const catTotal = orcItems.filter(it => it.categoria === cat).reduce((s, it) => s + Number(it.valor), 0)
+                      if (catTotal === 0) return null
+                      return (
+                        <div key={cat} style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: 9, color: ORC_CAT_COLOR[cat], fontWeight: 700, marginBottom: 2 }}>{cat}</div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: '#1a1a1a' }}>{fmtBRL(catTotal)}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Add item form */}
+                <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '16px 18px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#8e8e93', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 12 }}>Adicionar Item</div>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+                    <div style={{ flex: '0 0 140px' }}>
+                      <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Categoria</label>
+                      <select value={orcForm.categoria} onChange={e => setOrcForm(f => ({ ...f, categoria: e.target.value }))} style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 7, padding: '8px 10px', fontSize: 12.5, color: '#1a1a1a', outline: 'none', fontFamily: 'inherit' }}>
+                        {ORC_CATS.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Descrição</label>
+                      <input value={orcForm.descricao} onChange={e => setOrcForm(f => ({ ...f, descricao: e.target.value }))} placeholder="Ex: Projeto executivo" style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 7, padding: '8px 10px', fontSize: 12.5, color: '#1a1a1a', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} onKeyDown={e => e.key === 'Enter' && addOrcItem()} />
+                    </div>
+                    <div style={{ flex: '0 0 130px' }}>
+                      <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Valor (R$)</label>
+                      <input type="number" min="0" step="0.01" value={orcForm.valor} onChange={e => setOrcForm(f => ({ ...f, valor: e.target.value }))} placeholder="0,00" style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 7, padding: '8px 10px', fontSize: 12.5, color: '#1a1a1a', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} onKeyDown={e => e.key === 'Enter' && addOrcItem()} />
+                    </div>
+                    <button onClick={addOrcItem} disabled={orcSaving || !orcForm.descricao.trim() || !orcForm.valor} style={{ height: 36, padding: '0 16px', borderRadius: 7, background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.25)', color: '#007AFF', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap', opacity: orcSaving || !orcForm.descricao.trim() || !orcForm.valor ? 0.5 : 1 }}>
+                      {orcSaving ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Plus size={13} />} Adicionar
+                    </button>
+                  </div>
+                </div>
+
+                {/* Items per category */}
+                {ORC_CATS.map(cat => {
+                  const items = orcItems.filter(it => it.categoria === cat)
+                  if (items.length === 0) return null
+                  const catTotal = items.reduce((s, it) => s + Number(it.valor), 0)
+                  const color = ORC_CAT_COLOR[cat]
+                  return (
+                    <div key={cat} style={{ background: '#fff', border: `1px solid rgba(0,0,0,0.08)`, borderLeft: `3px solid ${color}`, borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                      <div style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color }}>{cat}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>{fmtBRL(catTotal)}</span>
+                      </div>
+                      {items.map((it, i) => (
+                        <div key={it.id} style={{ padding: '11px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: i < items.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
+                          <div style={{ flex: 1, fontSize: 13, color: '#1a1a1a' }}>{it.descricao}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', flexShrink: 0 }}>{fmtBRL(Number(it.valor))}</div>
+                          <button onClick={() => deleteOrcItem(it.id)} style={{ width: 24, height: 24, borderRadius: 5, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c7c7cc', flexShrink: 0 }}
+                            onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
+                            onMouseLeave={e => (e.currentTarget.style.color = '#c7c7cc')}>
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })}
+
+                {orcItems.length === 0 && (
+                  <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '40px 24px', textAlign: 'center', color: '#8e8e93', fontSize: 13, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                    <DollarSign size={32} color="#c7c7cc" style={{ marginBottom: 10 }} />
+                    <div>Nenhum item adicionado ainda.</div>
+                    <div style={{ fontSize: 12, marginTop: 4, color: '#c7c7cc' }}>Use o formulário acima para adicionar itens ao orçamento.</div>
+                  </div>
+                )}
               </div>
-              <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, padding: '24px', textAlign: 'center', color: '#8e8e93', fontSize: 13, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                Módulo de orçamento em desenvolvimento.
-              </div>
-            </div>
-          )}
+            )
+          })()}
         </div>
 
         {/* ─── Right sidebar ─── */}

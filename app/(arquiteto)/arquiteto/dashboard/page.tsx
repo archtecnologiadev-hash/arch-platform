@@ -27,12 +27,11 @@ import { createClient } from '@/lib/supabase'
 interface Project {
   id: string
   name: string
-  client: string
-  initials: string
+  cliente_nome: string | null
   stageIndex: number
   type: string
-  dueDate: string
-  coverUrl: string | null
+  created_at: string
+  metragem: number | null
 }
 
 interface Lead {
@@ -59,6 +58,8 @@ const ETAPA_TO_STAGE: Record<string, number> = {
 const TIPO_LABEL: Record<string, string> = {
   residencial: 'Residencial', comercial: 'Comercial', institucional: 'Institucional',
 }
+
+const STAGE_COLORS = ['#8b5cf6', '#007AFF', '#34d399', '#4f9cf9', '#f59e0b', '#f97316', '#ef4444', '#10b981']
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -107,7 +108,7 @@ export default function ArquitetoDashboardPage() {
   const [loadingProjects, setLoadingProjects] = useState(true)
 
   const [novoOpen, setNovoOpen] = useState(false)
-  const [novoForm, setNovoForm] = useState({ nome: '', tipo: 'residencial', descricao: '' })
+  const [novoForm, setNovoForm] = useState({ nome: '', tipo: 'residencial', descricao: '', metragem: '', endereco: '', email_cliente: '', tipo_contrato: '' })
   const [novoSaving, setNovoSaving] = useState(false)
 
   const userInitials = userName.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'A'
@@ -141,15 +142,21 @@ export default function ArquitetoDashboardPage() {
           .order('created_at', { ascending: false })
 
         if (projs && projs.length > 0) {
+          const clientIds = Array.from(new Set(projs.filter((p) => p.cliente_id).map((p) => p.cliente_id as string)))
+          const { data: clientsData } = clientIds.length > 0
+            ? await supabase.from('users').select('id, nome').in('id', clientIds)
+            : { data: [] }
+          const clientMap: Record<string, string> = {}
+          for (const c of (clientsData ?? [])) clientMap[(c as { id: string; nome: string }).id] = (c as { id: string; nome: string }).nome
+
           setRealProjects(projs.map((p) => ({
             id: p.id,
             name: p.nome,
-            client: '—',
-            initials: p.nome.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase(),
-            stageIndex: ETAPA_TO_STAGE[p.etapa_atual] ?? 2,
+            cliente_nome: p.cliente_id ? (clientMap[p.cliente_id] ?? null) : null,
+            stageIndex: ETAPA_TO_STAGE[p.etapa_atual] ?? 0,
             type: TIPO_LABEL[p.tipo] ?? 'Residencial',
-            dueDate: '—',
-            coverUrl: p.cover_url ?? null,
+            created_at: p.created_at,
+            metragem: p.metragem ?? null,
           })))
         }
 
@@ -179,21 +186,20 @@ export default function ArquitetoDashboardPage() {
     const supabase = createClient()
     const { data, error } = await supabase
       .from('projetos')
-      .insert({ escritorio_id: escritorioId, nome: novoForm.nome, tipo: novoForm.tipo, descricao: novoForm.descricao })
+      .insert({ escritorio_id: escritorioId, nome: novoForm.nome, tipo: novoForm.tipo, descricao: novoForm.descricao, metragem: novoForm.metragem ? parseFloat(novoForm.metragem) : null, endereco: novoForm.endereco || null, email_cliente: novoForm.email_cliente || null, tipo_contrato: novoForm.tipo_contrato || null })
       .select('*').single()
 
     if (!error && data) {
       const novo: Project = {
-        id: data.id, name: data.nome, client: '—',
-        initials: data.nome.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase(),
-        stageIndex: 2, type: TIPO_LABEL[data.tipo] ?? 'Residencial',
-        dueDate: '—', coverUrl: null,
+        id: data.id, name: data.nome, cliente_nome: null,
+        stageIndex: 0, type: TIPO_LABEL[data.tipo] ?? 'Residencial',
+        created_at: data.created_at, metragem: null,
       }
       setRealProjects(prev => [novo, ...prev])
     }
     setNovoSaving(false)
     setNovoOpen(false)
-    setNovoForm({ nome: '', tipo: 'residencial', descricao: '' })
+    setNovoForm({ nome: '', tipo: 'residencial', descricao: '', metragem: '', endereco: '', email_cliente: '', tipo_contrato: '' })
   }
 
   useEffect(() => {
@@ -205,11 +211,16 @@ export default function ArquitetoDashboardPage() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  const projAtivos = realProjects.filter(p => p.stageIndex < PIPELINE_STAGES.length - 1)
+  const totalMetragem = projAtivos.reduce((s, p) => s + (p.metragem ?? 0), 0)
+  const clientesAtivos = new Set(realProjects.filter(p => p.cliente_nome).map(p => p.cliente_nome)).size
+  const projConcluidos = realProjects.filter(p => p.stageIndex === PIPELINE_STAGES.length - 1).length
+
   const statsData = [
-    { title: 'Projetos Ativos', value: loadingProjects ? '—' : String(realProjects.length), delta: '', icon: FolderOpen, color: '#4f9cf9' },
-    { title: 'Leads Recebidos', value: loadingProjects ? '—' : String(leads.length), delta: '', icon: TrendingUp, color: '#007AFF' },
-    { title: 'Reuniões Agendadas', value: '0', delta: '', icon: Clock, color: '#a78bfa' },
-    { title: 'Orçamentos Pendentes', value: '0', delta: '', icon: FileText, color: '#34d399' },
+    { title: 'Projetos Ativos',    value: loadingProjects ? '—' : String(projAtivos.length),  delta: '', icon: FolderOpen,  color: '#4f9cf9' },
+    { title: 'Total m² em Dev.',   value: loadingProjects ? '—' : totalMetragem > 0 ? `${totalMetragem.toLocaleString('pt-BR')} m²` : '—', delta: '', icon: TrendingUp, color: '#007AFF' },
+    { title: 'Clientes Ativos',    value: loadingProjects ? '—' : String(clientesAtivos),      delta: '', icon: Clock,       color: '#a78bfa' },
+    { title: 'Projetos Concluídos', value: loadingProjects ? '—' : String(projConcluidos),     delta: '', icon: FileText,    color: '#34d399' },
   ]
 
   return (
@@ -428,52 +439,43 @@ export default function ArquitetoDashboardPage() {
                     {realProjects.map((project) => {
                       const progress = Math.round(((project.stageIndex + 1) / PIPELINE_STAGES.length) * 100)
                       const currentStage = PIPELINE_STAGES[project.stageIndex]
+                      const stageColor = STAGE_COLORS[project.stageIndex] ?? '#007AFF'
+                      const dateStr = new Date(project.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
                       return (
-                        <Link key={project.id} href={`/arquiteto/projetos/${project.id}`} className="proj-card" style={{ textDecoration: 'none', display: 'block' }}>
-                          <div style={{ position: 'relative', height: 190, overflow: 'hidden', background: '#e5e5ea' }}>
-                            {project.coverUrl
-                              ? <img src={project.coverUrl} alt={project.name} className="proj-card-img" />
-                              : <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'linear-gradient(135deg, #e8e8f0 0%, #d4d4dc 100%)' }}>
-                                  <FolderOpen size={28} color="#c7c7cc" />
-                                  <span style={{ fontSize: 11, color: '#aeaeb2', fontWeight: 500 }}>Sem capa</span>
-                                </div>}
-                            <div style={{ position: 'absolute', inset: 0, background: project.coverUrl ? 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)' : 'none' }} />
-                            <div style={{
-                              position: 'absolute', top: 10, right: 10,
-                              fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 20,
-                              background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(0,122,255,0.3)',
-                              color: '#007AFF', backdropFilter: 'blur(8px)',
-                              letterSpacing: '0.05em', textTransform: 'uppercase' as const,
-                            }}>
-                              {currentStage}
+                        <Link key={project.id} href={`/arquiteto/projetos/${project.id}`} style={{ textDecoration: 'none', display: 'block' }}>
+                          <div className="proj-card" style={{ padding: 16, borderLeft: `3px solid ${stageColor}` }}>
+                            {/* Stage + type row */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                              <span style={{ fontSize: 9.5, fontWeight: 700, color: stageColor, background: `${stageColor}14`, border: `1px solid ${stageColor}30`, padding: '3px 9px', borderRadius: 20, letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>
+                                {currentStage}
+                              </span>
+                              <span style={{ fontSize: 10, color: '#8e8e93' }}>{project.type}</span>
                             </div>
-                            <div style={{ position: 'absolute', bottom: 10, left: 14, right: 14 }}>
-                              <div style={{ fontSize: 14.5, fontWeight: 700, color: project.coverUrl ? '#fff' : '#1a1a1a', lineHeight: 1.25, textShadow: project.coverUrl ? '0 1px 6px rgba(0,0,0,0.6)' : 'none' }}>
-                                {project.name}
+                            {/* Project name */}
+                            <div style={{ fontSize: 14.5, fontWeight: 700, color: '#1a1a1a', marginBottom: 5, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                              {project.name}
+                            </div>
+                            {/* Client */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 14 }}>
+                              <User size={11} color="#8e8e93" />
+                              <span style={{ fontSize: 11.5, color: project.cliente_nome ? '#6b6b6b' : '#c7c7cc', fontStyle: project.cliente_nome ? 'normal' : 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                                {project.cliente_nome ?? 'Sem cliente vinculado'}
+                              </span>
+                            </div>
+                            {/* Progress bar */}
+                            <div style={{ marginBottom: 10 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                                <span style={{ fontSize: 10, color: '#8e8e93' }}>Progresso</span>
+                                <span style={{ fontSize: 10, fontWeight: 700, color: stageColor }}>{progress}%</span>
                               </div>
-                              <div style={{ fontSize: 11, color: project.coverUrl ? 'rgba(255,255,255,0.7)' : '#6b6b6b', marginTop: 2 }}>{project.client}</div>
-                            </div>
-                            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'rgba(255,255,255,0.2)' }}>
-                              <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, rgba(0,122,255,0.6) 0%, #007AFF 100%)' }} />
-                            </div>
-                          </div>
-                          <div style={{ padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 9, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                            <div style={{
-                              width: 30, height: 30, borderRadius: '50%',
-                              background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 10, fontWeight: 700, color: '#007AFF', flexShrink: 0,
-                            }}>
-                              {project.initials}
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 11.5, fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {project.client}
+                              <div style={{ height: 4, background: '#f2f2f7', borderRadius: 2, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${progress}%`, background: stageColor, borderRadius: 2, transition: 'width 0.4s' }} />
                               </div>
-                              <div style={{ fontSize: 10, color: '#8e8e93', marginTop: 1 }}>{project.dueDate}</div>
                             </div>
-                            <div style={{ flexShrink: 0, color: '#007AFF', opacity: 0.7 }}>
-                              <ArrowRight size={12} />
+                            {/* Footer */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: 10.5, color: '#8e8e93' }}>{dateStr}</span>
+                              <ArrowRight size={12} color="#007AFF" />
                             </div>
                           </div>
                         </Link>
@@ -587,7 +589,7 @@ export default function ArquitetoDashboardPage() {
         }} onClick={() => setNovoOpen(false)}>
           <div style={{
             background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16,
-            padding: 32, width: '100%', maxWidth: 480, position: 'relative',
+            padding: 32, width: '100%', maxWidth: 560, position: 'relative',
             boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
           }} onClick={e => e.stopPropagation()}>
             <button onClick={() => setNovoOpen(false)} style={{
@@ -646,6 +648,51 @@ export default function ArquitetoDashboardPage() {
                   }}
                   onFocus={e => (e.target.style.borderColor = '#007AFF')}
                   onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
+                    Metragem (m²) — opcional
+                  </label>
+                  <input type="number" min="0" value={novoForm.metragem} onChange={e => setNovoForm(p => ({ ...p, metragem: e.target.value }))}
+                    placeholder="Ex: 120" style={{ width: '100%', padding: '10px 14px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10 }}
+                    onFocus={e => (e.target.style.borderColor = '#007AFF')}
+                    onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
+                    Tipo de contrato — opcional
+                  </label>
+                  <select value={novoForm.tipo_contrato} onChange={e => setNovoForm(p => ({ ...p, tipo_contrato: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 14px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', color: novoForm.tipo_contrato ? '#1a1a1a' : '#8e8e93', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10, fontFamily: 'inherit' }}>
+                    <option value="">Selecionar...</option>
+                    <option value="execucao">Execução</option>
+                    <option value="somente_projeto">Somente Projeto</option>
+                    <option value="acompanhamento">Acompanhamento de Obra</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
+                  Endereço da obra — opcional
+                </label>
+                <input value={novoForm.endereco} onChange={e => setNovoForm(p => ({ ...p, endereco: e.target.value }))}
+                  placeholder="Rua, número, bairro..." style={{ width: '100%', padding: '10px 14px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10 }}
+                  onFocus={e => (e.target.style.borderColor = '#007AFF')}
+                  onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
+                  Email do cliente — opcional
+                </label>
+                <input type="email" value={novoForm.email_cliente} onChange={e => setNovoForm(p => ({ ...p, email_cliente: e.target.value }))}
+                  placeholder="cliente@email.com" style={{ width: '100%', padding: '10px 14px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10 }}
+                  onFocus={e => (e.target.style.borderColor = '#007AFF')}
+                  onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                <div style={{ fontSize: 10.5, color: '#8e8e93', marginTop: 4 }}>Quando o cliente criar conta com este email, será vinculado automaticamente.</div>
               </div>
 
               {!escritorioId && !loadingProjects && (
