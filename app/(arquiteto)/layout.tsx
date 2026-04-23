@@ -32,12 +32,17 @@ function ArquitetoSidebar() {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return
-      const nome = data.user.user_metadata?.nome ?? data.user.email ?? 'Arquiteto'
+
+      // Fetch real name and escritorio image in parallel
+      const [{ data: userData }, { data: escData }] = await Promise.all([
+        supabase.from('users').select('nome').eq('id', data.user.id).maybeSingle(),
+        supabase.from('escritorios').select('image_url').eq('user_id', data.user.id).maybeSingle(),
+      ])
+
+      const nome = userData?.nome?.trim() || data.user.user_metadata?.nome || data.user.email?.split('@')[0] || 'Arquiteto'
       setUserName(nome)
       setUserInitials(nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase())
 
-      const { data: escData } = await supabase
-        .from('escritorios').select('image_url').eq('user_id', data.user.id).maybeSingle()
       if (escData?.image_url) setAvatarUrl(escData.image_url)
 
       const { data: convs } = await supabase

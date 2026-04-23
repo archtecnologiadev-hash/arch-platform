@@ -144,7 +144,7 @@ function ChatInner({ userType }: { userType: UserType }) {
       const result: Conversa[] = await Promise.all(convsData.map(async (c) => {
         const { last, unread } = await fetchMsgMeta(supabase, c.id, uid)
         const user = usersMap[c.participante_id]
-        let participante_nome = user?.nome ?? user?.email ?? 'Usuário'
+        let participante_nome = user?.nome?.trim() || user?.email?.split('@')[0] || 'Usuário'
         let participante_avatar = user?.avatar_url ?? null
         if (c.tipo === 'fornecedor' && c.fornecedor_id && fornsMap[c.fornecedor_id]) {
           participante_nome = fornsMap[c.fornecedor_id].nome
@@ -197,7 +197,7 @@ function ChatInner({ userType }: { userType: UserType }) {
           id: c.id,
           tipo: c.tipo as 'cliente' | 'fornecedor',
           participante_id: c.arquiteto_id,
-          participante_nome: arq?.nome ?? arq?.email ?? 'Arquiteto',
+          participante_nome: arq?.nome?.trim() || arq?.email?.split('@')[0] || 'Arquiteto',
           participante_email: arq?.email ?? '',
           participante_avatar: escMap[c.arquiteto_id]?.image_url ?? null,
           projeto_nome: null,

@@ -24,12 +24,14 @@ function ClienteSidebar() {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return
-      const nome = data.user.user_metadata?.nome ?? data.user.email ?? 'Cliente'
+
+      const { data: userData } = await supabase
+        .from('users').select('nome, avatar_url').eq('id', data.user.id).maybeSingle()
+
+      const nome = userData?.nome?.trim() || data.user.user_metadata?.nome || data.user.email?.split('@')[0] || 'Cliente'
       setUserName(nome)
       setUserInitials(nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase())
 
-      const { data: userData } = await supabase
-        .from('users').select('avatar_url').eq('id', data.user.id).maybeSingle()
       if (userData?.avatar_url) setAvatarUrl(userData.avatar_url)
 
       const { data: convs } = await supabase

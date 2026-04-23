@@ -27,12 +27,13 @@ function FornecedorSidebar() {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return
-      const nome = data.user.user_metadata?.nome ?? data.user.email ?? 'Fornecedor'
-      setUserName(nome)
-      setUserInitials(nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase())
 
       const { data: forn } = await supabase
-        .from('fornecedores').select('id, image_url').eq('user_id', data.user.id).maybeSingle()
+        .from('fornecedores').select('id, nome, image_url').eq('user_id', data.user.id).maybeSingle()
+
+      const nome = forn?.nome?.trim() || data.user.user_metadata?.nome || data.user.email?.split('@')[0] || 'Fornecedor'
+      setUserName(nome)
+      setUserInitials(nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase())
       if (!forn) return
       if (forn.image_url) setAvatarUrl(forn.image_url)
 
