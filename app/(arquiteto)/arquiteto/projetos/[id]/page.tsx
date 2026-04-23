@@ -9,7 +9,7 @@ import {
   Star, ExternalLink, Send, X, CheckCircle2, MapPin, Loader2,
   Download, AlertCircle, Heart, ChevronLeft, UserPlus, Search, History,
 } from 'lucide-react'
-import CalendarioObra, { CalendarioEvent, EVENT_META, EventType } from '@/components/shared/CalendarioObra'
+import CalendarioObra, { CalendarioEvent, EVENT_META, EventType, getMeta } from '@/components/shared/CalendarioObra'
 import { createClient } from '@/lib/supabase'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -1180,7 +1180,7 @@ export default function ProjetoDetailPage() {
                     </div>
                     <div style={{ flex: 1, minWidth: 0, paddingTop: 1 }}>
                       {!hasEvents ? <div style={{ fontSize: 10.5, color: 'rgba(0,0,0,0.2)', paddingTop: 4 }}>—</div> : dayEvents.map(ev => {
-                        const color = EVENT_META[ev.type].color
+                        const color = getMeta(ev.type).color
                         return (
                           <div key={ev.id} onClick={() => { setSidebarEditTarget(ev); setSidebarEditForm({ type: ev.type, title: ev.title, provider: ev.provider ?? '', startDate: ev.startDate, endDate: ev.endDate, startTime: ev.startTime ?? '08:00', endTime: ev.endTime ?? '17:00', note: ev.note ?? '' }) }} style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4, cursor: 'pointer', borderRadius: 5, padding: '2px 3px', margin: '0 -3px 4px' }}
                             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}

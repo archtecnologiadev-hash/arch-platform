@@ -67,7 +67,7 @@ function eventsForDay(all: CalendarioEvent[], year: number, month: number, day: 
   return all.filter((e) => e.startDate <= d && e.endDate >= d)
 }
 
-function getMeta(type: string) {
+export function getMeta(type: string) {
   return EVENT_META[type] ?? EVENT_FALLBACK
 }
 
