@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Upload, FileText, ImageIcon, File, MessageCircle,
   Mail, Calendar, Plus, Package, DollarSign, Check, Pencil,
@@ -142,6 +142,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
 
 export default function ProjetoDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const projectId = (params?.id as string) ?? ''
 
   const [loading, setLoading] = useState(true)
@@ -309,6 +310,43 @@ export default function ProjetoDetailPage() {
         .insert({ arquiteto_id: currentUser.id, fornecedor_id: fornecedorDbId })
       setFavorites(prev => new Set(Array.from(prev).concat(fornecedorDbId)))
     }
+  }
+
+  async function handleIniciarConversa(participanteId: string, tipo: 'cliente' | 'fornecedor', fornecedorDbId?: string) {
+    if (!currentUser) return
+    const supabase = createClient()
+    const { data: existing } = await supabase
+      .from('conversas')
+      .select('id')
+      .eq('arquiteto_id', currentUser.id)
+      .eq('participante_id', participanteId)
+      .maybeSingle()
+    let convId: string
+    if (existing) {
+      convId = existing.id
+    } else {
+      const { data: created } = await supabase
+        .from('conversas')
+        .insert({
+          arquiteto_id: currentUser.id,
+          participante_id: participanteId,
+          tipo,
+          fornecedor_id: fornecedorDbId ?? null,
+        })
+        .select('id')
+        .single()
+      convId = created?.id
+    }
+    if (convId) router.push(`/arquiteto/mensagens?c=${convId}`)
+  }
+
+  async function handleMensagemFornecedor(fornecedorDbId: string) {
+    if (!currentUser) return
+    const supabase = createClient()
+    const { data: forn } = await supabase
+      .from('fornecedores').select('user_id').eq('id', fornecedorDbId).single()
+    if (!forn?.user_id) return
+    await handleIniciarConversa(forn.user_id, 'fornecedor', fornecedorDbId)
   }
 
   async function handleFiles(files: FileList | null) {
@@ -795,6 +833,11 @@ export default function ProjetoDetailPage() {
                                   <ExternalLink size={10} /> Ver Perfil
                                 </Link>
                               )}
+                              {sup.dbId && (
+                                <button onClick={() => handleMensagemFornecedor(sup.dbId!)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, fontSize: 11, padding: '6px 8px', borderRadius: 6, background: 'transparent', border: '1px solid rgba(0,0,0,0.08)', color: '#6b6b6b', cursor: 'pointer', fontWeight: 600 }}>
+                                  <MessageCircle size={10} /> Mensagem
+                                </button>
+                              )}
                               <button onClick={() => { setDirQuoteTarget(sup); setDirQuoteForm({ descricao: '', data: '' }); setDirQuoteFile(null); setDirQuoteSent(false) }} style={{ flex: 1, fontSize: 11, padding: '6px', borderRadius: 6, background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.22)', color: '#007AFF', cursor: 'pointer', fontWeight: 600 }}>
                                 Solicitar Orçamento
                               </button>
@@ -1014,7 +1057,9 @@ export default function ProjetoDetailPage() {
                       <span style={{ fontSize: 12, color: '#6b6b6b', wordBreak: 'break-all' as const }}>{cliente.email}</span>
                     </div>
                   </div>
-                  <button style={{ marginTop: 14, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '9px', background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.22)', borderRadius: 8, color: '#007AFF', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', transition: 'background 0.15s' }}
+                  <button
+                    onClick={() => projeto?.cliente_id && handleIniciarConversa(projeto.cliente_id, 'cliente')}
+                    style={{ marginTop: 14, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '9px', background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.22)', borderRadius: 8, color: '#007AFF', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', transition: 'background 0.15s' }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.18)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.09)')}>
                     <MessageCircle size={13} /> Iniciar conversa

@@ -12,6 +12,7 @@ import {
   FileText,
   UserCircle,
   LogOut,
+  MessageCircle,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { label: 'Clientes', href: '/arquiteto/clientes', icon: Users },
   { label: 'Calendário', href: '/arquiteto/calendario', icon: Calendar },
   { label: 'Fornecedores', href: '/arquiteto/fornecedores', icon: Package },
+  { label: 'Mensagens', href: '/arquiteto/mensagens', icon: MessageCircle },
   { label: 'Orçamentos', href: '/arquiteto/orcamentos', icon: FileText },
   { label: 'Meu Perfil', href: '/arquiteto/perfil', icon: UserCircle },
 ]
@@ -30,16 +32,27 @@ function ArquitetoSidebar() {
   const router = useRouter()
   const [userName, setUserName] = useState('Arquiteto')
   const [userInitials, setUserInitials] = useState('A')
+  const [unreadMsgs, setUnreadMsgs] = useState(0)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        const nome = data.user.user_metadata?.nome ?? data.user.email ?? 'Arquiteto'
-        setUserName(nome)
-        setUserInitials(
-          nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase()
-        )
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return
+      const nome = data.user.user_metadata?.nome ?? data.user.email ?? 'Arquiteto'
+      setUserName(nome)
+      setUserInitials(nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase())
+
+      const { data: convs } = await supabase
+        .from('conversas').select('id').eq('arquiteto_id', data.user.id)
+      const ids = convs?.map((c: { id: string }) => c.id) ?? []
+      if (ids.length > 0) {
+        const { count } = await supabase
+          .from('mensagens')
+          .select('id', { count: 'exact', head: true })
+          .in('conversa_id', ids)
+          .eq('lida', false)
+          .neq('remetente_id', data.user.id)
+        setUnreadMsgs(count ?? 0)
       }
     })
   }, [])
@@ -97,6 +110,7 @@ function ArquitetoSidebar() {
           const isActive =
             pathname === item.href ||
             (item.href !== '/arquiteto/dashboard' && pathname.startsWith(item.href))
+          const showBadge = item.href === '/arquiteto/mensagens' && unreadMsgs > 0
           return (
             <Link
               key={item.href}
@@ -116,7 +130,16 @@ function ArquitetoSidebar() {
               }}
             >
               <Icon size={16} strokeWidth={isActive ? 2 : 1.5} />
-              <span>{item.label}</span>
+              <span style={{ flex: 1 }}>{item.label}</span>
+              {showBadge && (
+                <span style={{
+                  fontSize: 10, fontWeight: 700, color: '#fff',
+                  background: '#007AFF', borderRadius: 10,
+                  padding: '1px 6px', lineHeight: '16px',
+                }}>
+                  {unreadMsgs}
+                </span>
+              )}
             </Link>
           )
         })}

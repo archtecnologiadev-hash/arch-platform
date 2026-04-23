@@ -16,7 +16,7 @@ const statusLabels: Record<string, string> = {
 
 export default function ClienteOrcamentosPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ padding: '28px 32px' }}>
       <div>
         <h1 className="text-3xl font-bold">Orçamentos</h1>
         <p className="text-muted-foreground">Analise e aprove os orçamentos dos fornecedores</p>

@@ -42,7 +42,7 @@ export default function ClienteDashboardPage() {
   }, [])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ padding: '28px 32px' }}>
       <div>
         <h1 className="text-3xl font-medium" style={{ color: '#1a1a1a' }}>Meu Painel</h1>
         <p className="text-muted-foreground">Acompanhe seus projetos em andamento</p>

@@ -20,6 +20,7 @@ function FornecedorSidebar() {
   const [userName, setUserName] = useState('Fornecedor')
   const [userInitials, setUserInitials] = useState('F')
   const [pendingCount, setPendingCount] = useState(0)
+  const [unreadMsgs, setUnreadMsgs] = useState(0)
 
   useEffect(() => {
     const supabase = createClient()
@@ -39,6 +40,20 @@ function FornecedorSidebar() {
         .eq('fornecedor_id', forn.id)
         .eq('status', 'pendente')
       setPendingCount(count ?? 0)
+
+      const { data: convs } = await supabase
+        .from('conversas').select('id')
+        .eq('participante_id', data.user.id).eq('tipo', 'fornecedor')
+      const ids = convs?.map((c: { id: string }) => c.id) ?? []
+      if (ids.length > 0) {
+        const { count: mc } = await supabase
+          .from('mensagens')
+          .select('id', { count: 'exact', head: true })
+          .in('conversa_id', ids)
+          .eq('lida', false)
+          .neq('remetente_id', data.user.id)
+        setUnreadMsgs(mc ?? 0)
+      }
     })
   }, [])
 
@@ -106,7 +121,10 @@ function FornecedorSidebar() {
           const isActive =
             pathname === item.href ||
             (item.href !== '/fornecedor/dashboard' && pathname.startsWith(item.href))
-          const showBadge = item.href === '/fornecedor/orcamentos' && pendingCount > 0
+          const showBadge =
+            (item.href === '/fornecedor/orcamentos' && pendingCount > 0) ||
+            (item.href === '/fornecedor/mensagens' && unreadMsgs > 0)
+          const badgeCount = item.href === '/fornecedor/mensagens' ? unreadMsgs : pendingCount
           return (
             <Link
               key={item.href}
@@ -130,10 +148,10 @@ function FornecedorSidebar() {
               {showBadge && (
                 <span style={{
                   fontSize: 10, fontWeight: 700, color: '#fff',
-                  background: '#ef4444', borderRadius: 10,
-                  padding: '1px 6px', lineHeight: '16px',
+                  background: item.href === '/fornecedor/mensagens' ? '#007AFF' : '#ef4444',
+                  borderRadius: 10, padding: '1px 6px', lineHeight: '16px',
                 }}>
-                  {pendingCount}
+                  {badgeCount}
                 </span>
               )}
             </Link>

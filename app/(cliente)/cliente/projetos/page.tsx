@@ -14,7 +14,7 @@ const statusLabels: Record<string, string> = {
 
 export default function ClienteProjetosPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ padding: '28px 32px' }}>
       <div>
         <h1 className="text-3xl font-bold">Meus Projetos</h1>
         <p className="text-muted-foreground">Acompanhe o andamento dos seus projetos</p>

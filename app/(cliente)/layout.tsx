@@ -3,12 +3,13 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, FolderOpen, FileText, LogOut } from 'lucide-react'
+import { LayoutDashboard, FolderOpen, FileText, LogOut, MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/cliente/dashboard', icon: LayoutDashboard },
   { label: 'Meus Projetos', href: '/cliente/projetos', icon: FolderOpen },
+  { label: 'Mensagens', href: '/cliente/mensagens', icon: MessageCircle },
   { label: 'Orçamentos', href: '/cliente/orcamentos', icon: FileText },
 ]
 
@@ -17,16 +18,28 @@ function ClienteSidebar() {
   const router = useRouter()
   const [userName, setUserName] = useState('Cliente')
   const [userInitials, setUserInitials] = useState('C')
+  const [unreadMsgs, setUnreadMsgs] = useState(0)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        const nome = data.user.user_metadata?.nome ?? data.user.email ?? 'Cliente'
-        setUserName(nome)
-        setUserInitials(
-          nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase()
-        )
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return
+      const nome = data.user.user_metadata?.nome ?? data.user.email ?? 'Cliente'
+      setUserName(nome)
+      setUserInitials(nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase())
+
+      const { data: convs } = await supabase
+        .from('conversas').select('id')
+        .eq('participante_id', data.user.id).eq('tipo', 'cliente')
+      const ids = convs?.map((c: { id: string }) => c.id) ?? []
+      if (ids.length > 0) {
+        const { count } = await supabase
+          .from('mensagens')
+          .select('id', { count: 'exact', head: true })
+          .in('conversa_id', ids)
+          .eq('lida', false)
+          .neq('remetente_id', data.user.id)
+        setUnreadMsgs(count ?? 0)
       }
     })
   }, [])
@@ -84,6 +97,7 @@ function ClienteSidebar() {
           const isActive =
             pathname === item.href ||
             (item.href !== '/cliente/dashboard' && pathname.startsWith(item.href))
+          const showBadge = item.href === '/cliente/mensagens' && unreadMsgs > 0
           return (
             <Link
               key={item.href}
@@ -103,7 +117,16 @@ function ClienteSidebar() {
               }}
             >
               <Icon size={16} strokeWidth={isActive ? 2 : 1.5} />
-              <span>{item.label}</span>
+              <span style={{ flex: 1 }}>{item.label}</span>
+              {showBadge && (
+                <span style={{
+                  fontSize: 10, fontWeight: 700, color: '#fff',
+                  background: '#007AFF', borderRadius: 10,
+                  padding: '1px 6px', lineHeight: '16px',
+                }}>
+                  {unreadMsgs}
+                </span>
+              )}
             </Link>
           )
         })}
@@ -179,7 +202,6 @@ export default function ClienteLayout({ children }: { children: React.ReactNode 
         minHeight: '100vh',
         background: '#f2f2f7',
         overflowX: 'hidden',
-        padding: '28px 32px',
       }}>
         {children}
       </main>
