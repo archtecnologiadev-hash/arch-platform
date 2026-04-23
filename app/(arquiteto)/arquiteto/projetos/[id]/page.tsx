@@ -7,7 +7,7 @@ import {
   ArrowLeft, Upload, FileText, ImageIcon, File, MessageCircle,
   Mail, Calendar, Plus, Package, DollarSign, Check, Pencil,
   Star, ExternalLink, Send, X, CheckCircle2, MapPin, Loader2,
-  Download, AlertCircle, Heart,
+  Download, AlertCircle, Heart, ChevronLeft, UserPlus, Search, History,
 } from 'lucide-react'
 import CalendarioObra, { CalendarioEvent, EVENT_META, EventType } from '@/components/shared/CalendarioObra'
 import { createClient } from '@/lib/supabase'
@@ -23,6 +23,19 @@ interface ProjetoReal {
   cliente_id: string | null
   cover_url: string | null
   created_at: string
+  descricao: string | null
+  metragem: number | null
+  endereco: string | null
+  email_cliente: string | null
+  tipo_contrato: string | null
+}
+
+interface HistoricoItem {
+  id: string
+  acao: string
+  detalhe: string | null
+  created_at: string
+  usuario_nome?: string
 }
 
 interface ClienteInfo {
@@ -154,6 +167,26 @@ export default function ProjetoDetailPage() {
 
   const [advancingStage, setAdvancingStage] = useState(false)
   const [stageAdvanced, setStageAdvanced] = useState(false)
+  const [regressingStage, setRegressingStage] = useState(false)
+
+  // Edit project modal
+  const [editOpen, setEditOpen] = useState(false)
+  const [editForm, setEditForm] = useState({ nome: '', tipo: 'residencial', descricao: '', metragem: '', endereco: '', email_cliente: '', tipo_contrato: '' })
+  const [editSaving, setEditSaving] = useState(false)
+
+  // Link client modal
+  const [linkOpen, setLinkOpen] = useState(false)
+  const [linkTab, setLinkTab] = useState<'buscar' | 'convidar'>('buscar')
+  const [linkQuery, setLinkQuery] = useState('')
+  const [linkResults, setLinkResults] = useState<Array<{ id: string; nome: string; email: string }>>([])
+  const [linkSearching, setLinkSearching] = useState(false)
+  const [linkInviteEmail, setLinkInviteEmail] = useState('')
+  const [linkInviting, setLinkInviting] = useState(false)
+  const [linkInviteSent, setLinkInviteSent] = useState(false)
+  const [linkingId, setLinkingId] = useState<string | null>(null)
+
+  // Historico
+  const [historico, setHistorico] = useState<HistoricoItem[]>([])
 
   const [dirFilter, setDirFilter] = useState('Todos')
   const [dirQuoteTarget, setDirQuoteTarget] = useState<DirSupplier | null>(null)
@@ -185,6 +218,7 @@ export default function ProjetoDetailPage() {
         { data: forn },
         { data: favs },
         { data: orcData },
+        { data: histData },
       ] = await Promise.all([
         supabase.from('projetos').select('*').eq('id', projectId).single(),
         supabase.from('eventos').select('*').eq('projeto_id', projectId).order('data_inicio'),
@@ -193,12 +227,22 @@ export default function ProjetoDetailPage() {
         supabase.from('fornecedores').select('id, slug, nome, segmento, cidade, bio, image_url, cover_url').order('created_at', { ascending: false }),
         currentUid ? supabase.from('fornecedores_favoritos').select('fornecedor_id').eq('arquiteto_id', currentUid) : Promise.resolve({ data: [] as Array<{ fornecedor_id: string }> }),
         supabase.from('orcamento_itens').select('*').eq('projeto_id', projectId).order('created_at'),
+        supabase.from('projeto_historico').select('*').eq('projeto_id', projectId).order('created_at', { ascending: false }).limit(30),
       ])
 
       if (proj) {
         setProjeto(proj as ProjetoReal)
         const idx = STAGES.findIndex(s => s.toLowerCase() === (proj.etapa_atual ?? '').toLowerCase())
         if (idx >= 0) setStageIndex(idx)
+        setEditForm({
+          nome: proj.nome ?? '',
+          tipo: proj.tipo ?? 'residencial',
+          descricao: proj.descricao ?? '',
+          metragem: proj.metragem != null ? String(proj.metragem) : '',
+          endereco: proj.endereco ?? '',
+          email_cliente: proj.email_cliente ?? '',
+          tipo_contrato: proj.tipo_contrato ?? '',
+        })
 
         if (proj.cliente_id) {
           const { data: cli } = await supabase
@@ -223,6 +267,7 @@ export default function ProjetoDetailPage() {
       if (arqs) setArquivos(arqs as ArquivoProjeto[])
       if (anots) setAnotacoes(anots as AnotacaoProjeto[])
       if (orcData) setOrcItems(orcData as OrcItem[])
+      if (histData) setHistorico(histData as HistoricoItem[])
       if (favs) {
         const favSet = new Set((favs as Array<{ fornecedor_id: string }>).map(r => r.fornecedor_id))
         setFavorites(favSet)
@@ -306,6 +351,15 @@ export default function ProjetoDetailPage() {
     setSavingNote(false)
   }
 
+  async function logHistorico(acao: string, detalhe?: string) {
+    if (!currentUser || !projeto) return
+    const supabase = createClient()
+    const { data } = await supabase.from('projeto_historico')
+      .insert({ projeto_id: projeto.id, usuario_id: currentUser.id, acao, detalhe: detalhe ?? null })
+      .select('*').single()
+    if (data) setHistorico(prev => [data as HistoricoItem, ...prev])
+  }
+
   async function handleAdvanceStage() {
     if (!projeto || stageIndex >= STAGES.length - 1) return
     setAdvancingStage(true)
@@ -313,9 +367,83 @@ export default function ProjetoDetailPage() {
     const supabase = createClient()
     await supabase.from('projetos').update({ etapa_atual: STAGES[next] }).eq('id', projeto.id)
     setStageIndex(next)
+    setProjeto(prev => prev ? { ...prev, etapa_atual: STAGES[next] } : prev)
+    await logHistorico('Etapa avançada', `${STAGES[stageIndex]} → ${STAGES[next]}`)
     setAdvancingStage(false)
     setStageAdvanced(true)
     setTimeout(() => setStageAdvanced(false), 2500)
+  }
+
+  async function handleRegressStage() {
+    if (!projeto || stageIndex <= 0) return
+    setRegressingStage(true)
+    const prev = stageIndex - 1
+    const supabase = createClient()
+    await supabase.from('projetos').update({ etapa_atual: STAGES[prev] }).eq('id', projeto.id)
+    setStageIndex(prev)
+    setProjeto(p => p ? { ...p, etapa_atual: STAGES[prev] } : p)
+    await logHistorico('Etapa retrocedida', `${STAGES[stageIndex]} → ${STAGES[prev]}`)
+    setRegressingStage(false)
+  }
+
+  async function handleEditSave(e: React.FormEvent) {
+    e.preventDefault()
+    if (!projeto || !editForm.nome.trim()) return
+    setEditSaving(true)
+    const supabase = createClient()
+    const updates = {
+      nome: editForm.nome.trim(),
+      tipo: editForm.tipo,
+      descricao: editForm.descricao || null,
+      metragem: editForm.metragem ? parseFloat(editForm.metragem) : null,
+      endereco: editForm.endereco || null,
+      email_cliente: editForm.email_cliente || null,
+      tipo_contrato: editForm.tipo_contrato || null,
+    }
+    const { error } = await supabase.from('projetos').update(updates).eq('id', projeto.id)
+    if (!error) {
+      setProjeto(prev => prev ? { ...prev, ...updates } : prev)
+      await logHistorico('Projeto editado', `Nome: ${updates.nome}`)
+      setEditOpen(false)
+    }
+    setEditSaving(false)
+  }
+
+  async function handleLinkSearch() {
+    if (!linkQuery.trim()) return
+    setLinkSearching(true)
+    const supabase = createClient()
+    const q = linkQuery.trim().toLowerCase()
+    const { data } = await supabase.from('users')
+      .select('id, nome, email')
+      .or(`email.ilike.%${q}%,nome.ilike.%${q}%`)
+      .limit(10)
+    setLinkResults((data ?? []) as Array<{ id: string; nome: string; email: string }>)
+    setLinkSearching(false)
+  }
+
+  async function handleLinkClient(userId: string, userName: string, userEmail: string) {
+    if (!projeto) return
+    setLinkingId(userId)
+    const supabase = createClient()
+    await supabase.from('projetos').update({ cliente_id: userId }).eq('id', projeto.id)
+    setProjeto(prev => prev ? { ...prev, cliente_id: userId } : prev)
+    setCliente({ nome: userName, email: userEmail })
+    await logHistorico('Cliente vinculado', userName)
+    setLinkingId(null)
+    setLinkOpen(false)
+  }
+
+  async function handleInviteClient() {
+    if (!linkInviteEmail.trim() || !projeto) return
+    setLinkInviting(true)
+    const supabase = createClient()
+    await supabase.from('projetos').update({ email_cliente: linkInviteEmail.trim() }).eq('id', projeto.id)
+    setProjeto(prev => prev ? { ...prev, email_cliente: linkInviteEmail.trim() } : prev)
+    await logHistorico('Convite enviado', linkInviteEmail.trim())
+    setLinkInviting(false)
+    setLinkInviteSent(true)
+    setTimeout(() => { setLinkOpen(false); setLinkInviteSent(false); setLinkInviteEmail('') }, 2500)
   }
 
   async function handleSendQuote(e: React.FormEvent) {
@@ -439,8 +567,13 @@ export default function ProjetoDetailPage() {
               )}
             </div>
           </div>
-          <div style={{ fontSize: 11, fontWeight: 700, padding: '7px 16px', borderRadius: 22, background: 'rgba(0,122,255,0.08)', border: '1.5px solid rgba(0,122,255,0.25)', color: '#007AFF', letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>
-            {STAGES[stageIndex]}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <button onClick={() => { setEditForm({ nome: projeto.nome, tipo: projeto.tipo ?? 'residencial', descricao: projeto.descricao ?? '', metragem: projeto.metragem != null ? String(projeto.metragem) : '', endereco: projeto.endereco ?? '', email_cliente: projeto.email_cliente ?? '', tipo_contrato: projeto.tipo_contrato ?? '' }); setEditOpen(true) }} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '7px 13px', borderRadius: 8, background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', cursor: 'pointer' }}>
+              <Pencil size={12} /> Editar
+            </button>
+            <div style={{ fontSize: 11, fontWeight: 700, padding: '7px 16px', borderRadius: 22, background: 'rgba(0,122,255,0.08)', border: '1.5px solid rgba(0,122,255,0.25)', color: '#007AFF', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              {STAGES[stageIndex]}
+            </div>
           </div>
         </div>
       </div>
@@ -888,8 +1021,11 @@ export default function ProjetoDetailPage() {
                   </button>
                 </>
               ) : (
-                <div style={{ textAlign: 'center', padding: '16px 0', color: '#8e8e93', fontSize: 12 }}>
-                  Cliente não vinculado
+                <div style={{ textAlign: 'center', padding: '12px 0' }}>
+                  <div style={{ fontSize: 12, color: '#8e8e93', marginBottom: 12 }}>Cliente não vinculado</div>
+                  <button onClick={() => { setLinkOpen(true); setLinkTab('buscar'); setLinkQuery(''); setLinkResults([]); setLinkInviteSent(false) }} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.22)', borderRadius: 8, color: '#007AFF', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+                    <UserPlus size={13} /> Vincular cliente
+                  </button>
                 </div>
               )}
             </div>
@@ -910,14 +1046,26 @@ export default function ProjetoDetailPage() {
             ))}
           </div>
 
-          {/* Avançar etapa */}
-          {stageIndex < STAGES.length - 1 ? (
-            <button onClick={handleAdvanceStage} disabled={advancingStage} style={{ width: '100%', padding: '12px', borderRadius: 9, background: stageAdvanced ? 'rgba(52,211,153,0.1)' : advancingStage ? '#f2f2f7' : 'rgba(0,122,255,0.1)', border: stageAdvanced ? '1px solid rgba(52,211,153,0.35)' : '1px solid rgba(0,122,255,0.28)', color: stageAdvanced ? '#34d399' : advancingStage ? '#8e8e93' : '#007AFF', fontSize: 12.5, fontWeight: 700, cursor: advancingStage ? 'not-allowed' : 'pointer', letterSpacing: '0.04em', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              {stageAdvanced ? <><CheckCircle2 size={14} /> ETAPA AVANÇADA</> : advancingStage ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> SALVANDO...</> : <>→ Avançar para {STAGES[stageIndex + 1]}</>}
-            </button>
+          {/* Etapa buttons */}
+          {stageIndex === STAGES.length - 1 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ textAlign: 'center', padding: '10px', fontSize: 12, color: '#34d399', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 9, background: 'rgba(52,211,153,0.06)' }}>
+                <CheckCircle2 size={14} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} /> Projeto concluído
+              </div>
+              <button onClick={handleRegressStage} disabled={regressingStage} style={{ width: '100%', padding: '9px', borderRadius: 9, background: 'transparent', border: '1px solid rgba(0,0,0,0.1)', color: '#8e8e93', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                {regressingStage ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <ChevronLeft size={13} />} Retroceder etapa
+              </button>
+            </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '10px', fontSize: 12, color: '#34d399', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 9, background: 'rgba(52,211,153,0.06)' }}>
-              <CheckCircle2 size={14} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} /> Projeto concluído
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button onClick={handleAdvanceStage} disabled={advancingStage} style={{ width: '100%', padding: '12px', borderRadius: 9, background: stageAdvanced ? 'rgba(52,211,153,0.1)' : advancingStage ? '#f2f2f7' : 'rgba(0,122,255,0.1)', border: stageAdvanced ? '1px solid rgba(52,211,153,0.35)' : '1px solid rgba(0,122,255,0.28)', color: stageAdvanced ? '#34d399' : advancingStage ? '#8e8e93' : '#007AFF', fontSize: 12.5, fontWeight: 700, cursor: advancingStage ? 'not-allowed' : 'pointer', letterSpacing: '0.04em', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                {stageAdvanced ? <><CheckCircle2 size={14} /> ETAPA AVANÇADA</> : advancingStage ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> SALVANDO...</> : <>→ Avançar para {STAGES[stageIndex + 1]}</>}
+              </button>
+              {stageIndex > 0 && (
+                <button onClick={handleRegressStage} disabled={regressingStage} style={{ width: '100%', padding: '9px', borderRadius: 9, background: 'transparent', border: '1px solid rgba(0,0,0,0.1)', color: '#8e8e93', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  {regressingStage ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <ChevronLeft size={13} />} Retroceder etapa
+                </button>
+              )}
             </div>
           )}
 
@@ -952,8 +1100,153 @@ export default function ProjetoDetailPage() {
               })}
             </div>
           </div>
+          {/* Histórico */}
+          {historico.length > 0 && (
+            <div style={panel}>
+              <div style={{ ...panelHeader, display: 'flex', alignItems: 'center', gap: 6 }}><History size={11} /> Histórico</div>
+              <div style={{ padding: '4px 0' }}>
+                {historico.slice(0, 8).map((h, i) => (
+                  <div key={h.id} style={{ padding: '9px 14px', borderBottom: i < Math.min(historico.length, 8) - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#1a1a1a' }}>{h.acao}</div>
+                    {h.detalhe && <div style={{ fontSize: 11, color: '#6b6b6b', marginTop: 1 }}>{h.detalhe}</div>}
+                    <div style={{ fontSize: 10, color: '#aeaeb2', marginTop: 3 }}>{new Date(h.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* ══ MODAL: Editar Projeto ══ */}
+      {editOpen && (
+        <div onClick={e => { if (e.target === e.currentTarget) setEditOpen(false) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div className="dir-modal-box" style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 560, padding: 28, boxShadow: '0 8px 32px rgba(0,0,0,0.14)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>Editar Projeto</div>
+                <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 2 }}>Altere os dados do projeto</div>
+              </div>
+              <button onClick={() => setEditOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleEditSave} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Nome do projeto *</label>
+                <input value={editForm.nome} onChange={e => setEditForm(f => ({ ...f, nome: e.target.value }))} required style={{ width: '100%', padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Tipo</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {['residencial', 'comercial', 'institucional'].map(t => (
+                    <button key={t} type="button" onClick={() => setEditForm(f => ({ ...f, tipo: t }))} style={{ flex: 1, padding: '8px', fontSize: 12, fontWeight: 600, borderRadius: 8, cursor: 'pointer', background: editForm.tipo === t ? 'rgba(0,122,255,0.1)' : '#f2f2f7', border: `1px solid ${editForm.tipo === t ? '#007AFF' : 'rgba(0,0,0,0.08)'}`, color: editForm.tipo === t ? '#007AFF' : '#6b6b6b', textTransform: 'capitalize' }}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Descrição</label>
+                <textarea value={editForm.descricao} onChange={e => setEditForm(f => ({ ...f, descricao: e.target.value }))} rows={3} placeholder="Descrição do projeto..." style={{ width: '100%', padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Metragem (m²)</label>
+                  <input type="number" min="0" step="0.01" value={editForm.metragem} onChange={e => setEditForm(f => ({ ...f, metragem: e.target.value }))} placeholder="Ex: 120" style={{ width: '100%', padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Tipo de contrato</label>
+                  <select value={editForm.tipo_contrato} onChange={e => setEditForm(f => ({ ...f, tipo_contrato: e.target.value }))} style={{ width: '100%', padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: editForm.tipo_contrato ? '#1a1a1a' : '#8e8e93', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}>
+                    <option value="">Selecionar...</option>
+                    <option value="execucao">Execução</option>
+                    <option value="somente_projeto">Somente Projeto</option>
+                    <option value="acompanhamento">Acompanhamento de Obra</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Endereço da obra</label>
+                <input value={editForm.endereco} onChange={e => setEditForm(f => ({ ...f, endereco: e.target.value }))} placeholder="Rua, número, bairro..." style={{ width: '100%', padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Email do cliente</label>
+                <input type="email" value={editForm.email_cliente} onChange={e => setEditForm(f => ({ ...f, email_cliente: e.target.value }))} placeholder="cliente@email.com" style={{ width: '100%', padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+              </div>
+              <button type="submit" disabled={editSaving || !editForm.nome.trim()} style={{ width: '100%', padding: '12px', background: editSaving ? 'rgba(0,122,255,0.5)' : '#007AFF', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: editSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 4 }}>
+                {editSaving ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</> : <><Check size={14} /> Salvar alterações</>}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ══ MODAL: Vincular Cliente ══ */}
+      {linkOpen && (
+        <div onClick={e => { if (e.target === e.currentTarget) setLinkOpen(false) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div className="dir-modal-box" style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 460, padding: 28, boxShadow: '0 8px 32px rgba(0,0,0,0.14)' }}>
+            {linkInviteSent ? (
+              <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                <CheckCircle2 size={48} color="#34d399" style={{ marginBottom: 14 }} />
+                <div style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>Convite registrado!</div>
+                <div style={{ fontSize: 12.5, color: '#6b6b6b' }}>Quando {linkInviteEmail} criar conta, será vinculado automaticamente.</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>Vincular Cliente</div>
+                  <button onClick={() => setLinkOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}><X size={18} /></button>
+                </div>
+                {/* Tabs */}
+                <div style={{ display: 'flex', borderBottom: '1px solid rgba(0,0,0,0.08)', marginBottom: 20 }}>
+                  {(['buscar', 'convidar'] as const).map(t => (
+                    <button key={t} onClick={() => setLinkTab(t)} style={{ padding: '9px 16px', background: 'transparent', border: 'none', borderBottom: `2px solid ${linkTab === t ? '#007AFF' : 'transparent'}`, color: linkTab === t ? '#007AFF' : '#8e8e93', fontSize: 13, fontWeight: linkTab === t ? 600 : 400, cursor: 'pointer', marginBottom: -1, textTransform: 'capitalize' }}>
+                      {t === 'buscar' ? 'Buscar cadastrado' : 'Convidar por email'}
+                    </button>
+                  ))}
+                </div>
+                {linkTab === 'buscar' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input value={linkQuery} onChange={e => setLinkQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLinkSearch()} placeholder="Buscar por nome ou email..." style={{ flex: 1, padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: '#1a1a1a', outline: 'none', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                      <button onClick={handleLinkSearch} disabled={linkSearching} style={{ padding: '10px 14px', background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.25)', borderRadius: 9, color: '#007AFF', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600 }}>
+                        {linkSearching ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Search size={14} />}
+                      </button>
+                    </div>
+                    {linkResults.length > 0 && (
+                      <div style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, overflow: 'hidden' }}>
+                        {linkResults.map((u, i) => (
+                          <div key={u.id} style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: i < linkResults.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
+                            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#007AFF', flexShrink: 0 }}>
+                              {u.nome.slice(0, 1).toUpperCase()}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{u.nome}</div>
+                              <div style={{ fontSize: 11, color: '#8e8e93' }}>{u.email}</div>
+                            </div>
+                            <button onClick={() => handleLinkClient(u.id, u.nome, u.email)} disabled={linkingId === u.id} style={{ padding: '7px 14px', background: '#007AFF', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, opacity: linkingId === u.id ? 0.6 : 1 }}>
+                              {linkingId === u.id ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={12} />} Vincular
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {linkResults.length === 0 && linkQuery && !linkSearching && (
+                      <div style={{ textAlign: 'center', padding: '24px', color: '#8e8e93', fontSize: 13, background: '#f9f9fb', borderRadius: 10 }}>Nenhum usuário encontrado. Tente convidar por email.</div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <p style={{ fontSize: 12.5, color: '#6b6b6b', margin: 0 }}>Informe o email do cliente. Quando ele criar conta com esse email, será vinculado automaticamente.</p>
+                    <input type="email" value={linkInviteEmail} onChange={e => setLinkInviteEmail(e.target.value)} placeholder="cliente@email.com" style={{ width: '100%', padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                    <button onClick={handleInviteClient} disabled={linkInviting || !linkInviteEmail.trim()} style={{ width: '100%', padding: '12px', background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: linkInviting || !linkInviteEmail.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: !linkInviteEmail.trim() ? 0.5 : 1 }}>
+                      {linkInviting ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</> : <><Send size={14} /> Salvar email do cliente</>}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   )
