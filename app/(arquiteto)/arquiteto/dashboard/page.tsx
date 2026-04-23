@@ -32,6 +32,7 @@ interface Project {
   type: string
   created_at: string
   metragem: number | null
+  cover_url: string | null
 }
 
 interface Lead {
@@ -157,6 +158,7 @@ export default function ArquitetoDashboardPage() {
             type: TIPO_LABEL[p.tipo] ?? 'Residencial',
             created_at: p.created_at,
             metragem: p.metragem ?? null,
+            cover_url: p.cover_url ?? null,
           })))
         }
 
@@ -193,7 +195,7 @@ export default function ArquitetoDashboardPage() {
       const novo: Project = {
         id: data.id, name: data.nome, cliente_nome: null,
         stageIndex: 0, type: TIPO_LABEL[data.tipo] ?? 'Residencial',
-        created_at: data.created_at, metragem: null,
+        created_at: data.created_at, metragem: null, cover_url: null,
       }
       setRealProjects(prev => [novo, ...prev])
     }
@@ -443,39 +445,51 @@ export default function ArquitetoDashboardPage() {
                       const dateStr = new Date(project.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
                       return (
                         <Link key={project.id} href={`/arquiteto/projetos/${project.id}`} style={{ textDecoration: 'none', display: 'block' }}>
-                          <div className="proj-card" style={{ padding: 16, borderLeft: `3px solid ${stageColor}` }}>
-                            {/* Stage + type row */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                              <span style={{ fontSize: 9.5, fontWeight: 700, color: stageColor, background: `${stageColor}14`, border: `1px solid ${stageColor}30`, padding: '3px 9px', borderRadius: 20, letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>
+                          <div className="proj-card">
+                            {/* Cover image */}
+                            <div style={{ position: 'relative', height: 140, overflow: 'hidden', background: '#e5e5ea' }}>
+                              {project.cover_url
+                                ? <img src={project.cover_url} alt={project.name} className="proj-card-img" />
+                                : <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'linear-gradient(135deg, #e8e8f0 0%, #d4d4dc 100%)' }}>
+                                    <FolderOpen size={24} color="#c7c7cc" />
+                                  </div>}
+                              {project.cover_url && (
+                                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)' }} />
+                              )}
+                              {/* Stage badge */}
+                              <div style={{ position: 'absolute', top: 8, right: 8, fontSize: 9.5, fontWeight: 700, color: stageColor, background: 'rgba(255,255,255,0.92)', border: `1px solid ${stageColor}40`, padding: '3px 9px', borderRadius: 20, backdropFilter: 'blur(6px)', letterSpacing: '0.04em' }}>
                                 {currentStage}
-                              </span>
-                              <span style={{ fontSize: 10, color: '#8e8e93' }}>{project.type}</span>
-                            </div>
-                            {/* Project name */}
-                            <div style={{ fontSize: 14.5, fontWeight: 700, color: '#1a1a1a', marginBottom: 5, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
-                              {project.name}
-                            </div>
-                            {/* Client */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 14 }}>
-                              <User size={11} color="#8e8e93" />
-                              <span style={{ fontSize: 11.5, color: project.cliente_nome ? '#6b6b6b' : '#c7c7cc', fontStyle: project.cliente_nome ? 'normal' : 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
-                                {project.cliente_nome ?? 'Sem cliente vinculado'}
-                              </span>
-                            </div>
-                            {/* Progress bar */}
-                            <div style={{ marginBottom: 10 }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                                <span style={{ fontSize: 10, color: '#8e8e93' }}>Progresso</span>
-                                <span style={{ fontSize: 10, fontWeight: 700, color: stageColor }}>{progress}%</span>
                               </div>
-                              <div style={{ height: 4, background: '#f2f2f7', borderRadius: 2, overflow: 'hidden' }}>
-                                <div style={{ height: '100%', width: `${progress}%`, background: stageColor, borderRadius: 2, transition: 'width 0.4s' }} />
+                              {/* Project name overlay on cover */}
+                              {project.cover_url && (
+                                <div style={{ position: 'absolute', bottom: 10, left: 12, right: 12 }}>
+                                  <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', lineHeight: 1.25, textShadow: '0 1px 6px rgba(0,0,0,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                                    {project.name}
+                                  </div>
+                                </div>
+                              )}
+                              {/* Progress bar */}
+                              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3 }}>
+                                <div style={{ height: '100%', width: `${progress}%`, background: stageColor, opacity: 0.8 }} />
                               </div>
                             </div>
-                            {/* Footer */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: 10.5, color: '#8e8e93' }}>{dateStr}</span>
-                              <ArrowRight size={12} color="#007AFF" />
+                            {/* Card body */}
+                            <div style={{ padding: '11px 14px' }}>
+                              {!project.cover_url && (
+                                <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                                  {project.name}
+                                </div>
+                              )}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
+                                <User size={11} color="#8e8e93" />
+                                <span style={{ fontSize: 11.5, color: project.cliente_nome ? '#6b6b6b' : '#c7c7cc', fontStyle: project.cliente_nome ? 'normal' : 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                                  {project.cliente_nome ?? 'Sem cliente vinculado'}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: 10, color: '#8e8e93' }}>{dateStr} · {project.type}</span>
+                                <ArrowRight size={12} color="#007AFF" />
+                              </div>
                             </div>
                           </div>
                         </Link>

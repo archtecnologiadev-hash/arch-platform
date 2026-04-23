@@ -7,10 +7,9 @@ import {
   ArrowLeft, Upload, FileText, ImageIcon, File, MessageCircle,
   Mail, Calendar, Plus, Package, DollarSign, Check, Pencil,
   Star, ExternalLink, Send, X, CheckCircle2, MapPin, Loader2,
-  Download, AlertCircle, Camera, Heart,
+  Download, AlertCircle, Heart,
 } from 'lucide-react'
 import CalendarioObra, { CalendarioEvent, EVENT_META, EventType } from '@/components/shared/CalendarioObra'
-import ImageCropModal, { type CropConfig } from '@/components/shared/ImageCropModal'
 import { createClient } from '@/lib/supabase'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -86,8 +85,6 @@ const SEG_COLOR: Record<string, string> = {
   Marcenaria: '#4f9cf9', Elétrica: '#34d399', Vidraçaria: '#a78bfa',
   Gesseiro: '#f97316', Pintura: '#ef4444', Iluminação: '#007AFF', Outro: '#6b6b6b',
 }
-
-const COVER_FALLBACK = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&q=80'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -165,10 +162,6 @@ export default function ProjetoDetailPage() {
   const [dirQuoteSending, setDirQuoteSending] = useState(false)
   const [dirQuoteSent, setDirQuoteSent] = useState(false)
   const dirQuoteFileRef = useRef<HTMLInputElement>(null)
-
-  const [coverUploading, setCoverUploading] = useState(false)
-  const [cropConfig, setCropConfig] = useState<CropConfig | null>(null)
-  const coverInputRef = useRef<HTMLInputElement>(null)
 
   const [dbSuppliers, setDbSuppliers] = useState<DirSupplier[]>([])
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
@@ -255,21 +248,6 @@ export default function ProjetoDetailPage() {
     }
     loadData()
   }, [projectId])
-
-  async function handleCoverUpload(blob: Blob) {
-    if (!currentUser || !projeto) return
-    setCoverUploading(true)
-    setCropConfig(null)
-    const supabase = createClient()
-    const path = `${currentUser.id}/${projeto.id}/cover_${Date.now()}.jpg`
-    const { error: upErr } = await supabase.storage.from('projetos').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
-    if (!upErr) {
-      const { data: { publicUrl } } = supabase.storage.from('projetos').getPublicUrl(path)
-      await supabase.from('projetos').update({ cover_url: publicUrl }).eq('id', projeto.id)
-      setProjeto(prev => prev ? { ...prev, cover_url: publicUrl } : prev)
-    }
-    setCoverUploading(false)
-  }
 
   async function toggleFavorite(fornecedorDbId: string) {
     if (!currentUser) return
@@ -441,57 +419,27 @@ export default function ProjetoDetailPage() {
         .dir-modal-box { animation: dir-modal-in 0.2s ease; }
       `}</style>
 
-      {/* ═══════════════════ COVER HEADER ═══════════════════ */}
-      <input ref={coverInputRef} type="file" accept="image/*" style={{ display: 'none' }}
-        onChange={e => {
-          const f = e.target.files?.[0]
-          if (f) {
-            const src = URL.createObjectURL(f)
-            setCropConfig({ src, aspect: 16 / 9, circular: false, onConfirm: handleCoverUpload, onCancel: () => setCropConfig(null) })
-          }
-          e.target.value = ''
-        }} />
-      <div style={{ position: 'relative', height: 300, overflow: 'hidden', background: '#e5e5ea' }}>
-        {(projeto.cover_url || COVER_FALLBACK) && (
-          <img src={projeto.cover_url ?? COVER_FALLBACK} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        )}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.28) 52%, rgba(0,0,0,0.08) 100%)' }} />
-
-        {/* Top bar */}
-        <div style={{ position: 'absolute', top: 20, left: 24, right: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link href="/arquiteto/projetos" className="proj-back-btn" style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: 'rgba(255,255,255,0.85)', textDecoration: 'none', background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.25)', padding: '6px 13px 6px 10px', borderRadius: 8, fontWeight: 500, transition: 'color 0.15s, border-color 0.15s' }}>
-            <ArrowLeft size={13} /> Projetos
-          </Link>
-          <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
-            {[displayType].map(tag => tag !== '—' && (
-              <div key={tag} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.9)' }}>
-                {tag}
-              </div>
-            ))}
-            <button
-              onClick={() => coverInputRef.current?.click()}
-              disabled={coverUploading}
-              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: 'rgba(255,255,255,0.9)', background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.25)', padding: '5px 11px 5px 9px', borderRadius: 8, cursor: coverUploading ? 'not-allowed' : 'pointer', fontWeight: 500 }}
-            >
-              {coverUploading
-                ? <><Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</>
-                : <><Camera size={12} /> Trocar capa</>}
-            </button>
-          </div>
-        </div>
-
-        {/* Bottom info */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 28px 26px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: 30, fontWeight: 800, color: '#fff', lineHeight: 1.15, letterSpacing: '-0.02em', textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>
+      {/* ═══════════════════ CLEAN HEADER ═══════════════════ */}
+      <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.08)', padding: '20px 28px 22px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+        <Link href="/arquiteto/projetos" className="proj-back-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#8e8e93', textDecoration: 'none', marginBottom: 14, transition: 'color 0.15s' }}>
+          <ArrowLeft size={12} /> Projetos
+        </Link>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16 }}>
+          <div style={{ minWidth: 0 }}>
+            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#1a1a1a', letterSpacing: '-0.02em', margin: '0 0 7px', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName}
-            </div>
-            <div style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.75)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>{cliente?.nome ?? 'Cliente não vinculado'}</span>
-              {displayType !== '—' && <><span style={{ color: 'rgba(255,255,255,0.4)' }}>·</span><span>{displayType}</span></>}
+            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#6b6b6b', flexWrap: 'wrap' }}>
+              <span style={{ color: '#007AFF', fontWeight: 600 }}>{STAGES[stageIndex]}</span>
+              {displayType !== '—' && (
+                <><span style={{ color: 'rgba(0,0,0,0.18)' }}>·</span><span>{displayType}</span></>
+              )}
+              {cliente && (
+                <><span style={{ color: 'rgba(0,0,0,0.18)' }}>·</span><span>{cliente.nome}</span></>
+              )}
             </div>
           </div>
-          <div style={{ fontSize: 11, fontWeight: 700, padding: '6px 15px', borderRadius: 20, background: 'rgba(0,122,255,0.9)', border: '1.5px solid rgba(255,255,255,0.3)', color: '#fff', backdropFilter: 'blur(10px)', letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, padding: '7px 16px', borderRadius: 22, background: 'rgba(0,122,255,0.08)', border: '1.5px solid rgba(0,122,255,0.25)', color: '#007AFF', letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>
             {STAGES[stageIndex]}
           </div>
         </div>
@@ -1007,8 +955,6 @@ export default function ProjetoDetailPage() {
         </div>
       </div>
 
-      {/* ── Crop Modal ── */}
-      {cropConfig && <ImageCropModal {...cropConfig} />}
     </div>
   )
 }
