@@ -13,6 +13,7 @@ interface Conversa {
   participante_id: string
   participante_nome: string
   participante_email: string
+  projeto_nome: string | null
   unread: number
   ultima_msg: string
   ultima_msg_at: string | null
@@ -64,90 +65,129 @@ function ChatInner({ userType }: { userType: UserType }) {
       await loadConversas(supabase, user.id)
       setLoading(false)
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userType])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async function fetchMsgMeta(supabase: ReturnType<typeof createClient>, convId: string, uid: string) {
+    const [{ data: msgs }, { count }] = await Promise.all([
+      supabase.from('mensagens').select('texto, created_at').eq('conversa_id', convId)
+        .order('created_at', { ascending: false }).limit(1),
+      supabase.from('mensagens').select('id', { count: 'exact', head: true })
+        .eq('conversa_id', convId).eq('lida', false).neq('remetente_id', uid),
+    ])
+    return { last: msgs?.[0] ?? null, unread: count ?? 0 }
+  }
+
   async function loadConversas(supabase: ReturnType<typeof createClient>, uid: string) {
     if (userType === 'arquiteto') {
-      const { data } = await supabase
+      const { data: convsData } = await supabase
         .from('conversas')
-        .select('*, participante:users!conversas_participante_id_fkey(id, nome, email)')
+        .select('id, tipo, participante_id, fornecedor_id')
         .eq('arquiteto_id', uid)
         .order('created_at', { ascending: false })
 
-      if (!data) return
+      if (!convsData || convsData.length === 0) return
 
+      // Fetch all participant user records in one query
+      const participanteIds = Array.from(new Set(convsData.map(c => c.participante_id)))
+      const { data: usersData } = await supabase
+        .from('users').select('id, nome, email').in('id', participanteIds)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result: Conversa[] = await Promise.all(data.map(async (c: any) => {
-        const [{ data: msgs }, { count }] = await Promise.all([
-          supabase
-            .from('mensagens')
-            .select('texto, created_at')
-            .eq('conversa_id', c.id)
+      const usersMap: Record<string, any> = Object.fromEntries((usersData ?? []).map(u => [u.id, u]))
+
+      // Fetch fornecedor business names for supplier convos
+      const fornecedorDbIds = convsData
+        .filter(c => c.tipo === 'fornecedor' && c.fornecedor_id)
+        .map(c => c.fornecedor_id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let fornsMap: Record<string, any> = {}
+      if (fornecedorDbIds.length > 0) {
+        const { data: fornsData } = await supabase
+          .from('fornecedores').select('id, nome').in('id', fornecedorDbIds)
+        fornsMap = Object.fromEntries((fornsData ?? []).map(f => [f.id, f]))
+      }
+
+      // Fetch project names for cliente convos (map participante_id -> nome)
+      const clienteParticipanteIds = convsData
+        .filter(c => c.tipo === 'cliente').map(c => c.participante_id)
+      const projetosMap: Record<string, string> = {}
+      if (clienteParticipanteIds.length > 0) {
+        const { data: escritoriosData } = await supabase
+          .from('escritorios').select('id').eq('user_id', uid)
+        const escritorioIds = (escritoriosData ?? []).map(e => e.id)
+        if (escritorioIds.length > 0) {
+          const { data: projetosData } = await supabase
+            .from('projetos').select('nome, cliente_id')
+            .in('cliente_id', clienteParticipanteIds)
+            .in('escritorio_id', escritorioIds)
             .order('created_at', { ascending: false })
-            .limit(1),
-          supabase
-            .from('mensagens')
-            .select('id', { count: 'exact', head: true })
-            .eq('conversa_id', c.id)
-            .eq('lida', false)
-            .neq('remetente_id', uid),
-        ])
-        const last = msgs?.[0]
+          for (const p of projetosData ?? []) {
+            if (p.cliente_id && !projetosMap[p.cliente_id]) projetosMap[p.cliente_id] = p.nome
+          }
+        }
+      }
+
+      const result: Conversa[] = await Promise.all(convsData.map(async (c) => {
+        const { last, unread } = await fetchMsgMeta(supabase, c.id, uid)
+        const user = usersMap[c.participante_id]
+        let participante_nome = user?.nome ?? user?.email ?? 'Usuário'
+        if (c.tipo === 'fornecedor' && c.fornecedor_id && fornsMap[c.fornecedor_id]) {
+          participante_nome = fornsMap[c.fornecedor_id].nome
+        }
         return {
           id: c.id,
           tipo: c.tipo as 'cliente' | 'fornecedor',
           participante_id: c.participante_id,
-          participante_nome: c.participante?.nome ?? c.participante?.email ?? 'Usuário',
-          participante_email: c.participante?.email ?? '',
-          unread: count ?? 0,
+          participante_nome,
+          participante_email: user?.email ?? '',
+          projeto_nome: c.tipo === 'cliente' ? (projetosMap[c.participante_id] ?? null) : null,
+          unread,
           ultima_msg: last?.texto ?? '',
           ultima_msg_at: last?.created_at ?? null,
         }
       }))
 
       setConversas(result)
-      if (!selectedId && initConvId) setSelectedId(initConvId)
+      if (initConvId && result.find(c => c.id === initConvId)) setSelectedId(initConvId)
       else if (!selectedId && result.length > 0) setSelectedId(result[0].id)
     } else {
+      // cliente or fornecedor: load their conversas and fetch arquiteto name separately
       const tipoField = userType === 'cliente' ? 'cliente' : 'fornecedor'
-      const { data } = await supabase
+      const { data: convsData } = await supabase
         .from('conversas')
-        .select('*, arquiteto:users!conversas_arquiteto_id_fkey(id, nome, email)')
+        .select('id, tipo, arquiteto_id, participante_id, fornecedor_id')
         .eq('participante_id', uid)
         .eq('tipo', tipoField)
-        .limit(1)
+        .order('created_at', { ascending: false })
 
-      if (!data || data.length === 0) { setLoading(false); return }
+      if (!convsData || convsData.length === 0) return
+
+      const arquitetoIds = Array.from(new Set(convsData.map(c => c.arquiteto_id)))
+      const { data: arquitetosData } = await supabase
+        .from('users').select('id, nome, email').in('id', arquitetoIds)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const c: any = data[0]
-      const [{ data: msgs }, { count }] = await Promise.all([
-        supabase
-          .from('mensagens')
-          .select('texto, created_at')
-          .eq('conversa_id', c.id)
-          .order('created_at', { ascending: false })
-          .limit(1),
-        supabase
-          .from('mensagens')
-          .select('id', { count: 'exact', head: true })
-          .eq('conversa_id', c.id)
-          .eq('lida', false)
-          .neq('remetente_id', uid),
-      ])
-      const last = msgs?.[0]
-      const conv: Conversa = {
-        id: c.id,
-        tipo: c.tipo,
-        participante_id: c.arquiteto_id,
-        participante_nome: c.arquiteto?.nome ?? c.arquiteto?.email ?? 'Arquiteto',
-        participante_email: c.arquiteto?.email ?? '',
-        unread: count ?? 0,
-        ultima_msg: last?.texto ?? '',
-        ultima_msg_at: last?.created_at ?? null,
-      }
-      setConversas([conv])
-      setSelectedId(conv.id)
+      const arquitetosMap: Record<string, any> = Object.fromEntries((arquitetosData ?? []).map(u => [u.id, u]))
+
+      const convsList: Conversa[] = await Promise.all(convsData.map(async (c) => {
+        const { last, unread } = await fetchMsgMeta(supabase, c.id, uid)
+        const arq = arquitetosMap[c.arquiteto_id]
+        return {
+          id: c.id,
+          tipo: c.tipo as 'cliente' | 'fornecedor',
+          participante_id: c.arquiteto_id,
+          participante_nome: arq?.nome ?? arq?.email ?? 'Arquiteto',
+          participante_email: arq?.email ?? '',
+          projeto_nome: null,
+          unread,
+          ultima_msg: last?.texto ?? '',
+          ultima_msg_at: last?.created_at ?? null,
+        }
+      }))
+
+      setConversas(convsList)
+      if (initConvId && convsList.find(c => c.id === initConvId)) setSelectedId(initConvId)
+      else if (convsList.length > 0) setSelectedId(convsList[0].id)
     }
   }
 
@@ -208,20 +248,13 @@ function ChatInner({ userType }: { userType: UserType }) {
     const t = texto.trim()
     setTexto('')
     const supabase = createClient()
-    await supabase.from('mensagens').insert({
-      conversa_id: selectedId,
-      remetente_id: userId,
-      texto: t,
-    })
+    await supabase.from('mensagens').insert({ conversa_id: selectedId, remetente_id: userId, texto: t })
     setSending(false)
     inputRef.current?.focus()
   }
 
   function handleKey(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      sendMessage()
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
   }
 
   const filtered = search.trim()
@@ -267,6 +300,11 @@ function ChatInner({ userType }: { userType: UserType }) {
               </span>
             )}
           </div>
+          {c.projeto_nome && (
+            <div style={{ fontSize: 11, color: '#8b5cf6', fontWeight: 500, marginBottom: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {c.projeto_nome}
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4, marginTop: 1 }}>
             <span style={{
               fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1,
@@ -389,6 +427,11 @@ function ChatInner({ userType }: { userType: UserType }) {
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>
                   {selectedConversa.participante_nome}
+                  {selectedConversa.projeto_nome && (
+                    <span style={{ fontWeight: 400, color: '#8b5cf6' }}>
+                      {' — Projeto: '}{selectedConversa.projeto_nome}
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: 11, color: '#8e8e93' }}>
                   {selectedConversa.participante_email}
@@ -403,10 +446,7 @@ function ChatInner({ userType }: { userType: UserType }) {
               background: '#f2f2f7',
             }}>
               {mensagens.length === 0 ? (
-                <div style={{
-                  flex: 1, display: 'flex',
-                  alignItems: 'center', justifyContent: 'center',
-                }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{ textAlign: 'center', color: '#8e8e93' }}>
                     <MessageCircle size={32} color="#c7c7cc" style={{ margin: '0 auto 8px' }} />
                     <div style={{ fontSize: 13 }}>Inicie a conversa</div>
@@ -421,9 +461,7 @@ function ChatInner({ userType }: { userType: UserType }) {
                     <div key={msg.id}>
                       {showDate && (
                         <div style={{ textAlign: 'center', margin: '8px 0 4px', fontSize: 11, color: '#8e8e93' }}>
-                          {new Date(msg.created_at).toLocaleDateString('pt-BR', {
-                            day: '2-digit', month: 'long', year: 'numeric',
-                          })}
+                          {new Date(msg.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
                         </div>
                       )}
                       <div style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', marginBottom: 2 }}>
@@ -432,8 +470,7 @@ function ChatInner({ userType }: { userType: UserType }) {
                           background: isMine ? '#007AFF' : '#ffffff',
                           color: isMine ? '#ffffff' : '#1a1a1a',
                           borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                          padding: '8px 12px',
-                          fontSize: 14, lineHeight: 1.4,
+                          padding: '8px 12px', fontSize: 14, lineHeight: 1.4,
                           boxShadow: isMine ? 'none' : '0 1px 2px rgba(0,0,0,0.08)',
                           wordBreak: 'break-word',
                         }}>
@@ -451,10 +488,8 @@ function ChatInner({ userType }: { userType: UserType }) {
             </div>
 
             <div style={{
-              padding: '10px 12px',
-              borderTop: '1px solid rgba(0,0,0,0.08)',
-              background: '#fff',
-              display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0,
+              padding: '10px 12px', borderTop: '1px solid rgba(0,0,0,0.08)',
+              background: '#fff', display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0,
             }}>
               <textarea
                 ref={inputRef}
@@ -478,8 +513,7 @@ function ChatInner({ userType }: { userType: UserType }) {
                 style={{
                   width: 36, height: 36, borderRadius: '50%',
                   background: texto.trim() && !sending ? '#007AFF' : '#c7c7cc',
-                  border: 'none',
-                  cursor: texto.trim() && !sending ? 'pointer' : 'default',
+                  border: 'none', cursor: texto.trim() && !sending ? 'pointer' : 'default',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   flexShrink: 0, transition: 'background 0.15s',
                 }}
@@ -489,19 +523,11 @@ function ChatInner({ userType }: { userType: UserType }) {
             </div>
           </>
         ) : (
-          <div style={{
-            flex: 1, display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            background: '#f2f2f7',
-          }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f2f2f7' }}>
             <div style={{ textAlign: 'center', color: '#8e8e93' }}>
               <MessageCircle size={48} color="#c7c7cc" style={{ margin: '0 auto 12px' }} />
-              <div style={{ fontSize: 15, fontWeight: 500, color: '#3a3a3c' }}>
-                Selecione uma conversa
-              </div>
-              <div style={{ marginTop: 4, fontSize: 13 }}>
-                Escolha uma conversa para começar
-              </div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: '#3a3a3c' }}>Selecione uma conversa</div>
+              <div style={{ marginTop: 4, fontSize: 13 }}>Escolha uma conversa para começar</div>
             </div>
           </div>
         )}
@@ -513,11 +539,7 @@ function ChatInner({ userType }: { userType: UserType }) {
 export function ChatPage({ userType }: { userType: UserType }) {
   return (
     <Suspense fallback={
-      <div style={{
-        display: 'flex', height: '100vh',
-        alignItems: 'center', justifyContent: 'center',
-        background: '#f2f2f7',
-      }}>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#f2f2f7' }}>
         <span style={{ color: '#8e8e93', fontSize: 14 }}>Carregando mensagens...</span>
       </div>
     }>
