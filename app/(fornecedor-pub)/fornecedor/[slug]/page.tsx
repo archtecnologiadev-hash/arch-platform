@@ -374,14 +374,6 @@ export default function FornecedorPublicPage() {
         .fp-action-btn:hover svg { transform:scale(1.18); }
       `}</style>
 
-      {/* Sticky top bar */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 50, height: 56, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px' }}>
-        <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '0.3em', color: '#1a1a1a', fontFamily: 'Georgia, serif' }}>ARC</span>
-        <button onClick={() => setQuoteOpen(true)} style={{ background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-          Solicitar Orçamento
-        </button>
-      </header>
-
       {/* Cover + profile card */}
       <div style={{ background: '#fff', marginBottom: 20 }}>
         {/* Cover */}
