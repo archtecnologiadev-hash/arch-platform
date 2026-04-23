@@ -16,6 +16,8 @@ interface OrcItem {
   mensagem: string | null
   arquivo_url: string | null
   arquivo_nome: string | null
+  titulo: string | null
+  valor_orcado: number | null
   status: OrcStatus
   resposta: string | null
   resposta_arquivo_url: string | null
@@ -80,6 +82,8 @@ export default function ArquitetoOrcamentosPage() {
         mensagem: r.mensagem as string | null,
         arquivo_url: r.arquivo_url as string | null,
         arquivo_nome: r.arquivo_nome as string | null,
+        titulo: r.titulo as string | null,
+        valor_orcado: r.valor_orcado as number | null,
         status: (r.status as OrcStatus) ?? 'pendente',
         resposta: r.resposta as string | null,
         resposta_arquivo_url: r.resposta_arquivo_url as string | null,
@@ -94,9 +98,13 @@ export default function ArquitetoOrcamentosPage() {
   async function updateStatus(id: string, status: OrcStatus) {
     setUpdatingId(id)
     const supabase = createClient()
-    const { error } = await supabase.from('orcamentos').update({ status }).eq('id', id)
+    const orc = orcamentos.find(o => o.id === id)
+    const extra = status === 'aprovado' && orc?.valor_orcado != null
+      ? { valor_fechado: orc.valor_orcado }
+      : {}
+    const { error } = await supabase.from('orcamentos').update({ status, ...extra }).eq('id', id)
     if (!error) {
-      setOrcamentos(prev => prev.map(o => o.id === id ? { ...o, status } : o))
+      setOrcamentos(prev => prev.map(o => o.id === id ? { ...o, status, ...extra } : o))
     }
     setUpdatingId(null)
   }
@@ -240,6 +248,12 @@ export default function ArquitetoOrcamentosPage() {
                     {orc.resposta ? (
                       <>
                         <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>Resposta do Fornecedor</div>
+                        {orc.titulo && <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginBottom: 4 }}>{orc.titulo}</div>}
+                        {orc.valor_orcado != null && (
+                          <div style={{ fontSize: 16, fontWeight: 800, color: '#34d399', marginBottom: 8 }}>
+                            {orc.valor_orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </div>
+                        )}
                         <p style={{ fontSize: 13, color: '#1a1a1a', lineHeight: 1.65, margin: '0 0 8px', background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(52,211,153,0.15)', borderRadius: 8, padding: '10px 13px' }}>{orc.resposta}</p>
                         {orc.resposta_arquivo_url && (
                           <a href={orc.resposta_arquivo_url} target="_blank" rel="noopener noreferrer"

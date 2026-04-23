@@ -20,6 +20,8 @@ interface OrcDetail {
   mensagem: string | null
   arquivo_url: string | null
   arquivo_nome: string | null
+  titulo: string | null
+  valor_orcado: number | null
   status: OrcStatus
   resposta: string | null
   resposta_arquivo_url: string | null
@@ -94,6 +96,8 @@ export default function OrcamentoDetailPage() {
   const [moving, setMoving] = useState<'fwd' | 'bck' | null>(null)
 
   const [replyText, setReplyText] = useState('')
+  const [replyTitulo, setReplyTitulo] = useState('')
+  const [replyValor, setReplyValor] = useState('')
   const [replyFile, setReplyFile] = useState<File | null>(null)
   const [replySending, setReplySending] = useState(false)
   const [replySent, setReplySent] = useState(false)
@@ -140,6 +144,8 @@ export default function OrcamentoDetailPage() {
 
       setOrc({
         ...row,
+        titulo: row.titulo ?? null,
+        valor_orcado: row.valor_orcado ?? null,
         projeto_nome: (proj as { nome: string } | null)?.nome ?? null,
         escritorio_nome,
         arquiteto_nome: (arq as { nome: string; email: string } | null)?.nome ?? null,
@@ -203,8 +209,16 @@ export default function OrcamentoDetailPage() {
 
     const now = new Date().toISOString()
     const prev = orc.status
+    const valorNum = replyValor ? parseFloat(replyValor.replace(',', '.')) : null
     const { error } = await supabase.from('orcamentos')
-      .update({ resposta: replyText.trim(), resposta_arquivo_url: respostaArquivoUrl, status: 'respondido', updated_at: now })
+      .update({
+        resposta: replyText.trim(),
+        resposta_arquivo_url: respostaArquivoUrl,
+        status: 'respondido',
+        updated_at: now,
+        ...(replyTitulo.trim() ? { titulo: replyTitulo.trim() } : {}),
+        ...(valorNum !== null && !isNaN(valorNum) ? { valor_orcado: valorNum } : {}),
+      })
       .eq('id', orc.id)
 
     if (!error && currentUserId) {
@@ -219,12 +233,22 @@ export default function OrcamentoDetailPage() {
         .select('id, etapa_anterior, etapa_nova, created_at')
         .single()
 
-      setOrc(o => o ? { ...o, resposta: replyText.trim(), resposta_arquivo_url: respostaArquivoUrl, status: 'respondido', updated_at: now } : o)
+      setOrc(o => o ? {
+        ...o,
+        resposta: replyText.trim(),
+        resposta_arquivo_url: respostaArquivoUrl,
+        status: 'respondido',
+        updated_at: now,
+        titulo: replyTitulo.trim() || o.titulo,
+        valor_orcado: valorNum !== null && !isNaN(valorNum) ? valorNum : o.valor_orcado,
+      } : o)
       if (newHist) setHistorico(h => [...h, newHist as HistItem])
     }
     setReplySending(false)
     setReplySent(true)
     setReplyText('')
+    setReplyTitulo('')
+    setReplyValor('')
     setReplyFile(null)
   }
 
@@ -438,6 +462,14 @@ export default function OrcamentoDetailPage() {
               <div style={{ background: '#fff', border: '1px solid rgba(52,211,153,0.25)', borderRadius: 14, padding: '20px 22px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
                 <div style={{ fontSize: 11, color: '#34d399', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 12 }}>Sua Proposta Enviada</div>
                 {replySent && <div style={{ fontSize: 12, color: '#34d399', marginBottom: 10 }}>✓ Proposta atualizada.</div>}
+                {orc.titulo && (
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>{orc.titulo}</div>
+                )}
+                {orc.valor_orcado != null && (
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#34d399', marginBottom: 10 }}>
+                    {orc.valor_orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </div>
+                )}
                 <p style={{ fontSize: 14, color: '#1a1a1a', lineHeight: 1.7, margin: '0 0 14px' }}>{orc.resposta}</p>
                 {orc.resposta_arquivo_url && (
                   <a href={orc.resposta_arquivo_url} target="_blank" rel="noopener noreferrer"
@@ -456,8 +488,24 @@ export default function OrcamentoDetailPage() {
                   </div>
                 ) : (
                   <form onSubmit={handleReply} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    <textarea className="od-inp" required rows={5}
-                      placeholder="Descreva sua proposta: prazo, valor, condições, materiais..."
+                    <div>
+                      <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Título do orçamento</label>
+                      <input className="od-inp" type="text"
+                        placeholder="Ex: Marcenaria sala de jantar"
+                        value={replyTitulo}
+                        onChange={e => setReplyTitulo(e.target.value)}
+                        style={{ borderRadius: 8, padding: '9px 12px' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Valor orçado (R$)</label>
+                      <input className="od-inp" type="text" inputMode="decimal"
+                        placeholder="Ex: 8500,00"
+                        value={replyValor}
+                        onChange={e => setReplyValor(e.target.value)}
+                        style={{ borderRadius: 8, padding: '9px 12px' }} />
+                    </div>
+                    <textarea className="od-inp" required rows={4}
+                      placeholder="Descreva sua proposta: prazo, condições, materiais..."
                       value={replyText}
                       onChange={e => setReplyText(e.target.value)} />
                     <input ref={replyFileRef} type="file" style={{ display: 'none' }}

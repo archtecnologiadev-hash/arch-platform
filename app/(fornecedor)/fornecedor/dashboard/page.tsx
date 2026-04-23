@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Star, ExternalLink, CheckCircle2, Loader2, Clock, FileText, Paperclip, Package } from 'lucide-react'
+import { TrendingUp, ExternalLink, CheckCircle2, Loader2, Clock, Paperclip, Package, Percent } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 
@@ -11,7 +11,8 @@ interface OrcCard {
   id: string
   projeto_nome: string | null
   escritorio_nome: string | null
-  arquiteto_nome: string | null
+  titulo: string | null
+  valor_orcado: number | null
   status: OrcStatus
   created_at: string
   mensagem: string | null
@@ -29,31 +30,40 @@ const STATUS_META: Record<OrcStatus, { label: string; color: string; bg: string;
   concluido:   { label: 'Concluído',    color: '#10b981', bg: 'rgba(16,185,129,0.1)',  border: 'rgba(16,185,129,0.25)' },
 }
 
-// Kanban columns — active pipeline
-const KANBAN_COLS: Array<{ key: OrcStatus; title: string }> = [
-  { key: 'pendente',   title: 'Aguardando' },
-  { key: 'em_analise', title: 'Em análise' },
-  { key: 'respondido', title: 'Enviado' },
-  { key: 'aprovado',   title: 'Aprovado' },
-]
+type FilterKey = 'todos' | 'pendentes' | 'em_andamento' | 'concluidos'
 
-// In-progress / done stages (shown as a compact list below)
-const PROGRESS_STAGES: OrcStatus[] = ['agendado', 'em_execucao', 'concluido', 'recusado']
+const FILTER_GROUPS: Record<FilterKey, OrcStatus[] | null> = {
+  todos: null,
+  pendentes: ['pendente'],
+  em_andamento: ['em_analise', 'respondido', 'aprovado', 'agendado', 'em_execucao'],
+  concluidos: ['concluido', 'recusado'],
+}
 
-function OrcCard({ orc }: { orc: OrcCard }) {
+const FILTER_LABELS: Record<FilterKey, string> = {
+  todos: 'Todos',
+  pendentes: 'Pendentes',
+  em_andamento: 'Em andamento',
+  concluidos: 'Concluídos',
+}
+
+function fmtBRL(v: number) {
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
+function OrcCardItem({ orc }: { orc: OrcCard }) {
   const meta = STATUS_META[orc.status]
-  const initials = (orc.arquiteto_nome ?? 'A').split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
+  const initials = (orc.escritorio_nome ?? orc.projeto_nome ?? 'A').slice(0, 2).toUpperCase()
   const dateStr = new Date(orc.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 
   return (
     <Link href={`/fornecedor/orcamentos/${orc.id}`} style={{ textDecoration: 'none' }}>
-      <div className="dash-orc-card" style={{
+      <div className="dash-card" style={{
         background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12,
         padding: '14px 16px', cursor: 'pointer', transition: 'all 0.15s',
         boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
       }}>
-        {/* Header row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#007AFF', flexShrink: 0 }}>
             {initials}
           </div>
@@ -66,29 +76,32 @@ function OrcCard({ orc }: { orc: OrcCard }) {
             <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {orc.projeto_nome ?? 'Projeto sem nome'}
             </div>
-          </div>
-        </div>
-
-        {/* Message preview */}
-        {orc.mensagem && (
-          <p style={{ fontSize: 11.5, color: '#6b6b6b', lineHeight: 1.5, margin: '0 0 10px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>
-            {orc.mensagem}
-          </p>
-        )}
-
-        {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Clock size={10} color="#8e8e93" />
-            <span style={{ fontSize: 10.5, color: '#8e8e93' }}>{dateStr}</span>
-            {orc.arquivo_url && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginLeft: 4 }}>
-                <Paperclip size={10} color="#8b5cf6" />
+            {orc.titulo && (
+              <div style={{ fontSize: 11.5, color: '#6b6b6b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {orc.titulo}
               </div>
             )}
           </div>
-          <div style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: meta.bg, border: `1px solid ${meta.border}`, color: meta.color, fontWeight: 700 }}>
+          <div style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: meta.bg, border: `1px solid ${meta.border}`, color: meta.color, fontWeight: 700, flexShrink: 0 }}>
             {meta.label}
+          </div>
+        </div>
+
+        {/* Value + footer */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          {orc.valor_orcado != null ? (
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#34d399' }}>{fmtBRL(orc.valor_orcado)}</div>
+          ) : (
+            orc.mensagem ? (
+              <div style={{ fontSize: 11, color: '#8e8e93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                {orc.mensagem.slice(0, 60)}{orc.mensagem.length > 60 ? '…' : ''}
+              </div>
+            ) : <div />
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 8 }}>
+            {orc.arquivo_url && <Paperclip size={10} color="#8b5cf6" />}
+            <Clock size={10} color="#c7c7cc" />
+            <span style={{ fontSize: 10.5, color: '#8e8e93' }}>{dateStr}</span>
           </div>
         </div>
       </div>
@@ -101,6 +114,7 @@ export default function FornecedorDashboardPage() {
   const [userName, setUserName] = useState('')
   const [perfilSlug, setPerfilSlug] = useState<string | null>(null)
   const [orcamentos, setOrcamentos] = useState<OrcCard[]>([])
+  const [activeFilter, setActiveFilter] = useState<FilterKey>('todos')
 
   useEffect(() => {
     async function load() {
@@ -117,18 +131,16 @@ export default function FornecedorDashboardPage() {
 
       const { data: rows } = await supabase
         .from('orcamentos')
-        .select('id, projeto_id, arquiteto_id, status, created_at, mensagem, arquivo_url')
+        .select('id, projeto_id, status, created_at, mensagem, arquivo_url, titulo, valor_orcado')
         .eq('fornecedor_id', forn.id)
         .order('created_at', { ascending: false })
 
       if (rows && rows.length > 0) {
         const projIds = Array.from(new Set(rows.map((r: Record<string, unknown>) => r.projeto_id as string).filter(Boolean)))
-        const arquIds = Array.from(new Set(rows.map((r: Record<string, unknown>) => r.arquiteto_id as string).filter(Boolean)))
 
-        const [{ data: projs }, { data: arqus }] = await Promise.all([
-          projIds.length > 0 ? supabase.from('projetos').select('id, nome, escritorio_id').in('id', projIds) : Promise.resolve({ data: [] }),
-          arquIds.length > 0 ? supabase.from('users').select('id, nome').in('id', arquIds) : Promise.resolve({ data: [] }),
-        ])
+        const { data: projs } = projIds.length > 0
+          ? await supabase.from('projetos').select('id, nome, escritorio_id').in('id', projIds)
+          : { data: [] }
 
         type ProjRow = { id: string; nome: string; escritorio_id: string | null }
         const projMap: Record<string, ProjRow> = {}
@@ -136,10 +148,7 @@ export default function FornecedorDashboardPage() {
           const pr = p as ProjRow
           projMap[pr.id] = pr
         }
-        const arquMap: Record<string, string> = {}
-        for (const a of (arqus ?? [])) arquMap[(a as { id: string; nome: string }).id] = (a as { id: string; nome: string }).nome
 
-        // Fetch escritorios
         const escIds = Array.from(new Set(Object.values(projMap).map(p => p.escritorio_id).filter(Boolean) as string[]))
         const { data: escs } = escIds.length > 0
           ? await supabase.from('escritorios').select('id, nome').in('id', escIds)
@@ -149,12 +158,12 @@ export default function FornecedorDashboardPage() {
 
         setOrcamentos(rows.map((r: Record<string, unknown>) => {
           const proj = r.projeto_id ? projMap[r.projeto_id as string] : null
-          const escNome = proj?.escritorio_id ? (escMap[proj.escritorio_id] ?? null) : null
           return {
             id: r.id as string,
             projeto_nome: proj?.nome ?? null,
-            escritorio_nome: escNome,
-            arquiteto_nome: r.arquiteto_id ? (arquMap[r.arquiteto_id as string] ?? null) : null,
+            escritorio_nome: proj?.escritorio_id ? (escMap[proj.escritorio_id] ?? null) : null,
+            titulo: r.titulo as string | null,
+            valor_orcado: r.valor_orcado as number | null,
             status: (r.status as OrcStatus) ?? 'pendente',
             created_at: r.created_at as string,
             mensagem: r.mensagem as string | null,
@@ -167,13 +176,33 @@ export default function FornecedorDashboardPage() {
     load()
   }, [])
 
-  const total     = orcamentos.length
-  const pendentes = orcamentos.filter(o => o.status === 'pendente').length
-  const aprovados = orcamentos.filter(o => o.status === 'aprovado').length
-  const concluidos = orcamentos.filter(o => o.status === 'concluido').length
+  // ── Derived metrics ────────────────────────────────────────────────────────
 
-  const kanbanOrcs = (col: OrcStatus) => orcamentos.filter(o => o.status === col)
-  const progressOrcs = orcamentos.filter(o => PROGRESS_STAGES.includes(o.status))
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+
+  const thisMonth = orcamentos.filter(o => o.created_at >= monthStart)
+  const totalOrcado = thisMonth.reduce((s, o) => s + (o.valor_orcado ?? 0), 0)
+  // For valor_fechado we don't have it in OrcCard — use valor_orcado of approved ones as proxy
+  const totalFechado = thisMonth
+    .filter(o => ['aprovado', 'agendado', 'em_execucao', 'concluido'].includes(o.status))
+    .reduce((s, o) => s + (o.valor_orcado ?? 0), 0)
+  const pendentesCount = orcamentos.filter(o => o.status === 'pendente').length
+  const respondidos = orcamentos.filter(o => o.status !== 'pendente' && o.status !== 'em_analise').length
+  const aprovadosTotal = orcamentos.filter(o => ['aprovado', 'agendado', 'em_execucao', 'concluido'].includes(o.status)).length
+  const taxaAprov = respondidos > 0 ? Math.round((aprovadosTotal / respondidos) * 100) : 0
+
+  // ── Filtered list ──────────────────────────────────────────────────────────
+
+  const filterGroup = FILTER_GROUPS[activeFilter]
+  const filtered = filterGroup
+    ? orcamentos.filter(o => filterGroup.includes(o.status))
+    : orcamentos
+
+  const countFor = (k: FilterKey) => {
+    const g = FILTER_GROUPS[k]
+    return g ? orcamentos.filter(o => g.includes(o.status)).length : orcamentos.length
+  }
 
   if (loading) {
     return (
@@ -188,45 +217,72 @@ export default function FornecedorDashboardPage() {
     <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1a1a1a', background: '#f2f2f7' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
-        .fd-stat-card { background:#fff; border:1px solid rgba(0,0,0,0.08); border-radius:14px; padding:18px 22px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
-        .dash-orc-card:hover { border-color:rgba(0,122,255,0.2) !important; box-shadow:0 4px 12px rgba(0,0,0,0.1) !important; transform:translateY(-1px); }
-        .dash-prog-row:hover { background:#f9f9fb !important; }
+        .fd-stat { background:#fff; border:1px solid rgba(0,0,0,0.08); border-radius:14px; padding:18px 20px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+        .dash-card:hover { border-color:rgba(0,122,255,0.22) !important; box-shadow:0 4px 14px rgba(0,0,0,0.1) !important; transform:translateY(-1px); }
+        .fd-filter-btn { padding:7px 16px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.15s; border:none; }
       `}</style>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 26 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a', margin: 0 }}>Dashboard</h1>
           {userName && <p style={{ fontSize: 13, color: '#6b6b6b', margin: '5px 0 0' }}>Bem-vindo, {userName}</p>}
         </div>
         {perfilSlug ? (
-          <Link href={`/fornecedor/${perfilSlug}`} target="_blank" style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, padding: '8px 16px', borderRadius: 10, background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>
+          <Link href={`/fornecedor/${perfilSlug}`} target="_blank"
+            style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, padding: '8px 16px', borderRadius: 10, background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>
             <ExternalLink size={13} /> Ver Perfil Público
           </Link>
         ) : (
-          <Link href="/fornecedor/perfil" style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, padding: '8px 16px', borderRadius: 10, background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>
+          <Link href="/fornecedor/perfil"
+            style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, padding: '8px 16px', borderRadius: 10, background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>
             Completar Perfil
           </Link>
         )}
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 30 }}>
+      {/* Metrics */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 28 }}>
         {[
-          { label: 'Total Recebidos', value: String(total),     icon: FileText,     color: '#007AFF' },
-          { label: 'Pendentes',       value: String(pendentes), icon: Clock,        color: '#8b5cf6' },
-          { label: 'Aprovados',       value: String(aprovados), icon: CheckCircle2, color: '#34d399' },
-          { label: 'Concluídos',      value: String(concluidos), icon: Star,        color: '#10b981' },
+          {
+            label: 'Total Orçado',
+            sublabel: 'mês atual',
+            value: totalOrcado > 0 ? fmtBRL(totalOrcado) : '—',
+            icon: TrendingUp,
+            color: '#007AFF',
+          },
+          {
+            label: 'Total Fechado',
+            sublabel: 'mês atual',
+            value: totalFechado > 0 ? fmtBRL(totalFechado) : '—',
+            icon: CheckCircle2,
+            color: '#34d399',
+          },
+          {
+            label: 'Pendentes',
+            sublabel: 'aguardando resposta',
+            value: String(pendentesCount),
+            icon: Clock,
+            color: '#8b5cf6',
+          },
+          {
+            label: 'Taxa de Aprovação',
+            sublabel: 'orçamentos aprovados',
+            value: respondidos > 0 ? `${taxaAprov}%` : '—',
+            icon: Percent,
+            color: '#f59e0b',
+          },
         ].map(card => {
           const Icon = card.icon
           return (
-            <div key={card.label} className="fd-stat-card">
+            <div key={card.label} className="fd-stat">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ fontSize: 10.5, color: '#8e8e93', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>{card.label}</div>
-                  <div style={{ fontSize: 26, fontWeight: 800, color: '#1a1a1a', marginTop: 8 }}>{card.value}</div>
+                  <div style={{ fontSize: card.value.length > 8 ? 17 : 24, fontWeight: 800, color: '#1a1a1a', marginTop: 6, lineHeight: 1.1 }}>{card.value}</div>
+                  <div style={{ fontSize: 10, color: '#8e8e93', marginTop: 3 }}>{card.sublabel}</div>
                 </div>
-                <div style={{ width: 36, height: 36, borderRadius: 9, background: `${card.color}14`, border: `1px solid ${card.color}28`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 36, height: 36, borderRadius: 9, background: `${card.color}14`, border: `1px solid ${card.color}28`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon size={16} color={card.color} />
                 </div>
               </div>
@@ -235,89 +291,46 @@ export default function FornecedorDashboardPage() {
         })}
       </div>
 
-      {/* Kanban header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Solicitações de Orçamento</div>
-        <Link href="/fornecedor/orcamentos" style={{ fontSize: 12, color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>Ver lista completa →</Link>
+      {/* Filter pills + section header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 7 }}>
+          {(Object.keys(FILTER_GROUPS) as FilterKey[]).map(k => {
+            const isActive = activeFilter === k
+            const count = countFor(k)
+            return (
+              <button key={k} onClick={() => setActiveFilter(k)} className="fd-filter-btn"
+                style={{
+                  background: isActive ? '#007AFF' : '#fff',
+                  color: isActive ? '#fff' : '#6b6b6b',
+                  boxShadow: isActive ? '0 2px 8px rgba(0,122,255,0.28)' : '0 1px 2px rgba(0,0,0,0.06)',
+                  border: isActive ? 'none' : '1px solid rgba(0,0,0,0.1)',
+                }}>
+                {FILTER_LABELS[k]}
+                <span style={{ marginLeft: 5, opacity: 0.75, fontSize: 11 }}>({count})</span>
+              </button>
+            )
+          })}
+        </div>
+        <Link href="/fornecedor/orcamentos" style={{ fontSize: 12, color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>
+          Ver lista completa →
+        </Link>
       </div>
 
-      {total === 0 ? (
+      {/* Card grid */}
+      {filtered.length === 0 ? (
         <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '52px 24px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
           <Package size={36} color="#c7c7cc" style={{ marginBottom: 14 }} />
-          <div style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 4 }}>Nenhum orçamento recebido</div>
-          <div style={{ fontSize: 12, color: '#8e8e93' }}>Quando arquitetos solicitarem orçamentos, eles aparecerão aqui</div>
+          <div style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 4 }}>
+            {orcamentos.length === 0 ? 'Nenhum orçamento recebido ainda.' : 'Nenhum orçamento nessa categoria.'}
+          </div>
+          {orcamentos.length === 0 && (
+            <div style={{ fontSize: 12, color: '#8e8e93' }}>Quando arquitetos solicitarem orçamentos, aparecerão aqui.</div>
+          )}
         </div>
       ) : (
-        <>
-          {/* Kanban columns */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
-            {KANBAN_COLS.map(col => {
-              const cards = kanbanOrcs(col.key)
-              const meta = STATUS_META[col.key]
-              return (
-                <div key={col.key}>
-                  {/* Column header */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: meta.color }} />
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#1a1a1a' }}>{col.title}</span>
-                    <div style={{ marginLeft: 'auto', fontSize: 11, padding: '1px 7px', borderRadius: 10, background: meta.bg, color: meta.color, fontWeight: 700, border: `1px solid ${meta.border}` }}>
-                      {cards.length}
-                    </div>
-                  </div>
-
-                  {/* Cards */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {cards.length === 0 ? (
-                      <div style={{ background: 'rgba(0,0,0,0.03)', border: '1.5px dashed rgba(0,0,0,0.1)', borderRadius: 12, padding: '20px 12px', textAlign: 'center' }}>
-                        <div style={{ fontSize: 11, color: '#c7c7cc' }}>Vazio</div>
-                      </div>
-                    ) : (
-                      cards.slice(0, 5).map(orc => <OrcCard key={orc.id} orc={orc} />)
-                    )}
-                    {cards.length > 5 && (
-                      <Link href={`/fornecedor/orcamentos`} style={{ fontSize: 11.5, color: '#007AFF', textDecoration: 'none', fontWeight: 600, textAlign: 'center', padding: '6px 0' }}>
-                        +{cards.length - 5} ver todos
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* In-progress / concluded section */}
-          {progressOrcs.length > 0 && (
-            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-              <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>Em andamento &amp; Histórico</div>
-                <div style={{ fontSize: 11, padding: '1px 7px', borderRadius: 10, background: 'rgba(0,0,0,0.05)', color: '#6b6b6b', fontWeight: 600 }}>{progressOrcs.length}</div>
-              </div>
-              {progressOrcs.slice(0, 6).map((orc, i) => {
-                const meta = STATUS_META[orc.status]
-                const initials = (orc.arquiteto_nome ?? 'A').split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
-                const dateStr = new Date(orc.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-                return (
-                  <Link key={orc.id} href={`/fornecedor/orcamentos/${orc.id}`} style={{ textDecoration: 'none' }}>
-                    <div className="dash-prog-row" style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: i < progressOrcs.slice(0, 6).length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', cursor: 'pointer', transition: 'background 0.12s' }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#007AFF', flexShrink: 0 }}>
-                        {initials}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {orc.projeto_nome ?? 'Projeto sem nome'}
-                        </div>
-                        <div style={{ fontSize: 11, color: '#8e8e93' }}>{orc.escritorio_nome ?? orc.arquiteto_nome ?? 'Arquiteto'} · {dateStr}</div>
-                      </div>
-                      <div style={{ fontSize: 10.5, padding: '3px 10px', borderRadius: 20, background: meta.bg, border: `1px solid ${meta.border}`, color: meta.color, fontWeight: 700, flexShrink: 0 }}>
-                        {meta.label}
-                      </div>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-        </>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+          {filtered.map(orc => <OrcCardItem key={orc.id} orc={orc} />)}
+        </div>
       )}
     </div>
   )
