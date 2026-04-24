@@ -97,10 +97,10 @@ export default function EquipePage() {
     setNivelAtual(nivel)
 
     // Members: owner + linked
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: raw } = await supabase.from('users').select('id, nome, email, cargo, nivel_permissao, avatar_url')
       .or(`id.eq.${escritorioData.user_id},escritorio_vinculado_id.eq.${escritorioData.id}`)
     if (raw) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setMembros(raw.map((m: any) => ({
         ...m,
         is_owner: m.id === escritorioData!.user_id,
