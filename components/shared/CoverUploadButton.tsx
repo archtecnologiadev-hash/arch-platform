@@ -9,9 +9,11 @@ interface Props {
   projectId: string
   hasCover: boolean
   onUpdate: (url: string) => void
+  /** CSS class applied to the button — use to control hover-visibility via parent CSS */
+  btnClassName?: string
 }
 
-export default function CoverUploadButton({ projectId, hasCover, onUpdate }: Props) {
+export default function CoverUploadButton({ projectId, hasCover, onUpdate, btnClassName }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [crop, setCrop] = useState<CropConfig | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -56,64 +58,41 @@ export default function CoverUploadButton({ projectId, hasCover, onUpdate }: Pro
     <>
       <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onFile} />
 
-      {hasCover ? (
-        <button
-          className="cover-edit-btn"
-          onClick={open}
-          title="Editar capa"
-          style={{
-            position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.32)',
-            border: 'none', cursor: 'pointer',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            gap: 7, zIndex: 4,
-          }}
-        >
-          {uploading ? (
-            <Loader2 size={22} color="#ffffff" style={{ animation: 'spin 0.8s linear infinite' }} />
-          ) : (
-            <>
-              <div style={{
-                width: 38, height: 38, borderRadius: '50%',
-                background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Camera size={16} color="#007AFF" />
-              </div>
-              <span style={{ fontSize: 11.5, fontWeight: 600, color: '#fff', letterSpacing: '0.02em', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
-                Editar capa
-              </span>
-            </>
-          )}
-        </button>
-      ) : (
-        <button
-          onClick={open}
-          title="Adicionar capa"
-          style={{
-            position: 'absolute', inset: 0, border: 'none', cursor: 'pointer',
-            background: 'transparent',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            gap: 8, zIndex: 4, transition: 'background 0.15s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,122,255,0.09)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-        >
-          {uploading ? (
-            <Loader2 size={22} color="#007AFF" style={{ animation: 'spin 0.8s linear infinite' }} />
-          ) : (
-            <>
-              <div style={{
-                width: 40, height: 40, borderRadius: '50%',
-                background: 'rgba(0,122,255,0.1)', border: '1.5px solid rgba(0,122,255,0.3)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Camera size={18} color="#007AFF" />
-              </div>
-              <span style={{ fontSize: 11.5, fontWeight: 600, color: '#007AFF' }}>Adicionar capa</span>
-            </>
-          )}
-        </button>
-      )}
+      <button
+        className={btnClassName}
+        onClick={open}
+        title={hasCover ? 'Editar capa' : 'Adicionar capa'}
+        style={{
+          position: 'absolute',
+          top: 8,
+          right: 8,
+          width: 30,
+          height: 30,
+          borderRadius: '50%',
+          background: hasCover ? 'rgba(0,0,0,0.48)' : 'rgba(0,122,255,0.15)',
+          border: hasCover ? '1px solid rgba(255,255,255,0.18)' : '1.5px solid rgba(0,122,255,0.35)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 10,
+          transition: 'background 0.15s, transform 0.15s',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.background = hasCover ? 'rgba(0,0,0,0.65)' : 'rgba(0,122,255,0.28)'
+          e.currentTarget.style.transform = 'scale(1.1)'
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.background = hasCover ? 'rgba(0,0,0,0.48)' : 'rgba(0,122,255,0.15)'
+          e.currentTarget.style.transform = 'scale(1)'
+        }}
+      >
+        {uploading
+          ? <Loader2 size={13} color={hasCover ? '#fff' : '#007AFF'} style={{ animation: 'spin 0.8s linear infinite' }} />
+          : <Camera size={13} color={hasCover ? '#fff' : '#007AFF'} />
+        }
+      </button>
 
       {crop && <ImageCropModal {...crop} />}
     </>

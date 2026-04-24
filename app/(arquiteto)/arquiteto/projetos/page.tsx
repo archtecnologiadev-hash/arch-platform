@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { FolderOpen, Plus, ArrowRight, X, AlertCircle } from 'lucide-react'
 import CoverUploadButton from '@/components/shared/CoverUploadButton'
@@ -38,6 +39,7 @@ interface Escritorio {
 }
 
 export default function ProjetosPage() {
+  const router = useRouter()
   const [projetos, setProjetos] = useState<Projeto[]>([])
   const [loading, setLoading] = useState(true)
   const [escritorio, setEscritorio] = useState<Escritorio | null>(null)
@@ -138,12 +140,12 @@ export default function ProjetosPage() {
     <div style={{ minHeight: '100vh', background: '#f2f2f7', padding: '28px 32px' }}>
       <style>{`
         @keyframes spin{to{transform:rotate(360deg)}}
-        .proj-card{border-radius:12px;overflow:hidden;border:1px solid rgba(0,0,0,0.08);background:#fff;cursor:pointer;transition:border-color 0.25s,box-shadow 0.25s;box-shadow:0 1px 3px rgba(0,0,0,0.08);text-decoration:none;display:block}
+        .proj-card{border-radius:12px;overflow:hidden;border:1px solid rgba(0,0,0,0.08);background:#fff;cursor:pointer;transition:border-color 0.25s,box-shadow 0.25s;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
         .proj-card:hover{border-color:rgba(0,122,255,0.3);box-shadow:0 4px 16px rgba(0,0,0,0.1)}
         .proj-card-img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.45s ease}
         .proj-card:hover .proj-card-img{transform:scale(1.06)}
         .cover-edit-btn{opacity:0;pointer-events:none;transition:opacity 0.18s}
-        .proj-card-cover:hover .cover-edit-btn{opacity:1;pointer-events:auto}
+        .proj-card:hover .cover-edit-btn{opacity:1;pointer-events:auto}
       `}</style>
 
       <div style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
@@ -238,8 +240,8 @@ export default function ProjetosPage() {
             const hasCover = !!proj.cover_url
 
             return (
-              <Link key={proj.id} href={`/arquiteto/projetos/${proj.id}`} className="proj-card">
-                <div className="proj-card-cover" style={{ position: 'relative', height: 180, overflow: 'hidden', background: 'linear-gradient(135deg, #e8e8f0 0%, #d4d4dc 100%)' }}>
+              <div key={proj.id} className="proj-card" onClick={() => router.push(`/arquiteto/projetos/${proj.id}`)}>
+                <div style={{ position: 'relative', height: 180, overflow: 'hidden', background: 'linear-gradient(135deg, #e8e8f0 0%, #d4d4dc 100%)' }}>
                   {hasCover && <img src={proj.cover_url!} alt={proj.nome} className="proj-card-img" />}
                   {hasCover && (
                     <div style={{
@@ -247,7 +249,18 @@ export default function ProjetosPage() {
                       background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)',
                     }} />
                   )}
-                  <CoverUploadButton projectId={proj.id} hasCover={hasCover} onUpdate={(url) => handleCoverUpdate(proj.id, url)} />
+                  {!hasCover && (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, pointerEvents: 'none' }}>
+                      <FolderOpen size={26} color="#c7c7cc" />
+                      <span style={{ fontSize: 11, color: '#aeaeb2', fontWeight: 500 }}>Sem capa</span>
+                    </div>
+                  )}
+                  <CoverUploadButton
+                    projectId={proj.id}
+                    hasCover={hasCover}
+                    onUpdate={(url) => handleCoverUpdate(proj.id, url)}
+                    btnClassName={hasCover ? 'cover-edit-btn' : undefined}
+                  />
                   <div style={{
                     position: 'absolute', top: 10, right: 10,
                     fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 20,
@@ -275,7 +288,7 @@ export default function ProjetosPage() {
                   </div>
                   <ArrowRight size={12} color="#007AFF" />
                 </div>
-              </Link>
+              </div>
             )
           })}
         </div>
