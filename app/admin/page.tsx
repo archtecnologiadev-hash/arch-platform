@@ -91,7 +91,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Metrics grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14, marginBottom: 28 }}>
         {metrics.map(m => (
           <div key={m.label} style={{
             background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12,

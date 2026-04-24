@@ -366,7 +366,7 @@ export default function ArquitetoDashboardPage() {
       <div style={{ padding: '28px 32px' }}>
 
         {/* ─── Stats Cards ─── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 24 }}>
+        <div className="stats-grid">
           {statsData.map((stat) => {
             const Icon = stat.icon
             return (
@@ -404,6 +404,10 @@ export default function ArquitetoDashboardPage() {
             {/* ── Pipeline ── */}
             <div style={card}>
               <style>{`
+                .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 24px; }
+                @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
+                @media (max-width: 800px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+                @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } }
                 .proj-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
                 @media (max-width: 1100px) { .proj-grid { grid-template-columns: repeat(2, 1fr); } }
                 @media (max-width: 640px) { .proj-grid { grid-template-columns: 1fr; } }

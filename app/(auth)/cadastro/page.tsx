@@ -47,7 +47,20 @@ export default function CadastroPage() {
     })
 
     if (signUpError) {
-      setError(signUpError.message)
+      const msg = signUpError.message.toLowerCase()
+      if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already')) {
+        setError('Este email já está cadastrado. Faça login ou recupere sua senha.')
+      } else if (msg.includes('invalid email')) {
+        setError('Email inválido. Verifique o endereço informado.')
+      } else if (msg.includes('password') && msg.includes('6')) {
+        setError('A senha deve ter no mínimo 8 caracteres.')
+      } else if (msg.includes('weak password') || msg.includes('should be at least')) {
+        setError('A senha deve ter no mínimo 8 caracteres.')
+      } else if (msg.includes('rate limit') || msg.includes('too many')) {
+        setError('Muitas tentativas. Aguarde alguns minutos e tente novamente.')
+      } else {
+        setError('Erro ao criar conta. Tente novamente.')
+      }
       setLoading(false)
       return
     }
@@ -165,8 +178,8 @@ export default function CadastroPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mínimo 6 caracteres"
-            minLength={6}
+            placeholder="Mínimo 8 caracteres"
+            minLength={8}
             required
             style={inputBase}
             onFocus={(e) => (e.target.style.borderColor = '#007AFF')}

@@ -154,7 +154,6 @@ export default function ClienteProjetoPage() {
 
       if (arqs) setArquivos(arqs as Arquivo[])
       if (orcData) setOrcItems(orcData as OrcItem[])
-      console.log('[cliente/projeto] eventos raw:', evs)
       if (evs) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapped = evs.map((e: any) => ({
@@ -168,14 +167,13 @@ export default function ClienteProjetoPage() {
           endTime: e.hora_fim ?? undefined,
           note: e.observacao ?? undefined,
         }))
-        console.log('[cliente/projeto] eventos mapeados:', mapped)
         setCalEvents(mapped)
       }
       if (hist) setHistorico(hist as HistoricoItem[])
       setLoading(false)
     }
     load()
-  }, [projetoId])
+  }, [projetoId, router])
 
   async function handleLogout() {
     const supabase = createClient()

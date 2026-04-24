@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FolderOpen, ArrowRight, MessageCircle, Clock } from 'lucide-react'
+import { FolderOpen, ArrowRight, MessageCircle, Clock, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 const STAGES = ['Atendimento', 'Reunião', 'Briefing', '3D', 'Alteração 3D', 'Detalhamento', 'Orçamento', 'Execução']
@@ -101,10 +101,9 @@ export default function ClienteProjetosPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: '28px 32px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0', color: '#8e8e93', fontSize: 13 }}>
-          Carregando...
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <Loader2 size={26} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
   }
