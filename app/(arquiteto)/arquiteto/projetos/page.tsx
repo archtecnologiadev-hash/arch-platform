@@ -55,16 +55,43 @@ export default function ProjetosPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
 
-      const { data: esc } = await supabase
+      // Owner lookup
+      let { data: esc } = await supabase
         .from('escritorios').select('id, nome, cidade').eq('user_id', user.id).maybeSingle()
+
+      let nivelPermissao = 'owner'
+
+      // Team member lookup
+      if (!esc) {
+        const { data: ud } = await supabase
+          .from('users').select('escritorio_vinculado_id, nivel_permissao').eq('id', user.id).maybeSingle()
+        if (ud?.escritorio_vinculado_id) {
+          nivelPermissao = ud.nivel_permissao ?? 'operacional'
+          const { data: le } = await supabase
+            .from('escritorios').select('id, nome, cidade').eq('id', ud.escritorio_vinculado_id).maybeSingle()
+          esc = le
+        }
+      }
 
       if (esc) {
         setEscritorio(esc)
-        const { data: projs } = await supabase
-          .from('projetos').select('*')
-          .eq('escritorio_id', esc.id)
-          .order('created_at', { ascending: false })
-        setProjetos(projs ?? [])
+        if (nivelPermissao === 'operacional') {
+          // Operacional: only see assigned projects
+          const { data: membros } = await supabase
+            .from('projeto_membros').select('projeto_id').eq('user_id', user.id)
+          const ids = (membros ?? []).map((m: { projeto_id: string }) => m.projeto_id)
+          if (ids.length > 0) {
+            const { data: projs } = await supabase
+              .from('projetos').select('*').in('id', ids).order('created_at', { ascending: false })
+            setProjetos(projs ?? [])
+          }
+        } else {
+          const { data: projs } = await supabase
+            .from('projetos').select('*')
+            .eq('escritorio_id', esc.id)
+            .order('created_at', { ascending: false })
+          setProjetos(projs ?? [])
+        }
       }
       setLoading(false)
     }

@@ -5,37 +5,39 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, FolderOpen, Users, Calendar, Package,
-  FileText, UserCircle, LogOut, MessageCircle,
+  FileText, UserCircle, LogOut, MessageCircle, UsersRound,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
-const NAV_ITEMS = [
-  { label: 'Dashboard', href: '/arquiteto/dashboard', icon: LayoutDashboard },
-  { label: 'Projetos', href: '/arquiteto/projetos', icon: FolderOpen },
-  { label: 'Clientes', href: '/arquiteto/clientes', icon: Users },
-  { label: 'Calendário', href: '/arquiteto/calendario', icon: Calendar },
-  { label: 'Fornecedores', href: '/arquiteto/fornecedores', icon: Package },
-  { label: 'Mensagens', href: '/arquiteto/mensagens', icon: MessageCircle },
-  { label: 'Orçamentos', href: '/arquiteto/orcamentos', icon: FileText },
-  { label: 'Meu Perfil', href: '/arquiteto/perfil', icon: UserCircle },
+const BASE_NAV = [
+  { label: 'Dashboard',    href: '/arquiteto/dashboard',   icon: LayoutDashboard },
+  { label: 'Projetos',     href: '/arquiteto/projetos',    icon: FolderOpen },
+  { label: 'Clientes',     href: '/arquiteto/clientes',    icon: Users },
+  { label: 'Equipe',       href: '/arquiteto/equipe',      icon: UsersRound, ownerOnly: true },
+  { label: 'Calendário',   href: '/arquiteto/calendario',  icon: Calendar },
+  { label: 'Fornecedores', href: '/arquiteto/fornecedores',icon: Package },
+  { label: 'Mensagens',    href: '/arquiteto/mensagens',   icon: MessageCircle },
+  { label: 'Orçamentos',   href: '/arquiteto/orcamentos',  icon: FileText },
+  { label: 'Meu Perfil',   href: '/arquiteto/perfil',      icon: UserCircle },
 ]
 
 function ArquitetoSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const [userName, setUserName] = useState('Arquiteto')
+  const [userName, setUserName]       = useState('Arquiteto')
   const [userInitials, setUserInitials] = useState('A')
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-  const [unreadMsgs, setUnreadMsgs] = useState(0)
+  const [avatarUrl, setAvatarUrl]     = useState<string | null>(null)
+  const [unreadMsgs, setUnreadMsgs]   = useState(0)
+  const [nivelPermissao, setNivelPermissao] = useState<string>('owner')
+  const [cargoLabel, setCargoLabel]   = useState('Arquiteto')
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return
 
-      // Fetch real name and escritorio image in parallel
       const [{ data: userData }, { data: escData }] = await Promise.all([
-        supabase.from('users').select('nome').eq('id', data.user.id).maybeSingle(),
+        supabase.from('users').select('nome, nivel_permissao, cargo, avatar_url, escritorio_vinculado_id').eq('id', data.user.id).maybeSingle(),
         supabase.from('escritorios').select('image_url').eq('user_id', data.user.id).maybeSingle(),
       ])
 
@@ -43,10 +45,18 @@ function ArquitetoSidebar() {
       setUserName(nome)
       setUserInitials(nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase())
 
-      if (escData?.image_url) setAvatarUrl(escData.image_url)
+      // Avatar: escritório photo for owner, or user's own avatar for members
+      const avatar = escData?.image_url || userData?.avatar_url || null
+      if (avatar) setAvatarUrl(avatar)
 
-      const { data: convs } = await supabase
-        .from('conversas').select('id').eq('arquiteto_id', data.user.id)
+      // Determine permission level
+      const nivel = userData?.nivel_permissao ?? 'owner'
+      setNivelPermissao(nivel)
+      setCargoLabel(userData?.cargo || (nivel === 'owner' ? 'Arquiteto' : nivel.charAt(0).toUpperCase() + nivel.slice(1)))
+
+      // Unread messages — use the correct arquiteto_id
+      // For team members, the conversas are still linked to the owner's id; show unread only for owner
+      const { data: convs } = await supabase.from('conversas').select('id').eq('arquiteto_id', data.user.id)
       const ids = convs?.map((c: { id: string }) => c.id) ?? []
       if (ids.length > 0) {
         const { count } = await supabase
@@ -67,21 +77,21 @@ function ArquitetoSidebar() {
     router.refresh()
   }
 
+  const canSeeEquipe = nivelPermissao === 'owner' || nivelPermissao === 'admin'
+  const navItems = BASE_NAV.filter(item => !item.ownerOnly || canSeeEquipe)
+
   return (
     <aside style={{
       width: 248, minWidth: 248, height: '100vh',
       background: '#ffffff', borderRight: '1px solid rgba(0,0,0,0.08)',
       display: 'flex', flexDirection: 'column', position: 'fixed', left: 0, top: 0, zIndex: 40,
     }}>
-      <div style={{
-        height: 64, display: 'flex', alignItems: 'center',
-        paddingLeft: 24, borderBottom: '1px solid rgba(0,0,0,0.06)',
-      }}>
+      <div style={{ height: 64, display: 'flex', alignItems: 'center', paddingLeft: 24, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
         <span style={{ fontSize: 18, fontWeight: 300, letterSpacing: '0.35em', color: '#007AFF' }}>ARC</span>
       </div>
 
       <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon
           const isActive =
             pathname === item.href ||
@@ -108,22 +118,16 @@ function ArquitetoSidebar() {
       </nav>
 
       <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          width: 34, height: 34, borderRadius: '50%', overflow: 'hidden',
-          background: 'rgba(0,122,255,0.1)', border: '1.5px solid rgba(0,122,255,0.2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 12, fontWeight: 500, color: '#007AFF', flexShrink: 0,
-        }}>
+        <div style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', background: 'rgba(0,122,255,0.1)', border: '1.5px solid rgba(0,122,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, color: '#007AFF', flexShrink: 0 }}>
           {avatarUrl
             ? <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : userInitials
-          }
+            : userInitials}
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 400, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {userName}
           </div>
-          <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 1 }}>Arquiteto</div>
+          <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 1 }}>{cargoLabel}</div>
         </div>
         <button onClick={handleLogout} title="Sair" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c7c7cc', padding: 4, display: 'flex', alignItems: 'center', transition: 'color 0.15s', flexShrink: 0 }}
           onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#ff3b30')}

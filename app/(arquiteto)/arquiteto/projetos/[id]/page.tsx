@@ -68,6 +68,14 @@ interface OrcItem {
   created_at: string
 }
 
+interface ProjetoMembro {
+  id: string
+  user_id: string
+  papel: string | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  users: any
+}
+
 interface DirSupplier {
   id: number; slug: string; name: string; segment: string; city: string
   rating: number; reviewCount: number; description: string; cover: string; color: string
@@ -195,6 +203,13 @@ export default function ProjetoDetailPage() {
   const [sidebarEditSaving, setSidebarEditSaving] = useState(false)
   const [sidebarEditDeleting, setSidebarEditDeleting] = useState(false)
 
+  const [projetoMembros, setProjetoMembros] = useState<ProjetoMembro[]>([])
+  const [membrosEscritorio, setMembrosEscritorio] = useState<Array<{ id: string; nome: string; cargo: string | null }>>([])
+  const [addMembroOpen, setAddMembroOpen] = useState(false)
+  const [addMembroId, setAddMembroId] = useState('')
+  const [addMembroPapel, setAddMembroPapel] = useState('')
+  const [addMembroSaving, setAddMembroSaving] = useState(false)
+
   const [dirFilter, setDirFilter] = useState('Todos')
   const [dirQuoteTarget, setDirQuoteTarget] = useState<DirSupplier | null>(null)
   const [dirQuoteForm, setDirQuoteForm] = useState({ descricao: '', data: '' })
@@ -296,10 +311,43 @@ export default function ProjetoDetailPage() {
           dbId: f.id as string,
         })))
       }
+      // Load projeto_membros and available escritório members
+      const { data: pmData } = await supabase
+        .from('projeto_membros')
+        .select('id, user_id, papel, users(nome, cargo, nivel_permissao)')
+        .eq('projeto_id', projectId)
+      if (pmData) setProjetoMembros(pmData as ProjetoMembro[])
+
+      // Load escritório members for the "add" dropdown
+      if (proj?.escritorio_id) {
+        const { data: emData } = await supabase
+          .from('users').select('id, nome, cargo')
+          .or(`escritorio_vinculado_id.eq.${proj.escritorio_id}`)
+        if (emData) setMembrosEscritorio(emData as Array<{ id: string; nome: string; cargo: string | null }>)
+      }
+
       setLoading(false)
     }
     loadData()
   }, [projectId])
+
+  async function handleAddMembro() {
+    if (!addMembroId || addMembroSaving) return
+    setAddMembroSaving(true)
+    const supabase = createClient()
+    const { data } = await supabase.from('projeto_membros').insert({
+      projeto_id: projectId, user_id: addMembroId, papel: addMembroPapel || null,
+    }).select('id, user_id, papel, users(nome, cargo, nivel_permissao)').single()
+    if (data) setProjetoMembros(prev => [...prev, data as ProjetoMembro])
+    setAddMembroOpen(false); setAddMembroId(''); setAddMembroPapel('')
+    setAddMembroSaving(false)
+  }
+
+  async function handleRemoveMembro(id: string) {
+    const supabase = createClient()
+    await supabase.from('projeto_membros').delete().eq('id', id)
+    setProjetoMembros(prev => prev.filter(m => m.id !== id))
+  }
 
   async function handleEventEdit(ev: CalendarioEvent) {
     const supabase = createClient()
@@ -1212,6 +1260,59 @@ export default function ProjetoDetailPage() {
               </div>
             </div>
           )}
+
+          {/* Equipe do Projeto */}
+          <div style={panel}>
+            <div style={{ ...panelHeader, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><UserPlus size={11} /> Equipe do Projeto</span>
+              <button onClick={() => setAddMembroOpen(v => !v)}
+                style={{ background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Plus size={9} /> Add
+              </button>
+            </div>
+            {addMembroOpen && membrosEscritorio.length > 0 && (
+              <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(0,0,0,0.06)', background: '#fafafa', display: 'flex', flexDirection: 'column', gap: 7 }}>
+                <select value={addMembroId} onChange={e => setAddMembroId(e.target.value)}
+                  style={{ width: '100%', padding: '6px 8px', fontSize: 12, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 7, background: '#fff', color: '#1a1a1a', outline: 'none' }}>
+                  <option value="">Selecionar membro...</option>
+                  {membrosEscritorio.filter(m => !projetoMembros.find(pm => pm.user_id === m.id)).map(m => (
+                    <option key={m.id} value={m.id}>{m.nome}{m.cargo ? ` (${m.cargo})` : ''}</option>
+                  ))}
+                </select>
+                <input value={addMembroPapel} onChange={e => setAddMembroPapel(e.target.value)} placeholder="Papel neste projeto (opcional)"
+                  style={{ width: '100%', padding: '6px 8px', fontSize: 12, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 7, background: '#fff', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }} />
+                <button onClick={handleAddMembro} disabled={!addMembroId || addMembroSaving}
+                  style={{ padding: '7px', background: !addMembroId ? 'rgba(0,122,255,0.3)' : '#007AFF', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11.5, fontWeight: 700, cursor: addMembroId ? 'pointer' : 'not-allowed' }}>
+                  {addMembroSaving ? 'Adicionando...' : 'Adicionar'}
+                </button>
+              </div>
+            )}
+            <div style={{ padding: '4px 0' }}>
+              {projetoMembros.length === 0 ? (
+                <div style={{ padding: '14px 16px', fontSize: 11, color: '#aeaeb2', textAlign: 'center' }}>Nenhum membro atribuído</div>
+              ) : projetoMembros.map((m, i) => {
+                const nome = m.users?.nome ?? '—'
+                const initials = nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase()
+                return (
+                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 14px', borderBottom: i < projetoMembros.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
+                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#007AFF', flexShrink: 0 }}>
+                      {initials}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 11.5, fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nome}</div>
+                      {m.papel && <div style={{ fontSize: 10, color: '#8e8e93' }}>{m.papel}</div>}
+                    </div>
+                    <button onClick={() => handleRemoveMembro(m.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c7c7cc', padding: 2, display: 'flex', flexShrink: 0 }}
+                      onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
+                      onMouseLeave={e => (e.currentTarget.style.color = '#c7c7cc')}>
+                      <X size={11} />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
