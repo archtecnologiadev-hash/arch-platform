@@ -22,6 +22,7 @@ import {
   DollarSign,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import CoverUploadButton from '@/components/shared/CoverUploadButton'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -226,6 +227,10 @@ export default function ArquitetoDashboardPage() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  function handleCoverUpdate(id: string, url: string) {
+    setRealProjects(prev => prev.map(p => p.id === id ? { ...p, cover_url: url } : p))
+  }
+
   const projAtivos = realProjects.filter(p => p.stageIndex < PIPELINE_STAGES.length - 1)
   const totalMetragem = projAtivos.reduce((s, p) => s + (p.metragem ?? 0), 0)
   const clientesAtivos = new Set(realProjects.filter(p => p.cliente_nome).map(p => p.cliente_nome)).size
@@ -415,6 +420,8 @@ export default function ArquitetoDashboardPage() {
                 .proj-card:hover { border-color: rgba(0,122,255,0.3); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
                 .proj-card-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.45s ease; }
                 .proj-card:hover .proj-card-img { transform: scale(1.06); }
+                .cover-edit-btn { opacity: 0; pointer-events: none; transition: opacity 0.18s; }
+                .proj-card-cover:hover .cover-edit-btn { opacity: 1; pointer-events: auto; }
               `}</style>
 
               <div style={sectionHeader}>
@@ -467,15 +474,12 @@ export default function ArquitetoDashboardPage() {
                         <Link key={project.id} href={`/arquiteto/projetos/${project.id}`} style={{ textDecoration: 'none', display: 'block' }}>
                           <div className="proj-card">
                             {/* Cover image */}
-                            <div style={{ position: 'relative', height: 140, overflow: 'hidden', background: '#e5e5ea' }}>
-                              {project.cover_url
-                                ? <img src={project.cover_url} alt={project.name} className="proj-card-img" />
-                                : <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'linear-gradient(135deg, #e8e8f0 0%, #d4d4dc 100%)' }}>
-                                    <FolderOpen size={24} color="#c7c7cc" />
-                                  </div>}
+                            <div className="proj-card-cover" style={{ position: 'relative', height: 140, overflow: 'hidden', background: 'linear-gradient(135deg, #e8e8f0 0%, #d4d4dc 100%)' }}>
+                              {project.cover_url && <img src={project.cover_url} alt={project.name} className="proj-card-img" />}
                               {project.cover_url && (
                                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)' }} />
                               )}
+                              <CoverUploadButton projectId={project.id} hasCover={!!project.cover_url} onUpdate={(url) => handleCoverUpdate(project.id, url)} />
                               {/* Stage badge */}
                               <div style={{ position: 'absolute', top: 8, right: 8, fontSize: 9.5, fontWeight: 700, color: stageColor, background: 'rgba(255,255,255,0.92)', border: `1px solid ${stageColor}40`, padding: '3px 9px', borderRadius: 20, backdropFilter: 'blur(6px)', letterSpacing: '0.04em' }}>
                                 {currentStage}

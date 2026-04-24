@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { FolderOpen, Plus, ArrowRight, X, AlertCircle } from 'lucide-react'
+import CoverUploadButton from '@/components/shared/CoverUploadButton'
 
 const PIPELINE_STAGES = ['Atendimento', 'Reunião', 'Briefing', '3D', 'Alt. 3D', 'Detalhamento', 'Orçamento', 'Execução']
 
@@ -120,6 +121,10 @@ export default function ProjetosPage() {
     setSaving(false)
   }
 
+  function handleCoverUpdate(id: string, url: string) {
+    setProjetos(prev => prev.map(p => p.id === id ? { ...p, cover_url: url } : p))
+  }
+
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
@@ -137,6 +142,8 @@ export default function ProjetosPage() {
         .proj-card:hover{border-color:rgba(0,122,255,0.3);box-shadow:0 4px 16px rgba(0,0,0,0.1)}
         .proj-card-img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.45s ease}
         .proj-card:hover .proj-card-img{transform:scale(1.06)}
+        .cover-edit-btn{opacity:0;pointer-events:none;transition:opacity 0.18s}
+        .proj-card-cover:hover .cover-edit-btn{opacity:1;pointer-events:auto}
       `}</style>
 
       <div style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
@@ -232,19 +239,15 @@ export default function ProjetosPage() {
 
             return (
               <Link key={proj.id} href={`/arquiteto/projetos/${proj.id}`} className="proj-card">
-                <div style={{ position: 'relative', height: 180, overflow: 'hidden', background: '#e5e5ea' }}>
-                  {hasCover
-                    ? <img src={proj.cover_url!} alt={proj.nome} className="proj-card-img" />
-                    : <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'linear-gradient(135deg, #e8e8f0 0%, #d4d4dc 100%)' }}>
-                        <FolderOpen size={28} color="#c7c7cc" />
-                        <span style={{ fontSize: 11, color: '#aeaeb2', fontWeight: 500 }}>Sem capa</span>
-                      </div>}
+                <div className="proj-card-cover" style={{ position: 'relative', height: 180, overflow: 'hidden', background: 'linear-gradient(135deg, #e8e8f0 0%, #d4d4dc 100%)' }}>
+                  {hasCover && <img src={proj.cover_url!} alt={proj.nome} className="proj-card-img" />}
                   {hasCover && (
                     <div style={{
                       position: 'absolute', inset: 0,
                       background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)',
                     }} />
                   )}
+                  <CoverUploadButton projectId={proj.id} hasCover={hasCover} onUpdate={(url) => handleCoverUpdate(proj.id, url)} />
                   <div style={{
                     position: 'absolute', top: 10, right: 10,
                     fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 20,
