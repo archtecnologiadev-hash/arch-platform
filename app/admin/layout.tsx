@@ -2,16 +2,17 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Users, UserPlus, TicketCheck, ScrollText, LogOut, ShieldCheck, CreditCard } from 'lucide-react'
+import { LayoutDashboard, Users, UserPlus, TicketCheck, ScrollText, LogOut, ShieldCheck, CreditCard, FlaskConical } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 const NAV = [
-  { label: 'Dashboard',    href: '/admin',              icon: LayoutDashboard, exact: true },
-  { label: 'Assinaturas',  href: '/admin/assinaturas',  icon: CreditCard },
-  { label: 'Usuários',   href: '/admin/usuarios',   icon: Users },
-  { label: 'Cadastrar',  href: '/admin/cadastrar',  icon: UserPlus },
-  { label: 'Tickets',    href: '/admin/tickets',    icon: TicketCheck },
-  { label: 'Logs',       href: '/admin/logs',       icon: ScrollText },
+  { label: 'Dashboard',    href: '/admin',                icon: LayoutDashboard, exact: true },
+  { label: 'Assinaturas',  href: '/admin/assinaturas',    icon: CreditCard },
+  { label: 'Dados de Teste', href: '/admin/dados-teste',  icon: FlaskConical },
+  { label: 'Usuários',     href: '/admin/usuarios',       icon: Users },
+  { label: 'Cadastrar',    href: '/admin/cadastrar',      icon: UserPlus },
+  { label: 'Tickets',      href: '/admin/tickets',        icon: TicketCheck },
+  { label: 'Logs',         href: '/admin/logs',           icon: ScrollText },
 ]
 
 function AdminSidebar() {

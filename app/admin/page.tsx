@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Users, Building2, Package, MessageSquare, TrendingUp, AlertTriangle, Clock, Loader2 } from 'lucide-react'
+import { Users, Building2, Package, MessageSquare, TrendingUp, AlertTriangle, Clock, Loader2, FlaskConical, Trash2, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 interface Metric { label: string; value: number | string; icon: React.ReactNode; color: string; sub?: string }
@@ -28,6 +28,10 @@ export default function AdminDashboard() {
   const [metrics, setMetrics] = useState<Metric[]>([])
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([])
   const [loading, setLoading] = useState(true)
+  const [testCount, setTestCount] = useState(0)
+  const [removingTest, setRemovingTest] = useState(false)
+  const [confirmTest, setConfirmTest] = useState(false)
+  const [testResult, setTestResult] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -66,10 +70,25 @@ export default function AdminDashboard() {
         { label: 'Inadimplentes', value: inadim ?? 0, icon: <AlertTriangle size={18} />, color: '#ef4444' },
       ])
       setRecentUsers((recentes as RecentUser[]) ?? [])
+
+      const { count: tc } = await supabase
+        .from('users').select('*', { count: 'exact', head: true }).like('email', '%@arc-test.local')
+      setTestCount(tc ?? 0)
+
       setLoading(false)
     }
     load()
   }, [])
+
+  async function handleRemoveTestData() {
+    setRemovingTest(true)
+    setConfirmTest(false)
+    const res = await fetch('/api/admin/dados-teste', { method: 'DELETE' })
+    const json = await res.json()
+    setTestResult(json.result ?? json.error ?? 'Concluído')
+    setTestCount(0)
+    setRemovingTest(false)
+  }
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f2f2f7' }}>
@@ -111,6 +130,57 @@ export default function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      {/* Test data banner */}
+      {(testCount > 0 || testResult) && (
+        <div style={{
+          background: '#fff', border: '1px solid rgba(245,158,11,0.35)', borderRadius: 12,
+          padding: '14px 18px', marginBottom: 20,
+          display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+        }}>
+          <FlaskConical size={16} color="#f59e0b" />
+          {testResult
+            ? <span style={{ fontSize: 13, color: '#059669', fontWeight: 500, flex: 1 }}><Check size={13} style={{ marginRight: 5, display: 'inline' }} />{testResult}</span>
+            : <span style={{ fontSize: 13, color: '#92400e', flex: 1 }}>
+                <strong>{testCount} usuários de teste</strong> (@arc-test.local) estão na plataforma.{' '}
+                <Link href="/admin/dados-teste" style={{ color: '#007AFF', textDecoration: 'none' }}>Ver credenciais →</Link>
+              </span>
+          }
+          {testCount > 0 && (
+            <button
+              onClick={() => setConfirmTest(true)}
+              disabled={removingTest}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+                color: '#dc2626', borderRadius: 8, padding: '6px 12px',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', opacity: removingTest ? 0.5 : 1,
+              }}>
+              {removingTest ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <Trash2 size={12} />}
+              Remover dados de teste
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Confirmation modal */}
+      {confirmTest && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16,
+        }} onClick={e => { if (e.target === e.currentTarget) setConfirmTest(false) }}>
+          <div style={{ background: '#fff', borderRadius: 18, padding: 28, maxWidth: 400, width: '100%', boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10 }}>Remover {testCount} usuários de teste?</div>
+            <p style={{ fontSize: 13, color: '#6b6b6b', lineHeight: 1.6, margin: '0 0 20px' }}>
+              Todos os dados vinculados (escritórios, projetos, produtos) também serão removidos. Esta ação não pode ser desfeita.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setConfirmTest(false)} style={{ flex: 1, background: '#f2f2f7', border: 'none', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+              <button onClick={handleRemoveTestData} style={{ flex: 1, background: '#ef4444', border: 'none', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#fff' }}>Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Recent users table */}
       <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
