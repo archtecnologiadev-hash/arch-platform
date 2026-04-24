@@ -71,32 +71,43 @@ export default function ArquitetoPlanos() {
   const [successPlanId, setSuccessPlanId] = useState<string | null>(null)
 
   useEffect(() => {
-    async function load() {
-      const supabase = createClient()
-      const [{ data: planosData }, { data: { user } }] = await Promise.all([
-        supabase.from('planos').select('*').eq('tipo_usuario', 'arquiteto').eq('ativo', true).order('ordem'),
-        supabase.auth.getUser(),
-      ])
-      setPlanos((planosData ?? []) as Plano[])
+    const timeout = setTimeout(() => setLoading(false), 8000)
 
-      if (user) {
-        const { data: sub } = await supabase
-          .from('assinaturas').select('id, plano_id, status, trial_fim, ciclo')
-          .eq('user_id', user.id).maybeSingle()
-        if (sub) {
-          setSubscriptionId(sub.id)
-          setCurrentPlanId(sub.plano_id)
-          setCurrentStatus(sub.status)
-          if (sub.status === 'trial' && sub.trial_fim) {
-            const days = Math.max(0, Math.ceil((new Date(sub.trial_fim).getTime() - Date.now()) / 86400000))
-            setTrialDaysLeft(days)
+    async function load() {
+      try {
+        const supabase = createClient()
+        const [{ data: planosData }, { data: authData }] = await Promise.all([
+          supabase.from('planos').select('*').eq('tipo_usuario', 'arquiteto').eq('ativo', true).order('ordem'),
+          supabase.auth.getUser(),
+        ])
+        setPlanos((planosData ?? []) as Plano[])
+
+        const user = authData?.user
+        if (user) {
+          const { data: sub } = await supabase
+            .from('assinaturas').select('id, plano_id, status, trial_fim, ciclo')
+            .eq('user_id', user.id).maybeSingle()
+          if (sub) {
+            setSubscriptionId(sub.id)
+            setCurrentPlanId(sub.plano_id)
+            setCurrentStatus(sub.status)
+            if (sub.status === 'trial' && sub.trial_fim) {
+              const days = Math.max(0, Math.ceil((new Date(sub.trial_fim).getTime() - Date.now()) / 86400000))
+              setTrialDaysLeft(days)
+            }
+            if (sub.ciclo) setCiclo(sub.ciclo as 'mensal' | 'anual')
           }
-          if (sub.ciclo) setCiclo(sub.ciclo as 'mensal' | 'anual')
         }
+      } catch (err) {
+        console.error('[planos] erro ao carregar:', err)
+      } finally {
+        clearTimeout(timeout)
+        setLoading(false)
       }
-      setLoading(false)
     }
     load()
+
+    return () => clearTimeout(timeout)
   }, [])
 
   async function handleSelect(plano: Plano) {
