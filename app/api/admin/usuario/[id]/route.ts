@@ -61,15 +61,33 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
   const admin = createAdminClient()
 
-  await admin.from('admin_log').insert({
-    admin_id: admin_user.id,
-    target_user_id: targetId,
-    acao: 'excluir_usuario',
-    detalhes: {},
-  })
+  // Nullify FK columns that have no ON DELETE action (would block the cascade).
+  // These columns are nullable — setting them to null preserves the sibling data
+  // (files, history entries, etc.) while removing the broken user reference.
+  await Promise.all([
+    admin.from('projeto_historico').update({ usuario_id: null }).eq('usuario_id', targetId),
+    admin.from('convites_equipe').update({ convidado_por: null }).eq('convidado_por', targetId),
+    // These three reference auth.users directly, so must be cleared before deleteUser()
+    admin.from('arquivos_projeto').update({ enviado_por: null }).eq('enviado_por', targetId),
+    admin.from('anotacoes_projeto').update({ autor_id: null }).eq('autor_id', targetId),
+    admin.from('solicitacoes_orcamento').update({ solicitante_id: null }).eq('solicitante_id', targetId),
+  ])
 
+  // deleteUser() deletes from auth.users, which cascades to public.users, which cascades
+  // to escritorios, fornecedores, conversas, mensagens, orcamentos, projeto_membros, etc.
   const { error } = await admin.auth.admin.deleteUser(targetId)
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+
+  try {
+    await admin.from('admin_log').insert({
+      admin_id: admin_user.id,
+      target_user_id: targetId,
+      acao: 'excluir_usuario',
+      detalhes: {},
+    })
+  } catch {
+    // Log failure must not block success response
+  }
 
   return NextResponse.json({ success: true })
 }

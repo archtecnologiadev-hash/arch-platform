@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Search, Filter, Loader2, Pencil } from 'lucide-react'
+import { Search, Filter, Loader2, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 interface UserRow {
@@ -37,6 +37,11 @@ export default function AdminUsuarios() {
   const [statusFilter, setStatusFilter] = useState('')
   const [total, setTotal] = useState(0)
 
+  // Delete state
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+
   const load = useCallback(async () => {
     setLoading(true)
     const supabase = createClient()
@@ -45,11 +50,9 @@ export default function AdminUsuarios() {
       .select('id, nome, email, tipo, plano, status_conta, created_at', { count: 'exact' })
       .order('created_at', { ascending: false })
       .limit(100)
-
     if (tipoFilter) q = q.eq('tipo', tipoFilter)
     if (statusFilter) q = q.eq('status_conta', statusFilter)
     if (search) q = q.or(`nome.ilike.%${search}%,email.ilike.%${search}%`)
-
     const { data, count } = await q
     setUsers((data as UserRow[]) ?? [])
     setTotal(count ?? 0)
@@ -58,8 +61,29 @@ export default function AdminUsuarios() {
 
   useEffect(() => { load() }, [load])
 
+  async function handleDelete(userId: string) {
+    setDeleting(true)
+    setDeleteError('')
+    const res = await fetch(`/api/admin/usuario/${userId}`, { method: 'DELETE' })
+    const data = await res.json()
+    if (data.error) {
+      setDeleteError(data.error)
+      setDeleting(false)
+      return
+    }
+    // Remove from local state without full reload
+    setUsers(prev => prev.filter(u => u.id !== userId))
+    setTotal(prev => prev - 1)
+    setConfirmDeleteId(null)
+    setDeleting(false)
+  }
+
+  const confirmTarget = users.find(u => u.id === confirmDeleteId)
+
   return (
     <div style={{ padding: 32, color: '#1a1a1a', background: '#f2f2f7', minHeight: '100vh' }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 22, fontWeight: 500, color: '#1a1a1a', marginBottom: 4 }}>Usuários</h1>
         <p style={{ fontSize: 13, color: '#8e8e93' }}>{total} usuário{total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}</p>
@@ -104,7 +128,6 @@ export default function AdminUsuarios() {
         {loading ? (
           <div style={{ padding: 48, display: 'flex', justifyContent: 'center' }}>
             <Loader2 size={24} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -133,16 +156,28 @@ export default function AdminUsuarios() {
                   <td style={{ padding: '12px 16px' }}><Badge text={u.status_conta ?? 'ativo'} color={STATUS_COLOR[u.status_conta ?? 'ativo']} /></td>
                   <td style={{ padding: '12px 16px', fontSize: 11, color: '#8e8e93' }}>{new Date(u.created_at).toLocaleDateString('pt-BR')}</td>
                   <td style={{ padding: '12px 16px' }}>
-                    <Link href={`/admin/usuarios/${u.id}`} style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                      fontSize: 11.5, color: '#007AFF', textDecoration: 'none',
-                      background: 'rgba(0,122,255,0.06)', border: '1px solid rgba(0,122,255,0.2)', borderRadius: 6, padding: '5px 10px',
-                      transition: 'all 0.15s',
-                    }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,122,255,0.12)' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,122,255,0.06)' }}>
-                      <Pencil size={11} /> Editar
-                    </Link>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Link href={`/admin/usuarios/${u.id}`} style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                        fontSize: 11.5, color: '#007AFF', textDecoration: 'none',
+                        background: 'rgba(0,122,255,0.06)', border: '1px solid rgba(0,122,255,0.2)', borderRadius: 6, padding: '5px 10px',
+                        transition: 'all 0.15s',
+                      }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,122,255,0.12)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,122,255,0.06)' }}>
+                        <Pencil size={11} /> Editar
+                      </Link>
+                      <button onClick={() => { setConfirmDeleteId(u.id); setDeleteError('') }} style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                        fontSize: 11.5, color: '#ef4444', background: 'rgba(239,68,68,0.06)',
+                        border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, padding: '5px 10px',
+                        cursor: 'pointer', transition: 'all 0.15s',
+                      }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.06)' }}>
+                        <Trash2 size={11} /> Excluir
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -150,6 +185,70 @@ export default function AdminUsuarios() {
           </table>
         )}
       </div>
+
+      {/* Delete confirmation modal */}
+      {confirmDeleteId && confirmTarget && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+        }}
+          onClick={e => { if (e.target === e.currentTarget && !deleting) setConfirmDeleteId(null) }}>
+          <div style={{
+            background: '#fff', borderRadius: 16, padding: 28, maxWidth: 420, width: '100%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <AlertTriangle size={18} color="#ef4444" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Excluir usuário</div>
+                  <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 2 }}>Ação irreversível</div>
+                </div>
+              </div>
+              {!deleting && (
+                <button onClick={() => setConfirmDeleteId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}>
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+
+            <p style={{ fontSize: 13, color: '#3a3a3c', lineHeight: 1.6, marginBottom: 8 }}>
+              Tem certeza que deseja excluir <strong>{confirmTarget.nome}</strong>?
+            </p>
+            <p style={{ fontSize: 12, color: '#8e8e93', lineHeight: 1.6, marginBottom: 20 }}>
+              Isso apagará permanentemente o usuário e <strong>todos os dados vinculados</strong> — projetos, orçamentos, conversas e arquivos. Essa ação não pode ser desfeita.
+            </p>
+
+            {deleteError && (
+              <div style={{ marginBottom: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 12, color: '#ef4444' }}>
+                {deleteError}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => { setConfirmDeleteId(null); setDeleteError('') }} disabled={deleting} style={{
+                flex: 1, padding: '11px', borderRadius: 9, fontSize: 13, fontWeight: 500,
+                background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b',
+                cursor: deleting ? 'not-allowed' : 'pointer',
+              }}>
+                Cancelar
+              </button>
+              <button onClick={() => handleDelete(confirmDeleteId)} disabled={deleting} style={{
+                flex: 1, padding: '11px', borderRadius: 9, fontSize: 13, fontWeight: 600,
+                background: '#ef4444', border: 'none', color: '#fff',
+                cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.75 : 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              }}>
+                {deleting
+                  ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Excluindo...</>
+                  : <><Trash2 size={13} /> Excluir permanentemente</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

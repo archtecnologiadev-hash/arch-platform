@@ -240,19 +240,26 @@ export default function EditarUsuario() {
                   <Trash2 size={13} /> Excluir conta
                 </button>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <p style={{ fontSize: 11, color: '#ef4444', textAlign: 'center' }}>
-                    <AlertTriangle size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
-                    Confirmar exclusão?
-                  </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px', background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.18)', borderRadius: 9 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
+                    <AlertTriangle size={13} color="#ef4444" style={{ flexShrink: 0, marginTop: 1 }} />
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#ef4444', marginBottom: 3 }}>Excluir permanentemente?</div>
+                      <div style={{ fontSize: 11, color: '#8e8e93', lineHeight: 1.5 }}>
+                        Todos os dados vinculados — projetos, orçamentos, conversas e arquivos — serão apagados. Essa ação é irreversível.
+                      </div>
+                    </div>
+                  </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => setConfirmDelete(false)} style={{
-                      flex: 1, padding: '8px', borderRadius: 7, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', cursor: 'pointer', fontSize: 12,
+                    <button onClick={() => setConfirmDelete(false)} disabled={deleting} style={{
+                      flex: 1, padding: '8px', borderRadius: 7, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', cursor: deleting ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 500,
                     }}>Cancelar</button>
                     <button onClick={handleDelete} disabled={deleting} style={{
-                      flex: 1, padding: '8px', borderRadius: 7, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', cursor: 'pointer', fontSize: 12,
+                      flex: 1, padding: '8px', borderRadius: 7, background: '#ef4444', border: 'none', color: '#fff', cursor: deleting ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                      opacity: deleting ? 0.7 : 1,
                     }}>
-                      {deleting ? 'Excluindo...' : 'Confirmar'}
+                      {deleting ? <><Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} /> Excluindo...</> : <><Trash2 size={11} /> Excluir</>}
                     </button>
                   </div>
                 </div>
