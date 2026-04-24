@@ -7,8 +7,9 @@ import {
   ArrowLeft, Upload, FileText, ImageIcon, File, MessageCircle,
   Mail, Calendar, Plus, Package, DollarSign, Check, Pencil,
   Star, ExternalLink, Send, X, CheckCircle2, MapPin, Loader2,
-  Download, AlertCircle, Heart, ChevronLeft, UserPlus, Search, History,
+  Download, AlertCircle, Heart, ChevronLeft, ChevronDown, UserPlus, Search, History,
 } from 'lucide-react'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import CalendarioObra, { CalendarioEvent, EVENT_META, EventType, getMeta } from '@/components/shared/CalendarioObra'
 import { createClient } from '@/lib/supabase'
 
@@ -65,6 +66,8 @@ interface OrcItem {
   categoria: string
   descricao: string
   valor: number
+  quantidade: number | null
+  observacao: string | null
   created_at: string
 }
 
@@ -160,8 +163,11 @@ export default function ProjetoDetailPage() {
   const [anotacoes, setAnotacoes] = useState<AnotacaoProjeto[]>([])
   const [calEvents, setCalEvents] = useState<CalendarioEvent[]>([])
   const [orcItems, setOrcItems] = useState<OrcItem[]>([])
-  const [orcForm, setOrcForm] = useState({ categoria: 'Projeto', descricao: '', valor: '' })
+  const [orcForm, setOrcForm] = useState({ categoria: 'Projeto', descricao: '', valor: '', quantidade: '1', observacao: '' })
   const [orcSaving, setOrcSaving] = useState(false)
+  const [orcModal, setOrcModal] = useState(false)
+  const [orcEditItem, setOrcEditItem] = useState<OrcItem | null>(null)
+  const [orcExpandedCats, setOrcExpandedCats] = useState<Set<string>>(new Set(['Projeto', 'Execução', 'Marcenaria', 'Decoração', 'Elétrica', 'Hidráulica', 'Pintura', 'Outros']))
   const [currentUser, setCurrentUser] = useState<{ id: string; nome: string } | null>(null)
   const [stageIndex, setStageIndex] = useState(0)
 
@@ -1015,28 +1021,48 @@ export default function ProjetoDetailPage() {
 
           {/* ══ TAB: Orçamento ══ */}
           {activeTab === 'orcamento' && (() => {
-            const ORC_CATS = ['Projeto', 'Execução', 'Marcenaria', 'Decoração', 'Outros']
+            const ORC_CATS = ['Projeto', 'Execução', 'Marcenaria', 'Decoração', 'Elétrica', 'Hidráulica', 'Pintura', 'Outros']
             const ORC_CAT_COLOR: Record<string, string> = {
               Projeto: '#007AFF', Execução: '#34d399', Marcenaria: '#4f9cf9',
-              Decoração: '#a78bfa', Outros: '#8e8e93',
+              Decoração: '#a78bfa', Elétrica: '#f59e0b', Hidráulica: '#06b6d4',
+              Pintura: '#f97316', Outros: '#8e8e93',
             }
-            const grandTotal = orcItems.reduce((s, it) => s + Number(it.valor), 0)
+            const grandTotal = orcItems.reduce((s, it) => s + Number(it.valor) * (it.quantidade || 1), 0)
             const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+            const pieData = ORC_CATS.map(cat => ({
+              name: cat,
+              value: orcItems.filter(it => it.categoria === cat).reduce((s, it) => s + Number(it.valor) * (it.quantidade || 1), 0),
+              color: ORC_CAT_COLOR[cat],
+            })).filter(d => d.value > 0)
 
-            async function addOrcItem() {
+            async function saveOrcItem() {
               if (!orcForm.descricao.trim() || !orcForm.valor || !projeto) return
               const val = parseFloat(orcForm.valor.replace(',', '.'))
               if (isNaN(val) || val <= 0) return
+              const qty = Math.max(1, parseInt(orcForm.quantidade) || 1)
               setOrcSaving(true)
               const supabase = createClient()
-              const { data, error } = await supabase
-                .from('orcamento_itens')
-                .insert({ projeto_id: projeto.id, categoria: orcForm.categoria, descricao: orcForm.descricao.trim(), valor: val })
-                .select('*').single()
-              if (!error && data) {
-                setOrcItems(prev => [...prev, data as OrcItem])
-                setOrcForm(f => ({ ...f, descricao: '', valor: '' }))
+              if (orcEditItem) {
+                const { data, error } = await supabase
+                  .from('orcamento_itens')
+                  .update({ categoria: orcForm.categoria, descricao: orcForm.descricao.trim(), valor: val, quantidade: qty, observacao: orcForm.observacao || null })
+                  .eq('id', orcEditItem.id).select('*').single()
+                if (!error && data) {
+                  setOrcItems(prev => prev.map(it => it.id === orcEditItem.id ? data as OrcItem : it))
+                  setOrcEditItem(null)
+                  setOrcModal(false)
+                }
+              } else {
+                const { data, error } = await supabase
+                  .from('orcamento_itens')
+                  .insert({ projeto_id: projeto.id, categoria: orcForm.categoria, descricao: orcForm.descricao.trim(), valor: val, quantidade: qty, observacao: orcForm.observacao || null })
+                  .select('*').single()
+                if (!error && data) {
+                  setOrcItems(prev => [...prev, data as OrcItem])
+                  setOrcModal(false)
+                }
               }
+              setOrcForm({ categoria: 'Projeto', descricao: '', valor: '', quantidade: '1', observacao: '' })
               setOrcSaving(false)
             }
 
@@ -1046,69 +1072,179 @@ export default function ProjetoDetailPage() {
               setOrcItems(prev => prev.filter(it => it.id !== id))
             }
 
+            function openEdit(it: OrcItem) {
+              setOrcEditItem(it)
+              setOrcForm({ categoria: it.categoria, descricao: it.descricao, valor: String(it.valor), quantidade: String(it.quantidade || 1), observacao: it.observacao || '' })
+              setOrcModal(true)
+            }
+
+            function openNew() {
+              setOrcEditItem(null)
+              setOrcForm({ categoria: 'Projeto', descricao: '', valor: '', quantidade: '1', observacao: '' })
+              setOrcModal(true)
+            }
+
+            function exportPDF() {
+              const win = window.open('', '', 'width=900,height=700')
+              if (!win) return
+              const now = new Date().toLocaleDateString('pt-BR')
+              const rows = ORC_CATS.flatMap(cat => {
+                const items = orcItems.filter(it => it.categoria === cat)
+                if (items.length === 0) return []
+                return [
+                  `<tr><td colspan="4" style="background:#f5f5f7;font-weight:700;font-size:13px;padding:8px 12px;border-top:2px solid #e5e5ea">${cat}</td></tr>`,
+                  ...items.map(it => `<tr>
+                    <td style="padding:7px 12px;border-bottom:1px solid #f0f0f0">${it.descricao}${it.observacao ? `<div style="font-size:11px;color:#8e8e93;margin-top:2px">${it.observacao}</div>` : ''}</td>
+                    <td style="padding:7px 12px;border-bottom:1px solid #f0f0f0;text-align:center">${it.quantidade || 1}</td>
+                    <td style="padding:7px 12px;border-bottom:1px solid #f0f0f0;text-align:right">${fmtBRL(Number(it.valor))}</td>
+                    <td style="padding:7px 12px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600">${fmtBRL(Number(it.valor) * (it.quantidade || 1))}</td>
+                  </tr>`)
+                ]
+              }).join('')
+              const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Orçamento - ${projeto?.nome}</title>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#1a1a1a;margin:0;padding:40px;background:#fff}.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:20px;border-bottom:2px solid #007AFF}.brand{font-size:22px;font-weight:800;color:#007AFF;letter-spacing:-0.02em}.meta{font-size:12px;color:#6b6b6b;text-align:right;line-height:1.8}h2{font-size:18px;font-weight:700;margin:0 0 4px}.sub{font-size:13px;color:#6b6b6b;margin:0 0 24px}table{width:100%;border-collapse:collapse;font-size:13px}thead th{background:#007AFF;color:#fff;padding:10px 12px;text-align:left;font-size:12px;font-weight:600}thead th:nth-child(2){text-align:center}thead th:nth-child(3),thead th:nth-child(4){text-align:right}.total-row td{background:#1a1a1a;color:#fff;font-weight:700;font-size:14px;padding:10px 12px}.total-row td:last-child{text-align:right}.footer{margin-top:40px;font-size:11px;color:#8e8e93;border-top:1px solid #e5e5ea;padding-top:16px;display:flex;justify-content:space-between}@media print{body{padding:20px}}</style>
+</head><body>
+<div class="header"><div><div class="brand">ARC Platform</div><h2>${projeto?.nome}</h2><div class="sub">${cliente?.nome ?? ''}</div></div><div class="meta"><div>Data: ${now}</div><div>Orçamento do Projeto</div></div></div>
+<table><thead><tr><th>Descrição</th><th style="width:80px">Qtd.</th><th style="width:140px">Valor Unit.</th><th style="width:140px">Total</th></tr></thead>
+<tbody>${rows}<tr class="total-row"><td colspan="3">Total Geral</td><td>${fmtBRL(grandTotal)}</td></tr></tbody></table>
+<div class="footer"><span>ARC Platform — Gestão de Projetos de Arquitetura</span><span>Gerado em ${now}</span></div>
+<script>window.onload=function(){window.print();window.close()}<\/script></body></html>`
+              win.document.write(html)
+              win.document.close()
+            }
+
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {/* Grand total */}
-                <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: 10.5, color: '#8e8e93', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 4 }}>Total Geral</div>
-                    <div style={{ fontSize: 26, fontWeight: 800, color: '#1a1a1a', letterSpacing: '-0.02em' }}>{fmtBRL(grandTotal)}</div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {ORC_CATS.map(cat => {
-                      const catTotal = orcItems.filter(it => it.categoria === cat).reduce((s, it) => s + Number(it.valor), 0)
-                      if (catTotal === 0) return null
-                      return (
-                        <div key={cat} style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 9, color: ORC_CAT_COLOR[cat], fontWeight: 700, marginBottom: 2 }}>{cat}</div>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: '#1a1a1a' }}>{fmtBRL(catTotal)}</div>
+
+                {/* Modal Novo / Editar Item */}
+                {orcModal && (
+                  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setOrcModal(false)}>
+                    <div style={{ background: '#fff', borderRadius: 16, padding: '24px', width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>{orcEditItem ? 'Editar Item' : 'Novo Item'}</div>
+                        <button onClick={() => setOrcModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', display: 'flex', alignItems: 'center' }}><X size={18} /></button>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        <div>
+                          <label style={{ fontSize: 11.5, fontWeight: 600, color: '#6b6b6b', display: 'block', marginBottom: 6 }}>Categoria</label>
+                          <select value={orcForm.categoria} onChange={e => setOrcForm(f => ({ ...f, categoria: e.target.value }))} style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}>
+                            {ORC_CATS.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
                         </div>
-                      )
-                    })}
+                        <div>
+                          <label style={{ fontSize: 11.5, fontWeight: 600, color: '#6b6b6b', display: 'block', marginBottom: 6 }}>Descrição</label>
+                          <input value={orcForm.descricao} onChange={e => setOrcForm(f => ({ ...f, descricao: e.target.value }))} placeholder="Ex: Armário de cozinha em MDF" style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 12 }}>
+                          <div>
+                            <label style={{ fontSize: 11.5, fontWeight: 600, color: '#6b6b6b', display: 'block', marginBottom: 6 }}>Valor unitário (R$)</label>
+                            <input type="number" min="0" step="0.01" value={orcForm.valor} onChange={e => setOrcForm(f => ({ ...f, valor: e.target.value }))} placeholder="0,00" style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: 11.5, fontWeight: 600, color: '#6b6b6b', display: 'block', marginBottom: 6 }}>Quantidade</label>
+                            <input type="number" min="1" step="1" value={orcForm.quantidade} onChange={e => setOrcForm(f => ({ ...f, quantidade: e.target.value }))} placeholder="1" style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                          </div>
+                        </div>
+                        <div>
+                          <label style={{ fontSize: 11.5, fontWeight: 600, color: '#6b6b6b', display: 'block', marginBottom: 6 }}>Observação (opcional)</label>
+                          <textarea value={orcForm.observacao} onChange={e => setOrcForm(f => ({ ...f, observacao: e.target.value }))} placeholder="Detalhes adicionais..." rows={2} style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', resize: 'none' }} />
+                        </div>
+                        <button onClick={saveOrcItem} disabled={orcSaving || !orcForm.descricao.trim() || !orcForm.valor} style={{ width: '100%', padding: '12px', borderRadius: 10, background: '#007AFF', border: 'none', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: orcSaving || !orcForm.descricao.trim() || !orcForm.valor ? 0.5 : 1 }}>
+                          {orcSaving && <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />}
+                          {orcEditItem ? 'Salvar Alterações' : 'Adicionar Item'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
+                )}
+
+                {/* Header — Total + Ações */}
+                <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '20px 22px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 700, color: '#8e8e93', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Orçamento do Projeto</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={exportPDF} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 8, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+                        <Download size={13} /> Exportar PDF
+                      </button>
+                      <button onClick={openNew} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, background: '#007AFF', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                        <Plus size={13} /> Novo Item
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 34, fontWeight: 800, color: '#1a1a1a', letterSpacing: '-0.03em', lineHeight: 1 }}>{fmtBRL(grandTotal)}</div>
+                  {orcItems.length > 0 && (
+                    <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 6 }}>
+                      {orcItems.length} {orcItems.length === 1 ? 'item' : 'itens'} · {pieData.length} {pieData.length === 1 ? 'categoria' : 'categorias'}
+                    </div>
+                  )}
                 </div>
 
-                {/* Add item form */}
-                <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '16px 18px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#8e8e93', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 12 }}>Adicionar Item</div>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
-                    <div style={{ flex: '0 0 140px' }}>
-                      <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Categoria</label>
-                      <select value={orcForm.categoria} onChange={e => setOrcForm(f => ({ ...f, categoria: e.target.value }))} style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 7, padding: '8px 10px', fontSize: 12.5, color: '#1a1a1a', outline: 'none', fontFamily: 'inherit' }}>
-                        {ORC_CATS.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
+                {/* Gráfico de Pizza */}
+                {pieData.length > 0 && (
+                  <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 700, color: '#8e8e93', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 16 }}>Distribuição por Categoria</div>
+                    <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+                      <div style={{ width: 180, height: 170, flexShrink: 0 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={pieData} cx="50%" cy="50%" outerRadius={78} innerRadius={38} dataKey="value" strokeWidth={2} stroke="#fff">
+                              {pieData.map((entry, idx) => <Cell key={idx} fill={entry.color} />)}
+                            </Pie>
+                            <Tooltip formatter={(v) => fmtBRL(Number(v))} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 9 }}>
+                        {pieData.map(d => (
+                          <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ width: 10, height: 10, borderRadius: 3, background: d.color, flexShrink: 0 }} />
+                            <div style={{ fontSize: 12.5, color: '#1a1a1a', flex: 1 }}>{d.name}</div>
+                            <div style={{ fontSize: 11.5, color: '#8e8e93', minWidth: 34, textAlign: 'right' }}>{grandTotal > 0 ? Math.round(d.value / grandTotal * 100) : 0}%</div>
+                            <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1a1a1a', minWidth: 110, textAlign: 'right' }}>{fmtBRL(d.value)}</div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Descrição</label>
-                      <input value={orcForm.descricao} onChange={e => setOrcForm(f => ({ ...f, descricao: e.target.value }))} placeholder="Ex: Projeto executivo" style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 7, padding: '8px 10px', fontSize: 12.5, color: '#1a1a1a', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} onKeyDown={e => e.key === 'Enter' && addOrcItem()} />
-                    </div>
-                    <div style={{ flex: '0 0 130px' }}>
-                      <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Valor (R$)</label>
-                      <input type="number" min="0" step="0.01" value={orcForm.valor} onChange={e => setOrcForm(f => ({ ...f, valor: e.target.value }))} placeholder="0,00" style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 7, padding: '8px 10px', fontSize: 12.5, color: '#1a1a1a', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} onKeyDown={e => e.key === 'Enter' && addOrcItem()} />
-                    </div>
-                    <button onClick={addOrcItem} disabled={orcSaving || !orcForm.descricao.trim() || !orcForm.valor} style={{ height: 36, padding: '0 16px', borderRadius: 7, background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.25)', color: '#007AFF', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap', opacity: orcSaving || !orcForm.descricao.trim() || !orcForm.valor ? 0.5 : 1 }}>
-                      {orcSaving ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Plus size={13} />} Adicionar
-                    </button>
                   </div>
-                </div>
+                )}
 
-                {/* Items per category */}
+                {/* Seções por categoria */}
                 {ORC_CATS.map(cat => {
                   const items = orcItems.filter(it => it.categoria === cat)
                   if (items.length === 0) return null
-                  const catTotal = items.reduce((s, it) => s + Number(it.valor), 0)
+                  const catTotal = items.reduce((s, it) => s + Number(it.valor) * (it.quantidade || 1), 0)
+                  const pct = grandTotal > 0 ? Math.round(catTotal / grandTotal * 100) : 0
                   const color = ORC_CAT_COLOR[cat]
+                  const isExpanded = orcExpandedCats.has(cat)
                   return (
-                    <div key={cat} style={{ background: '#fff', border: `1px solid rgba(0,0,0,0.08)`, borderLeft: `3px solid ${color}`, borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                      <div style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color }}>{cat}</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>{fmtBRL(catTotal)}</span>
-                      </div>
-                      {items.map((it, i) => (
+                    <div key={cat} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderLeft: `3px solid ${color}`, borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                      <button onClick={() => setOrcExpandedCats(prev => { const s = new Set(prev); if (s.has(cat)) s.delete(cat); else s.add(cat); return s })} style={{ width: '100%', padding: '13px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', borderBottom: isExpanded ? '1px solid rgba(0,0,0,0.06)' : 'none', cursor: 'pointer' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color }}>{cat}</span>
+                          <span style={{ fontSize: 11, background: `${color}15`, color, border: `1px solid ${color}30`, padding: '2px 8px', borderRadius: 20 }}>{pct}%</span>
+                          <span style={{ fontSize: 11, color: '#8e8e93' }}>{items.length} {items.length === 1 ? 'item' : 'itens'}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>{fmtBRL(catTotal)}</span>
+                          <ChevronDown size={14} color="#8e8e93" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                        </div>
+                      </button>
+                      {isExpanded && items.map((it, i) => (
                         <div key={it.id} style={{ padding: '11px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: i < items.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
-                          <div style={{ flex: 1, fontSize: 13, color: '#1a1a1a' }}>{it.descricao}</div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', flexShrink: 0 }}>{fmtBRL(Number(it.valor))}</div>
-                          <button onClick={() => deleteOrcItem(it.id)} style={{ width: 24, height: 24, borderRadius: 5, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c7c7cc', flexShrink: 0 }}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, color: '#1a1a1a', fontWeight: 500 }}>{it.descricao}</div>
+                            {it.observacao && <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{it.observacao}</div>}
+                          </div>
+                          <div style={{ fontSize: 11.5, color: '#8e8e93', flexShrink: 0 }}>
+                            {(it.quantidade || 1) > 1 ? `${it.quantidade}× ` : ''}{fmtBRL(Number(it.valor))}
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', flexShrink: 0, minWidth: 100, textAlign: 'right' }}>
+                            {fmtBRL(Number(it.valor) * (it.quantidade || 1))}
+                          </div>
+                          <button onClick={() => openEdit(it)} title="Editar" style={{ width: 26, height: 26, borderRadius: 6, background: '#f2f2f7', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Pencil size={11} color="#6b6b6b" />
+                          </button>
+                          <button onClick={() => deleteOrcItem(it.id)} title="Remover" style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c7c7cc', flexShrink: 0 }}
                             onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
                             onMouseLeave={e => (e.currentTarget.style.color = '#c7c7cc')}>
                             <X size={12} />
@@ -1120,10 +1256,13 @@ export default function ProjetoDetailPage() {
                 })}
 
                 {orcItems.length === 0 && (
-                  <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '40px 24px', textAlign: 'center', color: '#8e8e93', fontSize: 13, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                    <DollarSign size={32} color="#c7c7cc" style={{ marginBottom: 10 }} />
-                    <div>Nenhum item adicionado ainda.</div>
-                    <div style={{ fontSize: 12, marginTop: 4, color: '#c7c7cc' }}>Use o formulário acima para adicionar itens ao orçamento.</div>
+                  <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '60px 24px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                    <DollarSign size={36} color="#c7c7cc" style={{ margin: '0 auto 12px' }} />
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#3a3a3c', marginBottom: 4 }}>Nenhum item no orçamento</div>
+                    <div style={{ fontSize: 12, color: '#8e8e93', marginBottom: 20 }}>Adicione itens clicando em &quot;Novo Item&quot;</div>
+                    <button onClick={openNew} style={{ padding: '9px 22px', borderRadius: 9, background: '#007AFF', border: 'none', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <Plus size={13} /> Adicionar primeiro item
+                    </button>
                   </div>
                 )}
               </div>

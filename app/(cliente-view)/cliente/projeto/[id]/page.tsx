@@ -5,13 +5,23 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import {
   LogOut, Download, MessageCircle, FileText, ImageIcon, File,
-  CalendarDays, FolderOpen, Activity, ArrowLeft, Check,
+  CalendarDays, FolderOpen, Activity, ArrowLeft, Check, DollarSign,
 } from 'lucide-react'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import CalendarioObra, { CalendarioEvent, EventType } from '@/components/shared/CalendarioObra'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type TabId = 'andamento' | 'calendario' | 'arquivos'
+type TabId = 'andamento' | 'calendario' | 'arquivos' | 'orcamento'
+
+interface OrcItem {
+  id: string
+  categoria: string
+  descricao: string
+  valor: number
+  quantidade: number | null
+  observacao: string | null
+}
 
 interface Projeto {
   id: string
@@ -50,7 +60,15 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'andamento', label: 'Andamento', icon: Activity },
   { id: 'calendario', label: 'Calendário', icon: CalendarDays },
   { id: 'arquivos', label: 'Arquivos', icon: FolderOpen },
+  { id: 'orcamento', label: 'Orçamento', icon: DollarSign },
 ]
+
+const ORC_CATS = ['Projeto', 'Execução', 'Marcenaria', 'Decoração', 'Elétrica', 'Hidráulica', 'Pintura', 'Outros']
+const ORC_CAT_COLOR: Record<string, string> = {
+  Projeto: '#007AFF', Execução: '#34d399', Marcenaria: '#4f9cf9',
+  Decoração: '#a78bfa', Elétrica: '#f59e0b', Hidráulica: '#06b6d4',
+  Pintura: '#f97316', Outros: '#8e8e93',
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -87,6 +105,7 @@ export default function ClienteProjetoPage() {
   const [arquivos, setArquivos] = useState<Arquivo[]>([])
   const [calEvents, setCalEvents] = useState<CalendarioEvent[]>([])
   const [historico, setHistorico] = useState<HistoricoItem[]>([])
+  const [orcItems, setOrcItems] = useState<OrcItem[]>([])
   const [userId, setUserId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabId>('andamento')
   const [startingConv, setStartingConv] = useState(false)
@@ -126,13 +145,15 @@ export default function ClienteProjetoPage() {
         escritorio_nome: proj.escritorios?.nome ?? null,
       })
 
-      const [{ data: arqs }, { data: evs }, { data: hist }] = await Promise.all([
+      const [{ data: arqs }, { data: evs }, { data: hist }, { data: orcData }] = await Promise.all([
         supabase.from('arquivos_projeto').select('*').eq('projeto_id', projetoId).order('created_at', { ascending: false }),
         supabase.from('eventos').select('*').eq('projeto_id', projetoId).order('data_inicio'),
         supabase.from('projeto_historico').select('*').eq('projeto_id', projetoId).order('created_at', { ascending: false }).limit(20),
+        supabase.from('orcamento_itens').select('id,categoria,descricao,valor,quantidade,observacao').eq('projeto_id', projetoId).order('created_at'),
       ])
 
       if (arqs) setArquivos(arqs as Arquivo[])
+      if (orcData) setOrcItems(orcData as OrcItem[])
       console.log('[cliente/projeto] eventos raw:', evs)
       if (evs) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -393,6 +414,103 @@ export default function ClienteProjetoPage() {
         {activeTab === 'calendario' && (
           <CalendarioObra events={calEvents} readonly />
         )}
+
+        {/* Tab: Orçamento */}
+        {activeTab === 'orcamento' && (() => {
+          const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+          const grandTotal = orcItems.reduce((s, it) => s + Number(it.valor) * (it.quantidade || 1), 0)
+          const pieData = ORC_CATS.map(cat => ({
+            name: cat,
+            value: orcItems.filter(it => it.categoria === cat).reduce((s, it) => s + Number(it.valor) * (it.quantidade || 1), 0),
+            color: ORC_CAT_COLOR[cat],
+          })).filter(d => d.value > 0)
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Total Geral */}
+              <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '22px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: '#8e8e93', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>Total do Orçamento</div>
+                <div style={{ fontSize: 36, fontWeight: 800, color: '#1a1a1a', letterSpacing: '-0.03em', lineHeight: 1 }}>{fmtBRL(grandTotal)}</div>
+                {orcItems.length > 0 && (
+                  <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 6 }}>
+                    {orcItems.length} {orcItems.length === 1 ? 'item' : 'itens'} · {pieData.length} {pieData.length === 1 ? 'categoria' : 'categorias'}
+                  </div>
+                )}
+              </div>
+
+              {/* Gráfico */}
+              {pieData.length > 0 && (
+                <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: '#8e8e93', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 16 }}>Distribuição por Categoria</div>
+                  <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+                    <div style={{ width: 170, height: 160, flexShrink: 0 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={pieData} cx="50%" cy="50%" outerRadius={74} innerRadius={36} dataKey="value" strokeWidth={2} stroke="#fff">
+                            {pieData.map((entry, idx) => <Cell key={idx} fill={entry.color} />)}
+                          </Pie>
+                          <Tooltip formatter={(v) => fmtBRL(Number(v))} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 9 }}>
+                      {pieData.map(d => (
+                        <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 10, height: 10, borderRadius: 3, background: d.color, flexShrink: 0 }} />
+                          <div style={{ fontSize: 12.5, color: '#1a1a1a', flex: 1 }}>{d.name}</div>
+                          <div style={{ fontSize: 11.5, color: '#8e8e93' }}>{grandTotal > 0 ? Math.round(d.value / grandTotal * 100) : 0}%</div>
+                          <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1a1a1a', minWidth: 100, textAlign: 'right' }}>{fmtBRL(d.value)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Detalhamento por categoria */}
+              {ORC_CATS.map(cat => {
+                const items = orcItems.filter(it => it.categoria === cat)
+                if (items.length === 0) return null
+                const catTotal = items.reduce((s, it) => s + Number(it.valor) * (it.quantidade || 1), 0)
+                const pct = grandTotal > 0 ? Math.round(catTotal / grandTotal * 100) : 0
+                const color = ORC_CAT_COLOR[cat]
+                return (
+                  <div key={cat} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderLeft: `3px solid ${color}`, borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                    <div style={{ padding: '13px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color }}>{cat}</span>
+                        <span style={{ fontSize: 11, background: `${color}15`, color, border: `1px solid ${color}30`, padding: '2px 8px', borderRadius: 20 }}>{pct}%</span>
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>{fmtBRL(catTotal)}</span>
+                    </div>
+                    {items.map((it, i) => (
+                      <div key={it.id} style={{ padding: '11px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: i < items.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, color: '#1a1a1a', fontWeight: 500 }}>{it.descricao}</div>
+                          {it.observacao && <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{it.observacao}</div>}
+                        </div>
+                        <div style={{ fontSize: 11.5, color: '#8e8e93', flexShrink: 0 }}>
+                          {(it.quantidade || 1) > 1 ? `${it.quantidade}× ` : ''}{fmtBRL(Number(it.valor))}
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', flexShrink: 0, minWidth: 100, textAlign: 'right' }}>
+                          {fmtBRL(Number(it.valor) * (it.quantidade || 1))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })}
+
+              {orcItems.length === 0 && (
+                <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '60px 24px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                  <DollarSign size={36} color="#c7c7cc" style={{ margin: '0 auto 12px' }} />
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#3a3a3c', marginBottom: 4 }}>Orçamento não disponível</div>
+                  <div style={{ fontSize: 12, color: '#8e8e93' }}>O orçamento deste projeto ainda não foi preenchido.</div>
+                </div>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Tab: Arquivos */}
         {activeTab === 'arquivos' && (

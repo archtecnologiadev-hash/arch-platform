@@ -19,6 +19,7 @@ import {
   Plus,
   X,
   ShieldCheck,
+  DollarSign,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
@@ -107,6 +108,7 @@ export default function ArquitetoDashboardPage() {
   const [leads, setLeads] = useState<Lead[]>([])
   const [escritorioId, setEscritorioId] = useState<string | null>(null)
   const [loadingProjects, setLoadingProjects] = useState(true)
+  const [totalOrcamento, setTotalOrcamento] = useState<number>(0)
 
   const [novoOpen, setNovoOpen] = useState(false)
   const [novoForm, setNovoForm] = useState({ nome: '', tipo: 'residencial', descricao: '', metragem: '', endereco: '', email_cliente: '', tipo_contrato: '' })
@@ -150,7 +152,7 @@ export default function ArquitetoDashboardPage() {
           const clientMap: Record<string, string> = {}
           for (const c of (clientsData ?? [])) clientMap[(c as { id: string; nome: string }).id] = (c as { id: string; nome: string }).nome
 
-          setRealProjects(projs.map((p) => ({
+          const mappedProjs = projs.map((p) => ({
             id: p.id,
             name: p.nome,
             cliente_nome: p.cliente_id ? (clientMap[p.cliente_id] ?? null) : null,
@@ -159,7 +161,18 @@ export default function ArquitetoDashboardPage() {
             created_at: p.created_at,
             metragem: p.metragem ?? null,
             cover_url: p.cover_url ?? null,
-          })))
+          }))
+          setRealProjects(mappedProjs)
+
+          // Budget total for active projects
+          const activeProjIds = mappedProjs.filter(p => p.stageIndex < Object.keys(ETAPA_TO_STAGE).length - 1).map(p => p.id)
+          if (activeProjIds.length > 0) {
+            const { data: budgetData } = await supabase
+              .from('orcamento_itens').select('valor,quantidade').in('projeto_id', activeProjIds)
+            if (budgetData) {
+              setTotalOrcamento(budgetData.reduce((s: number, it: { valor: number; quantidade: number | null }) => s + Number(it.valor) * (it.quantidade || 1), 0))
+            }
+          }
         }
 
         const { data: leadsData } = await supabase
@@ -218,11 +231,14 @@ export default function ArquitetoDashboardPage() {
   const clientesAtivos = new Set(realProjects.filter(p => p.cliente_nome).map(p => p.cliente_nome)).size
   const projConcluidos = realProjects.filter(p => p.stageIndex === PIPELINE_STAGES.length - 1).length
 
+  const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+
   const statsData = [
     { title: 'Projetos Ativos',    value: loadingProjects ? '—' : String(projAtivos.length),  delta: '', icon: FolderOpen,  color: '#4f9cf9' },
     { title: 'Total m² em Dev.',   value: loadingProjects ? '—' : totalMetragem > 0 ? `${totalMetragem.toLocaleString('pt-BR')} m²` : '—', delta: '', icon: TrendingUp, color: '#007AFF' },
     { title: 'Clientes Ativos',    value: loadingProjects ? '—' : String(clientesAtivos),      delta: '', icon: Clock,       color: '#a78bfa' },
     { title: 'Projetos Concluídos', value: loadingProjects ? '—' : String(projConcluidos),     delta: '', icon: FileText,    color: '#34d399' },
+    { title: 'Valor Orçado (Ativos)', value: loadingProjects ? '—' : fmtBRL(totalOrcamento),  delta: '', icon: DollarSign,  color: '#34d399' },
   ]
 
   return (
@@ -350,7 +366,7 @@ export default function ArquitetoDashboardPage() {
       <div style={{ padding: '28px 32px' }}>
 
         {/* ─── Stats Cards ─── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 24 }}>
           {statsData.map((stat) => {
             const Icon = stat.icon
             return (
