@@ -56,7 +56,7 @@ export default function CoverUploadButton({ projectId, hasCover, onUpdate, btnCl
 
   return (
     <>
-      <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onFile} />
+      <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onFile} onClick={e => e.stopPropagation()} />
 
       <button
         className={btnClassName}
