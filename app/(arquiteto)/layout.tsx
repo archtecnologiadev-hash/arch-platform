@@ -5,9 +5,10 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, FolderOpen, Users, Calendar, Package,
-  FileText, UserCircle, LogOut, MessageCircle, UsersRound,
+  FileText, UserCircle, LogOut, MessageCircle, UsersRound, CreditCard,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import TrialGate from '@/components/shared/TrialGate'
 
 const BASE_NAV = [
   { label: 'Dashboard',    href: '/arquiteto/dashboard',   icon: LayoutDashboard },
@@ -19,6 +20,7 @@ const BASE_NAV = [
   { label: 'Mensagens',    href: '/arquiteto/mensagens',   icon: MessageCircle },
   { label: 'Orçamentos',   href: '/arquiteto/orcamentos',  icon: FileText },
   { label: 'Meu Perfil',   href: '/arquiteto/perfil',      icon: UserCircle },
+  { label: 'Planos',       href: '/arquiteto/planos',      icon: CreditCard },
 ]
 
 function ArquitetoSidebar() {
@@ -144,7 +146,9 @@ export default function ArquitetoLayout({ children }: { children: React.ReactNod
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f2f2f7' }}>
       <ArquitetoSidebar />
       <main style={{ flex: 1, marginLeft: 248, minHeight: '100vh', background: '#f2f2f7', overflowX: 'hidden' }}>
-        {children}
+        <TrialGate tipo="arquiteto">
+          {children}
+        </TrialGate>
       </main>
     </div>
   )

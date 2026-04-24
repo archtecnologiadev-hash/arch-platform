@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Plus, Trash2, Loader2, Package, X, CheckCircle2, Upload, ImageIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import { usePlan } from '@/hooks/usePlan'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,7 @@ const TIPO_META: Record<string, { color: string; bg: string; border: string }> =
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CatalogoPage() {
+  const planInfo = usePlan()
   const [loading, setLoading] = useState(true)
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [fornecedorId, setFornecedorId] = useState<string | null>(null)
@@ -105,7 +107,10 @@ export default function CatalogoPage() {
     setPreviews(prev => prev.filter((_, i) => i !== index))
   }
 
+  const limiteAtingido = planInfo.maxProdutos !== null && produtos.length >= planInfo.maxProdutos
+
   function openModal() {
+    if (limiteAtingido) return
     setForm({ nome: '', descricao: '', tipo: 'produto' })
     setFiles([])
     setPreviews([])
@@ -118,6 +123,12 @@ export default function CatalogoPage() {
     if (!fornecedorId || !userId) return
     setSaving(true)
     const supabase = createClient()
+
+    if (planInfo.maxProdutos !== null && produtos.length >= planInfo.maxProdutos) {
+      setSaving(false)
+      setModalOpen(false)
+      return
+    }
 
     const { data: prod, error: prodErr } = await supabase
       .from('fornecedor_produtos')
@@ -185,9 +196,16 @@ export default function CatalogoPage() {
           </p>
         </div>
         {fornecedorId && (
-          <button onClick={openModal} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 10, background: '#007AFF', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-            <Plus size={14} /> Adicionar Item
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+            <button onClick={openModal} disabled={limiteAtingido} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 10, background: limiteAtingido ? 'rgba(0,0,0,0.1)' : '#007AFF', border: 'none', color: limiteAtingido ? '#8e8e93' : '#fff', fontSize: 13, fontWeight: 700, cursor: limiteAtingido ? 'not-allowed' : 'pointer' }}>
+              <Plus size={14} /> Adicionar Item
+            </button>
+            {limiteAtingido && (
+              <span style={{ fontSize: 11, color: '#f97316' }}>
+                Limite de {planInfo.maxProdutos} itens atingido · <a href="/fornecedor/planos" style={{ color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>Fazer upgrade</a>
+              </span>
+            )}
+          </div>
         )}
       </div>
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Users, Plus, X, Copy, Check, Trash2, MoreVertical, Loader2, Mail, UserCheck } from 'lucide-react'
+import { usePlan } from '@/hooks/usePlan'
 
 interface Membro {
   id: string
@@ -49,6 +50,7 @@ const inp: React.CSSProperties = {
 }
 
 export default function EquipePage() {
+  const planInfo = usePlan()
   const [loading, setLoading] = useState(true)
   const [denied, setDenied]   = useState(false)
   const [escritorio, setEscritorio] = useState<Escritorio | null>(null)
@@ -122,8 +124,9 @@ export default function EquipePage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (membros.length + convites.length >= (escritorio.max_membros ?? 3)) {
-      setFormError(`Limite de ${escritorio.max_membros ?? 3} membros atingido. Faça upgrade do plano.`)
+    const maxMembros = planInfo.maxMembros ?? escritorio.max_membros ?? 3
+    if (membros.length + convites.length >= maxMembros) {
+      setFormError(`Limite de ${maxMembros} membro${maxMembros !== 1 ? 's' : ''} atingido no seu plano. Faça upgrade para continuar.`)
       setSaving(false); return
     }
 

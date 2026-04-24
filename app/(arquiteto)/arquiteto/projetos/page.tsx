@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { FolderOpen, Plus, ArrowRight, X, AlertCircle } from 'lucide-react'
 import CoverUploadButton from '@/components/shared/CoverUploadButton'
+import { usePlan } from '@/hooks/usePlan'
 
 const PIPELINE_STAGES = ['Atendimento', 'Reunião', 'Briefing', '3D', 'Alt. 3D', 'Detalhamento', 'Orçamento', 'Execução']
 
@@ -40,6 +41,7 @@ interface Escritorio {
 
 export default function ProjetosPage() {
   const router = useRouter()
+  const planInfo = usePlan()
   const [projetos, setProjetos] = useState<Projeto[]>([])
   const [loading, setLoading] = useState(true)
   const [escritorio, setEscritorio] = useState<Escritorio | null>(null)
@@ -107,6 +109,12 @@ export default function ProjetosPage() {
     setSaving(true)
     setFormError(null)
     const supabase = createClient()
+
+    if (planInfo.maxProjetos !== null && projetos.length >= planInfo.maxProjetos) {
+      setFormError(`Limite de ${planInfo.maxProjetos} projeto${planInfo.maxProjetos !== 1 ? 's' : ''} atingido no seu plano. Faça upgrade para continuar.`)
+      setSaving(false)
+      return
+    }
     const { data, error } = await supabase
       .from('projetos')
       .insert({ escritorio_id: escritorio.id, nome: form.nome.trim(), tipo: form.tipo, descricao: form.descricao || null })

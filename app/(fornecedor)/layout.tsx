@@ -3,15 +3,17 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, UserCircle, Package, FileText, MessageCircle, LogOut } from 'lucide-react'
+import { LayoutDashboard, UserCircle, Package, FileText, MessageCircle, LogOut, CreditCard } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import TrialGate from '@/components/shared/TrialGate'
 
 const NAV_ITEMS = [
-  { label: 'Dashboard', href: '/fornecedor/dashboard', icon: LayoutDashboard },
-  { label: 'Meu Perfil', href: '/fornecedor/perfil', icon: UserCircle },
-  { label: 'Catálogo', href: '/fornecedor/catalogo', icon: Package },
-  { label: 'Orçamentos', href: '/fornecedor/orcamentos', icon: FileText },
-  { label: 'Mensagens', href: '/fornecedor/mensagens', icon: MessageCircle },
+  { label: 'Dashboard',  href: '/fornecedor/dashboard', icon: LayoutDashboard },
+  { label: 'Meu Perfil', href: '/fornecedor/perfil',    icon: UserCircle },
+  { label: 'Catálogo',   href: '/fornecedor/catalogo',  icon: Package },
+  { label: 'Orçamentos', href: '/fornecedor/orcamentos',icon: FileText },
+  { label: 'Mensagens',  href: '/fornecedor/mensagens', icon: MessageCircle },
+  { label: 'Planos',     href: '/fornecedor/planos',    icon: CreditCard },
 ]
 
 function FornecedorSidebar() {
@@ -150,7 +152,9 @@ export default function FornecedorLayout({ children }: { children: React.ReactNo
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f2f2f7' }}>
       <FornecedorSidebar />
       <main style={{ flex: 1, marginLeft: 248, minHeight: '100vh', background: '#f2f2f7', overflowX: 'hidden' }}>
-        {children}
+        <TrialGate tipo="fornecedor">
+          {children}
+        </TrialGate>
       </main>
     </div>
   )
