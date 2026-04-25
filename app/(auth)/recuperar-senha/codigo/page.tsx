@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { Mail } from 'lucide-react'
+import { KeyRound, ArrowLeft } from 'lucide-react'
 
 const inputBase: React.CSSProperties = {
   width: '100%',
@@ -20,27 +20,40 @@ const inputBase: React.CSSProperties = {
   transition: 'border-color 0.15s',
 }
 
-export default function RecuperarSenhaPage() {
+export default function RecuperarSenhaCodigoPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
+  const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const emailParam = searchParams.get('email')
+    if (emailParam) setEmail(emailParam)
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    if (!email) { setError('Informe o email.'); return }
+    if (code.length !== 6) { setError('O código deve ter exatamente 6 dígitos.'); return }
     setLoading(true)
 
     const supabase = createClient()
-    const { error: authError } = await supabase.auth.resetPasswordForEmail(email)
+    const { error: otpError } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: 'recovery',
+    })
 
-    if (authError) {
-      setError('Não foi possível enviar o email. Verifique o endereço e tente novamente.')
+    if (otpError) {
+      setError('Código inválido ou expirado. Solicite um novo código.')
       setLoading(false)
       return
     }
 
-    router.push(`/recuperar-senha/codigo?email=${encodeURIComponent(email)}`)
+    router.push('/nova-senha')
   }
 
   return (
@@ -54,14 +67,15 @@ export default function RecuperarSenhaPage() {
         background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.15)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <Mail size={20} color="#007AFF" />
+        <KeyRound size={20} color="#007AFF" strokeWidth={1.5} />
       </div>
 
       <h1 style={{ fontSize: 22, fontWeight: 300, color: '#1a1a1a', marginBottom: 6 }}>
-        Recuperar senha
+        Digite o código
       </h1>
       <p style={{ fontSize: 13, fontWeight: 300, color: '#8e8e93', marginBottom: 28, lineHeight: 1.6 }}>
-        Digite seu email e enviaremos um link para criar uma nova senha.
+        Enviamos um código de 6 dígitos para seu email.<br />
+        Verifique sua caixa de entrada e spam.
       </p>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -81,6 +95,30 @@ export default function RecuperarSenhaPage() {
           />
         </div>
 
+        <div>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: '#6b6b6b', marginBottom: 6 }}>
+            Código de 6 dígitos
+          </label>
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={code}
+            onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="000000"
+            required
+            style={{
+              ...inputBase,
+              fontSize: 24,
+              fontWeight: 400,
+              letterSpacing: '0.3em',
+              textAlign: 'center',
+            }}
+            onFocus={e => (e.target.style.borderColor = '#007AFF')}
+            onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+          />
+        </div>
+
         {error && (
           <p style={{
             fontSize: 13, color: '#ff3b30', margin: 0,
@@ -91,22 +129,31 @@ export default function RecuperarSenhaPage() {
           </p>
         )}
 
-        <button type="submit" disabled={loading} style={{
+        <button type="submit" disabled={loading || code.length !== 6} style={{
           width: '100%', padding: '13px',
-          background: loading ? '#a0c4ff' : '#007AFF',
+          background: loading || code.length !== 6 ? '#a0c4ff' : '#007AFF',
           color: '#ffffff', border: 'none', borderRadius: 10,
           fontSize: 15, fontWeight: 400,
-          cursor: loading ? 'not-allowed' : 'pointer',
-          transition: 'opacity 0.2s', marginTop: 4,
+          cursor: loading || code.length !== 6 ? 'not-allowed' : 'pointer',
+          transition: 'background 0.2s', marginTop: 4,
         }}>
-          {loading ? 'Enviando…' : 'Enviar link de recuperação'}
+          {loading ? 'Verificando…' : 'Verificar código'}
         </button>
       </form>
 
       <p style={{ marginTop: 24, textAlign: 'center', fontSize: 13, fontWeight: 300, color: '#8e8e93' }}>
-        Lembrou a senha?{' '}
-        <Link href="/login" style={{ color: '#007AFF', textDecoration: 'none' }}>
-          Voltar ao login
+        Não recebeu?{' '}
+        <Link href="/recuperar-senha" style={{ color: '#007AFF', textDecoration: 'none' }}>
+          Enviar novo código
+        </Link>
+      </p>
+
+      <p style={{ marginTop: 12, textAlign: 'center', fontSize: 13, fontWeight: 300, color: '#8e8e93' }}>
+        <Link href="/login" style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          color: '#8e8e93', textDecoration: 'none',
+        }}>
+          <ArrowLeft size={13} /> Voltar ao login
         </Link>
       </p>
     </div>

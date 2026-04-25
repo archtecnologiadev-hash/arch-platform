@@ -52,7 +52,8 @@ export async function middleware(request: NextRequest) {
   if (
     pathname === '/auth/confirm' ||
     pathname === '/nova-senha' ||
-    pathname === '/recuperar-senha'
+    pathname === '/recuperar-senha' ||
+    pathname === '/recuperar-senha/codigo'
   ) {
     return NextResponse.next({ request: { headers: request.headers } })
   }
