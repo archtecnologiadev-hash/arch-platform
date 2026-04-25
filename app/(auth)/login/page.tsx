@@ -1,16 +1,39 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { CheckCircle2 } from 'lucide-react'
 
-export default function LoginPage() {
+const inputBase: React.CSSProperties = {
+  width: '100%',
+  padding: '12px 14px',
+  background: '#f2f2f7',
+  border: '1px solid rgba(0,0,0,0.1)',
+  borderRadius: 10,
+  color: '#1a1a1a',
+  fontSize: 15,
+  fontWeight: 300,
+  outline: 'none',
+  boxSizing: 'border-box',
+  transition: 'border-color 0.15s',
+}
+
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [successMsg, setSuccessMsg] = useState('')
+
+  useEffect(() => {
+    if (searchParams.get('msg') === 'senha-alterada') {
+      setSuccessMsg('Senha alterada com sucesso! Faça login para continuar.')
+    }
+  }, [searchParams])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -38,36 +61,32 @@ export default function LoginPage() {
     router.refresh()
   }
 
-  const inputBase: React.CSSProperties = {
-    width: '100%',
-    padding: '12px 14px',
-    background: '#f2f2f7',
-    border: '1px solid rgba(0,0,0,0.1)',
-    borderRadius: 10,
-    color: '#1a1a1a',
-    fontSize: 15,
-    fontWeight: 300,
-    outline: 'none',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.15s',
-  }
-
   return (
-    <div
-      style={{
-        background: '#ffffff',
-        border: '1px solid rgba(0,0,0,0.08)',
-        borderRadius: 16,
-        padding: '36px 32px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-      }}
-    >
+    <div style={{
+      background: '#ffffff',
+      border: '1px solid rgba(0,0,0,0.08)',
+      borderRadius: 16,
+      padding: '36px 32px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+    }}>
       <h1 style={{ fontSize: 22, fontWeight: 300, color: '#1a1a1a', marginBottom: 6 }}>
         Entrar
       </h1>
       <p style={{ fontSize: 13, fontWeight: 300, color: '#8e8e93', marginBottom: 28 }}>
         Acesse sua conta na ARC Platform
       </p>
+
+      {successMsg && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          fontSize: 13, color: '#1a7a35', marginBottom: 20,
+          padding: '10px 14px', background: 'rgba(52,199,89,0.08)',
+          borderRadius: 8, border: '1px solid rgba(52,199,89,0.25)',
+        }}>
+          <CheckCircle2 size={15} color="#34c759" />
+          {successMsg}
+        </div>
+      )}
 
       <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
@@ -119,17 +138,12 @@ export default function LoginPage() {
           type="submit"
           disabled={loading}
           style={{
-            width: '100%',
-            padding: '13px',
+            width: '100%', padding: '13px',
             background: loading ? '#a0c4ff' : '#007AFF',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: 10,
-            fontSize: 15,
-            fontWeight: 400,
+            color: '#ffffff', border: 'none', borderRadius: 10,
+            fontSize: 15, fontWeight: 400,
             cursor: loading ? 'not-allowed' : 'pointer',
-            transition: 'opacity 0.2s',
-            marginTop: 4,
+            transition: 'opacity 0.2s', marginTop: 4,
           }}
         >
           {loading ? 'Entrando…' : 'Entrar'}
@@ -143,5 +157,21 @@ export default function LoginPage() {
         </Link>
       </p>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)',
+        borderRadius: 16, padding: '36px 32px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+      }}>
+        <div style={{ fontSize: 13, fontWeight: 300, color: '#8e8e93' }}>Carregando…</div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
