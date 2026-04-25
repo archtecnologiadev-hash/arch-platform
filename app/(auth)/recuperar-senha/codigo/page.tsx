@@ -37,7 +37,7 @@ function CodigoForm() {
     e.preventDefault()
     setError('')
     if (!email) { setError('Informe o email.'); return }
-    if (code.length !== 6) { setError('O código deve ter exatamente 6 dígitos.'); return }
+    if (code.length !== 8) { setError('O código deve ter exatamente 8 dígitos.'); return }
     setLoading(true)
 
     const supabase = createClient()
@@ -74,7 +74,7 @@ function CodigoForm() {
         Digite o código
       </h1>
       <p style={{ fontSize: 13, fontWeight: 300, color: '#8e8e93', marginBottom: 28, lineHeight: 1.6 }}>
-        Enviamos um código de 6 dígitos para seu email.<br />
+        Enviamos um código de 8 dígitos para seu email.<br />
         Verifique sua caixa de entrada e spam.
       </p>
 
@@ -104,8 +104,8 @@ function CodigoForm() {
             inputMode="numeric"
             autoComplete="one-time-code"
             value={code}
-            onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            placeholder="000000"
+            onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+            placeholder="00000000"
             required
             style={{
               ...inputBase,
@@ -129,12 +129,12 @@ function CodigoForm() {
           </p>
         )}
 
-        <button type="submit" disabled={loading || code.length !== 6} style={{
+        <button type="submit" disabled={loading || code.length !== 8} style={{
           width: '100%', padding: '13px',
-          background: loading || code.length !== 6 ? '#a0c4ff' : '#007AFF',
+          background: loading || code.length !== 8 ? '#a0c4ff' : '#007AFF',
           color: '#ffffff', border: 'none', borderRadius: 10,
           fontSize: 15, fontWeight: 400,
-          cursor: loading || code.length !== 6 ? 'not-allowed' : 'pointer',
+          cursor: loading || code.length !== 8 ? 'not-allowed' : 'pointer',
           transition: 'background 0.2s', marginTop: 4,
         }}>
           {loading ? 'Verificando…' : 'Verificar código'}
