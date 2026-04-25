@@ -35,29 +35,47 @@ export default function NovaSenhaPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+    const supabase = createClient()
 
     if (params.get('erro') === 'link-invalido') {
       setInvalidLink(true)
       return
     }
 
+    // Format 1: ?token_hash=xxx&type=recovery
     const tokenHash = params.get('token_hash')
     const type = params.get('type')
-
-    if (!tokenHash || type !== 'recovery') {
-      setInvalidLink(true)
+    if (tokenHash && type === 'recovery') {
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' }).then(({ error }) => {
+        if (error) setInvalidLink(true)
+        else { window.history.replaceState({}, '', '/nova-senha'); setReady(true) }
+      })
       return
     }
 
-    const supabase = createClient()
-    supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' }).then(({ error }) => {
-      if (error) {
-        setInvalidLink(true)
-      } else {
-        window.history.replaceState({}, '', '/nova-senha')
-        setReady(true)
-      }
-    })
+    // Format 2: ?code=xxx (PKCE)
+    const code = params.get('code')
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) setInvalidLink(true)
+        else { window.history.replaceState({}, '', '/nova-senha'); setReady(true) }
+      })
+      return
+    }
+
+    // Format 3: #access_token=xxx&refresh_token=xxx (legacy implicit)
+    const hash = new URLSearchParams(window.location.hash.slice(1))
+    const accessToken = hash.get('access_token')
+    const refreshToken = hash.get('refresh_token')
+    if (accessToken && refreshToken) {
+      supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }).then(({ error }) => {
+        if (error) setInvalidLink(true)
+        else { window.history.replaceState({}, '', '/nova-senha'); setReady(true) }
+      })
+      return
+    }
+
+    setInvalidLink(true)
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
