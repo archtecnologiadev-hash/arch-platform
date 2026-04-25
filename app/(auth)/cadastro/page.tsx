@@ -31,6 +31,7 @@ export default function CadastroPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [tipo, setTipo] = useState<'cliente' | 'arquiteto' | 'fornecedor'>('cliente')
+  const [termos, setTermos] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -187,6 +188,25 @@ export default function CadastroPage() {
           />
         </div>
 
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={termos}
+            onChange={e => setTermos(e.target.checked)}
+            style={{ marginTop: 2, accentColor: '#007AFF', width: 15, height: 15, flexShrink: 0 }}
+          />
+          <span style={{ fontSize: 12, fontWeight: 300, color: '#6b6b6b', lineHeight: 1.6 }}>
+            Li e concordo com os{' '}
+            <a href="/termos-de-uso" target="_blank" rel="noopener noreferrer" style={{ color: '#007AFF', textDecoration: 'none' }}>
+              Termos de Uso
+            </a>{' '}
+            e a{' '}
+            <a href="/privacidade" target="_blank" rel="noopener noreferrer" style={{ color: '#007AFF', textDecoration: 'none' }}>
+              Política de Privacidade
+            </a>
+          </span>
+        </label>
+
         {error && (
           <p style={{
             fontSize: 13, color: '#ff3b30', textAlign: 'center', margin: 0,
@@ -199,17 +219,17 @@ export default function CadastroPage() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !termos}
           style={{
             width: '100%',
             padding: '13px',
-            background: loading ? '#a0c4ff' : '#007AFF',
+            background: loading || !termos ? '#a0c4ff' : '#007AFF',
             color: '#ffffff',
             border: 'none',
             borderRadius: 10,
             fontSize: 15,
             fontWeight: 400,
-            cursor: loading ? 'not-allowed' : 'pointer',
+            cursor: loading || !termos ? 'not-allowed' : 'pointer',
             transition: 'opacity 0.2s',
             marginTop: 4,
           }}

@@ -23,7 +23,13 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       </header>
       <main className="flex-1">{children}</main>
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-        © 2026 Arch Platform. Todos os direitos reservados.
+        <p>© 2026 ARC Tecnologia. Todos os direitos reservados.</p>
+        <div className="mt-3 flex justify-center gap-5">
+          <a href="/sobre" className="text-xs text-muted-foreground hover:text-foreground">Sobre</a>
+          <a href="/termos-de-uso" className="text-xs text-muted-foreground hover:text-foreground">Termos de Uso</a>
+          <a href="/privacidade" className="text-xs text-muted-foreground hover:text-foreground">Privacidade</a>
+          <a href="mailto:contato@usearc.com.br" className="text-xs text-muted-foreground hover:text-foreground">Contato</a>
+        </div>
       </footer>
     </div>
   )

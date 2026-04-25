@@ -381,11 +381,9 @@ export default function LandingPage() {
           <span className="text-base font-light tracking-[0.3em] text-black">ARC</span>
           <p className="text-xs font-light text-[#c7c7cc]">© 2026 ARC Marketplace. Todos os direitos reservados.</p>
           <div className="flex gap-5">
-            {['Privacidade', 'Termos', 'Cookies'].map((item) => (
-              <a key={item} href="#" className="text-xs font-light text-[#c7c7cc] transition-colors hover:text-[#8e8e93]">
-                {item}
-              </a>
-            ))}
+            <a href="/sobre" className="text-xs font-light text-[#c7c7cc] transition-colors hover:text-[#8e8e93]">Sobre</a>
+            <a href="/termos-de-uso" className="text-xs font-light text-[#c7c7cc] transition-colors hover:text-[#8e8e93]">Termos</a>
+            <a href="/privacidade" className="text-xs font-light text-[#c7c7cc] transition-colors hover:text-[#8e8e93]">Privacidade</a>
           </div>
         </div>
       </footer>
