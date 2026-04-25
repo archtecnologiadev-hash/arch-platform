@@ -529,6 +529,15 @@ export default function ProjetoDetailPage() {
     setStageIndex(next)
     setProjeto(prev => prev ? { ...prev, etapa_atual: STAGES[next] } : prev)
     await logHistorico('Etapa avançada', `${STAGES[stageIndex]} → ${STAGES[next]}`)
+    fetch('/api/notifications/etapa-avancada', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        projeto_id: projeto.id,
+        etapa_anterior: STAGES[stageIndex],
+        nova_etapa: STAGES[next],
+      }),
+    }).catch(() => {})
     setAdvancingStage(false)
     setStageAdvanced(true)
     setTimeout(() => setStageAdvanced(false), 2500)
@@ -635,6 +644,16 @@ export default function ProjetoDetailPage() {
         arquivo_url: arquivoUrl,
         status: 'pendente',
       })
+      fetch('/api/notifications/orcamento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fornecedor_id: dirQuoteTarget.dbId,
+          arquiteto_id: currentUser.id,
+          projeto_id: projeto.id,
+          mensagem: dirQuoteForm.descricao,
+        }),
+      }).catch(() => {})
     } else {
       await supabase.from('solicitacoes_orcamento').insert({
         projeto_id: projeto.id,

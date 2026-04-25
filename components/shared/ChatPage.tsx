@@ -312,6 +312,11 @@ function ChatInner({ userType }: { userType: UserType }) {
     setTexto('')
     const supabase = createClient()
     await supabase.from('mensagens').insert({ conversa_id: selectedId, remetente_id: userId, texto: t })
+    fetch('/api/notifications/mensagem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversa_id: selectedId, remetente_id: userId, texto: t }),
+    }).catch(() => {})
     setSending(false)
     inputRef.current?.focus()
   }

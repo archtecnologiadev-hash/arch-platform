@@ -152,6 +152,16 @@ export default function ArquitetoFornecedoresPage() {
       ...(arquivo_url ? { arquivo_url } : {}),
       ...(arquivo_nome ? { arquivo_nome } : {}),
     })
+    fetch('/api/notifications/orcamento', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fornecedor_id: quoteTarget.id,
+        arquiteto_id: currentUserId,
+        projeto_id: null,
+        mensagem: form.descricao.trim(),
+      }),
+    }).catch(() => {})
     setSending(false)
     setSent(true)
     setTimeout(() => {

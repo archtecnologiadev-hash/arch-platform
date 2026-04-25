@@ -167,6 +167,18 @@ export default function EquipePage() {
     const link = `${window.location.origin}/aceitar-convite?token=${data.token}`
     setLinkGerado(link)
     setConvites(prev => [data as Convite, ...prev])
+    fetch('/api/notifications/convite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: form.email.trim().toLowerCase(),
+        nome: form.nome.trim(),
+        cargo: form.cargo.trim() || null,
+        nivel_permissao: form.nivel_permissao,
+        nome_escritorio: escritorio?.nome ?? '',
+        link_convite: link,
+      }),
+    }).catch(() => {})
     setForm({ nome: '', email: '', cargo: '', nivel_permissao: 'junior' })
     setSaving(false)
   }

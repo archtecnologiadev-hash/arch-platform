@@ -76,6 +76,17 @@ function LeadForm({ studioId, studioName }: { studioId: string | null; studioNam
       setError('Erro ao enviar. Tente novamente.')
     } else {
       setSubmitted(true)
+      fetch('/api/notifications/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          escritorio_id: studioId,
+          nome: form.name,
+          email: form.email,
+          telefone: form.phone || null,
+          mensagem: form.message,
+        }),
+      }).catch(() => {})
     }
   }
 
