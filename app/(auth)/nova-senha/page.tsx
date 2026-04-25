@@ -41,41 +41,22 @@ export default function NovaSenhaPage() {
       return
     }
 
-    const supabase = createClient()
-
-    // Flow 1: link customizado via Resend — token_hash do admin.generateLink
     const tokenHash = params.get('token_hash')
     const type = params.get('type')
-    if (tokenHash && type === 'recovery') {
-      supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' }).then(({ error }) => {
-        if (error) {
-          setInvalidLink(true)
-        } else {
-          window.history.replaceState({}, '', '/nova-senha')
-          setReady(true)
-        }
-      })
+
+    if (!tokenHash || type !== 'recovery') {
+      setInvalidLink(true)
       return
     }
 
-    // Flow 2: PKCE code (ex: via /auth/confirm)
-    const code = params.get('code')
-    if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-        if (error) {
-          setInvalidLink(true)
-        } else {
-          window.history.replaceState({}, '', '/nova-senha')
-          setReady(true)
-        }
-      })
-      return
-    }
-
-    // Flow 3: sessão já existente
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setReady(true)
-      else setInvalidLink(true)
+    const supabase = createClient()
+    supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' }).then(({ error }) => {
+      if (error) {
+        setInvalidLink(true)
+      } else {
+        window.history.replaceState({}, '', '/nova-senha')
+        setReady(true)
+      }
     })
   }, [])
 
