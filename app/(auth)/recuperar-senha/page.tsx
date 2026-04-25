@@ -32,7 +32,7 @@ export default function RecuperarSenhaPage() {
 
     const supabase = createClient()
     const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://www.usearc.com.br/nova-senha',
+      redirectTo: 'https://www.usearc.com.br/auth/confirm',
     })
 
     if (authError) {

@@ -35,47 +35,62 @@ export default function NovaSenhaPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+    const hash = new URLSearchParams(window.location.hash.slice(1))
     const supabase = createClient()
 
+    console.log('[nova-senha] href:', window.location.href)
+
     if (params.get('erro') === 'link-invalido') {
+      console.log('[nova-senha] flow=erro-param')
       setInvalidLink(true)
       return
     }
 
-    // Format 1: ?token_hash=xxx&type=recovery
+    // Flow 1: ?token_hash=xxx&type=recovery (link direto custom)
     const tokenHash = params.get('token_hash')
     const type = params.get('type')
     if (tokenHash && type === 'recovery') {
+      console.log('[nova-senha] flow=token_hash')
       supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' }).then(({ error }) => {
+        console.log('[nova-senha] verifyOtp:', error?.message ?? 'ok')
         if (error) setInvalidLink(true)
         else { window.history.replaceState({}, '', '/nova-senha'); setReady(true) }
       })
       return
     }
 
-    // Format 2: ?code=xxx (PKCE)
+    // Flow 2: ?code=xxx (PKCE direto para /nova-senha — legado)
     const code = params.get('code')
     if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+      console.log('[nova-senha] flow=code (PKCE direto)')
+      supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
+        console.log('[nova-senha] exchangeCode:', error?.message ?? 'ok', 'session=', !!data?.session)
         if (error) setInvalidLink(true)
         else { window.history.replaceState({}, '', '/nova-senha'); setReady(true) }
       })
       return
     }
 
-    // Format 3: #access_token=xxx&refresh_token=xxx (legacy implicit)
-    const hash = new URLSearchParams(window.location.hash.slice(1))
+    // Flow 3: #access_token=xxx (implicit legado)
     const accessToken = hash.get('access_token')
     const refreshToken = hash.get('refresh_token')
     if (accessToken && refreshToken) {
+      console.log('[nova-senha] flow=hash-implicit')
       supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }).then(({ error }) => {
+        console.log('[nova-senha] setSession:', error?.message ?? 'ok')
         if (error) setInvalidLink(true)
         else { window.history.replaceState({}, '', '/nova-senha'); setReady(true) }
       })
       return
     }
 
-    setInvalidLink(true)
+    // Flow 4: sessão já estabelecida pelo /auth/confirm server-side
+    console.log('[nova-senha] flow=getSession (via /auth/confirm)')
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('[nova-senha] getSession: session=', !!session)
+      if (session) setReady(true)
+      else setInvalidLink(true)
+    })
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
