@@ -29,11 +29,10 @@ export default function RecuperarSenhaPage() {
     setError('')
     setLoading(true)
 
-    const redirectTo = `${window.location.origin}/auth/confirm`
     const res = await fetch('/api/notifications/reset-senha', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, redirectTo }),
+      body: JSON.stringify({ email }),
     })
 
     if (!res.ok) {

@@ -35,11 +35,27 @@ export default function NovaSenhaPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+
     if (params.get('erro') === 'link-invalido') {
       setInvalidLink(true)
       return
     }
+
     const supabase = createClient()
+    const code = params.get('code')
+
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) {
+          setInvalidLink(true)
+        } else {
+          window.history.replaceState({}, '', '/nova-senha')
+          setReady(true)
+        }
+      })
+      return
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setReady(true)
       else setInvalidLink(true)

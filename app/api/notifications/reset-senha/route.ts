@@ -5,15 +5,16 @@ import { resetSenhaEmail } from '@/lib/email-templates/reset-senha'
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, redirectTo } = await req.json()
+    const { email } = await req.json()
     if (!email) return NextResponse.json({ error: 'Missing email' }, { status: 400 })
 
     const supabase = createAdminClient()
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.usearc.com.br'
     const { data, error } = await supabase.auth.admin.generateLink({
       type: 'recovery',
       email,
-      options: { redirectTo: redirectTo ?? `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.usearc.com.br'}/auth/confirm` },
+      options: { redirectTo: `${appUrl}/nova-senha` },
     })
 
     if (error || !data?.properties?.action_link) {
