@@ -10,22 +10,25 @@ export async function POST(req: NextRequest) {
 
     const supabase = createAdminClient()
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.usearc.com.br'
     const { data, error } = await supabase.auth.admin.generateLink({
       type: 'recovery',
       email,
-      options: { redirectTo: `${appUrl}/nova-senha` },
     })
 
-    if (error || !data?.properties?.action_link) {
-      // Return 200 regardless to avoid email enumeration
+    if (error || !data?.properties?.hashed_token) {
+      // Return 200 to avoid email enumeration
+      console.log('[reset-senha] generateLink error or no token:', error?.message)
       return NextResponse.json({ ok: true })
     }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.usearc.com.br'
+    const link = `${appUrl}/nova-senha?token_hash=${data.properties.hashed_token}&type=recovery`
+    console.log('[reset-senha] link destino:', link.substring(0, 80) + '...')
 
     await sendEmail({
       to: email,
       subject: 'Redefinir senha — ARC',
-      html: resetSenhaEmail({ link: data.properties.action_link }),
+      html: resetSenhaEmail({ link }),
     })
 
     return NextResponse.json({ ok: true })
