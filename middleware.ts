@@ -138,9 +138,12 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(homeMap[userTipo] ?? '/login', request.url))
     }
 
-    // ── 5. Operacional route blocking ────────────────────────────────────────
-    const OPERACIONAL_BLOCKED = ['/arquiteto/equipe', '/arquiteto/perfil', '/arquiteto/planos']
-    if (dbInfo?.nivel_permissao === 'operacional' && OPERACIONAL_BLOCKED.some(p => pathname === p || pathname.startsWith(p + '/'))) {
+    // ── 5. Non-privileged member route blocking ──────────────────────────────
+    // junior/estagiario/pleno cannot access equipe, perfil (studio), or planos
+    const PRIVILEGED = ['owner', 'admin', 'senior']
+    const nivel = dbInfo?.nivel_permissao ?? 'owner'
+    const MEMBER_BLOCKED = ['/arquiteto/equipe', '/arquiteto/perfil', '/arquiteto/planos']
+    if (!PRIVILEGED.includes(nivel) && MEMBER_BLOCKED.some(p => pathname === p || pathname.startsWith(p + '/'))) {
       return NextResponse.redirect(new URL('/arquiteto/dashboard', request.url))
     }
   }

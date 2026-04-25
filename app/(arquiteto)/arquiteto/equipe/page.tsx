@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
-import { Users, Plus, X, Copy, Check, Trash2, MoreVertical, Loader2, Mail, UserCheck } from 'lucide-react'
+import { Users, Plus, X, Copy, Check, Trash2, MoreVertical, Loader2, Mail, UserCheck, ChevronDown } from 'lucide-react'
 import { usePlan } from '@/hooks/usePlan'
 
 interface Membro {
@@ -32,16 +32,25 @@ interface Escritorio {
   user_id: string
 }
 
-const NIVEL_LABEL: Record<string, string> = {
-  owner: 'Owner', admin: 'Admin', pleno: 'Pleno', operacional: 'Operacional',
+const NIVEIS: Array<{ value: string; label: string; desc: string; bg: string; color: string }> = [
+  { value: 'admin',      label: 'Admin',      desc: 'Gerencia escritório e equipe',       bg: 'rgba(0,64,180,0.08)',    color: '#003fa3' },
+  { value: 'senior',     label: 'Sênior',     desc: 'Gerencia projetos e clientes',       bg: 'rgba(0,122,255,0.08)',   color: '#007AFF' },
+  { value: 'pleno',      label: 'Pleno',      desc: 'Cria e gerencia próprios projetos',  bg: 'rgba(52,211,153,0.08)',  color: '#059669' },
+  { value: 'junior',     label: 'Júnior',     desc: 'Trabalha em projetos atribuídos',    bg: 'rgba(249,115,22,0.08)', color: '#ea580c' },
+  { value: 'estagiario', label: 'Estagiário', desc: 'Acompanha com supervisão',           bg: 'rgba(107,107,107,0.08)', color: '#6b6b6b' },
+]
+
+const NIVEL_META: Record<string, { bg: string; color: string; label: string }> = {
+  owner:      { bg: 'rgba(139,92,246,0.12)',  color: '#7c3aed', label: 'Owner' },
+  admin:      { bg: 'rgba(0,64,180,0.1)',     color: '#003fa3', label: 'Admin' },
+  senior:     { bg: 'rgba(0,122,255,0.1)',    color: '#007AFF', label: 'Sênior' },
+  pleno:      { bg: 'rgba(52,211,153,0.12)',  color: '#059669', label: 'Pleno' },
+  junior:     { bg: 'rgba(249,115,22,0.1)',   color: '#ea580c', label: 'Júnior' },
+  estagiario: { bg: 'rgba(107,107,107,0.1)',  color: '#6b6b6b', label: 'Estagiário' },
 }
-const NIVEL_META: Record<string, { bg: string; color: string }> = {
-  owner:       { bg: 'rgba(0,122,255,0.1)',   color: '#007AFF' },
-  admin:       { bg: 'rgba(139,92,246,0.1)',  color: '#8b5cf6' },
-  pleno:       { bg: 'rgba(52,211,153,0.1)',  color: '#059669' },
-  operacional: { bg: 'rgba(245,158,11,0.1)',  color: '#d97706' },
-}
-function nivelMeta(n: string) { return NIVEL_META[n] ?? NIVEL_META.operacional }
+function nivelMeta(n: string) { return NIVEL_META[n] ?? NIVEL_META.junior }
+
+const NIVEL_RANK: Record<string, number> = { estagiario: 0, junior: 1, pleno: 2, senior: 3, admin: 4, owner: 5 }
 
 const inp: React.CSSProperties = {
   width: '100%', padding: '9px 12px', background: '#f2f2f7',
@@ -59,7 +68,7 @@ export default function EquipePage() {
   const [nivelAtual, setNivelAtual] = useState('owner')
 
   const [modalOpen, setModalOpen] = useState(false)
-  const [form, setForm] = useState({ nome: '', email: '', cargo: '', nivel_permissao: 'operacional' })
+  const [form, setForm] = useState({ nome: '', email: '', cargo: '', nivel_permissao: 'junior' })
   const [saving, setSaving]     = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [linkGerado, setLinkGerado] = useState<string | null>(null)
@@ -67,15 +76,30 @@ export default function EquipePage() {
 
   const [menuAberto, setMenuAberto] = useState<string | null>(null)
   const [removendo, setRemovendo]   = useState<string | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Alterar nível
+  const [alterandoNivel, setAlterandoNivel] = useState<string | null>(null)
+  const [confirmNivel, setConfirmNivel] = useState<{ userId: string; nome: string; novoNivel: string } | null>(null)
+  const [aplicandoNivel, setAplicandoNivel] = useState(false)
 
   useEffect(() => { load() }, [])
+
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuAberto(null)
+      }
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [])
 
   async function load() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setLoading(false); return }
 
-    // Try owner
     const { data: esc } = await supabase
       .from('escritorios').select('id, nome, max_membros, user_id').eq('user_id', user.id).maybeSingle()
 
@@ -85,8 +109,8 @@ export default function EquipePage() {
     if (!esc) {
       const { data: ud } = await supabase
         .from('users').select('escritorio_vinculado_id, nivel_permissao').eq('id', user.id).maybeSingle()
-      nivel = ud?.nivel_permissao ?? 'operacional'
-      if (nivel !== 'admin') { setDenied(true); setLoading(false); return }
+      nivel = ud?.nivel_permissao ?? 'junior'
+      if ((NIVEL_RANK[nivel] ?? 0) < 4) { setDenied(true); setLoading(false); return }
       if (ud?.escritorio_vinculado_id) {
         const { data: le } = await supabase
           .from('escritorios').select('id, nome, max_membros, user_id').eq('id', ud.escritorio_vinculado_id).maybeSingle()
@@ -98,7 +122,6 @@ export default function EquipePage() {
     setEscritorio(escritorioData)
     setNivelAtual(nivel)
 
-    // Members: owner + linked
     const { data: raw } = await supabase.from('users').select('id, nome, email, cargo, nivel_permissao, avatar_url')
       .or(`id.eq.${escritorioData.user_id},escritorio_vinculado_id.eq.${escritorioData.id}`)
     if (raw) {
@@ -106,7 +129,7 @@ export default function EquipePage() {
       setMembros(raw.map((m: any) => ({
         ...m,
         is_owner: m.id === escritorioData!.user_id,
-        nivel_permissao: m.id === escritorioData!.user_id ? 'owner' : (m.nivel_permissao ?? 'operacional'),
+        nivel_permissao: m.id === escritorioData!.user_id ? 'owner' : (m.nivel_permissao ?? 'junior'),
       })))
     }
 
@@ -144,7 +167,7 @@ export default function EquipePage() {
     const link = `${window.location.origin}/aceitar-convite?token=${data.token}`
     setLinkGerado(link)
     setConvites(prev => [data as Convite, ...prev])
-    setForm({ nome: '', email: '', cargo: '', nivel_permissao: 'operacional' })
+    setForm({ nome: '', email: '', cargo: '', nivel_permissao: 'junior' })
     setSaving(false)
   }
 
@@ -168,7 +191,19 @@ export default function EquipePage() {
     setRemovendo(null); setMenuAberto(null)
   }
 
+  async function aplicarNovoNivel() {
+    if (!confirmNivel) return
+    setAplicandoNivel(true)
+    const supabase = createClient()
+    await supabase.from('users').update({ nivel_permissao: confirmNivel.novoNivel }).eq('id', confirmNivel.userId)
+    setMembros(prev => prev.map(m => m.id === confirmNivel.userId ? { ...m, nivel_permissao: confirmNivel.novoNivel } : m))
+    setConfirmNivel(null); setAlterandoNivel(null); setMenuAberto(null)
+    setAplicandoNivel(false)
+  }
+
   function closeModal() { setModalOpen(false); setLinkGerado(null); setFormError(null) }
+
+  const canManage = (NIVEL_RANK[nivelAtual] ?? 5) >= 4 // admin+
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#f2f2f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -219,6 +254,8 @@ export default function EquipePage() {
             {membros.map(m => {
               const meta = nivelMeta(m.nivel_permissao)
               const initials = m.nome.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
+              const isMenuOpen = menuAberto === m.id
+              const isAlterandoNivel = alterandoNivel === m.id
               return (
                 <div key={m.id} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', position: 'relative' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -228,26 +265,47 @@ export default function EquipePage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', marginBottom: 3 }}>
                         <span style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>{m.nome}</span>
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: meta.bg, color: meta.color, flexShrink: 0 }}>
-                          {NIVEL_LABEL[m.nivel_permissao] ?? m.nivel_permissao}
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: meta.bg, color: meta.color, flexShrink: 0, border: `1px solid ${meta.color}22` }}>
+                          {meta.label}
                         </span>
                       </div>
                       {m.cargo && <div style={{ fontSize: 11.5, color: '#6b6b6b', marginBottom: 2 }}>{m.cargo}</div>}
                       {m.email && <div style={{ fontSize: 11, color: '#aeaeb2' }}>{m.email}</div>}
                     </div>
-                    {nivelAtual === 'owner' && !m.is_owner && (
-                      <div style={{ position: 'relative', flexShrink: 0 }}>
-                        <button className="menu-btn" onClick={() => setMenuAberto(menuAberto === m.id ? null : m.id)}
+                    {canManage && !m.is_owner && (
+                      <div ref={isMenuOpen ? menuRef : undefined} style={{ position: 'relative', flexShrink: 0 }}>
+                        <button className="menu-btn" onClick={() => { setMenuAberto(isMenuOpen ? null : m.id); setAlterandoNivel(null) }}
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 6, borderRadius: 7, display: 'flex', transition: 'background 0.15s' }}>
                           <MoreVertical size={16} />
                         </button>
-                        {menuAberto === m.id && (
-                          <div style={{ position: 'absolute', right: 0, top: 30, background: '#fff', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 10, padding: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 20, minWidth: 160 }}>
-                            <button onClick={() => removerMembro(m.id)} disabled={!!removendo}
-                              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: 12.5, fontWeight: 500, borderRadius: 7 }}>
-                              {removendo === m.id ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Trash2 size={13} />}
-                              Remover da equipe
-                            </button>
+                        {isMenuOpen && (
+                          <div style={{ position: 'absolute', right: 0, top: 30, background: '#fff', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 10, padding: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 20, minWidth: 190 }}>
+                            {!isAlterandoNivel ? (
+                              <>
+                                <button onClick={() => setAlterandoNivel(m.id)}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a', fontSize: 12.5, fontWeight: 500, borderRadius: 7 }}>
+                                  <ChevronDown size={13} /> Alterar nível
+                                </button>
+                                <div style={{ height: 1, background: 'rgba(0,0,0,0.07)', margin: '3px 0' }} />
+                                <button onClick={() => removerMembro(m.id)} disabled={!!removendo}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: 12.5, fontWeight: 500, borderRadius: 7 }}>
+                                  {removendo === m.id ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Trash2 size={13} />}
+                                  Remover da equipe
+                                </button>
+                              </>
+                            ) : (
+                              <div style={{ padding: '4px 2px' }}>
+                                <div style={{ fontSize: 10, fontWeight: 700, color: '#8e8e93', letterSpacing: '0.06em', padding: '4px 8px 6px', textTransform: 'uppercase' }}>Novo nível</div>
+                                {NIVEIS.filter(n => n.value !== 'owner').map(n => (
+                                  <button key={n.value} onClick={() => { setConfirmNivel({ userId: m.id, nome: m.nome, novoNivel: n.value }); setAlterandoNivel(null); setMenuAberto(null) }}
+                                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: m.nivel_permissao === n.value ? n.bg : 'none', border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: m.nivel_permissao === n.value ? 700 : 400, color: m.nivel_permissao === n.value ? n.color : '#1a1a1a', borderRadius: 7 }}>
+                                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: n.color, flexShrink: 0 }} />
+                                    {n.label}
+                                    {m.nivel_permissao === n.value && <Check size={11} style={{ marginLeft: 'auto' }} />}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -276,8 +334,8 @@ export default function EquipePage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1a1a1a' }}>{c.nome}</span>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: meta.bg, color: meta.color }}>
-                        {NIVEL_LABEL[c.nivel_permissao] ?? c.nivel_permissao}
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: meta.bg, color: meta.color, border: `1px solid ${meta.color}22` }}>
+                        {meta.label}
                       </span>
                     </div>
                     <div style={{ fontSize: 11.5, color: '#6b6b6b' }}>{c.email}{c.cargo ? ` · ${c.cargo}` : ''}</div>
@@ -299,11 +357,38 @@ export default function EquipePage() {
         </div>
       )}
 
+      {/* Confirm nivel change dialog */}
+      {confirmNivel && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 28, maxWidth: 400, width: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.14)' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a', marginBottom: 10 }}>Alterar nível</div>
+            <p style={{ fontSize: 13, color: '#6b6b6b', marginBottom: 20 }}>
+              Confirmar alteração do nível de <strong>{confirmNivel.nome}</strong> para{' '}
+              <strong style={{ color: nivelMeta(confirmNivel.novoNivel).color }}>{nivelMeta(confirmNivel.novoNivel).label}</strong>?
+            </p>
+            <p style={{ fontSize: 11.5, color: '#8e8e93', marginBottom: 24 }}>
+              {NIVEIS.find(n => n.value === confirmNivel.novoNivel)?.desc}
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setConfirmNivel(null)}
+                style={{ flex: 1, padding: '11px', background: '#f2f2f7', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b6b6b', cursor: 'pointer' }}>
+                Cancelar
+              </button>
+              <button onClick={aplicarNovoNivel} disabled={aplicandoNivel}
+                style={{ flex: 1, padding: '11px', background: '#007AFF', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                {aplicandoNivel ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={14} />}
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Invite Modal */}
       {modalOpen && (
         <div onClick={e => { if (e.target === e.currentTarget) closeModal() }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 460, padding: 28, boxShadow: '0 8px 24px rgba(0,0,0,0.14)', border: '1px solid rgba(0,0,0,0.08)' }}>
+          <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 480, padding: 28, boxShadow: '0 8px 24px rgba(0,0,0,0.14)', border: '1px solid rgba(0,0,0,0.08)', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>Convidar Membro</div>
               <button onClick={closeModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93' }}><X size={18} /></button>
@@ -326,7 +411,7 @@ export default function EquipePage() {
                 <p style={{ fontSize: 12, color: '#8e8e93', textAlign: 'center' }}>Envie o link para o membro. Ele expira após ser aceito.</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {formError && (
                   <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, padding: '10px 14px', fontSize: 12.5, color: '#ef4444' }}>
                     {formError}
@@ -343,30 +428,32 @@ export default function EquipePage() {
                     onFocus={e => (e.target.style.borderColor = '#007AFF')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Cargo</label>
-                  <input value={form.cargo} onChange={e => setForm(f => ({ ...f, cargo: e.target.value }))} placeholder="Ex: Arquiteto Operacional" style={inp}
+                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Cargo (opcional)</label>
+                  <input value={form.cargo} onChange={e => setForm(f => ({ ...f, cargo: e.target.value }))} placeholder="Ex: Arquiteto Sênior" style={inp}
                     onFocus={e => (e.target.style.borderColor = '#007AFF')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
                 </div>
+
+                {/* Level selector */}
                 <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Nível de permissão</label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {(['admin', 'pleno', 'operacional'] as const).map(n => {
-                      const meta = nivelMeta(n)
-                      const sel = form.nivel_permissao === n
+                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 8, fontWeight: 600 }}>Nível de permissão</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {NIVEIS.map(n => {
+                      const sel = form.nivel_permissao === n.value
                       return (
-                        <button key={n} type="button" onClick={() => setForm(f => ({ ...f, nivel_permissao: n }))}
-                          style={{ flex: 1, padding: '9px 4px', fontSize: 12, fontWeight: sel ? 600 : 400, borderRadius: 8, cursor: 'pointer', background: sel ? meta.bg : '#f2f2f7', border: `1px solid ${sel ? meta.color : 'rgba(0,0,0,0.08)'}`, color: sel ? meta.color : '#6b6b6b' }}>
-                          {NIVEL_LABEL[n]}
+                        <button key={n.value} type="button" onClick={() => setForm(f => ({ ...f, nivel_permissao: n.value }))}
+                          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, cursor: 'pointer', transition: 'all 0.15s', background: sel ? n.bg : '#f9f9f9', border: `1.5px solid ${sel ? n.color : 'rgba(0,0,0,0.07)'}`, textAlign: 'left' }}>
+                          <span style={{ width: 10, height: 10, borderRadius: '50%', background: n.color, flexShrink: 0 }} />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? n.color : '#1a1a1a' }}>{n.label}</div>
+                            <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 1 }}>{n.desc}</div>
+                          </div>
+                          {sel && <Check size={14} color={n.color} />}
                         </button>
                       )
                     })}
                   </div>
-                  <div style={{ marginTop: 8, fontSize: 11, color: '#8e8e93' }}>
-                    {form.nivel_permissao === 'admin' && 'Pode convidar membros e editar todos os projetos.'}
-                    {form.nivel_permissao === 'pleno' && 'Cria e gerencia todos os projetos do escritório.'}
-                    {form.nivel_permissao === 'operacional' && 'Acessa apenas projetos onde foi atribuído.'}
-                  </div>
                 </div>
+
                 <button onClick={convidar} disabled={saving || !form.nome.trim() || !form.email.trim()}
                   style={{ padding: '12px', background: saving || !form.nome.trim() || !form.email.trim() ? 'rgba(0,122,255,0.4)' : '#007AFF', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 4 }}>
                   {saving ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Gerando convite...</> : <><Plus size={14} /> Gerar link de convite</>}

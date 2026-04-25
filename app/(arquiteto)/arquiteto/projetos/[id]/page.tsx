@@ -170,6 +170,7 @@ export default function ProjetoDetailPage() {
   const [orcEditItem, setOrcEditItem] = useState<OrcItem | null>(null)
   const [orcExpandedCats, setOrcExpandedCats] = useState<Set<string>>(new Set(['Projeto', 'Execução', 'Marcenaria', 'Decoração', 'Elétrica', 'Hidráulica', 'Pintura', 'Outros']))
   const [currentUser, setCurrentUser] = useState<{ id: string; nome: string } | null>(null)
+  const [nivelRank, setNivelRank] = useState(5) // default owner
   const [stageIndex, setStageIndex] = useState(0)
 
   const [activeTab, setActiveTab] = useState<TabId>('arquivos')
@@ -237,6 +238,9 @@ export default function ProjetoDetailPage() {
       if (user) {
         const nome = user.user_metadata?.nome ?? user.email ?? 'Arquiteto'
         setCurrentUser({ id: user.id, nome })
+        const { data: ud } = await supabase.from('users').select('nivel_permissao').eq('id', user.id).maybeSingle()
+        const NIVEL_RANK: Record<string, number> = { estagiario: 0, junior: 1, pleno: 2, senior: 3, admin: 4, owner: 5 }
+        setNivelRank(NIVEL_RANK[ud?.nivel_permissao ?? 'owner'] ?? 5)
       }
       const currentUid = user?.id ?? ''
 
@@ -727,9 +731,11 @@ export default function ProjetoDetailPage() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <button onClick={() => { setEditForm({ nome: projeto.nome, tipo: projeto.tipo ?? 'residencial', descricao: projeto.descricao ?? '', metragem: projeto.metragem != null ? String(projeto.metragem) : '', endereco: projeto.endereco ?? '', email_cliente: projeto.email_cliente ?? '', tipo_contrato: projeto.tipo_contrato ?? '' }); setEditOpen(true) }} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '7px 13px', borderRadius: 8, background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', cursor: 'pointer' }}>
-              <Pencil size={12} /> Editar
-            </button>
+            {nivelRank >= 3 && (
+              <button onClick={() => { setEditForm({ nome: projeto.nome, tipo: projeto.tipo ?? 'residencial', descricao: projeto.descricao ?? '', metragem: projeto.metragem != null ? String(projeto.metragem) : '', endereco: projeto.endereco ?? '', email_cliente: projeto.email_cliente ?? '', tipo_contrato: projeto.tipo_contrato ?? '' }); setEditOpen(true) }} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '7px 13px', borderRadius: 8, background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', cursor: 'pointer' }}>
+                <Pencil size={12} /> Editar
+              </button>
+            )}
             <div style={{ fontSize: 11, fontWeight: 700, padding: '7px 16px', borderRadius: 22, background: 'rgba(0,122,255,0.08)', border: '1.5px solid rgba(0,122,255,0.25)', color: '#007AFF', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
               {STAGES[stageIndex]}
             </div>
@@ -1348,20 +1354,24 @@ export default function ProjetoDetailPage() {
                       <span style={{ fontSize: 12, color: '#6b6b6b', wordBreak: 'break-all' as const }}>{cliente.email}</span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => projeto?.cliente_id && handleIniciarConversa(projeto.cliente_id, 'cliente')}
-                    style={{ marginTop: 14, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '9px', background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.22)', borderRadius: 8, color: '#007AFF', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', transition: 'background 0.15s' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.18)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.09)')}>
-                    <MessageCircle size={13} /> Iniciar conversa
-                  </button>
+                  {nivelRank > 0 && (
+                    <button
+                      onClick={() => projeto?.cliente_id && handleIniciarConversa(projeto.cliente_id, 'cliente')}
+                      style={{ marginTop: 14, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '9px', background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.22)', borderRadius: 8, color: '#007AFF', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', transition: 'background 0.15s' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.18)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.09)')}>
+                      <MessageCircle size={13} /> Iniciar conversa
+                    </button>
+                  )}
                 </>
               ) : (
                 <div style={{ textAlign: 'center', padding: '12px 0' }}>
                   <div style={{ fontSize: 12, color: '#8e8e93', marginBottom: 12 }}>Cliente não vinculado</div>
-                  <button onClick={() => { setLinkOpen(true); setLinkTab('buscar'); setLinkQuery(''); setLinkResults([]); setLinkInviteSent(false) }} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.22)', borderRadius: 8, color: '#007AFF', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
-                    <UserPlus size={13} /> Vincular cliente
-                  </button>
+                  {nivelRank >= 3 && (
+                    <button onClick={() => { setLinkOpen(true); setLinkTab('buscar'); setLinkQuery(''); setLinkResults([]); setLinkInviteSent(false) }} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.22)', borderRadius: 8, color: '#007AFF', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+                      <UserPlus size={13} /> Vincular cliente
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -1383,7 +1393,12 @@ export default function ProjetoDetailPage() {
           </div>
 
           {/* Etapa buttons */}
-          {stageIndex === STAGES.length - 1 ? (
+          {nivelRank === 0 ? (
+            <div style={{ textAlign: 'center', padding: '12px 10px', fontSize: 12, color: '#ea580c', border: '1px solid rgba(234,88,12,0.2)', borderRadius: 9, background: 'rgba(234,88,12,0.05)' }}>
+              <AlertCircle size={13} style={{ display: 'inline', marginRight: 5, verticalAlign: 'middle' }} />
+              Aguardando aprovação para avançar etapa
+            </div>
+          ) : stageIndex === STAGES.length - 1 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ textAlign: 'center', padding: '10px', fontSize: 12, color: '#34d399', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 9, background: 'rgba(52,211,153,0.06)' }}>
                 <CheckCircle2 size={14} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} /> Projeto concluído
@@ -1458,10 +1473,12 @@ export default function ProjetoDetailPage() {
           <div style={panel}>
             <div style={{ ...panelHeader, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><UserPlus size={11} /> Equipe do Projeto</span>
-              <button onClick={() => setAddMembroOpen(v => !v)}
-                style={{ background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
-                <Plus size={9} /> Add
-              </button>
+              {nivelRank >= 2 && (
+                <button onClick={() => setAddMembroOpen(v => !v)}
+                  style={{ background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <Plus size={9} /> Add
+                </button>
+              )}
             </div>
             {addMembroOpen && membrosEscritorio.length > 0 && (
               <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(0,0,0,0.06)', background: '#fafafa', display: 'flex', flexDirection: 'column', gap: 7 }}>

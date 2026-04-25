@@ -10,29 +10,44 @@ import {
 import { createClient } from '@/lib/supabase'
 import TrialGate from '@/components/shared/TrialGate'
 
+// Rank: higher = more privileged
+const NIVEL_RANK: Record<string, number> = {
+  estagiario: 0, junior: 1, pleno: 2, senior: 3, admin: 4, owner: 5,
+}
+const NIVEL_BADGE: Record<string, { label: string; bg: string; color: string }> = {
+  owner:      { label: 'Owner',      bg: 'rgba(139,92,246,0.12)',  color: '#7c3aed' },
+  admin:      { label: 'Admin',      bg: 'rgba(0,64,180,0.1)',     color: '#003fa3' },
+  senior:     { label: 'Sênior',     bg: 'rgba(0,122,255,0.1)',    color: '#007AFF' },
+  pleno:      { label: 'Pleno',      bg: 'rgba(52,211,153,0.12)',  color: '#059669' },
+  junior:     { label: 'Júnior',     bg: 'rgba(249,115,22,0.1)',   color: '#ea580c' },
+  estagiario: { label: 'Estagiário', bg: 'rgba(107,107,107,0.1)',  color: '#6b6b6b' },
+}
+function rank(n: string) { return NIVEL_RANK[n] ?? 5 }
+
+// minRank = minimum rank to see. maxRank = maximum rank to see.
 const BASE_NAV = [
   { label: 'Dashboard',    href: '/arquiteto/dashboard',   icon: LayoutDashboard },
   { label: 'Projetos',     href: '/arquiteto/projetos',    icon: FolderOpen },
-  { label: 'Clientes',     href: '/arquiteto/clientes',    icon: Users,       ownerOnly: true },
-  { label: 'Equipe',       href: '/arquiteto/equipe',      icon: UsersRound,  ownerOnly: true },
+  { label: 'Clientes',     href: '/arquiteto/clientes',    icon: Users,       minRank: 2 }, // pleno+
+  { label: 'Equipe',       href: '/arquiteto/equipe',      icon: UsersRound,  minRank: 4 }, // admin+
   { label: 'Calendário',   href: '/arquiteto/calendario',  icon: Calendar },
-  { label: 'Fornecedores', href: '/arquiteto/fornecedores',icon: Package,     ownerOnly: true },
+  { label: 'Fornecedores', href: '/arquiteto/fornecedores',icon: Package,     minRank: 2 }, // pleno+
   { label: 'Mensagens',    href: '/arquiteto/mensagens',   icon: MessageCircle },
-  { label: 'Orçamentos',   href: '/arquiteto/orcamentos',  icon: FileText,    ownerOnly: true },
-  { label: 'Meu Perfil',   href: '/arquiteto/perfil',      icon: UserCircle,  ownerOnly: true },
-  { label: 'Planos',       href: '/arquiteto/planos',      icon: CreditCard,  ownerOnly: true },
-  { label: 'Minha Conta',  href: '/arquiteto/conta',       icon: UserCog,     operacionalOnly: true },
+  { label: 'Orçamentos',   href: '/arquiteto/orcamentos',  icon: FileText,    minRank: 2 }, // pleno+
+  { label: 'Meu Perfil',   href: '/arquiteto/perfil',      icon: UserCircle,  minRank: 3 }, // senior+
+  { label: 'Planos',       href: '/arquiteto/planos',      icon: CreditCard,  minRank: 5 }, // owner only
+  { label: 'Minha Conta',  href: '/arquiteto/conta',       icon: UserCog,     maxRank: 2 }, // pleno and below
 ]
 
 function ArquitetoSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const [userName, setUserName]       = useState('Arquiteto')
+  const [userName, setUserName]         = useState('Arquiteto')
   const [userInitials, setUserInitials] = useState('A')
-  const [avatarUrl, setAvatarUrl]     = useState<string | null>(null)
-  const [unreadMsgs, setUnreadMsgs]   = useState(0)
+  const [avatarUrl, setAvatarUrl]       = useState<string | null>(null)
+  const [unreadMsgs, setUnreadMsgs]     = useState(0)
   const [nivelPermissao, setNivelPermissao] = useState<string>('owner')
-  const [cargoLabel, setCargoLabel]   = useState('Arquiteto')
+  const [cargoLabel, setCargoLabel]     = useState('Arquiteto')
   const [escritorioNome, setEscritorioNome] = useState<string | null>(null)
 
   useEffect(() => {
@@ -51,10 +66,11 @@ function ArquitetoSidebar() {
 
       const nivel = userData?.nivel_permissao ?? 'owner'
       setNivelPermissao(nivel)
-      setCargoLabel(userData?.cargo || (nivel === 'owner' ? 'Arquiteto' : nivel.charAt(0).toUpperCase() + nivel.slice(1)))
+      setCargoLabel(userData?.cargo || (nivel === 'owner' ? 'Arquiteto' : (NIVEL_BADGE[nivel]?.label ?? nivel)))
 
-      if (nivel === 'operacional') {
-        // Operacional: own avatar + load the studio name they're linked to
+      const userRank = rank(nivel)
+      if (userRank < 3) {
+        // pleno/junior/estagiario: own avatar + studio name
         if (userData?.avatar_url) setAvatarUrl(userData.avatar_url)
         if (userData?.escritorio_vinculado_id) {
           const { data: escData } = await supabase
@@ -62,13 +78,11 @@ function ArquitetoSidebar() {
           if (escData?.nome) setEscritorioNome(escData.nome)
         }
       } else {
-        // Owner/admin/pleno: studio cover photo takes precedence
+        // senior+ / owner: studio cover photo takes precedence
         const avatar = escOwnerData?.image_url || userData?.avatar_url || null
         if (avatar) setAvatarUrl(avatar)
       }
 
-      // Unread messages — use the correct arquiteto_id
-      // For team members, the conversas are still linked to the owner's id; show unread only for owner
       const { data: convs } = await supabase.from('conversas').select('id').eq('arquiteto_id', data.user.id)
       const ids = convs?.map((c: { id: string }) => c.id) ?? []
       if (ids.length > 0) {
@@ -90,11 +104,11 @@ function ArquitetoSidebar() {
     router.refresh()
   }
 
-  const isOperacional = nivelPermissao === 'operacional'
-  const canSeeOwnerItems = !isOperacional
+  const userRank = rank(nivelPermissao)
+  const badge = NIVEL_BADGE[nivelPermissao]
   const navItems = BASE_NAV.filter(item => {
-    if (item.ownerOnly && !canSeeOwnerItems) return false
-    if (item.operacionalOnly && !isOperacional) return false
+    if (item.minRank !== undefined && userRank < item.minRank) return false
+    if (item.maxRank !== undefined && userRank > item.maxRank) return false
     return true
   })
 
@@ -145,9 +159,11 @@ function ArquitetoSidebar() {
           <div style={{ fontSize: 13, fontWeight: 400, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {userName}
           </div>
-          {isOperacional && escritorioNome ? (
-            <div style={{ fontSize: 10, color: '#007AFF', marginTop: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
-              <span style={{ background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.2)', borderRadius: 4, padding: '1px 5px', fontWeight: 600, letterSpacing: '0.04em' }}>Operacional</span>
+          {badge && userRank < 3 && escritorioNome ? (
+            <div style={{ fontSize: 10, marginTop: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
+              <span style={{ background: badge.bg, border: `1px solid ${badge.color}33`, borderRadius: 4, padding: '1px 5px', fontWeight: 700, color: badge.color, letterSpacing: '0.04em' }}>
+                {badge.label}
+              </span>
               <span style={{ color: '#8e8e93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>· {escritorioNome}</span>
             </div>
           ) : (

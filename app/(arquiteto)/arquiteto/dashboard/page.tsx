@@ -104,7 +104,7 @@ export default function ArquitetoDashboardPage() {
   const [userName, setUserName] = useState('Arquiteto')
   const [userEmail, setUserEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
-  const [isOperacional, setIsOperacional] = useState(false)
+  const [nivelRank, setNivelRank] = useState(5) // default owner
 
   const [realProjects, setRealProjects] = useState<Project[]>([])
   const [leads, setLeads] = useState<Lead[]>([])
@@ -133,15 +133,18 @@ export default function ArquitetoDashboardPage() {
       const { data: userData } = await supabase.from('users').select('role, nivel_permissao').eq('id', user.id).maybeSingle()
       if (userData?.role === 'admin' || user.user_metadata?.role === 'admin') setIsAdmin(true)
 
+      const NIVEL_RANK: Record<string, number> = { estagiario: 0, junior: 1, pleno: 2, senior: 3, admin: 4, owner: 5 }
       const nivel = userData?.nivel_permissao ?? 'owner'
-      const operacional = nivel === 'operacional'
-      setIsOperacional(operacional)
+      const r = NIVEL_RANK[nivel] ?? 5
+      setNivelRank(r)
 
-      if (operacional) {
-        // Load only projects where this user is a member
+      // junior/estagiario (rank < 2): only assigned projects
+      // pleno (rank === 2): assigned + own projects (no leads, simplified metrics)
+      // senior+ (rank >= 3): all studio projects
+      if (r < 2) {
         const { data: memberRows } = await supabase
           .from('projeto_membros').select('projeto_id').eq('user_id', user.id)
-        const projIds = (memberRows ?? []).map((r: { projeto_id: string }) => r.projeto_id)
+        const projIds = (memberRows ?? []).map((row: { projeto_id: string }) => row.projeto_id)
         if (projIds.length > 0) {
           const { data: projs } = await supabase
             .from('projetos').select('*').in('id', projIds).order('created_at', { ascending: false })
@@ -160,6 +163,39 @@ export default function ArquitetoDashboardPage() {
               created_at: p.created_at, metragem: p.metragem ?? null, cover_url: p.cover_url ?? null,
             })))
           }
+        }
+        setLoadingProjects(false)
+        return
+      }
+
+      if (r === 2) {
+        // pleno: load member rows + owned projects via escritorio
+        const { data: memberRows } = await supabase
+          .from('projeto_membros').select('projeto_id').eq('user_id', user.id)
+        const assignedIds = new Set((memberRows ?? []).map((row: { projeto_id: string }) => row.projeto_id))
+
+        const { data: escData } = await supabase
+          .from('escritorios').select('id').eq('user_id', user.id).maybeSingle()
+        let projs: Record<string, unknown>[] = []
+        if (escData) {
+          const { data: allProjs } = await supabase
+            .from('projetos').select('*').eq('escritorio_id', escData.id).order('created_at', { ascending: false })
+          projs = (allProjs ?? []).filter(p => assignedIds.has(p.id as string))
+        }
+        if (projs.length > 0) {
+          const clientIds = Array.from(new Set(projs.filter((p) => p.cliente_id).map((p) => p.cliente_id as string)))
+          const { data: clientsData } = clientIds.length > 0
+            ? await supabase.from('users').select('id, nome').in('id', clientIds)
+            : { data: [] }
+          const clientMap: Record<string, string> = {}
+          for (const c of (clientsData ?? [])) clientMap[(c as { id: string; nome: string }).id] = (c as { id: string; nome: string }).nome
+          setRealProjects(projs.map((p) => ({
+            id: p.id as string, name: p.nome as string,
+            cliente_nome: p.cliente_id ? (clientMap[p.cliente_id as string] ?? null) : null,
+            stageIndex: ETAPA_TO_STAGE[p.etapa_atual as string] ?? 0,
+            type: TIPO_LABEL[p.tipo as string] ?? 'Residencial',
+            created_at: p.created_at as string, metragem: (p.metragem as number) ?? null, cover_url: (p.cover_url as string) ?? null,
+          })))
         }
         setLoadingProjects(false)
         return
@@ -400,7 +436,7 @@ export default function ArquitetoDashboardPage() {
       <div style={{ padding: '28px 32px' }}>
 
         {/* ─── Stats Cards — hidden for operacional ─── */}
-        {!isOperacional && <div className="stats-grid">
+        {nivelRank >= 3 && <div className="stats-grid">
           {statsData.map((stat) => {
             const Icon = stat.icon
             return (
@@ -430,7 +466,7 @@ export default function ArquitetoDashboardPage() {
         </div>}
 
         {/* ─── Two-column layout ─── */}
-        <div style={{ display: 'grid', gridTemplateColumns: isOperacional ? '1fr' : '1fr 296px', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: nivelRank < 3 ? '1fr' : '1fr 296px', gap: 20 }}>
 
           {/* Left column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
@@ -456,15 +492,15 @@ export default function ArquitetoDashboardPage() {
               <div style={sectionHeader}>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>
-                    {isOperacional ? 'Meus Projetos' : 'Pipeline de Projetos'}
+                    {nivelRank < 3 ? 'Meus Projetos' : 'Pipeline de Projetos'}
                   </div>
-                  {!isOperacional && (
+                  {nivelRank >= 3 && (
                     <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 3 }}>
                       Atendimento · Reunião · Briefing · 3D · Alt. 3D · Detalhamento · Orçamento · Execução
                     </div>
                   )}
                 </div>
-                {!isOperacional && (
+                {nivelRank >= 3 && (
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button style={blueButton}>Ver todos</button>
                     <button onClick={() => setNovoOpen(true)} style={{
@@ -486,14 +522,14 @@ export default function ArquitetoDashboardPage() {
                   <div style={{ textAlign: 'center', padding: '48px 0' }}>
                     <FolderOpen size={40} color="#8e8e93" style={{ marginBottom: 14 }} />
                     <div style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 6 }}>
-                      {isOperacional ? 'Nenhum projeto atribuído' : 'Nenhum projeto ainda'}
+                      {nivelRank < 3 ? 'Nenhum projeto atribuído' : 'Nenhum projeto ainda'}
                     </div>
                     <div style={{ fontSize: 12, color: '#8e8e93', marginBottom: 18 }}>
-                      {isOperacional
+                      {nivelRank < 3
                         ? 'Você aparecerá aqui quando for adicionado a um projeto'
                         : 'Crie seu primeiro projeto para começar'}
                     </div>
-                    {!isOperacional && (
+                    {nivelRank >= 3 && (
                       <button onClick={() => setNovoOpen(true)} style={{
                         display: 'inline-flex', alignItems: 'center', gap: 7,
                         padding: '10px 18px', borderRadius: 10, cursor: 'pointer',
@@ -576,7 +612,7 @@ export default function ArquitetoDashboardPage() {
             </div>
 
             {/* ── Leads table — hidden for operacional ── */}
-            {!isOperacional && <div style={card}>
+            {nivelRank >= 3 && <div style={card}>
               <div style={sectionHeader}>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Leads Recentes</div>
@@ -636,7 +672,7 @@ export default function ArquitetoDashboardPage() {
           </div>
 
           {/* ─── Right column — Agenda — hidden for operacional ─── */}
-          {!isOperacional && <div>
+          {nivelRank >= 3 && <div>
             <div style={{ ...card, position: 'sticky', top: 90, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
               <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Agenda do Dia</div>
