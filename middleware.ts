@@ -13,8 +13,14 @@ const PROTECTED_PATHS = [
   '/fornecedor/pedidos',
 ]
 
+interface UserInfo {
+  role: string | null
+  tipo: string
+  nivel_permissao: string | null
+}
+
 // Queries public.users directly with service role — bypasses RLS entirely
-async function getRoleFromDB(userId: string): Promise<string | null> {
+async function getUserInfoFromDB(userId: string): Promise<UserInfo | null> {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return null
   try {
     const { data } = await createClient(
@@ -23,10 +29,15 @@ async function getRoleFromDB(userId: string): Promise<string | null> {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
       .from('users')
-      .select('role')
+      .select('role, tipo, nivel_permissao')
       .eq('id', userId)
       .single()
-    return data?.role ?? null
+    if (!data) return null
+    return {
+      role: data.role ?? null,
+      tipo: data.tipo ?? 'cliente',
+      nivel_permissao: data.nivel_permissao ?? null,
+    }
   } catch {
     return null
   }
@@ -83,9 +94,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── 2. Has session: check role FIRST from public.users (service role) ─────
-  const role = await getRoleFromDB(session.user.id)
+  const dbInfo = await getUserInfoFromDB(session.user.id)
 
-  if (role === 'admin') {
+  if (dbInfo?.role === 'admin') {
     // Admin accessing /admin → allow
     if (isAdminPath) return response
     // Admin on protected routes or auth pages → send to /admin
@@ -101,7 +112,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  const userTipo = session.user.user_metadata?.tipo ?? 'cliente'
+  // DB tipo is authoritative; fall back to metadata only when DB row not yet created
+  const userTipo = dbInfo?.tipo ?? session.user.user_metadata?.tipo ?? 'cliente'
 
   if (isAuthPage) {
     const home = userTipo === 'cliente'
@@ -124,6 +136,12 @@ export async function middleware(request: NextRequest) {
         fornecedor: '/fornecedor/dashboard',
       }
       return NextResponse.redirect(new URL(homeMap[userTipo] ?? '/login', request.url))
+    }
+
+    // ── 5. Operacional route blocking ────────────────────────────────────────
+    const OPERACIONAL_BLOCKED = ['/arquiteto/equipe', '/arquiteto/perfil', '/arquiteto/planos']
+    if (dbInfo?.nivel_permissao === 'operacional' && OPERACIONAL_BLOCKED.some(p => pathname === p || pathname.startsWith(p + '/'))) {
+      return NextResponse.redirect(new URL('/arquiteto/dashboard', request.url))
     }
   }
 

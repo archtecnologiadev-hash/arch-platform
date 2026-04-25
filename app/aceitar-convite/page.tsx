@@ -67,7 +67,7 @@ function AceitarConviteContent() {
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email: convite.email,
       password: form.senha,
-      options: { data: { nome: convite.nome } },
+      options: { data: { nome: convite.nome, tipo: 'arquiteto' } },
     })
 
     if (signUpError) {
@@ -84,6 +84,7 @@ function AceitarConviteContent() {
       id: authData.user.id,
       nome: convite.nome,
       email: convite.email,
+      tipo: 'arquiteto',
       cargo: convite.cargo,
       escritorio_vinculado_id: convite.escritorio_id,
       nivel_permissao: convite.nivel_permissao,

@@ -104,6 +104,7 @@ export default function ArquitetoDashboardPage() {
   const [userName, setUserName] = useState('Arquiteto')
   const [userEmail, setUserEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isOperacional, setIsOperacional] = useState(false)
 
   const [realProjects, setRealProjects] = useState<Project[]>([])
   const [leads, setLeads] = useState<Lead[]>([])
@@ -129,11 +130,39 @@ export default function ArquitetoDashboardPage() {
       setUserName(nome)
       setUserEmail(user.email ?? '')
 
-      if (user.user_metadata?.role === 'admin') {
-        setIsAdmin(true)
-      } else {
-        const { data: userData } = await supabase.from('users').select('role').eq('id', user.id).single()
-        if (userData?.role === 'admin') setIsAdmin(true)
+      const { data: userData } = await supabase.from('users').select('role, nivel_permissao').eq('id', user.id).maybeSingle()
+      if (userData?.role === 'admin' || user.user_metadata?.role === 'admin') setIsAdmin(true)
+
+      const nivel = userData?.nivel_permissao ?? 'owner'
+      const operacional = nivel === 'operacional'
+      setIsOperacional(operacional)
+
+      if (operacional) {
+        // Load only projects where this user is a member
+        const { data: memberRows } = await supabase
+          .from('projeto_membros').select('projeto_id').eq('user_id', user.id)
+        const projIds = (memberRows ?? []).map((r: { projeto_id: string }) => r.projeto_id)
+        if (projIds.length > 0) {
+          const { data: projs } = await supabase
+            .from('projetos').select('*').in('id', projIds).order('created_at', { ascending: false })
+          if (projs) {
+            const clientIds = Array.from(new Set(projs.filter((p) => p.cliente_id).map((p) => p.cliente_id as string)))
+            const { data: clientsData } = clientIds.length > 0
+              ? await supabase.from('users').select('id, nome').in('id', clientIds)
+              : { data: [] }
+            const clientMap: Record<string, string> = {}
+            for (const c of (clientsData ?? [])) clientMap[(c as { id: string; nome: string }).id] = (c as { id: string; nome: string }).nome
+            setRealProjects(projs.map((p) => ({
+              id: p.id, name: p.nome,
+              cliente_nome: p.cliente_id ? (clientMap[p.cliente_id] ?? null) : null,
+              stageIndex: ETAPA_TO_STAGE[p.etapa_atual] ?? 0,
+              type: TIPO_LABEL[p.tipo] ?? 'Residencial',
+              created_at: p.created_at, metragem: p.metragem ?? null, cover_url: p.cover_url ?? null,
+            })))
+          }
+        }
+        setLoadingProjects(false)
+        return
       }
 
       const { data: escritorio } = await supabase
@@ -370,8 +399,8 @@ export default function ArquitetoDashboardPage() {
       {/* ═══════════════════════════ CONTENT ═══════════════════════════ */}
       <div style={{ padding: '28px 32px' }}>
 
-        {/* ─── Stats Cards ─── */}
-        <div className="stats-grid">
+        {/* ─── Stats Cards — hidden for operacional ─── */}
+        {!isOperacional && <div className="stats-grid">
           {statsData.map((stat) => {
             const Icon = stat.icon
             return (
@@ -398,10 +427,10 @@ export default function ArquitetoDashboardPage() {
               </div>
             )
           })}
-        </div>
+        </div>}
 
         {/* ─── Two-column layout ─── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 296px', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isOperacional ? '1fr' : '1fr 296px', gap: 20 }}>
 
           {/* Left column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
@@ -426,20 +455,26 @@ export default function ArquitetoDashboardPage() {
 
               <div style={sectionHeader}>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Pipeline de Projetos</div>
-                  <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 3 }}>
-                    Atendimento · Reunião · Briefing · 3D · Alt. 3D · Detalhamento · Orçamento · Execução
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>
+                    {isOperacional ? 'Meus Projetos' : 'Pipeline de Projetos'}
                   </div>
+                  {!isOperacional && (
+                    <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 3 }}>
+                      Atendimento · Reunião · Briefing · 3D · Alt. 3D · Detalhamento · Orçamento · Execução
+                    </div>
+                  )}
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button style={blueButton}>Ver todos</button>
-                  <button onClick={() => setNovoOpen(true)} style={{
-                    ...blueButton, background: 'rgba(0,122,255,0.1)',
-                    display: 'flex', alignItems: 'center', gap: 5,
-                  }}>
-                    <Plus size={12} /> Novo Projeto
-                  </button>
-                </div>
+                {!isOperacional && (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button style={blueButton}>Ver todos</button>
+                    <button onClick={() => setNovoOpen(true)} style={{
+                      ...blueButton, background: 'rgba(0,122,255,0.1)',
+                      display: 'flex', alignItems: 'center', gap: 5,
+                    }}>
+                      <Plus size={12} /> Novo Projeto
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div style={{ padding: 20 }}>
@@ -450,18 +485,24 @@ export default function ArquitetoDashboardPage() {
                 ) : realProjects.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '48px 0' }}>
                     <FolderOpen size={40} color="#8e8e93" style={{ marginBottom: 14 }} />
-                    <div style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 6 }}>Nenhum projeto ainda</div>
-                    <div style={{ fontSize: 12, color: '#8e8e93', marginBottom: 18 }}>
-                      Crie seu primeiro projeto para começar
+                    <div style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 6 }}>
+                      {isOperacional ? 'Nenhum projeto atribuído' : 'Nenhum projeto ainda'}
                     </div>
-                    <button onClick={() => setNovoOpen(true)} style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 7,
-                      padding: '10px 18px', borderRadius: 10, cursor: 'pointer',
-                      background: '#007AFF', color: '#ffffff', border: 'none',
-                      fontSize: 13, fontWeight: 400,
-                    }}>
-                      <Plus size={14} /> Criar primeiro projeto
-                    </button>
+                    <div style={{ fontSize: 12, color: '#8e8e93', marginBottom: 18 }}>
+                      {isOperacional
+                        ? 'Você aparecerá aqui quando for adicionado a um projeto'
+                        : 'Crie seu primeiro projeto para começar'}
+                    </div>
+                    {!isOperacional && (
+                      <button onClick={() => setNovoOpen(true)} style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 7,
+                        padding: '10px 18px', borderRadius: 10, cursor: 'pointer',
+                        background: '#007AFF', color: '#ffffff', border: 'none',
+                        fontSize: 13, fontWeight: 400,
+                      }}>
+                        <Plus size={14} /> Criar primeiro projeto
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="proj-grid">
@@ -534,8 +575,8 @@ export default function ArquitetoDashboardPage() {
               </div>
             </div>
 
-            {/* ── Leads table ── */}
-            <div style={card}>
+            {/* ── Leads table — hidden for operacional ── */}
+            {!isOperacional && <div style={card}>
               <div style={sectionHeader}>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Leads Recentes</div>
@@ -591,11 +632,11 @@ export default function ArquitetoDashboardPage() {
                   </table>
                 </div>
               )}
-            </div>
+            </div>}
           </div>
 
-          {/* ─── Right column — Agenda ─── */}
-          <div>
+          {/* ─── Right column — Agenda — hidden for operacional ─── */}
+          {!isOperacional && <div>
             <div style={{ ...card, position: 'sticky', top: 90, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
               <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Agenda do Dia</div>
@@ -624,7 +665,7 @@ export default function ArquitetoDashboardPage() {
                 </Link>
               </div>
             </div>
-          </div>
+          </div>}
         </div>
       </div>
 

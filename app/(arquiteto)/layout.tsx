@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, FolderOpen, Users, Calendar, Package,
-  FileText, UserCircle, LogOut, MessageCircle, UsersRound, CreditCard,
+  FileText, UserCircle, LogOut, MessageCircle, UsersRound, CreditCard, UserCog,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import TrialGate from '@/components/shared/TrialGate'
@@ -13,14 +13,15 @@ import TrialGate from '@/components/shared/TrialGate'
 const BASE_NAV = [
   { label: 'Dashboard',    href: '/arquiteto/dashboard',   icon: LayoutDashboard },
   { label: 'Projetos',     href: '/arquiteto/projetos',    icon: FolderOpen },
-  { label: 'Clientes',     href: '/arquiteto/clientes',    icon: Users },
-  { label: 'Equipe',       href: '/arquiteto/equipe',      icon: UsersRound, ownerOnly: true },
+  { label: 'Clientes',     href: '/arquiteto/clientes',    icon: Users,       ownerOnly: true },
+  { label: 'Equipe',       href: '/arquiteto/equipe',      icon: UsersRound,  ownerOnly: true },
   { label: 'Calendário',   href: '/arquiteto/calendario',  icon: Calendar },
-  { label: 'Fornecedores', href: '/arquiteto/fornecedores',icon: Package },
+  { label: 'Fornecedores', href: '/arquiteto/fornecedores',icon: Package,     ownerOnly: true },
   { label: 'Mensagens',    href: '/arquiteto/mensagens',   icon: MessageCircle },
-  { label: 'Orçamentos',   href: '/arquiteto/orcamentos',  icon: FileText },
-  { label: 'Meu Perfil',   href: '/arquiteto/perfil',      icon: UserCircle },
-  { label: 'Planos',       href: '/arquiteto/planos',      icon: CreditCard },
+  { label: 'Orçamentos',   href: '/arquiteto/orcamentos',  icon: FileText,    ownerOnly: true },
+  { label: 'Meu Perfil',   href: '/arquiteto/perfil',      icon: UserCircle,  ownerOnly: true },
+  { label: 'Planos',       href: '/arquiteto/planos',      icon: CreditCard,  ownerOnly: true },
+  { label: 'Minha Conta',  href: '/arquiteto/conta',       icon: UserCog,     operacionalOnly: true },
 ]
 
 function ArquitetoSidebar() {
@@ -32,29 +33,39 @@ function ArquitetoSidebar() {
   const [unreadMsgs, setUnreadMsgs]   = useState(0)
   const [nivelPermissao, setNivelPermissao] = useState<string>('owner')
   const [cargoLabel, setCargoLabel]   = useState('Arquiteto')
+  const [escritorioNome, setEscritorioNome] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return
 
-      const [{ data: userData }, { data: escData }] = await Promise.all([
+      const [{ data: userData }, { data: escOwnerData }] = await Promise.all([
         supabase.from('users').select('nome, nivel_permissao, cargo, avatar_url, escritorio_vinculado_id').eq('id', data.user.id).maybeSingle(),
-        supabase.from('escritorios').select('image_url').eq('user_id', data.user.id).maybeSingle(),
+        supabase.from('escritorios').select('image_url, nome').eq('user_id', data.user.id).maybeSingle(),
       ])
 
       const nome = userData?.nome?.trim() || data.user.user_metadata?.nome || data.user.email?.split('@')[0] || 'Arquiteto'
       setUserName(nome)
       setUserInitials(nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase())
 
-      // Avatar: escritório photo for owner, or user's own avatar for members
-      const avatar = escData?.image_url || userData?.avatar_url || null
-      if (avatar) setAvatarUrl(avatar)
-
-      // Determine permission level
       const nivel = userData?.nivel_permissao ?? 'owner'
       setNivelPermissao(nivel)
       setCargoLabel(userData?.cargo || (nivel === 'owner' ? 'Arquiteto' : nivel.charAt(0).toUpperCase() + nivel.slice(1)))
+
+      if (nivel === 'operacional') {
+        // Operacional: own avatar + load the studio name they're linked to
+        if (userData?.avatar_url) setAvatarUrl(userData.avatar_url)
+        if (userData?.escritorio_vinculado_id) {
+          const { data: escData } = await supabase
+            .from('escritorios').select('nome').eq('id', userData.escritorio_vinculado_id).maybeSingle()
+          if (escData?.nome) setEscritorioNome(escData.nome)
+        }
+      } else {
+        // Owner/admin/pleno: studio cover photo takes precedence
+        const avatar = escOwnerData?.image_url || userData?.avatar_url || null
+        if (avatar) setAvatarUrl(avatar)
+      }
 
       // Unread messages — use the correct arquiteto_id
       // For team members, the conversas are still linked to the owner's id; show unread only for owner
@@ -79,8 +90,13 @@ function ArquitetoSidebar() {
     router.refresh()
   }
 
-  const canSeeEquipe = nivelPermissao === 'owner' || nivelPermissao === 'admin'
-  const navItems = BASE_NAV.filter(item => !item.ownerOnly || canSeeEquipe)
+  const isOperacional = nivelPermissao === 'operacional'
+  const canSeeOwnerItems = !isOperacional
+  const navItems = BASE_NAV.filter(item => {
+    if (item.ownerOnly && !canSeeOwnerItems) return false
+    if (item.operacionalOnly && !isOperacional) return false
+    return true
+  })
 
   return (
     <aside style={{
@@ -129,7 +145,14 @@ function ArquitetoSidebar() {
           <div style={{ fontSize: 13, fontWeight: 400, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {userName}
           </div>
-          <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 1 }}>{cargoLabel}</div>
+          {isOperacional && escritorioNome ? (
+            <div style={{ fontSize: 10, color: '#007AFF', marginTop: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
+              <span style={{ background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.2)', borderRadius: 4, padding: '1px 5px', fontWeight: 600, letterSpacing: '0.04em' }}>Operacional</span>
+              <span style={{ color: '#8e8e93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>· {escritorioNome}</span>
+            </div>
+          ) : (
+            <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 1 }}>{cargoLabel}</div>
+          )}
         </div>
         <button onClick={handleLogout} title="Sair" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c7c7cc', padding: 4, display: 'flex', alignItems: 'center', transition: 'color 0.15s', flexShrink: 0 }}
           onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#ff3b30')}
