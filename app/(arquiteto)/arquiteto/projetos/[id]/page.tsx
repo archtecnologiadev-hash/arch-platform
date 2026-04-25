@@ -75,6 +75,7 @@ interface ProjetoMembro {
   id: string
   user_id: string
   papel: string | null
+  etapa?: string | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   users: any
 }
@@ -215,6 +216,7 @@ export default function ProjetoDetailPage() {
   const [addMembroId, setAddMembroId] = useState('')
   const [addMembroPapel, setAddMembroPapel] = useState('')
   const [addMembroSaving, setAddMembroSaving] = useState(false)
+  const [stageAssignOpen, setStageAssignOpen] = useState<number | null>(null)
 
   const [dirFilter, setDirFilter] = useState('Todos')
   const [dirQuoteTarget, setDirQuoteTarget] = useState<DirSupplier | null>(null)
@@ -320,7 +322,7 @@ export default function ProjetoDetailPage() {
       // Load projeto_membros and available escritório members
       const { data: pmData } = await supabase
         .from('projeto_membros')
-        .select('id, user_id, papel, users(nome, cargo, nivel_permissao)')
+        .select('id, user_id, papel, etapa, users(nome, cargo, nivel_permissao)')
         .eq('projeto_id', projectId)
       if (pmData) setProjetoMembros(pmData as ProjetoMembro[])
 
@@ -343,16 +345,39 @@ export default function ProjetoDetailPage() {
     const supabase = createClient()
     const { data } = await supabase.from('projeto_membros').insert({
       projeto_id: projectId, user_id: addMembroId, papel: addMembroPapel || null,
-    }).select('id, user_id, papel, users(nome, cargo, nivel_permissao)').single()
-    if (data) setProjetoMembros(prev => [...prev, data as ProjetoMembro])
+    }).select('id, user_id, papel, etapa, users(nome, cargo, nivel_permissao)').single()
+    if (data) {
+      setProjetoMembros(prev => [...prev, data as ProjetoMembro])
+      await logHistorico('Membro adicionado', (data as ProjetoMembro).users?.nome ?? addMembroId)
+    }
     setAddMembroOpen(false); setAddMembroId(''); setAddMembroPapel('')
     setAddMembroSaving(false)
   }
 
   async function handleRemoveMembro(id: string) {
+    const nome = projetoMembros.find(m => m.id === id)?.users?.nome ?? id
     const supabase = createClient()
     await supabase.from('projeto_membros').delete().eq('id', id)
     setProjetoMembros(prev => prev.filter(m => m.id !== id))
+    await logHistorico('Membro removido', nome)
+  }
+
+  async function handleAssignStage(stageIdx: number, userId: string) {
+    const supabase = createClient()
+    const stageName = STAGES[stageIdx]
+    const current = projetoMembros.find(m => m.etapa === stageName)
+    if (current) {
+      await supabase.from('projeto_membros').update({ etapa: null }).eq('id', current.id)
+      setProjetoMembros(prev => prev.map(m => m.id === current.id ? { ...m, etapa: null } : m))
+    }
+    if (userId) {
+      const member = projetoMembros.find(m => m.user_id === userId)
+      if (member) {
+        await supabase.from('projeto_membros').update({ etapa: stageName }).eq('id', member.id)
+        setProjetoMembros(prev => prev.map(m => m.id === member.id ? { ...m, etapa: stageName } : m))
+      }
+    }
+    setStageAssignOpen(null)
   }
 
   async function handleEventEdit(ev: CalendarioEvent) {
@@ -718,13 +743,42 @@ export default function ProjetoDetailPage() {
           {STAGES.map((stage, i) => {
             const done = i < stageIndex
             const current = i === stageIndex
+            const stageAssignee = projetoMembros.find(m => m.etapa === stage)
+            const stageInitials = stageAssignee
+              ? (stageAssignee.users?.nome ?? '?').split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase()
+              : null
             return (
               <div key={stage} style={{ display: 'flex', alignItems: 'center', flex: i < STAGES.length - 1 ? '1 1 0' : '0 0 auto', minWidth: 0 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-                  <div className={current ? 'stage-pulse' : ''} style={{ width: 26, height: 26, borderRadius: '50%', background: done ? '#007AFF' : current ? 'rgba(0,122,255,0.12)' : '#f2f2f7', border: `2px solid ${done ? '#007AFF' : current ? '#007AFF' : 'rgba(0,0,0,0.12)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+                  <div className={current ? 'stage-pulse' : ''} style={{ position: 'relative', width: 26, height: 26, borderRadius: '50%', background: done ? '#007AFF' : current ? 'rgba(0,122,255,0.12)' : '#f2f2f7', border: `2px solid ${done ? '#007AFF' : current ? '#007AFF' : 'rgba(0,0,0,0.12)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
                     {done ? <Check size={12} color="#fff" strokeWidth={3} /> : current ? <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#007AFF' }} /> : <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(0,0,0,0.2)' }} />}
+                    {stageInitials && (
+                      <div title={`Responsável: ${stageAssignee?.users?.nome}`} style={{ position: 'absolute', bottom: -3, right: -5, width: 14, height: 14, borderRadius: '50%', background: '#007AFF', border: '1.5px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 5.5, fontWeight: 800, color: '#fff', zIndex: 1 }}>
+                        {stageInitials}
+                      </div>
+                    )}
                   </div>
-                  <div style={{ fontSize: 9.5, fontWeight: current ? 700 : 400, color: done ? '#007AFF' : current ? '#1a1a1a' : '#8e8e93', whiteSpace: 'nowrap', letterSpacing: '0.02em' }}>{stage}</div>
+                  <div
+                    onClick={() => projetoMembros.length > 0 && setStageAssignOpen(v => v === i ? null : i)}
+                    style={{ fontSize: 9.5, fontWeight: current ? 700 : 400, color: done ? '#007AFF' : current ? '#1a1a1a' : '#8e8e93', whiteSpace: 'nowrap', letterSpacing: '0.02em', cursor: projetoMembros.length > 0 ? 'pointer' : 'default' }}>
+                    {stage}
+                  </div>
+                  {stageAssignOpen === i && (
+                    <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 6, background: '#fff', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', zIndex: 100, minWidth: 150, padding: '4px 0' }}
+                      onClick={e => e.stopPropagation()}>
+                      <div style={{ fontSize: 9.5, color: '#8e8e93', padding: '4px 10px 6px', fontWeight: 600, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>Responsável · {stage}</div>
+                      {stageAssignee && (
+                        <button onClick={() => handleAssignStage(i, '')} style={{ width: '100%', padding: '5px 10px', background: 'none', border: 'none', fontSize: 11, color: '#ef4444', cursor: 'pointer', textAlign: 'left' as const }}>
+                          ✕ Remover
+                        </button>
+                      )}
+                      {projetoMembros.map(m => (
+                        <button key={m.id} onClick={() => handleAssignStage(i, m.user_id)} style={{ width: '100%', padding: '6px 10px', background: m.etapa === stage ? 'rgba(0,122,255,0.06)' : 'none', border: 'none', fontSize: 11.5, color: m.etapa === stage ? '#007AFF' : '#1a1a1a', cursor: 'pointer', textAlign: 'left' as const, fontWeight: m.etapa === stage ? 600 : 400 }}>
+                          {m.users?.nome ?? '?'}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {i < STAGES.length - 1 && <div style={{ flex: 1, height: 2, marginBottom: 18, background: done ? '#007AFF' : 'rgba(0,0,0,0.08)', minWidth: 6 }} />}
               </div>
@@ -1454,6 +1508,10 @@ export default function ProjetoDetailPage() {
           </div>
         </div>
       </div>
+
+      {stageAssignOpen !== null && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setStageAssignOpen(null)} />
+      )}
 
       {/* ══ MODAL: Editar Projeto ══ */}
       {editOpen && (

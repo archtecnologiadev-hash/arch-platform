@@ -43,6 +43,7 @@ export default function ProjetosPage() {
   const router = useRouter()
   const planInfo = usePlan()
   const [projetos, setProjetos] = useState<Projeto[]>([])
+  const [projetoMembrosMap, setProjetoMembrosMap] = useState<Record<string, Array<{ nome: string }>>>({})
   const [loading, setLoading] = useState(true)
   const [escritorio, setEscritorio] = useState<Escritorio | null>(null)
 
@@ -80,22 +81,39 @@ export default function ProjetosPage() {
 
       if (esc) {
         setEscritorio(esc)
+        let projs: Projeto[] = []
         if (nivelPermissao === 'operacional') {
           // Operacional: only see assigned projects
           const { data: membros } = await supabase
             .from('projeto_membros').select('projeto_id').eq('user_id', user.id)
           const ids = (membros ?? []).map((m: { projeto_id: string }) => m.projeto_id)
           if (ids.length > 0) {
-            const { data: projs } = await supabase
+            const { data } = await supabase
               .from('projetos').select('*').in('id', ids).order('created_at', { ascending: false })
-            setProjetos(projs ?? [])
+            projs = (data ?? []) as Projeto[]
           }
         } else {
-          const { data: projs } = await supabase
+          const { data } = await supabase
             .from('projetos').select('*')
             .eq('escritorio_id', esc.id)
             .order('created_at', { ascending: false })
-          setProjetos(projs ?? [])
+          projs = (data ?? []) as Projeto[]
+        }
+        setProjetos(projs)
+        if (projs.length > 0) {
+          const projIds = projs.map(p => p.id)
+          const { data: membrosData } = await supabase
+            .from('projeto_membros')
+            .select('projeto_id, users(nome)')
+            .in('projeto_id', projIds)
+          if (membrosData) {
+            const map: Record<string, Array<{ nome: string }>> = {}
+            for (const m of membrosData as unknown as Array<{ projeto_id: string; users: { nome: string } | null }>) {
+              if (!map[m.projeto_id]) map[m.projeto_id] = []
+              map[m.projeto_id].push({ nome: m.users?.nome ?? '?' })
+            }
+            setProjetoMembrosMap(map)
+          }
         }
       }
       setLoading(false)
@@ -294,7 +312,26 @@ export default function ProjetosPage() {
                       {new Date(proj.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </div>
                   </div>
-                  <ArrowRight size={12} color="#007AFF" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {(projetoMembrosMap[proj.id] ?? []).length > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        {(projetoMembrosMap[proj.id] ?? []).slice(0, 3).map((m, idx) => {
+                          const ini = m.nome.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
+                          return (
+                            <div key={idx} title={m.nome} style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,122,255,0.1)', border: '1.5px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, fontWeight: 700, color: '#007AFF', marginLeft: idx > 0 ? -6 : 0, flexShrink: 0 }}>
+                              {ini}
+                            </div>
+                          )
+                        })}
+                        {(projetoMembrosMap[proj.id] ?? []).length > 3 && (
+                          <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#f2f2f7', border: '1.5px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, fontWeight: 700, color: '#8e8e93', marginLeft: -6, flexShrink: 0 }}>
+                            +{(projetoMembrosMap[proj.id] ?? []).length - 3}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <ArrowRight size={12} color="#007AFF" />
+                  </div>
                 </div>
               </div>
             )
