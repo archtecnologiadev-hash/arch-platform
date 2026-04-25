@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
@@ -20,7 +20,7 @@ const inputBase: React.CSSProperties = {
   transition: 'border-color 0.15s',
 }
 
-export default function RecuperarSenhaCodigoPage() {
+function CodigoForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
@@ -157,5 +157,22 @@ export default function RecuperarSenhaCodigoPage() {
         </Link>
       </p>
     </div>
+  )
+}
+
+export default function RecuperarSenhaCodigoPage() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)',
+        borderRadius: 16, padding: '36px 32px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+        textAlign: 'center',
+      }}>
+        <div style={{ fontSize: 13, fontWeight: 300, color: '#8e8e93' }}>Carregando…</div>
+      </div>
+    }>
+      <CodigoForm />
+    </Suspense>
   )
 }
