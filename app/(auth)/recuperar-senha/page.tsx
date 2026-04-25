@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase'
 import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react'
 
 const inputBase: React.CSSProperties = {
@@ -30,11 +29,14 @@ export default function RecuperarSenhaPage() {
     setError('')
     setLoading(true)
 
-    const supabase = createClient()
     const redirectTo = `${window.location.origin}/auth/confirm`
-    const { error: authError } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+    const res = await fetch('/api/notifications/reset-senha', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, redirectTo }),
+    })
 
-    if (authError) {
+    if (!res.ok) {
       setError('Não foi possível enviar o email. Verifique o endereço e tente novamente.')
       setLoading(false)
       return
