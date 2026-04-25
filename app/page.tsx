@@ -88,11 +88,9 @@ export default function LandingPage() {
           </Link>
 
           <nav className="hidden items-center gap-7 md:flex">
-            {['Escritórios', 'Projetos', 'Sobre'].map((item) => (
-              <a key={item} href="#" className="text-sm font-light text-[#8e8e93] transition-colors hover:text-black">
-                {item}
-              </a>
-            ))}
+            <a href="/" className="text-sm font-light text-[#8e8e93] transition-colors hover:text-black">Escritórios</a>
+            <a href="/sobre" className="text-sm font-light text-[#8e8e93] transition-colors hover:text-black">Sobre</a>
+            <a href="/contato" className="text-sm font-light text-[#8e8e93] transition-colors hover:text-black">Contato</a>
           </nav>
 
           <div className="flex items-center gap-3">
@@ -113,11 +111,10 @@ export default function LandingPage() {
 
         {mobileMenuOpen && (
           <div className="border-t border-black/[0.07] bg-white/95 px-5 py-3 md:hidden">
-            {['Escritórios', 'Projetos', 'Sobre', 'Cadastrar'].map((item) => (
-              <a key={item} href="#" className="block py-3 text-sm font-light text-[#6b6b6b] hover:text-black">
-                {item}
-              </a>
-            ))}
+            <a href="/" className="block py-3 text-sm font-light text-[#6b6b6b] hover:text-black">Escritórios</a>
+            <a href="/sobre" className="block py-3 text-sm font-light text-[#6b6b6b] hover:text-black">Sobre</a>
+            <a href="/contato" className="block py-3 text-sm font-light text-[#6b6b6b] hover:text-black">Contato</a>
+            <a href="/cadastro" className="block py-3 text-sm font-light text-[#6b6b6b] hover:text-black">Cadastrar</a>
           </div>
         )}
       </header>
@@ -132,8 +129,12 @@ export default function LandingPage() {
           </div>
         ) : withProfile.length === 0 ? (
           <div className="flex h-[60vh] items-center justify-center bg-[#f2f2f7]">
-            <div className="text-center">
-              <p className="text-sm font-light text-[#8e8e93]">Nenhum escritório disponível ainda.</p>
+            <div className="text-center px-6">
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm border border-black/[0.06]">
+                <span className="text-2xl">🏛️</span>
+              </div>
+              <p className="text-base font-light text-[#1a1a1a]">Em breve novos escritórios</p>
+              <p className="mt-2 text-sm font-light text-[#8e8e93]">Estamos integrando os primeiros escritórios à plataforma.</p>
             </div>
           </div>
         ) : (

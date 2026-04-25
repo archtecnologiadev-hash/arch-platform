@@ -66,7 +66,9 @@ export default function CadastroPage() {
       return
     }
 
-    router.push(`/${tipo}/dashboard`)
+    if (tipo === 'arquiteto') router.push('/arquiteto/perfil?welcome=1')
+    else if (tipo === 'fornecedor') router.push('/fornecedor/perfil?welcome=1')
+    else router.push('/cliente/projetos')
     router.refresh()
   }
 

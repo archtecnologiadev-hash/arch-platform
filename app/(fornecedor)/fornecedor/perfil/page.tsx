@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Star, MapPin, Globe, Phone, CheckCircle2, Save, Loader2, Camera, X, ImagePlus, CreditCard, ArrowRight, Zap } from 'lucide-react'
+import WelcomeBanner from '@/components/WelcomeBanner'
 import { createClient } from '@/lib/supabase'
 import ImageCropModal, { type CropConfig } from '@/components/shared/ImageCropModal'
 import { usePlan } from '@/hooks/usePlan'
@@ -226,6 +227,8 @@ export default function FornecedorPerfilPage() {
         onChange={e => { const f = e.target.files?.[0]; if (f) openLogoCrop(f); e.target.value = '' }} />
       <input ref={coverInputRef} type="file" accept="image/*" style={{ display: 'none' }}
         onChange={e => { const f = e.target.files?.[0]; if (f) openCoverCrop(f); e.target.value = '' }} />
+
+      <WelcomeBanner text="Bem-vindo à ARC! Complete seu perfil para aparecer no diretório de fornecedores e receber solicitações de orçamento." />
 
       {/* Header */}
       <div style={{ marginBottom: 30 }}>

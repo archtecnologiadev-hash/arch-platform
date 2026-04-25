@@ -7,6 +7,7 @@ import ImageCropModal, { type CropConfig } from '@/components/shared/ImageCropMo
 import {
   Save, ExternalLink, Loader2, Camera, Plus, X, ImagePlus, CheckCircle2, CreditCard, ArrowRight, Zap,
 } from 'lucide-react'
+import WelcomeBanner from '@/components/WelcomeBanner'
 import { usePlan } from '@/hooks/usePlan'
 
 function slugify(t: string) {
@@ -387,6 +388,8 @@ export default function ArquitetoPerfilPage() {
       </div>
 
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '28px 20px 48px' }}>
+
+        <WelcomeBanner text="Bem-vindo à ARC! Complete seu perfil para aparecer no diretório e começar a captar clientes." />
 
         {/* ── Cover + Avatar ─────────────────────────────────────────── */}
         <div style={{
