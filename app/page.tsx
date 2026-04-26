@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Menu, X } from 'lucide-react'
@@ -22,16 +22,47 @@ interface Studio {
   image_url: string | null
   cover_url: string | null
   destaque_marketplace: string | null
-  imagem_principal_id: string | null
-  imagem_principal_url?: string | null
+  galeria_urls: string[]
 }
 
 function seededRnd(n: number) { const x = Math.sin(n + 1) * 10000; return x - Math.floor(x) }
 function hashStr(s: string) { let h = 0; for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0; return Math.abs(h) }
-function getBestImage(s: Studio) { return s.imagem_principal_url ?? s.cover_url ?? s.image_url ?? null }
+
+// Best image: galeria first, then cover, then profile photo
+function getDisplayImages(s: Studio): string[] {
+  if (s.galeria_urls.length > 0) return s.galeria_urls
+  const fallbacks = [s.cover_url, s.image_url].filter(Boolean) as string[]
+  return fallbacks.slice(0, 1)
+}
+
+// ─── StudioCard ───────────────────────────────────────────────────────────────
 
 function StudioCard({ studio, index }: { studio: Studio; index: number }) {
-  const img = getBestImage(studio)
+  const [hoverIdx, setHoverIdx] = useState(0)
+  const [hovering, setHovering] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const imgs = getDisplayImages(studio)
+  const hasMultiple = imgs.length > 1
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [])
+
+  function handleMouseEnter() {
+    setHovering(true)
+    if (!hasMultiple) return
+    timerRef.current = setInterval(() => {
+      setHoverIdx(prev => (prev + 1) % imgs.length)
+    }, 1200)
+  }
+
+  function handleMouseLeave() {
+    setHovering(false)
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+    setHoverIdx(0)
+  }
+
   const espec = studio.especialidades?.[0] ?? studio.estilo ?? null
   const location = [studio.cidade, studio.estado].filter(Boolean).join(', ')
   const subtitle = [location, espec].filter(Boolean).join(' · ')
@@ -42,34 +73,63 @@ function StudioCard({ studio, index }: { studio: Studio; index: number }) {
       href={`/escritorio/${studio.slug}`}
       className="group block cursor-pointer"
       style={{ animation: `fadeInUp 0.5s cubic-bezier(0.22,1,0.36,1) ${index * 70}ms both` }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Image — 4:5 */}
       <div
-        className="relative overflow-hidden rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.07)] transition-shadow duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:shadow-[0_12px_40px_rgba(0,0,0,0.14)]"
+        className="relative overflow-hidden rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.07)] transition-shadow duration-[400ms] group-hover:shadow-[0_12px_40px_rgba(0,0,0,0.14)]"
         style={{ aspectRatio: '4/5' }}
       >
-        {img ? (
-          <Image
-            src={img}
-            alt={studio.nome}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
-            loading="lazy"
-          />
+        {imgs.length > 0 ? (
+          <>
+            {imgs.map((url, i) => (
+              <Image
+                key={url}
+                src={url}
+                alt={i === 0 ? studio.nome : ''}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className={`object-cover transition-all duration-500 ease-in-out ${
+                  i === hoverIdx
+                    ? `opacity-100 ${hovering ? 'scale-[1.04]' : 'scale-100'}`
+                    : 'opacity-0 scale-100'
+                }`}
+                priority={i === 0 && index < 3}
+                loading={i === 0 && index < 3 ? undefined : 'lazy'}
+              />
+            ))}
+
+            {/* Dots indicator — shows on hover when multiple images */}
+            {hasMultiple && (
+              <div
+                className="absolute bottom-3 left-0 right-0 z-10 flex justify-center gap-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                aria-hidden="true"
+              >
+                {imgs.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1.5 rounded-full bg-white transition-all duration-300 ${
+                      i === hoverIdx ? 'w-4' : 'w-1.5 opacity-60'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         ) : (
           <div
-            className="h-full w-full flex items-center justify-center"
+            className="flex h-full w-full items-center justify-center"
             style={{ background: 'linear-gradient(145deg, #ececf2 0%, #dcdce8 100%)' }}
           >
-            <span className="text-5xl font-extralight text-[#c7c7cc]">
+            <span className="text-5xl font-extralight text-[#c7c7cc]" aria-hidden="true">
               {studio.nome.charAt(0).toUpperCase()}
             </span>
           </div>
         )}
 
         {isPremium && (
-          <div className="absolute left-3 top-3">
+          <div className="absolute left-3 top-3 z-10">
             <span className="rounded-full bg-white/96 px-3 py-1 text-[10px] font-semibold text-[#007AFF] shadow-sm backdrop-blur-sm">
               ★ Em Destaque
             </span>
@@ -95,6 +155,8 @@ function StudioCard({ studio, index }: { studio: Studio; index: number }) {
   )
 }
 
+// ─── Page ────────────────────────────────────────────────────────────────────
+
 export default function LandingPage() {
   const [studios, setStudios] = useState<Studio[]>([])
   const [loading, setLoading] = useState(true)
@@ -104,30 +166,38 @@ export default function LandingPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      const base = 'id, slug, nome, cidade, estado, estilo, especialidades, bio, rating, image_url, cover_url, destaque_marketplace'
+      const fields = 'id, slug, nome, cidade, estado, estilo, especialidades, bio, rating, image_url, cover_url, destaque_marketplace'
 
-      const { data: raw, error } = await supabase
+      const { data: raw } = await supabase
         .from('escritorios')
-        .select(`${base}, imagem_principal_id`)
+        .select(fields)
         .not('nome', 'is', null)
 
-      let studioData: Studio[]
+      if (!raw || raw.length === 0) { setLoading(false); return }
 
-      if (!error && raw) {
-        const ids = raw.filter(s => s.imagem_principal_id).map(s => s.imagem_principal_id as string)
-        let urlMap: Record<string, string> = {}
-        if (ids.length > 0) {
-          const { data: gal } = await supabase.from('escritorio_galeria').select('id, url').in('id', ids)
-          urlMap = Object.fromEntries((gal ?? []).map(g => [g.id as string, g.url as string]))
+      const studioIds = raw.map(s => s.id as string)
+
+      // Single query: best gallery image per studio (principal first, then by ordem)
+      const { data: galleryRows } = await supabase
+        .from('escritorio_galeria')
+        .select('escritorio_id, url')
+        .in('escritorio_id', studioIds)
+        .order('eh_principal', { ascending: false, nullsFirst: false })
+        .order('ordem', { ascending: true })
+
+      // Build map: studio_id → first 3 gallery URLs
+      const galleryMap: Record<string, string[]> = {}
+      for (const row of (galleryRows ?? []) as { escritorio_id: string; url: string }[]) {
+        if (!galleryMap[row.escritorio_id]) galleryMap[row.escritorio_id] = []
+        if (galleryMap[row.escritorio_id].length < 3) {
+          galleryMap[row.escritorio_id].push(row.url)
         }
-        studioData = raw.map(s => ({
-          ...s,
-          imagem_principal_url: s.imagem_principal_id ? (urlMap[s.imagem_principal_id as string] ?? null) : null,
-        })) as Studio[]
-      } else {
-        const { data: fb } = await supabase.from('escritorios').select(base).not('nome', 'is', null)
-        studioData = (fb ?? []).map(s => ({ ...s, imagem_principal_id: null, imagem_principal_url: null })) as Studio[]
       }
+
+      const studioData: Studio[] = raw.map(s => ({
+        ...(s as Omit<Studio, 'galeria_urls'>),
+        galeria_urls: galleryMap[s.id as string] ?? [],
+      }))
 
       setStudios(studioData)
       setLoading(false)
@@ -135,7 +205,9 @@ export default function LandingPage() {
     load()
   }, [])
 
-  const withProfile = studios.filter(s => s.nome && (s.imagem_principal_url || s.image_url || s.cover_url))
+  const withProfile = studios.filter(s =>
+    s.nome && (s.galeria_urls.length > 0 || s.cover_url || s.image_url)
+  )
   const todaySeed = +new Date().toISOString().slice(0, 10).replace(/-/g, '')
 
   const filtered = withProfile
@@ -150,6 +222,9 @@ export default function LandingPage() {
       if (ao !== bo) return ao - bo
       return seededRnd(todaySeed + hashStr(a.id)) - seededRnd(todaySeed + hashStr(b.id))
     })
+
+  // Also derive best single image for hero grid
+  function heroImg(s: Studio) { return s.galeria_urls[0] ?? s.cover_url ?? s.image_url ?? null }
 
   return (
     <div className="min-h-screen bg-white text-[#1a1a1a]">
@@ -217,7 +292,7 @@ export default function LandingPage() {
         ) : (
           <div className="grid grid-cols-1 gap-px bg-black/[0.06] sm:grid-cols-2 lg:grid-cols-3">
             {filtered.slice(0, 6).map((studio, i) => {
-              const img = getBestImage(studio)
+              const img = heroImg(studio)
               return (
                 <Link key={studio.id} href={`/escritorio/${studio.slug}`}
                   className="group relative block overflow-hidden bg-white">
@@ -303,7 +378,6 @@ export default function LandingPage() {
       >
         <div className="mx-auto max-w-7xl">
 
-          {/* Section header */}
           <div className="mb-10 md:mb-14">
             <p className="mb-2 text-[11px] font-light tracking-[0.45em] text-[#8e8e93] uppercase">Escritórios</p>
             <h2 className="text-[32px] font-bold leading-tight text-[#1a1a1a] md:text-[52px]">
@@ -314,17 +388,10 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Specialty filter pills — horizontal scroll on mobile */}
+          {/* Filter pills — horizontal scroll on mobile */}
           <div className="relative mb-10">
-            {/* Edge fades for horizontal scroll (mobile only) */}
-            <div
-              className="pointer-events-none absolute left-0 top-0 z-10 h-full w-8 bg-gradient-to-r from-white to-transparent md:hidden"
-              aria-hidden="true"
-            />
-            <div
-              className="pointer-events-none absolute right-0 top-0 z-10 h-full w-8 bg-gradient-to-l from-white to-transparent md:hidden"
-              aria-hidden="true"
-            />
+            <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-8 bg-gradient-to-r from-white to-transparent md:hidden" aria-hidden="true" />
+            <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-8 bg-gradient-to-l from-white to-transparent md:hidden" aria-hidden="true" />
             <div
               className="scrollbar-hide flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible"
               role="group"
@@ -370,7 +437,6 @@ export default function LandingPage() {
               </p>
             </div>
           ) : (
-            /* key forces re-animation when filter changes */
             <div key={selectedStyle} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((studio, i) => (
                 <StudioCard key={studio.id} studio={studio} index={i} />
@@ -410,9 +476,7 @@ export default function LandingPage() {
       {/* ── FOOTER ──────────────────────────────────────────────── */}
       <footer className="border-t border-black/[0.06] bg-white px-5 py-6">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 md:flex-row">
-          <Link href="/" className="text-base font-light tracking-[0.3em] text-black" aria-label="ARC — Página inicial">
-            ARC
-          </Link>
+          <Link href="/" className="text-base font-light tracking-[0.3em] text-black" aria-label="ARC — Página inicial">ARC</Link>
           <p className="text-xs font-light text-[#c7c7cc]">© 2026 ARC Marketplace. Todos os direitos reservados.</p>
           <div className="flex gap-5">
             <a href="/sobre" className="text-xs font-light text-[#c7c7cc] transition-colors hover:text-[#8e8e93]">Sobre</a>
