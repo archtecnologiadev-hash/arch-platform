@@ -139,12 +139,16 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(homeMap[userTipo] ?? '/login', request.url))
     }
 
-    // ── 5. Non-privileged member route blocking ──────────────────────────────
-    // junior/estagiario/pleno cannot access equipe, perfil (studio), or planos
-    const PRIVILEGED = ['owner', 'admin', 'senior']
+    // ── 5. Role-based route blocking ─────────────────────────────────────────
     const nivel = dbInfo?.nivel_permissao ?? 'owner'
-    const MEMBER_BLOCKED = ['/arquiteto/equipe', '/arquiteto/perfil', '/arquiteto/planos']
-    if (!PRIVILEGED.includes(nivel) && MEMBER_BLOCKED.some(p => pathname === p || pathname.startsWith(p + '/'))) {
+    // equipe and planos: owner only
+    const OWNER_ONLY = ['/arquiteto/equipe', '/arquiteto/planos']
+    if (nivel !== 'owner' && OWNER_ONLY.some(p => pathname === p || pathname.startsWith(p + '/'))) {
+      return NextResponse.redirect(new URL('/arquiteto/dashboard', request.url))
+    }
+    // perfil, clientes, fornecedores, orcamentos: gestor and owner only
+    const OPERACIONAL_BLOCKED = ['/arquiteto/perfil', '/arquiteto/clientes', '/arquiteto/fornecedores', '/arquiteto/orcamentos']
+    if (nivel === 'operacional' && OPERACIONAL_BLOCKED.some(p => pathname === p || pathname.startsWith(p + '/'))) {
       return NextResponse.redirect(new URL('/arquiteto/dashboard', request.url))
     }
   }

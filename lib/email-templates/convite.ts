@@ -9,11 +9,9 @@ interface ConviteEmailProps {
 }
 
 const NIVEL_LABEL: Record<string, string> = {
-  admin: 'Admin',
-  senior: 'Sênior',
-  pleno: 'Pleno',
-  junior: 'Júnior',
-  estagiario: 'Estagiário',
+  gestor:      'Gestor',
+  operacional: 'Operacional',
+  owner:       'Owner',
 }
 
 export function conviteEmail(p: ConviteEmailProps): string {

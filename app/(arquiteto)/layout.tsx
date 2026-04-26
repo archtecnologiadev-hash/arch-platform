@@ -12,31 +12,28 @@ import TrialGate from '@/components/shared/TrialGate'
 
 // Rank: higher = more privileged
 const NIVEL_RANK: Record<string, number> = {
-  estagiario: 0, junior: 1, pleno: 2, senior: 3, admin: 4, owner: 5,
+  operacional: 0, gestor: 1, owner: 2,
 }
 const NIVEL_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  owner:      { label: 'Owner',      bg: 'rgba(139,92,246,0.12)',  color: '#7c3aed' },
-  admin:      { label: 'Admin',      bg: 'rgba(0,64,180,0.1)',     color: '#003fa3' },
-  senior:     { label: 'Sênior',     bg: 'rgba(0,122,255,0.1)',    color: '#007AFF' },
-  pleno:      { label: 'Pleno',      bg: 'rgba(52,211,153,0.12)',  color: '#059669' },
-  junior:     { label: 'Júnior',     bg: 'rgba(249,115,22,0.1)',   color: '#ea580c' },
-  estagiario: { label: 'Estagiário', bg: 'rgba(107,107,107,0.1)',  color: '#6b6b6b' },
+  owner:       { label: 'Owner',       bg: 'rgba(139,92,246,0.12)',  color: '#7c3aed' },
+  gestor:      { label: 'Gestor',      bg: 'rgba(0,122,255,0.10)',   color: '#007AFF' },
+  operacional: { label: 'Operacional', bg: 'rgba(52,211,153,0.12)',  color: '#059669' },
 }
-function rank(n: string) { return NIVEL_RANK[n] ?? 5 }
+function rank(n: string) { return NIVEL_RANK[n] ?? 2 }
 
 // minRank = minimum rank to see. maxRank = maximum rank to see.
 const BASE_NAV = [
-  { label: 'Dashboard',    href: '/arquiteto/dashboard',   icon: LayoutDashboard },
-  { label: 'Projetos',     href: '/arquiteto/projetos',    icon: FolderOpen },
-  { label: 'Clientes',     href: '/arquiteto/clientes',    icon: Users,       minRank: 2 }, // pleno+
-  { label: 'Equipe',       href: '/arquiteto/equipe',      icon: UsersRound,  minRank: 4 }, // admin+
-  { label: 'Calendário',   href: '/arquiteto/calendario',  icon: Calendar },
-  { label: 'Fornecedores', href: '/arquiteto/fornecedores',icon: Package,     minRank: 2 }, // pleno+
-  { label: 'Mensagens',    href: '/arquiteto/mensagens',   icon: MessageCircle },
-  { label: 'Orçamentos',   href: '/arquiteto/orcamentos',  icon: FileText,    minRank: 2 }, // pleno+
-  { label: 'Meu Perfil',   href: '/arquiteto/perfil',      icon: UserCircle,  minRank: 3 }, // senior+
-  { label: 'Planos',       href: '/arquiteto/planos',      icon: CreditCard,  minRank: 5 }, // owner only
-  { label: 'Minha Conta',  href: '/arquiteto/conta',       icon: UserCog,     maxRank: 2 }, // pleno and below
+  { label: 'Dashboard',    href: '/arquiteto/dashboard',    icon: LayoutDashboard },
+  { label: 'Projetos',     href: '/arquiteto/projetos',     icon: FolderOpen },
+  { label: 'Clientes',     href: '/arquiteto/clientes',     icon: Users,        minRank: 1 }, // gestor+
+  { label: 'Equipe',       href: '/arquiteto/equipe',       icon: UsersRound,   minRank: 2 }, // owner only
+  { label: 'Calendário',   href: '/arquiteto/calendario',   icon: Calendar },
+  { label: 'Fornecedores', href: '/arquiteto/fornecedores', icon: Package,      minRank: 1 }, // gestor+
+  { label: 'Mensagens',    href: '/arquiteto/mensagens',    icon: MessageCircle },
+  { label: 'Orçamentos',   href: '/arquiteto/orcamentos',   icon: FileText,     minRank: 1 }, // gestor+
+  { label: 'Meu Perfil',   href: '/arquiteto/perfil',       icon: UserCircle,   minRank: 1 }, // gestor+
+  { label: 'Planos',       href: '/arquiteto/planos',       icon: CreditCard,   minRank: 2 }, // owner only
+  { label: 'Minha Conta',  href: '/arquiteto/conta',        icon: UserCog,      maxRank: 0 }, // operacional only
 ]
 
 function ArquitetoSidebar() {
@@ -69,8 +66,8 @@ function ArquitetoSidebar() {
       setCargoLabel(userData?.cargo || (nivel === 'owner' ? 'Arquiteto' : (NIVEL_BADGE[nivel]?.label ?? nivel)))
 
       const userRank = rank(nivel)
-      if (userRank < 3) {
-        // pleno/junior/estagiario: own avatar + studio name
+      if (userRank < 2) {
+        // gestor/operacional: own avatar + studio name
         if (userData?.avatar_url) setAvatarUrl(userData.avatar_url)
         if (userData?.escritorio_vinculado_id) {
           const { data: escData } = await supabase
@@ -78,7 +75,7 @@ function ArquitetoSidebar() {
           if (escData?.nome) setEscritorioNome(escData.nome)
         }
       } else {
-        // senior+ / owner: studio cover photo takes precedence
+        // owner: studio cover photo takes precedence
         const avatar = escOwnerData?.image_url || userData?.avatar_url || null
         if (avatar) setAvatarUrl(avatar)
       }
@@ -159,7 +156,7 @@ function ArquitetoSidebar() {
           <div style={{ fontSize: 13, fontWeight: 400, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {userName}
           </div>
-          {badge && userRank < 3 && escritorioNome ? (
+          {badge && userRank < 2 && escritorioNome ? (
             <div style={{ fontSize: 10, marginTop: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
               <span style={{ background: badge.bg, border: `1px solid ${badge.color}33`, borderRadius: 4, padding: '1px 5px', fontWeight: 700, color: badge.color, letterSpacing: '0.04em' }}>
                 {badge.label}
