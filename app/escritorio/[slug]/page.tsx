@@ -615,9 +615,8 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
           <Link href="/" className="text-xl font-black tracking-[0.25em] text-[#1a1a1a]">ARC</Link>
           <p className="text-xs text-[#8e8e93]">© 2026 ARC Marketplace. Todos os direitos reservados.</p>
           <div className="flex gap-6">
-            {['Privacidade', 'Termos'].map(item => (
-              <a key={item} href="#" className="text-xs text-[#8e8e93] transition-colors hover:text-[#6b6b6b]">{item}</a>
-            ))}
+            <Link href="/privacidade" className="text-xs text-[#8e8e93] transition-colors hover:text-[#6b6b6b]">Privacidade</Link>
+            <Link href="/termos-de-uso" className="text-xs text-[#8e8e93] transition-colors hover:text-[#6b6b6b]">Termos</Link>
           </div>
         </div>
       </footer>

@@ -145,7 +145,7 @@ export default function LandingPage() {
                 href={`/escritorio/${studio.slug}`}
                 className="group relative block overflow-hidden bg-white"
               >
-                <div className="relative h-[42vh] min-h-[240px] overflow-hidden sm:h-[46vh]">
+                <div className="relative aspect-[4/3] overflow-hidden">
                   <StudioImage url={studio.cover_url ?? studio.image_url} alt={studio.nome} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
                   <div className="absolute inset-0 bg-white/0 transition-all duration-300 group-hover:bg-white/[0.04]" />

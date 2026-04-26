@@ -119,6 +119,12 @@ export default function FornecedorPerfilPage() {
   }
 
   function openLogoCrop(file: File) {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      showToast('Formato inválido. Use JPG, PNG ou WEBP.', false); return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      showToast('Arquivo muito grande. Máximo 2 MB para o logo.', false); return
+    }
     const src = URL.createObjectURL(file)
     setCropConfig({
       src, aspect: 1, circular: true,
@@ -133,9 +139,15 @@ export default function FornecedorPerfilPage() {
   }
 
   function openCoverCrop(file: File) {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      showToast('Formato inválido. Use JPG, PNG ou WEBP.', false); return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Arquivo muito grande. Máximo 5 MB para a capa.', false); return
+    }
     const src = URL.createObjectURL(file)
     setCropConfig({
-      src, aspect: 16 / 5, circular: false,
+      src, aspect: 16 / 9, circular: false,
       onConfirm: async blob => {
         setCropConfig(null)
         if (!userId) return
@@ -223,9 +235,9 @@ export default function FornecedorPerfilPage() {
       {cropConfig && <ImageCropModal {...cropConfig} />}
 
       {/* Hidden file inputs */}
-      <input ref={logoInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+      <input ref={logoInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
         onChange={e => { const f = e.target.files?.[0]; if (f) openLogoCrop(f); e.target.value = '' }} />
-      <input ref={coverInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+      <input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
         onChange={e => { const f = e.target.files?.[0]; if (f) openCoverCrop(f); e.target.value = '' }} />
 
       <WelcomeBanner text="Bem-vindo à ARC! Complete seu perfil para aparecer no diretório de fornecedores e receber solicitações de orçamento." />
@@ -284,6 +296,11 @@ export default function FornecedorPerfilPage() {
                 <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>{form.name || <span style={{ color: '#c7c7cc' }}>Nome da empresa</span>}</div>
                 {form.city && <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 2 }}>{form.city}</div>}
               </div>
+            </div>
+            <div style={{ padding: '6px 20px 14px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+              <span style={{ fontSize: 11, color: '#8e8e93' }}>
+                Capa: 1920×1080px (16:9) · Logo: 800×800px · Máx. 5 MB · JPG, PNG ou WEBP
+              </span>
             </div>
           </div>
 

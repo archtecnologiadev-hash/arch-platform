@@ -397,12 +397,18 @@ export default function ArquitetoPerfilPage() {
           overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 18,
         }}>
           {/* Cover */}
-          <input ref={capaRef} type="file" accept="image/*" style={{ display: 'none' }}
+          <input ref={capaRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
             onChange={e => {
               const f = e.target.files?.[0]
               if (f) {
+                if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
+                  showToast('Formato inválido. Use JPG, PNG ou WEBP.', false); e.target.value = ''; return
+                }
+                if (f.size > 5 * 1024 * 1024) {
+                  showToast('Arquivo muito grande. Máximo 5 MB para a capa.', false); e.target.value = ''; return
+                }
                 const src = URL.createObjectURL(f)
-                setCropConfig({ src, aspect: 16 / 5, circular: false, onConfirm: blob => {
+                setCropConfig({ src, aspect: 16 / 9, circular: false, onConfirm: blob => {
                   const cropped = new File([blob], f.name, { type: 'image/jpeg' })
                   setCapaFile(cropped)
                   setFotoCapa(URL.createObjectURL(blob))
@@ -437,10 +443,16 @@ export default function ArquitetoPerfilPage() {
 
           {/* Avatar row */}
           <div style={{ padding: '0 20px 20px', display: 'flex', alignItems: 'flex-end', gap: 14, marginTop: -36 }}>
-            <input ref={perfilRef} type="file" accept="image/*" style={{ display: 'none' }}
+            <input ref={perfilRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
               onChange={e => {
                 const f = e.target.files?.[0]
                 if (f) {
+                  if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
+                    showToast('Formato inválido. Use JPG, PNG ou WEBP.', false); e.target.value = ''; return
+                  }
+                  if (f.size > 2 * 1024 * 1024) {
+                    showToast('Arquivo muito grande. Máximo 2 MB para a foto de perfil.', false); e.target.value = ''; return
+                  }
                   const src = URL.createObjectURL(f)
                   setCropConfig({ src, aspect: 1, circular: true, onConfirm: blob => {
                     const cropped = new File([blob], f.name, { type: 'image/jpeg' })
@@ -484,6 +496,11 @@ export default function ArquitetoPerfilPage() {
                   {[cidade, estado].filter(Boolean).join(', ')}
                 </div>}
             </div>
+          </div>
+          <div style={{ padding: '6px 20px 14px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+            <span style={{ fontSize: 11, color: '#8e8e93' }}>
+              Capa: 1920×1080px (16:9) · Foto: 800×800px · Máx. 5 MB · JPG, PNG ou WEBP
+            </span>
           </div>
         </div>
 
@@ -561,7 +578,7 @@ export default function ArquitetoPerfilPage() {
             : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
                 {projetos.map((p, i) => (
                   <div key={p.id ?? i} style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)', background: '#f2f2f7' }}>
-                    <div style={{ height: 110, overflow: 'hidden', background: '#e5e5ea' }}>
+                    <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e5e5ea' }}>
                       {p.imagens[0]
                         ? <img src={p.imagens[0].url} alt={p.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -679,10 +696,16 @@ export default function ArquitetoPerfilPage() {
               </div>
               <div>
                 <label style={LBL}>Fotos <span style={{ color: '#c7c7cc' }}>(até 5)</span></label>
-                <input ref={projImgRef} type="file" accept="image/*" style={{ display: 'none' }}
+                <input ref={projImgRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
                   onChange={e => {
                     const f = e.target.files?.[0]
                     if (f && novoProj.imagens.length < 5) {
+                      if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
+                        showToast('Formato inválido. Use JPG, PNG ou WEBP.', false); e.target.value = ''; return
+                      }
+                      if (f.size > 5 * 1024 * 1024) {
+                        showToast('Arquivo muito grande. Máximo 5 MB por foto.', false); e.target.value = ''; return
+                      }
                       const src = URL.createObjectURL(f)
                       setCropConfig({ src, aspect: 4 / 3, circular: false, onConfirm: blob => {
                         const cropped = new File([blob], f.name, { type: 'image/jpeg' })
