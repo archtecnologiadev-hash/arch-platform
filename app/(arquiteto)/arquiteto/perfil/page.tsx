@@ -5,8 +5,11 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import ImageCropModal, { type CropConfig } from '@/components/shared/ImageCropModal'
 import { comprimirImagem } from '@/lib/image-compression'
+import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, rectSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import {
-  Save, ExternalLink, Loader2, Camera, Plus, X, ImagePlus, CheckCircle2, CreditCard, ArrowRight, Zap, Upload,
+  Save, ExternalLink, Loader2, Camera, Plus, X, ImagePlus, CheckCircle2, CreditCard, ArrowRight, Zap, Upload, Star,
 } from 'lucide-react'
 import WelcomeBanner from '@/components/WelcomeBanner'
 import { usePlan } from '@/hooks/usePlan'
@@ -22,7 +25,7 @@ const ESPECIALIDADES = ['Residencial','Comercial','Interiores','Corporativo','In
 const CATEGORIAS = ['Residencial','Comercial','Interiores','Corporativo','Institucional','Paisagismo','Outro']
 
 interface ImgPreview { url: string; file?: File }
-interface GaleriaItem { id?: string; url: string; ordem: number; tamanho_bytes?: number | null }
+interface GaleriaItem { id?: string; url: string; ordem: number; tamanho_bytes?: number | null; eh_principal?: boolean }
 interface UploadingItem { tempId: string; previewUrl: string; status: 'compressing' | 'uploading' | 'error'; nome: string }
 interface ProjPortfolio {
   id?: string
@@ -54,6 +57,58 @@ function Field({ label, value, onChange, placeholder, required, type }: {
         onFocus={e => (e.target.style.borderColor = '#007AFF')}
         onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')}
       />
+    </div>
+  )
+}
+
+function formatBytes(b: number): string {
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(0)} KB`
+  return `${(b / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function SortableGaleriaItem({
+  img, index, onRemove, onSetPrincipal,
+}: {
+  img: GaleriaItem
+  index: number
+  onRemove: (id: string) => void
+  onSetPrincipal: (id: string) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: img.id! })
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        position: 'relative', aspectRatio: '1/1', borderRadius: 12, overflow: 'hidden',
+        border: '1px solid rgba(0,0,0,0.08)', background: '#f2f2f7',
+        opacity: isDragging ? 0.45 : 1,
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+    >
+      {/* Drag handle (whole image area) */}
+      <div {...attributes} {...listeners}
+        style={{ position: 'absolute', inset: 0, cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}>
+        <img src={img.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+      </div>
+
+      {/* Star button */}
+      <button onClick={() => img.id && onSetPrincipal(img.id)} title="Definir como capa do perfil"
+        style={{ position: 'absolute', top: 6, left: 6, zIndex: 20, background: 'rgba(0,0,0,0.42)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+        <Star size={13} color="#fff" fill="none" />
+      </button>
+
+      {/* Remove button */}
+      <button onClick={() => img.id && onRemove(img.id)}
+        style={{ position: 'absolute', top: 6, right: 6, zIndex: 20, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+        <X size={12} color="#fff" />
+      </button>
+
+      {/* Bottom info */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 7px 6px', background: 'linear-gradient(to top, rgba(0,0,0,0.55), transparent)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', zIndex: 10 }}>
+        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>{index + 1}</span>
+        {img.tamanho_bytes ? <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', background: 'rgba(0,0,0,0.35)', borderRadius: 4, padding: '1px 5px' }}>{formatBytes(img.tamanho_bytes)}</span> : null}
+      </div>
     </div>
   )
 }
@@ -95,7 +150,11 @@ export default function ArquitetoPerfilPage() {
   const [cropConfig, setCropConfig] = useState<CropConfig | null>(null)
   const [galeria, setGaleria] = useState<GaleriaItem[]>([])
   const [galeriaUploading, setGaleriaUploading] = useState<UploadingItem[]>([])
-  const [dragIdx, setDragIdx] = useState<number | null>(null)
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+  )
 
   const perfilRef = useRef<HTMLInputElement>(null)
   const capaRef = useRef<HTMLInputElement>(null)
@@ -149,8 +208,8 @@ export default function ArquitetoPerfilPage() {
         }
 
         const { data: gal } = await supabase.from('escritorio_galeria')
-          .select('id, url, ordem, tamanho_bytes').eq('escritorio_id', data.id).order('ordem')
-        if (gal) setGaleria((gal as { id: string; url: string; ordem: number; tamanho_bytes: number | null }[]).map(g => ({ id: g.id, url: g.url, ordem: g.ordem, tamanho_bytes: g.tamanho_bytes })))
+          .select('id, url, ordem, tamanho_bytes, eh_principal').eq('escritorio_id', data.id).order('eh_principal', { ascending: false }).order('ordem')
+        if (gal) setGaleria((gal as { id: string; url: string; ordem: number; tamanho_bytes: number | null; eh_principal: boolean }[]).map(g => ({ id: g.id, url: g.url, ordem: g.ordem, tamanho_bytes: g.tamanho_bytes, eh_principal: g.eh_principal })))
       }
       setLoading(false)
     }
@@ -326,9 +385,36 @@ export default function ArquitetoPerfilPage() {
     setSavingProj(false)
   }
 
-  function formatBytes(b: number): string {
-    if (b < 1024 * 1024) return `${(b / 1024).toFixed(0)} KB`
-    return `${(b / (1024 * 1024)).toFixed(1)} MB`
+  function handleGaleriaDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const nonPrincipal = galeria.filter(g => !g.eh_principal).sort((a, b) => a.ordem - b.ordem)
+    const oldIdx = nonPrincipal.findIndex(g => g.id === active.id)
+    const newIdx = nonPrincipal.findIndex(g => g.id === over.id)
+    if (oldIdx === -1 || newIdx === -1) return
+    const reordered = arrayMove(nonPrincipal, oldIdx, newIdx).map((g, i) => ({ ...g, ordem: i }))
+    setGaleria(prev => [...prev.filter(g => g.eh_principal), ...reordered])
+    const supabase = createClient()
+    reordered.forEach(g => { if (g.id) supabase.from('escritorio_galeria').update({ ordem: g.ordem }).eq('id', g.id).then(() => {}) })
+    showToast('Ordem atualizada')
+  }
+
+  async function setGaleriaPrincipal(id: string) {
+    if (!escritorioId) return
+    const isAlready = galeria.find(g => g.id === id)?.eh_principal
+    if (isAlready) {
+      setGaleria(prev => prev.map(g => ({ ...g, eh_principal: false })))
+      const supabase = createClient()
+      await supabase.from('escritorio_galeria').update({ eh_principal: false }).eq('escritorio_id', escritorioId)
+      await supabase.from('escritorios').update({ imagem_principal_id: null }).eq('id', escritorioId)
+    } else {
+      setGaleria(prev => prev.map(g => ({ ...g, eh_principal: g.id === id })))
+      showToast('Capa do perfil público alterada')
+      const supabase = createClient()
+      await supabase.from('escritorio_galeria').update({ eh_principal: false }).eq('escritorio_id', escritorioId)
+      await supabase.from('escritorio_galeria').update({ eh_principal: true }).eq('id', id)
+      await supabase.from('escritorios').update({ imagem_principal_id: id }).eq('id', escritorioId)
+    }
   }
 
   async function processarArquivosGaleria(files: FileList | File[]) {
@@ -625,46 +711,48 @@ export default function ArquitetoPerfilPage() {
               </div>
             )}
 
-            {/* Grid de imagens enviadas + em upload */}
+            {/* Grid */}
             {(galeria.length > 0 || galeriaUploading.length > 0) && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(148px, 1fr))', gap: 10 }}>
-                {galeria.map((img, i) => (
-                  <div
-                    key={img.id ?? i}
-                    draggable
-                    onDragStart={() => setDragIdx(i)}
-                    onDragOver={e => e.preventDefault()}
-                    onDrop={() => {
-                      if (dragIdx === null || dragIdx === i) { setDragIdx(null); return }
-                      const reordered = [...galeria]
-                      const [moved] = reordered.splice(dragIdx, 1)
-                      reordered.splice(i, 0, moved)
-                      const updated = reordered.map((g, idx) => ({ ...g, ordem: idx }))
-                      setGaleria(updated)
-                      const supabase = createClient()
-                      updated.forEach(g => { if (g.id) supabase.from('escritorio_galeria').update({ ordem: g.ordem }).eq('id', g.id).then(() => {}) })
-                      setDragIdx(null)
-                    }}
-                    style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)', cursor: 'grab', background: '#f2f2f7', opacity: dragIdx === i ? 0.5 : 1, transition: 'opacity 0.15s' }}
-                  >
+
+                {/* Imagem principal — sempre primeiro, sem drag */}
+                {galeria.filter(g => g.eh_principal).map(img => (
+                  <div key={img.id} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 12, overflow: 'hidden', border: '2px solid #007AFF', background: '#f2f2f7' }}>
                     <img src={img.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-                    <button
-                      onClick={() => img.id && removeGaleriaImage(img.id)}
-                      style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                    >
+                    <button onClick={() => img.id && setGaleriaPrincipal(img.id)} title="Remover como capa"
+                      style={{ position: 'absolute', top: 6, left: 6, zIndex: 20, background: 'rgba(230,160,0,0.92)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <Star size={13} color="#fff" fill="#fff" />
+                    </button>
+                    <button onClick={() => img.id && removeGaleriaImage(img.id)}
+                      style={{ position: 'absolute', top: 6, right: 6, zIndex: 20, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                       <X size={12} color="#fff" />
                     </button>
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 7px 6px', background: 'linear-gradient(to top, rgba(0,0,0,0.55), transparent)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>{i + 1}</span>
-                      {img.tamanho_bytes ? (
-                        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', background: 'rgba(0,0,0,0.35)', borderRadius: 4, padding: '1px 5px' }}>
-                          {formatBytes(img.tamanho_bytes)}
-                        </span>
-                      ) : null}
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 7px 6px', background: 'linear-gradient(to top, rgba(0,0,0,0.55), transparent)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', zIndex: 10 }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', background: '#007AFF', borderRadius: 4, padding: '2px 6px', letterSpacing: '0.05em' }}>CAPA</span>
+                      {img.tamanho_bytes ? <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', background: 'rgba(0,0,0,0.35)', borderRadius: 4, padding: '1px 5px' }}>{formatBytes(img.tamanho_bytes)}</span> : null}
                     </div>
                   </div>
                 ))}
 
+                {/* Imagens não-principais — reordenáveis com dnd-kit */}
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleGaleriaDragEnd}>
+                  <SortableContext
+                    items={galeria.filter(g => !g.eh_principal).sort((a, b) => a.ordem - b.ordem).map(g => g.id!)}
+                    strategy={rectSortingStrategy}
+                  >
+                    {galeria.filter(g => !g.eh_principal).sort((a, b) => a.ordem - b.ordem).map((img, i) => (
+                      <SortableGaleriaItem
+                        key={img.id}
+                        img={img}
+                        index={i}
+                        onRemove={removeGaleriaImage}
+                        onSetPrincipal={setGaleriaPrincipal}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
+
+                {/* Em upload */}
                 {galeriaUploading.map(u => (
                   <div key={u.tempId} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)', background: '#f2f2f7' }}>
                     <img src={u.previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />
@@ -683,7 +771,7 @@ export default function ArquitetoPerfilPage() {
               {galeria.length + galeriaUploading.length < 8
                 ? `${8 - galeria.length - galeriaUploading.length} espaço${8 - galeria.length - galeriaUploading.length !== 1 ? 's' : ''} disponível${8 - galeria.length - galeriaUploading.length !== 1 ? 'is' : ''} · `
                 : 'Limite atingido · '}
-              Arraste para reordenar · Comprimido automaticamente para ~1.5 MB
+              Arraste para reordenar · Clique na ★ para definir a capa do perfil público
             </div>
           </div>
         </div>
