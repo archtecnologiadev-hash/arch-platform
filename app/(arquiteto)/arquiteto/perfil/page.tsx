@@ -445,13 +445,8 @@ export default function ArquitetoPerfilPage() {
                     showToast('Limite de armazenamento atingido. Faça upgrade do plano.', false); e.target.value = ''; return
                   }
                 }
-                const src = URL.createObjectURL(f)
-                setCropConfig({ src, aspect: 16 / 9, circular: false, onConfirm: blob => {
-                  const cropped = new File([blob], f.name, { type: 'image/jpeg' })
-                  setCapaFile(cropped)
-                  setFotoCapa(URL.createObjectURL(blob))
-                  setCropConfig(null)
-                }, onCancel: () => setCropConfig(null) })
+                setCapaFile(f)
+                setFotoCapa(URL.createObjectURL(f))
               }
               e.target.value = ''
             }} />
