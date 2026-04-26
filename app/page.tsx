@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 const FILTROS = ['Todos', 'Residencial', 'Comercial', 'Interiores', 'Corporativo', 'Institucional', 'Paisagismo']
@@ -231,9 +231,6 @@ export default function LandingPage() {
       return seededRnd(todaySeed + hashStr(a.id)) - seededRnd(todaySeed + hashStr(b.id))
     })
 
-  // Also derive best single image for hero grid
-  function heroImg(s: Studio) { return s.galeria_urls[0] ?? s.cover_url ?? s.image_url ?? null }
-
   return (
     <div className="min-h-screen bg-white text-[#1a1a1a]">
 
@@ -279,108 +276,10 @@ export default function LandingPage() {
         )}
       </header>
 
-      {/* ── HERO ────────────────────────────────────────────────── */}
-      <section className="relative pt-14" aria-label="Destaque de escritórios">
-        {loading ? (
-          <div className="grid grid-cols-1 gap-px bg-black/[0.06] sm:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-[42vh] min-h-[240px] animate-pulse bg-[#e5e5ea]" />
-            ))}
-          </div>
-        ) : withProfile.length === 0 ? (
-          <div className="flex h-[60vh] items-center justify-center bg-[#f2f2f7]">
-            <div className="px-6 text-center">
-              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-black/[0.06] bg-white shadow-sm">
-                <span className="text-2xl" role="img" aria-label="Arquitetura">🏛️</span>
-              </div>
-              <p className="text-base font-light text-[#1a1a1a]">Em breve novos escritórios</p>
-              <p className="mt-2 text-sm font-light text-[#8e8e93]">Estamos integrando os primeiros escritórios à plataforma.</p>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-px bg-black/[0.06] sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.slice(0, 6).map((studio, i) => {
-              const img = heroImg(studio)
-              return (
-                <Link key={studio.id} href={`/escritorio/${studio.slug}`}
-                  className="group relative block overflow-hidden bg-white">
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    {img ? (
-                      <Image
-                        src={img} alt={studio.nome} fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        priority={i < 3}
-                      />
-                    ) : (
-                      <div className="h-full w-full bg-gradient-to-br from-[#e5e5ea] to-[#d1d1d6]" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <p className="text-sm font-light text-white">{studio.nome}</p>
-                      {(studio.cidade || studio.estado) && (
-                        <p className="mt-0.5 text-xs font-light text-white/60">
-                          {[studio.cidade, studio.estado].filter(Boolean).join(', ')}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        )}
-
-        {/* Frosted glass card */}
-        <div className="absolute left-4 top-[calc(3.5rem+1rem)] z-10 w-[min(288px,calc(100vw-32px))] sm:left-8 sm:w-80">
-          <div className="rounded-2xl bg-white/88 p-5 shadow-[0_8px_40px_rgba(0,0,0,0.14)] backdrop-blur-xl sm:p-6">
-            <p className="mb-3 text-[10px] font-light tracking-[0.45em] text-[#8e8e93] uppercase">
-              Plataforma de Arquitetura
-            </p>
-            <h1 className="mb-3 text-[1.35rem] font-extralight leading-snug text-black sm:text-[1.55rem]">
-              Encontre o arquiteto certo para o seu projeto.
-            </h1>
-            <p className="mb-5 text-xs font-light leading-relaxed text-[#8e8e93]">
-              Escritórios verificados. Portfólios reais. Sem intermediários.
-            </p>
-            <div className="flex flex-col gap-2">
-              <a
-                href="#escritorios"
-                className="flex items-center justify-center gap-2 rounded-[8px] bg-[#007AFF] py-2.5 text-sm font-light text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-offset-2"
-              >
-                Explorar escritórios <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-              </a>
-              <Link
-                href="/cadastro"
-                className="py-2 text-center text-sm font-light text-[#007AFF] transition-opacity hover:opacity-70"
-              >
-                Sou arquiteto →
-              </Link>
-            </div>
-          </div>
-
-          <div className="mt-3 flex gap-2">
-            {[
-              { value: `${withProfile.length || '—'}`, label: 'Escritórios' },
-              { value: '500+', label: 'Projetos' },
-              { value: '98%', label: 'Satisfação' },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="flex-1 rounded-xl bg-white/88 py-3 text-center shadow-[0_2px_12px_rgba(0,0,0,0.08)] backdrop-blur-xl"
-              >
-                <p className="text-base font-extralight text-black">{stat.value}</p>
-                <p className="text-[10px] font-light text-[#8e8e93]">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── STUDIOS SECTION ─────────────────────────────────────── */}
       <section
         id="escritorios"
-        className="bg-white py-16 md:py-24"
+        className="bg-white pb-16 pt-24 md:pb-24 md:pt-32"
         style={{ paddingLeft: 'max(20px, 5%)', paddingRight: 'max(20px, 5%)' }}
         aria-label="Escritórios de arquitetura"
       >
