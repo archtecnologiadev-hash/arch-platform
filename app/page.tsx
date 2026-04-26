@@ -30,7 +30,6 @@ interface Studio {
 function seededRnd(n: number) { const x = Math.sin(n + 1) * 10000; return x - Math.floor(x) }
 function hashStr(s: string) { let h = 0; for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0; return Math.abs(h) }
 
-// Best image: galeria first, then cover, then profile photo
 function getDisplayImages(s: Studio): string[] {
   if (s.galeria_urls.length > 0) return s.galeria_urls
   const fallbacks = [s.cover_url, s.image_url].filter(Boolean) as string[]
@@ -72,14 +71,13 @@ function StudioCard({ studio, index }: { studio: Studio; index: number }) {
   return (
     <Link
       href={`/escritorio/${studio.slug}`}
-      className="group block cursor-pointer"
+      className="group block cursor-pointer active:opacity-90"
       style={{ animation: `fadeInUp 0.5s cubic-bezier(0.22,1,0.36,1) ${index * 70}ms both` }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Card — all info overlaid on image */}
       <div
-        className="relative overflow-hidden rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-shadow duration-[400ms] group-hover:shadow-[0_16px_48px_rgba(0,0,0,0.18)]"
+        className="relative overflow-hidden rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-shadow duration-[400ms] group-hover:shadow-[0_16px_48px_rgba(0,0,0,0.18)] active:shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
         style={{ aspectRatio: '4/5' }}
       >
         {imgs.length > 0 ? (
@@ -90,7 +88,7 @@ function StudioCard({ studio, index }: { studio: Studio; index: number }) {
               alt={i === 0 ? studio.nome : ''}
               fill
               quality={85}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              sizes="(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 50vw, 33vw"
               className={`object-cover transition-all duration-500 ease-in-out ${
                 i === hoverIdx
                   ? `opacity-100 ${hovering ? 'scale-[1.03]' : 'scale-100'}`
@@ -111,7 +109,7 @@ function StudioCard({ studio, index }: { studio: Studio; index: number }) {
           </div>
         )}
 
-        {/* Bottom gradient overlay — bottom 35% */}
+        {/* Bottom gradient overlay */}
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[35%] bg-gradient-to-t from-black/50 to-transparent transition-all duration-300 group-hover:from-black/65"
           aria-hidden="true"
@@ -119,17 +117,17 @@ function StudioCard({ studio, index }: { studio: Studio; index: number }) {
 
         {/* Text overlay */}
         <div className="absolute inset-x-0 bottom-0 z-20 p-4">
-          <p className="line-clamp-1 text-[16px] font-semibold leading-snug text-white">
+          <p className="line-clamp-1 text-[15px] font-semibold leading-snug text-white sm:text-[16px]">
             {studio.nome}
           </p>
           {studio.cidade && (
-            <p className="mt-0.5 text-[13px] font-normal text-white/80">{studio.cidade}</p>
+            <p className="mt-0.5 text-[12px] font-normal text-white/80 sm:text-[13px]">{studio.cidade}</p>
           )}
           {igHandle && (
-            <p className="mt-0.5 text-[12px] font-normal text-white/70">{igHandle}</p>
+            <p className="mt-0.5 text-[11px] font-normal text-white/70 sm:text-[12px]">{igHandle}</p>
           )}
           {studio.ano_fundacao && (
-            <p className="mt-0.5 text-[11px] font-normal text-white/60">Desde {studio.ano_fundacao}</p>
+            <p className="mt-0.5 text-[10px] font-normal text-white/60 sm:text-[11px]">Desde {studio.ano_fundacao}</p>
           )}
         </div>
 
@@ -185,7 +183,6 @@ export default function LandingPage() {
 
       const studioIds = raw.map(s => s.id as string)
 
-      // Single query: best gallery image per studio (principal first, then by ordem)
       const { data: galleryRows } = await supabase
         .from('escritorio_galeria')
         .select('escritorio_id, url')
@@ -193,7 +190,6 @@ export default function LandingPage() {
         .order('eh_principal', { ascending: false, nullsFirst: false })
         .order('ordem', { ascending: true })
 
-      // Build map: studio_id → first 3 gallery URLs
       const galleryMap: Record<string, string[]> = {}
       for (const row of (galleryRows ?? []) as { escritorio_id: string; url: string }[]) {
         if (!galleryMap[row.escritorio_id]) galleryMap[row.escritorio_id] = []
@@ -236,8 +232,8 @@ export default function LandingPage() {
 
       {/* ── HEADER ──────────────────────────────────────────────── */}
       <header className="fixed top-0 z-50 w-full border-b border-black/[0.07] bg-white/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-5">
-          <Link href="/" className="text-lg font-light tracking-[0.35em] text-black" aria-label="ARC — Página inicial">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-5">
+          <Link href="/" className="text-[15px] font-light tracking-[0.35em] text-black md:text-lg" aria-label="ARC — Página inicial">
             ARC
           </Link>
 
@@ -247,16 +243,16 @@ export default function LandingPage() {
             <a href="/contato" className="text-sm font-light text-[#8e8e93] transition-colors hover:text-black">Contato</a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <Link href="/cadastro" className="hidden text-sm font-light text-[#8e8e93] hover:text-black md:block">Cadastrar</Link>
             <Link
               href="/login"
-              className="rounded-[8px] bg-[#007AFF] px-4 py-1.5 text-sm font-light text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-offset-2"
+              className="rounded-[8px] bg-[#007AFF] px-3.5 py-1.5 text-[13px] font-light text-white transition-opacity hover:opacity-90 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-offset-2 md:px-4 md:text-sm"
             >
               Entrar
             </Link>
             <button
-              className="flex h-11 w-11 items-center justify-center text-[#8e8e93] md:hidden"
+              className="flex h-10 w-10 items-center justify-center text-[#8e8e93] md:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
               aria-expanded={mobileMenuOpen}
@@ -267,7 +263,7 @@ export default function LandingPage() {
         </div>
 
         {mobileMenuOpen && (
-          <nav className="border-t border-black/[0.07] bg-white/95 px-5 py-3 md:hidden" aria-label="Menu mobile">
+          <nav className="border-t border-black/[0.07] bg-white/95 px-4 py-2 md:hidden" aria-label="Menu mobile">
             <a href="/" className="block py-3 text-sm font-light text-[#6b6b6b] hover:text-black">Escritórios</a>
             <a href="/sobre" className="block py-3 text-sm font-light text-[#6b6b6b] hover:text-black">Sobre</a>
             <a href="/contato" className="block py-3 text-sm font-light text-[#6b6b6b] hover:text-black">Contato</a>
@@ -279,24 +275,23 @@ export default function LandingPage() {
       {/* ── STUDIOS SECTION ─────────────────────────────────────── */}
       <section
         id="escritorios"
-        className="bg-white pb-16 pt-24 md:pb-24 md:pt-32"
-        style={{ paddingLeft: 'max(20px, 5%)', paddingRight: 'max(20px, 5%)' }}
+        className="bg-white px-4 pb-16 pt-20 md:px-8 md:pb-24 md:pt-28 lg:px-[max(20px,5%)]"
         aria-label="Escritórios de arquitetura"
       >
         <div className="mx-auto max-w-7xl">
 
-          <div className="mb-10 md:mb-14">
-            <p className="mb-2 text-[11px] font-light tracking-[0.45em] text-[#8e8e93] uppercase">Escritórios</p>
-            <h2 className="text-[32px] font-bold leading-tight text-[#1a1a1a] md:text-[52px]">
+          <div className="mb-6 md:mb-14">
+            <p className="mb-1.5 text-[11px] font-light tracking-[0.45em] text-[#8e8e93] uppercase md:mb-2">Escritórios</p>
+            <h2 className="text-[26px] font-bold leading-tight text-[#1a1a1a] md:text-[52px]">
               Todos os escritórios
             </h2>
-            <p className="mt-3 text-[17px] font-light text-[#555]">
+            <p className="mt-2 text-[14px] font-light text-[#555] md:mt-3 md:text-[17px]">
               Profissionais verificados prontos para o seu projeto.
             </p>
           </div>
 
           {/* Filter pills — horizontal scroll on mobile */}
-          <div className="relative mb-10">
+          <div className="relative mb-6 md:mb-10">
             <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-8 bg-gradient-to-r from-white to-transparent md:hidden" aria-hidden="true" />
             <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-8 bg-gradient-to-l from-white to-transparent md:hidden" aria-hidden="true" />
             <div
@@ -310,7 +305,7 @@ export default function LandingPage() {
                   onClick={() => setSelectedStyle(f)}
                   aria-pressed={selectedStyle === f}
                   style={{ transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)' }}
-                  className={`shrink-0 rounded-full px-5 py-2 text-sm font-light focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-offset-1 ${
+                  className={`shrink-0 rounded-full px-4 py-2 text-[13px] font-light active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-offset-1 md:px-5 md:text-sm ${
                     selectedStyle === f
                       ? 'bg-black text-white shadow-sm'
                       : 'bg-[#f2f2f7] text-black hover:bg-[#e5e5ea]'
@@ -324,15 +319,9 @@ export default function LandingPage() {
 
           {/* Cards grid */}
           {loading ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="Carregando escritórios">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3" aria-busy="true" aria-label="Carregando escritórios">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="rounded-2xl bg-[#f2f2f7]" style={{ aspectRatio: '4/5' }} />
-                  <div className="mt-3 space-y-2 px-0.5">
-                    <div className="h-[18px] w-2/3 rounded-md bg-[#e5e5ea]" />
-                    <div className="h-[14px] w-1/2 rounded-md bg-[#e5e5ea]" />
-                  </div>
-                </div>
+                <div key={i} className="animate-pulse rounded-2xl bg-[#f2f2f7]" style={{ aspectRatio: '4/5' }} />
               ))}
             </div>
           ) : filtered.length === 0 ? (
@@ -344,7 +333,7 @@ export default function LandingPage() {
               </p>
             </div>
           ) : (
-            <div key={selectedStyle} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div key={selectedStyle} className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
               {filtered.map((studio, i) => (
                 <StudioCard key={studio.id} studio={studio} index={i} />
               ))}
@@ -355,24 +344,23 @@ export default function LandingPage() {
 
       {/* ── CTA BANNER ──────────────────────────────────────────── */}
       <section
-        className="pb-16"
-        style={{ paddingLeft: 'max(20px, 5%)', paddingRight: 'max(20px, 5%)' }}
+        className="px-4 pb-12 md:px-8 md:pb-16 lg:px-[max(20px,5%)]"
         aria-label="Cadastre seu escritório"
       >
-        <div className="mx-auto max-w-7xl rounded-2xl bg-[#f2f2f7] p-8 md:p-12">
-          <div className="flex flex-col items-center gap-6 text-center md:flex-row md:justify-between md:text-left">
+        <div className="mx-auto max-w-7xl rounded-2xl bg-[#f2f2f7] p-6 md:p-12">
+          <div className="flex flex-col items-start gap-5 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="mb-2 text-[10px] font-light tracking-[0.35em] text-[#8e8e93] uppercase">Para arquitetos</p>
-              <h3 className="text-2xl font-bold text-black md:text-3xl">
-                Mostre seu trabalho para<br className="hidden md:block" /> milhares de clientes.
+              <p className="mb-1.5 text-[10px] font-light tracking-[0.35em] text-[#8e8e93] uppercase md:mb-2">Para arquitetos</p>
+              <h3 className="text-xl font-bold text-black md:text-3xl">
+                Mostre seu trabalho para milhares de clientes.
               </h3>
-              <p className="mt-2 text-[15px] font-light text-[#666]">
+              <p className="mt-1.5 text-[14px] font-light text-[#666] md:mt-2 md:text-[15px]">
                 Cadastre seu escritório gratuitamente e comece a receber projetos.
               </p>
             </div>
             <Link
               href="/cadastro"
-              className="shrink-0 rounded-[10px] bg-[#007AFF] px-8 py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-offset-2"
+              className="shrink-0 rounded-[10px] bg-[#007AFF] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-offset-2 md:px-8 md:py-3.5"
             >
               Criar perfil grátis
             </Link>
@@ -381,14 +369,14 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ──────────────────────────────────────────────── */}
-      <footer className="border-t border-black/[0.06] bg-white px-5 py-6">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 md:flex-row">
-          <Link href="/" className="text-base font-light tracking-[0.3em] text-black" aria-label="ARC — Página inicial">ARC</Link>
-          <p className="text-xs font-light text-[#c7c7cc]">© 2026 ARC Marketplace. Todos os direitos reservados.</p>
+      <footer className="border-t border-black/[0.06] bg-white px-4 py-5 md:py-6">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 md:flex-row md:justify-between">
+          <Link href="/" className="text-[14px] font-light tracking-[0.3em] text-black md:text-base" aria-label="ARC — Página inicial">ARC</Link>
+          <p className="text-[11px] font-light text-[#c7c7cc] md:text-xs">© 2026 ARC Marketplace. Todos os direitos reservados.</p>
           <div className="flex gap-5">
-            <a href="/sobre" className="text-xs font-light text-[#c7c7cc] transition-colors hover:text-[#8e8e93]">Sobre</a>
-            <a href="/termos-de-uso" className="text-xs font-light text-[#c7c7cc] transition-colors hover:text-[#8e8e93]">Termos</a>
-            <a href="/privacidade" className="text-xs font-light text-[#c7c7cc] transition-colors hover:text-[#8e8e93]">Privacidade</a>
+            <a href="/sobre" className="text-[11px] font-light text-[#c7c7cc] transition-colors hover:text-[#8e8e93] md:text-xs">Sobre</a>
+            <a href="/termos-de-uso" className="text-[11px] font-light text-[#c7c7cc] transition-colors hover:text-[#8e8e93] md:text-xs">Termos</a>
+            <a href="/privacidade" className="text-[11px] font-light text-[#c7c7cc] transition-colors hover:text-[#8e8e93] md:text-xs">Privacidade</a>
           </div>
         </div>
       </footer>

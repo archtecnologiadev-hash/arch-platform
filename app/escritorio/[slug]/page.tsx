@@ -147,20 +147,21 @@ function LeadForm({ studioId, studioName }: { studioId: string | null; studioNam
     }
   }
 
+  // 48px tall inputs for mobile tap targets
   const inputCls =
-    'w-full rounded-xl border border-black/[0.08] bg-[#f7f7f9] px-3.5 py-2.5 text-sm text-[#1a1a1a] outline-none placeholder-[#b0b0b8] transition-all focus:border-[#007AFF]/40 focus:bg-white focus:ring-2 focus:ring-[#007AFF]/10'
+    'w-full rounded-xl border border-black/[0.08] bg-[#f7f7f9] px-3.5 py-3 text-[15px] text-[#1a1a1a] outline-none placeholder-[#b0b0b8] transition-all focus:border-[#007AFF]/40 focus:bg-white focus:ring-2 focus:ring-[#007AFF]/10'
 
   if (submitted) {
     return (
-      <div className="py-8 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#007AFF]/10">
-          <CheckCircle2 size={22} className="text-[#007AFF]" />
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#007AFF]/10">
+          <CheckCircle2 size={26} className="text-[#007AFF]" />
         </div>
-        <p className="font-semibold text-[#1a1a1a]">Mensagem enviada!</p>
-        <p className="mt-1 text-sm text-[#8e8e93]">{studioName} entrará em contato em breve.</p>
+        <p className="text-lg font-semibold text-[#1a1a1a]">Mensagem enviada!</p>
+        <p className="mt-2 text-sm text-[#8e8e93]">{studioName} entrará em contato em breve.</p>
         <button
           onClick={() => { setSubmitted(false); setForm({ name: '', email: '', phone: '', message: '' }) }}
-          className="mt-5 text-xs text-[#8e8e93] transition-colors hover:text-[#6b6b6b]"
+          className="mt-6 rounded-xl bg-[#f2f2f7] px-6 py-2.5 text-sm text-[#6b6b6b] transition-colors hover:bg-[#e5e5ea] active:scale-[0.97]"
         >
           Enviar outra mensagem
         </button>
@@ -169,32 +170,35 @@ function LeadForm({ studioId, studioName }: { studioId: string | null; studioNam
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-3.5">
       <div>
         <label className="mb-1.5 block text-[10px] font-semibold tracking-[0.18em] text-[#8e8e93]">NOME COMPLETO</label>
         <input type="text" required placeholder="Seu nome" value={form.name}
-          onChange={e => setForm({ ...form, name: e.target.value })} className={inputCls} />
+          onChange={e => setForm({ ...form, name: e.target.value })} className={inputCls}
+          autoComplete="name" />
       </div>
       <div>
         <label className="mb-1.5 block text-[10px] font-semibold tracking-[0.18em] text-[#8e8e93]">EMAIL</label>
         <input type="email" required placeholder="seu@email.com" value={form.email}
-          onChange={e => setForm({ ...form, email: e.target.value })} className={inputCls} />
+          onChange={e => setForm({ ...form, email: e.target.value })} className={inputCls}
+          inputMode="email" autoComplete="email" />
       </div>
       <div>
         <label className="mb-1.5 block text-[10px] font-semibold tracking-[0.18em] text-[#8e8e93]">TELEFONE</label>
         <input type="tel" placeholder="+55 11 99999-9999" value={form.phone}
-          onChange={e => setForm({ ...form, phone: e.target.value })} className={inputCls} />
+          onChange={e => setForm({ ...form, phone: e.target.value })} className={inputCls}
+          inputMode="tel" autoComplete="tel" />
       </div>
       <div>
         <label className="mb-1.5 block text-[10px] font-semibold tracking-[0.18em] text-[#8e8e93]">MENSAGEM</label>
-        <textarea required rows={3} placeholder="Descreva seu projeto, metragem, prazo estimado..."
+        <textarea required rows={4} placeholder="Descreva seu projeto, metragem, prazo estimado..."
           value={form.message} onChange={e => setForm({ ...form, message: e.target.value })}
           className={`${inputCls} resize-none`} />
       </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
       <button
         type="submit" disabled={loading}
-        className="w-full rounded-xl bg-[#007AFF] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#0066d6] active:scale-[0.98] disabled:opacity-60"
+        className="w-full rounded-xl bg-[#007AFF] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#0066d6] active:scale-[0.98] disabled:opacity-60"
       >
         {loading ? 'Enviando...' : 'Enviar mensagem'}
       </button>
@@ -330,14 +334,17 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
             : 'bg-white border-b border-black/[0.06]'
         }`}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 md:px-10">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:h-16 md:px-10">
+          {/* Back link — shows arrow on mobile, just ARC on desktop */}
           <Link
             href="/"
-            className="text-xl font-light tracking-[0.42em] text-[#1a1a1a] transition-opacity hover:opacity-60"
+            className="flex items-center gap-1 text-[#1a1a1a] transition-opacity hover:opacity-60"
             aria-label="ARC — Voltar ao marketplace"
           >
-            ARC
+            <ChevronLeft size={18} className="md:hidden" strokeWidth={2.5} />
+            <span className="text-[15px] font-light tracking-[0.42em] md:text-xl">ARC</span>
           </Link>
+          {/* Desktop CTA */}
           <button
             onClick={() =>
               document.getElementById('contact-section')?.scrollIntoView({ behavior: 'smooth' })
@@ -346,34 +353,36 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
           >
             Solicitar contato
           </button>
+          {/* Mobile CTA */}
           <button
             onClick={() => setContactModalOpen(true)}
-            className="lg:hidden rounded-[10px] bg-[#007AFF] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#0066d6] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-offset-2"
+            className="lg:hidden rounded-[10px] bg-[#007AFF] px-4 py-1.5 text-[13px] font-semibold text-white transition-all hover:bg-[#0066d6] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-offset-2"
           >
-            Contato
+            Solicitar contato
           </button>
         </div>
       </header>
 
-      {/* ── HERO ───────────────────────────────────────────────────────── */}
-      <div className="pt-16 bg-[#f7f7f9]">
-        <div className="mx-auto max-w-[540px] px-4 py-10 md:py-14">
+      {/* ── CAROUSEL ──────────────────────────────────────────────────── */}
+      <div className="pt-14 bg-[#f7f7f9] md:pt-16">
+        {/* Full-width on mobile, 540px max on desktop */}
+        <div className="py-4 md:mx-auto md:max-w-[540px] md:px-4 md:py-10">
           <CarrosselImagens images={galeria} fallbackUrl={studio.cover_url} />
         </div>
       </div>
 
       {/* ── MAIN CONTENT ───────────────────────────────────────────────── */}
-      <div className="mx-auto max-w-7xl px-6 md:px-10 py-12 pb-32 lg:pb-20">
-        <div className="flex flex-col lg:flex-row lg:items-start gap-10 xl:gap-20">
+      <div className="mx-auto max-w-7xl px-4 py-8 pb-32 md:px-10 md:py-12 lg:pb-20">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-8 xl:gap-20">
 
           {/* ── LEFT COLUMN ─────────────────────────────────────────────── */}
-          <div className="min-w-0 flex-1 space-y-20">
+          <div className="min-w-0 flex-1 space-y-12 md:space-y-20">
 
             {/* IDENTITY */}
             <section>
-              <div className="flex items-start gap-5">
+              <div className="flex items-start gap-4">
                 {studio.image_url && (
-                  <div className="shrink-0 h-20 w-20 overflow-hidden rounded-full border border-black/[0.08] shadow-sm">
+                  <div className="shrink-0 h-16 w-16 overflow-hidden rounded-full border border-black/[0.08] shadow-sm md:h-20 md:w-20">
                     <img
                       src={studio.image_url} alt={studio.nome}
                       className="h-full w-full object-cover" loading="eager"
@@ -381,8 +390,8 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                   </div>
                 )}
                 <div className="min-w-0 pt-1">
-                  <div className="flex flex-wrap items-center gap-2.5 mb-1.5">
-                    <h1 className="text-[28px] font-bold leading-tight text-[#1a1a1a]">
+                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                    <h1 className="text-[22px] font-bold leading-tight text-[#1a1a1a] md:text-[28px]">
                       {studio.nome}
                     </h1>
                     {studio.verificado && (
@@ -394,9 +403,9 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                   </div>
 
                   {locationStr && (
-                    <div className="flex items-center gap-1.5 mb-2">
+                    <div className="flex items-center gap-1.5 mb-1.5">
                       <MapPin size={13} className="shrink-0 text-[#007AFF]" />
-                      <span className="text-base text-[#666]">{locationStr}</span>
+                      <span className="text-sm text-[#666] md:text-base">{locationStr}</span>
                     </div>
                   )}
 
@@ -412,19 +421,19 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
               </div>
 
               {studio.bio && (
-                <div className="mt-8 max-w-2xl">
+                <div className="mt-6 max-w-2xl">
                   {studio.bio.split('\n\n').map((p, i) => (
-                    <p key={i} className="mb-4 text-base leading-[1.75] text-[#444] last:mb-0">{p}</p>
+                    <p key={i} className="mb-3 text-[14px] leading-[1.6] text-[#444] last:mb-0 md:mb-4 md:text-base md:leading-[1.75]">{p}</p>
                   ))}
                 </div>
               )}
 
               {studio.especialidades && studio.especialidades.length > 0 && (
-                <div className="mt-6 flex flex-wrap gap-2">
+                <div className="mt-5 flex flex-wrap gap-2">
                   {studio.especialidades.map(e => (
                     <span
                       key={e}
-                      className="rounded-full border border-black/[0.09] bg-white px-4 py-1.5 text-sm text-[#444] shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
+                      className="rounded-full border border-black/[0.09] bg-white px-3.5 py-1.5 text-[13px] text-[#444] shadow-[0_1px_2px_rgba(0,0,0,0.05)] md:px-4 md:text-sm"
                     >
                       {e}
                     </span>
@@ -439,16 +448,16 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                 <p className="mb-1.5 text-[11px] font-semibold tracking-[0.35em] text-[#007AFF]">
                   PORTFÓLIO
                 </p>
-                <h2 className="mb-8 text-2xl font-bold text-[#1a1a1a]">Projetos</h2>
+                <h2 className="mb-6 text-xl font-bold text-[#1a1a1a] md:mb-8 md:text-2xl">Projetos</h2>
 
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 gap-2 sm:gap-4">
                   {portfolio.map((project) => {
                     const firstImg = project.imagens[0]?.url
                     return (
                       <div
                         key={project.id}
                         onClick={() => openProject(project)}
-                        className="group relative cursor-pointer overflow-hidden rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-shadow duration-300 hover:shadow-[0_10px_32px_rgba(0,0,0,0.14)]"
+                        className="group relative cursor-pointer overflow-hidden rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-shadow duration-300 hover:shadow-[0_10px_32px_rgba(0,0,0,0.14)] active:scale-[0.98] md:rounded-2xl"
                         style={{ aspectRatio: '4/5' }}
                       >
                         {firstImg ? (
@@ -463,22 +472,19 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                           </div>
                         )}
 
-                        {/* Bottom gradient always visible */}
                         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/65 to-transparent" />
 
-                        {/* Project info */}
-                        <div className="absolute inset-x-0 bottom-0 p-4">
+                        <div className="absolute inset-x-0 bottom-0 p-3 md:p-4">
                           {project.categoria && (
-                            <p className="mb-0.5 text-[10px] font-semibold tracking-[0.25em] text-white/65">
+                            <p className="mb-0.5 text-[9px] font-semibold tracking-[0.25em] text-white/65 md:text-[10px]">
                               {project.categoria.toUpperCase()}
                             </p>
                           )}
-                          <p className="line-clamp-2 text-sm font-semibold leading-snug text-white">
+                          <p className="line-clamp-2 text-[12px] font-semibold leading-snug text-white md:text-sm">
                             {project.nome}
                           </p>
                         </div>
 
-                        {/* Blue tint on hover */}
                         <div className="pointer-events-none absolute inset-0 bg-[#007AFF]/8 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                       </div>
                     )
@@ -492,10 +498,10 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
               <p className="mb-1.5 text-[11px] font-semibold tracking-[0.35em] text-[#007AFF]">
                 SOBRE
               </p>
-              <h2 className="mb-8 text-2xl font-bold text-[#1a1a1a]">O Escritório</h2>
+              <h2 className="mb-6 text-xl font-bold text-[#1a1a1a] md:mb-8 md:text-2xl">O Escritório</h2>
 
               {/* Stats */}
-              <div className="mb-10 grid grid-cols-3 gap-3">
+              <div className="mb-8 grid grid-cols-3 gap-2 md:mb-10 md:gap-3">
                 {[
                   {
                     icon: Calendar,
@@ -513,16 +519,16 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                 ].map(({ icon: Icon, value, unit, label }) => (
                   <div
                     key={label}
-                    className="rounded-2xl border border-black/[0.07] bg-[#f9f9fb] p-5"
+                    className="rounded-xl border border-black/[0.07] bg-[#f9f9fb] p-4 md:rounded-2xl md:p-5"
                   >
-                    <Icon size={18} className="mb-3 text-[#007AFF]" />
-                    <p className="text-2xl font-bold text-[#1a1a1a]">
+                    <Icon size={16} className="mb-2 text-[#007AFF] md:mb-3 md:text-[18px]" />
+                    <p className="text-xl font-bold text-[#1a1a1a] md:text-2xl">
                       {value}
                       {unit && (
-                        <span className="ml-1 text-base font-normal text-[#8e8e93]">{unit}</span>
+                        <span className="ml-1 text-sm font-normal text-[#8e8e93] md:text-base">{unit}</span>
                       )}
                     </p>
-                    <p className="mt-0.5 text-xs text-[#8e8e93]">{label}</p>
+                    <p className="mt-0.5 text-[11px] text-[#8e8e93] md:text-xs">{label}</p>
                   </div>
                 ))}
               </div>
@@ -537,7 +543,7 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                     {studio.image_url && (
                       <img
                         src={studio.image_url} alt={studio.nome_responsavel}
-                        className="h-14 w-14 rounded-full border border-black/[0.08] object-cover"
+                        className="h-12 w-12 rounded-full border border-black/[0.08] object-cover md:h-14 md:w-14"
                         loading="lazy"
                       />
                     )}
@@ -550,13 +556,68 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
               )}
             </FadeSection>
 
+            {/* Contact links — mobile only (replaces right-column on small screens) */}
+            <div className="lg:hidden">
+              {(studio.telefone || studio.instagram || studio.website) && (
+                <FadeSection>
+                  <p className="mb-3 text-[11px] font-semibold tracking-[0.35em] text-[#8e8e93]">CONTATO</p>
+                  <div className="space-y-0 overflow-hidden rounded-2xl border border-black/[0.08] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
+                    {studio.telefone && whatsappUrl && (
+                      <a
+                        href={whatsappUrl}
+                        target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-3 px-5 py-4 transition-colors hover:bg-[#f9f9fb] active:bg-[#f2f2f7] group border-b border-black/[0.04] last:border-0"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#25D366]/12">
+                          <MessageCircle size={16} className="text-[#25D366]" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold tracking-[0.15em] text-[#8e8e93]">WHATSAPP</p>
+                          <p className="truncate text-sm text-[#1a1a1a]">{studio.telefone}</p>
+                        </div>
+                      </a>
+                    )}
+                    {instagramUrl && instagramHandle && (
+                      <a
+                        href={instagramUrl}
+                        target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-3 px-5 py-4 transition-colors hover:bg-[#f9f9fb] active:bg-[#f2f2f7] group border-b border-black/[0.04] last:border-0"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E1306C]/10">
+                          <InstagramIcon size={16} className="text-[#E1306C]" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold tracking-[0.15em] text-[#8e8e93]">INSTAGRAM</p>
+                          <p className="truncate text-sm text-[#1a1a1a]">@{instagramHandle}</p>
+                        </div>
+                      </a>
+                    )}
+                    {studio.website && (
+                      <a
+                        href={studio.website}
+                        target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-3 px-5 py-4 transition-colors hover:bg-[#f9f9fb] active:bg-[#f2f2f7] group border-b border-black/[0.04] last:border-0"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#007AFF]/10">
+                          <Globe size={16} className="text-[#007AFF]" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold tracking-[0.15em] text-[#8e8e93]">WEBSITE</p>
+                          <p className="truncate text-sm text-[#1a1a1a]">{studio.website.replace(/^https?:\/\//, '')}</p>
+                        </div>
+                      </a>
+                    )}
+                  </div>
+                </FadeSection>
+              )}
+            </div>
+
           </div>
 
-          {/* ── RIGHT COLUMN — STICKY CONTACT ───────────────────────────── */}
-          <div id="contact-section" className="w-full lg:w-[380px] xl:w-[420px] shrink-0">
+          {/* ── RIGHT COLUMN — STICKY CONTACT (desktop only) ────────────── */}
+          <div id="contact-section" className="hidden lg:block w-full lg:w-[380px] xl:w-[420px] shrink-0">
             <div className="lg:sticky" style={{ top: 96 }}>
 
-              {/* Contact form card */}
               <div className="overflow-hidden rounded-2xl border border-black/[0.08] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.08)]">
                 <div className="border-b border-black/[0.06] px-6 py-5">
                   <h3 className="text-lg font-bold text-[#1a1a1a]">Entre em contato</h3>
@@ -569,7 +630,6 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                 </div>
               </div>
 
-              {/* Contact links */}
               {(studio.telefone || studio.instagram || studio.website) && (
                 <div className="mt-3 space-y-0 overflow-hidden rounded-2xl border border-black/[0.08] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
                   {studio.telefone && whatsappUrl && (
@@ -582,9 +642,7 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                         <MessageCircle size={15} className="text-[#25D366]" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[10px] font-semibold tracking-[0.15em] text-[#8e8e93]">
-                          WHATSAPP
-                        </p>
+                        <p className="text-[10px] font-semibold tracking-[0.15em] text-[#8e8e93]">WHATSAPP</p>
                         <p className="truncate text-sm text-[#1a1a1a] transition-colors group-hover:text-[#007AFF]">
                           {studio.telefone}
                         </p>
@@ -601,9 +659,7 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                         <InstagramIcon size={15} className="text-[#E1306C]" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[10px] font-semibold tracking-[0.15em] text-[#8e8e93]">
-                          INSTAGRAM
-                        </p>
+                        <p className="text-[10px] font-semibold tracking-[0.15em] text-[#8e8e93]">INSTAGRAM</p>
                         <p className="truncate text-sm text-[#1a1a1a] transition-colors group-hover:text-[#007AFF]">
                           @{instagramHandle}
                         </p>
@@ -620,9 +676,7 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                         <Globe size={15} className="text-[#007AFF]" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[10px] font-semibold tracking-[0.15em] text-[#8e8e93]">
-                          WEBSITE
-                        </p>
+                        <p className="text-[10px] font-semibold tracking-[0.15em] text-[#8e8e93]">WEBSITE</p>
                         <p className="truncate text-sm text-[#1a1a1a] transition-colors group-hover:text-[#007AFF]">
                           {studio.website.replace(/^https?:\/\//, '')}
                         </p>
@@ -632,7 +686,6 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                 </div>
               )}
 
-              {/* Trust badges */}
               <div className="mt-4 space-y-2 px-1">
                 {[
                   'Verificado pela ARC Platform',
@@ -652,17 +705,17 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
       </div>
 
       {/* ── MOBILE FIXED CTA ───────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-black/[0.06] bg-white/92 p-4 backdrop-blur-md lg:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-black/[0.06] bg-white/95 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur-md lg:hidden">
         <button
           onClick={() => setContactModalOpen(true)}
-          className="w-full rounded-xl bg-[#007AFF] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#0066d6] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-offset-2"
+          className="w-full rounded-xl bg-[#007AFF] py-4 text-[15px] font-semibold text-white transition-all hover:bg-[#0066d6] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-offset-2"
           aria-haspopup="dialog"
         >
           Solicitar contato
         </button>
       </div>
 
-      {/* ── CONTACT MODAL (mobile) ─────────────────────────────────────── */}
+      {/* ── CONTACT MODAL — full-screen on mobile ─────────────────────── */}
       {contactModalOpen && (
         <div
           className="fixed inset-0 z-[300] lg:hidden"
@@ -672,28 +725,21 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
           aria-label="Formulário de contato"
         >
           <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setContactModalOpen(false)}
-          />
-          <div
-            className="absolute bottom-0 left-0 right-0 max-h-[90vh] overflow-y-auto rounded-t-3xl bg-white pb-8"
+            className="absolute inset-0 overflow-y-auto bg-white"
             style={{ animation: 'slideUp 0.35s cubic-bezier(0.22,1,0.36,1)' }}
           >
-            {/* Handle */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="h-1 w-10 rounded-full bg-black/10" />
-            </div>
-            <div className="flex items-center justify-between px-6 py-3">
+            {/* Sticky header in modal */}
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-black/[0.06] bg-white px-4 py-4">
               <h3 className="text-lg font-bold text-[#1a1a1a]">Entre em contato</h3>
               <button
                 onClick={() => setContactModalOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f2f2f7] transition-colors hover:bg-[#e5e5ea]"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f2f2f7] transition-colors hover:bg-[#e5e5ea] active:scale-[0.97]"
                 aria-label="Fechar"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
-            <div className="px-6 pb-2">
+            <div className="px-4 py-5 pb-10">
               <LeadForm studioId={studio.id} studioName={studio.nome} />
             </div>
           </div>
@@ -710,15 +756,14 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
             className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-[#111] shadow-[0_32px_80px_rgba(0,0,0,0.6)]"
             style={{ maxHeight: '92vh' }}
           >
-            {/* Modal header */}
-            <div className="flex items-start justify-between gap-4 px-5 py-4">
+            <div className="flex items-start justify-between gap-4 px-4 py-4 md:px-5">
               <div>
                 {selectedProject.categoria && (
                   <p className="mb-0.5 text-[10px] font-semibold tracking-[0.35em] text-[#007AFF]">
                     {selectedProject.categoria.toUpperCase()}
                   </p>
                 )}
-                <h3 className="text-base font-bold text-white">{selectedProject.nome}</h3>
+                <h3 className="text-sm font-bold text-white md:text-base">{selectedProject.nome}</h3>
                 {selectedProject.descricao && (
                   <p className="mt-1 line-clamp-2 text-xs text-white/50">
                     {selectedProject.descricao}
@@ -727,13 +772,13 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
               </div>
               <button
                 onClick={closeModal}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white active:scale-[0.95]"
+                aria-label="Fechar"
               >
                 <X size={15} />
               </button>
             </div>
 
-            {/* Image area */}
             <div className="relative flex-1 overflow-hidden bg-black" style={{ minHeight: 240 }}>
               {selectedProject.imagens.length > 0 ? (
                 <>
@@ -748,13 +793,15 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                     <>
                       <button
                         onClick={prevImg}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/70 active:scale-[0.95]"
+                        aria-label="Imagem anterior"
                       >
                         <ChevronLeft size={20} />
                       </button>
                       <button
                         onClick={nextImg}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/70 active:scale-[0.95]"
+                        aria-label="Próxima imagem"
                       >
                         <ChevronRight size={20} />
                       </button>
@@ -768,15 +815,15 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
               )}
             </div>
 
-            {/* Thumbnails */}
             {selectedProject.imagens.length > 1 && (
-              <div className="flex items-center gap-2 overflow-x-auto px-5 py-3">
+              <div className="flex items-center gap-2 overflow-x-auto px-4 py-3 md:px-5">
                 <span className="mr-2 shrink-0 text-[10px] text-white/30">
                   {imgIdx + 1}/{selectedProject.imagens.length}
                 </span>
                 {selectedProject.imagens.map((img, i) => (
                   <button
                     key={i} onClick={() => setImgIdx(i)}
+                    aria-label={`Foto ${i + 1}`}
                     className={`h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
                       i === imgIdx ? 'border-[#007AFF] opacity-100' : 'border-transparent opacity-40 hover:opacity-70'
                     }`}
@@ -791,15 +838,15 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
       )}
 
       {/* ── FOOTER ──────────────────────────────────────────────────────── */}
-      <footer className="border-t border-black/[0.08] bg-white px-6 py-10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 md:flex-row">
-          <Link href="/" className="text-xl font-light tracking-[0.42em] text-[#1a1a1a]">ARC</Link>
-          <p className="text-xs text-[#8e8e93]">© 2026 ARC Marketplace. Todos os direitos reservados.</p>
-          <div className="flex gap-6">
-            <Link href="/privacidade" className="text-xs text-[#8e8e93] transition-colors hover:text-[#6b6b6b]">
+      <footer className="border-t border-black/[0.08] bg-white px-4 py-6 md:px-6 md:py-10">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 md:flex-row md:gap-4">
+          <Link href="/" className="text-[15px] font-light tracking-[0.42em] text-[#1a1a1a] md:text-xl">ARC</Link>
+          <p className="text-[11px] text-[#8e8e93] md:text-xs">© 2026 ARC Marketplace. Todos os direitos reservados.</p>
+          <div className="flex gap-5">
+            <Link href="/privacidade" className="text-[11px] text-[#8e8e93] transition-colors hover:text-[#6b6b6b] md:text-xs">
               Privacidade
             </Link>
-            <Link href="/termos-de-uso" className="text-xs text-[#8e8e93] transition-colors hover:text-[#6b6b6b]">
+            <Link href="/termos-de-uso" className="text-[11px] text-[#8e8e93] transition-colors hover:text-[#6b6b6b] md:text-xs">
               Termos
             </Link>
           </div>
