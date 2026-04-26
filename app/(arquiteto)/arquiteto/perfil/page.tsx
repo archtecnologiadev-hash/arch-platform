@@ -548,7 +548,7 @@ export default function ArquitetoPerfilPage() {
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 5 }}>GALERIA DO PERFIL PÚBLICO</p>
               <p style={{ fontSize: 12, color: '#8e8e93', lineHeight: 1.5 }}>
-                Adicione até 8 imagens quadradas (formato Instagram) que aparecerão no carrossel do seu perfil público. Recomendado: 1080×1080px
+                Adicione imagens já em formato quadrado 1:1 (recomendado 1080×1080px). Máx. 8 imagens · 10 MB por imagem.
               </p>
             </div>
             {galeria.length < 8 && (
@@ -571,12 +571,7 @@ export default function ArquitetoPerfilPage() {
               if (galeria.length >= 8) {
                 showToast('Limite de 8 imagens atingido.', false); e.target.value = ''; return
               }
-              const src = URL.createObjectURL(f)
-              setCropConfig({ src, aspect: 1, circular: false, onConfirm: blob => {
-                const cropped = new File([blob], f.name, { type: 'image/jpeg' })
-                addGaleriaImage(cropped)
-                setCropConfig(null)
-              }, onCancel: () => setCropConfig(null) })
+              addGaleriaImage(f)
               e.target.value = ''
             }} />
 
