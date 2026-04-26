@@ -553,7 +553,7 @@ export default function ArquitetoPerfilPage() {
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 5 }}>GALERIA DO PERFIL PÚBLICO</p>
               <p style={{ fontSize: 12, color: '#8e8e93', lineHeight: 1.5 }}>
-                Adicione até 8 imagens em alta definição que aparecerão no carrossel do seu perfil público. Recomendado: 1920×1080px (16:9)
+                Adicione até 8 imagens quadradas (formato Instagram) que aparecerão no carrossel do seu perfil público. Recomendado: 1080×1080px
               </p>
             </div>
             {galeria.length < 8 && (
@@ -577,7 +577,7 @@ export default function ArquitetoPerfilPage() {
                 showToast('Limite de 8 imagens atingido.', false); e.target.value = ''; return
               }
               const src = URL.createObjectURL(f)
-              setCropConfig({ src, aspect: 16 / 9, circular: false, onConfirm: blob => {
+              setCropConfig({ src, aspect: 1, circular: false, onConfirm: blob => {
                 const cropped = new File([blob], f.name, { type: 'image/jpeg' })
                 addGaleriaImage(cropped)
                 setCropConfig(null)
@@ -611,7 +611,7 @@ export default function ArquitetoPerfilPage() {
                       updated.forEach(g => { if (g.id) supabase.from('escritorio_galeria').update({ ordem: g.ordem }).eq('id', g.id).then(() => {}) })
                       setDragIdx(null)
                     }}
-                    style={{ position: 'relative', aspectRatio: '16/9', borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)', cursor: 'grab', background: '#f2f2f7', opacity: dragIdx === i ? 0.5 : 1, transition: 'opacity 0.15s' }}>
+                    style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)', cursor: 'grab', background: '#f2f2f7', opacity: dragIdx === i ? 0.5 : 1, transition: 'opacity 0.15s' }}>
                     <img src={img.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
                     <div style={{ position: 'absolute', top: 0, right: 0, padding: 5 }}>
                       <button

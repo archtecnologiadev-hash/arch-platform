@@ -271,54 +271,52 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
         </div>
       </header>
 
-      {/* ── HERO ────────────────────────────────────────────────────── */}
-      <section className="relative h-[72vh] max-h-[700px] min-h-[480px] pt-16">
-        <CarrosselImagens images={galeria} fallbackUrl={studio.cover_url} fill />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10 pointer-events-none" style={{ zIndex: 5 }} />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent pointer-events-none" style={{ zIndex: 5 }} />
-
-        <div className="absolute inset-x-0 bottom-0 pb-10" style={{ zIndex: 6 }}>
-          <div className="mx-auto max-w-7xl px-6">
-            {/* Avatar + info */}
-            <div className="flex items-end gap-5 mb-2">
-              {studio.image_url && (
-                <div className="hidden sm:block shrink-0 w-20 h-20 rounded-full overflow-hidden border-2 border-white/60 shadow-lg">
-                  <img src={studio.image_url} alt={studio.nome} className="w-full h-full object-cover" />
-                </div>
+      {/* ── STUDIO INFO ──────────────────────────────────────────────── */}
+      <div className="bg-white pt-16 border-b border-black/[0.06]">
+        <div className="mx-auto max-w-2xl px-6 py-6">
+          <div className="flex items-center gap-4">
+            {studio.image_url && (
+              <div className="shrink-0 w-16 h-16 rounded-full overflow-hidden border border-black/10 shadow-sm">
+                <img src={studio.image_url} alt={studio.nome} className="w-full h-full object-cover" />
+              </div>
+            )}
+            <div className="min-w-0">
+              {(studio.estilo || (studio.especialidades && studio.especialidades.length > 0)) && (
+                <p className="text-xs font-semibold tracking-[0.35em] text-[#007AFF] mb-0.5">
+                  {studio.estilo ?? studio.especialidades?.slice(0, 2).join(' · ')}
+                </p>
               )}
-              <div>
-                {(studio.estilo || (studio.especialidades && studio.especialidades.length > 0)) && (
-                  <p className="mb-2 text-xs font-semibold tracking-[0.4em] text-[#007AFF]">
-                    {studio.estilo ?? studio.especialidades?.slice(0, 2).join(' · ')}
-                  </p>
+              <h1 className="text-2xl font-black text-[#1a1a1a] leading-tight">{studio.nome}</h1>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
+                {(studio.cidade || studio.estado) && (
+                  <div className="flex items-center gap-1 text-[#8e8e93]">
+                    <MapPin className="h-3 w-3 text-[#007AFF]" />
+                    <span className="text-xs">{[studio.cidade, studio.estado].filter(Boolean).join(', ')}</span>
+                  </div>
                 )}
-                <h1 className="mb-4 text-5xl font-black leading-none text-white md:text-6xl lg:text-7xl">
-                  {studio.nome}
-                </h1>
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                  {(studio.cidade || studio.estado) && (
-                    <div className="flex items-center gap-1.5 text-white/70">
-                      <MapPin className="h-3.5 w-3.5 text-[#007AFF]" />
-                      <span className="text-sm">{[studio.cidade, studio.estado].filter(Boolean).join(', ')}</span>
-                    </div>
-                  )}
-                  {studio.rating && studio.rating > 0 && (
-                    <div className="flex items-center gap-2">
-                      <StarRating rating={studio.rating} size="md" />
-                      <span className="font-bold text-white">{studio.rating.toFixed(1)}</span>
-                    </div>
-                  )}
-                  {yearsExp > 0 && (
-                    <span className="hidden text-xs text-white/50 sm:block">
-                      {yearsExp} {yearsExp === 1 ? 'ano' : 'anos'} na plataforma
-                    </span>
-                  )}
-                </div>
+                {studio.rating && studio.rating > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <StarRating rating={studio.rating} size="sm" />
+                    <span className="text-xs font-bold text-[#1a1a1a]">{studio.rating.toFixed(1)}</span>
+                  </div>
+                )}
+                {yearsExp > 0 && (
+                  <span className="text-xs text-[#aeaeb2]">
+                    {yearsExp} {yearsExp === 1 ? 'ano' : 'anos'} na plataforma
+                  </span>
+                )}
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+
+      {/* ── CAROUSEL ─────────────────────────────────────────────────── */}
+      <div className="bg-[#f2f2f7] py-8">
+        <div className="mx-auto max-w-2xl px-6">
+          <CarrosselImagens images={galeria} fallbackUrl={studio.cover_url} />
+        </div>
+      </div>
 
       {/* ── TAB NAV ─────────────────────────────────────────────────── */}
       <nav className="sticky top-16 z-30 border-b border-black/[0.08] bg-white/95 backdrop-blur-md">
