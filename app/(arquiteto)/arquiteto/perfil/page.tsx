@@ -129,6 +129,7 @@ export default function ArquitetoPerfilPage() {
   const [estado, setEstado] = useState('')
   const [telefone, setTelefone] = useState('')
   const [instagram, setInstagram] = useState('')
+  const [anoFundacao, setAnoFundacao] = useState('')
   const [website, setWebsite] = useState('')
   const [bio, setBio] = useState('')
   const [espec, setEspec] = useState<string[]>([])
@@ -179,6 +180,7 @@ export default function ArquitetoPerfilPage() {
         setEstado(data.estado ?? '')
         setTelefone(data.telefone ?? '')
         setInstagram(data.instagram ?? '')
+        setAnoFundacao(data.ano_fundacao ? String(data.ano_fundacao) : '')
         setWebsite(data.website ?? '')
         setBio(data.bio ?? '')
         setEspec(data.especialidades ?? [])
@@ -309,6 +311,7 @@ export default function ArquitetoPerfilPage() {
       estado:           estado || null,
       telefone:         telefone || null,
       instagram:        instagram || null,
+      ano_fundacao:     anoFundacao.trim() ? parseInt(anoFundacao, 10) : null,
       website:          website || null,
       bio:              bio || null,
       especialidades:   espec,
@@ -796,6 +799,20 @@ export default function ArquitetoPerfilPage() {
             </div>
             <Field label="Telefone / WhatsApp" value={telefone} onChange={v => setTelefone(maskPhone(v))} placeholder="(11) 99999-9999" />
             <Field label="Instagram" value={instagram} onChange={setInstagram} placeholder="@seu.escritorio" />
+            <div>
+              <label style={LBL}>Ano de fundação</label>
+              <input
+                type="number"
+                value={anoFundacao}
+                onChange={e => setAnoFundacao(e.target.value)}
+                placeholder="Ex: 2010"
+                min={1900}
+                max={new Date().getFullYear()}
+                style={INP}
+                onFocus={e => (e.target.style.borderColor = '#007AFF')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')}
+              />
+            </div>
             <Field label="Website" value={website} onChange={setWebsite} placeholder="https://seusite.com.br" type="url" />
             <div>
               <label style={LBL}>Bio / Descrição &nbsp;

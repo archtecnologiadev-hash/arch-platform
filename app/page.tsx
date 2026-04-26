@@ -22,6 +22,8 @@ interface Studio {
   image_url: string | null
   cover_url: string | null
   destaque_marketplace: string | null
+  instagram: string | null
+  ano_fundacao: number | null
   galeria_urls: string[]
 }
 
@@ -44,6 +46,10 @@ function StudioCard({ studio, index }: { studio: Studio; index: number }) {
 
   const imgs = getDisplayImages(studio)
   const hasMultiple = imgs.length > 1
+  const isPremium = studio.destaque_marketplace === 'premium'
+  const igHandle = studio.instagram
+    ? (studio.instagram.startsWith('@') ? studio.instagram : `@${studio.instagram}`)
+    : null
 
   useEffect(() => {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
@@ -63,11 +69,6 @@ function StudioCard({ studio, index }: { studio: Studio; index: number }) {
     setHoverIdx(0)
   }
 
-  const espec = studio.especialidades?.[0] ?? studio.estilo ?? null
-  const location = [studio.cidade, studio.estado].filter(Boolean).join(', ')
-  const subtitle = [location, espec].filter(Boolean).join(' · ')
-  const isPremium = studio.destaque_marketplace === 'premium'
-
   return (
     <Link
       href={`/escritorio/${studio.slug}`}
@@ -76,79 +77,86 @@ function StudioCard({ studio, index }: { studio: Studio; index: number }) {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Image — 4:5 */}
+      {/* Card — all info overlaid on image */}
       <div
-        className="relative overflow-hidden rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.07)] transition-shadow duration-[400ms] group-hover:shadow-[0_12px_40px_rgba(0,0,0,0.14)]"
+        className="relative overflow-hidden rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-shadow duration-[400ms] group-hover:shadow-[0_16px_48px_rgba(0,0,0,0.18)]"
         style={{ aspectRatio: '4/5' }}
       >
         {imgs.length > 0 ? (
-          <>
-            {imgs.map((url, i) => (
-              <Image
-                key={url}
-                src={url}
-                alt={i === 0 ? studio.nome : ''}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className={`object-cover transition-all duration-500 ease-in-out ${
-                  i === hoverIdx
-                    ? `opacity-100 ${hovering ? 'scale-[1.04]' : 'scale-100'}`
-                    : 'opacity-0 scale-100'
-                }`}
-                priority={i === 0 && index < 3}
-                loading={i === 0 && index < 3 ? undefined : 'lazy'}
-              />
-            ))}
-
-            {/* Dots indicator — shows on hover when multiple images */}
-            {hasMultiple && (
-              <div
-                className="absolute bottom-3 left-0 right-0 z-10 flex justify-center gap-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                aria-hidden="true"
-              >
-                {imgs.map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1.5 rounded-full bg-white transition-all duration-300 ${
-                      i === hoverIdx ? 'w-4' : 'w-1.5 opacity-60'
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-          </>
+          imgs.map((url, i) => (
+            <Image
+              key={url}
+              src={url}
+              alt={i === 0 ? studio.nome : ''}
+              fill
+              quality={85}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className={`object-cover transition-all duration-500 ease-in-out ${
+                i === hoverIdx
+                  ? `opacity-100 ${hovering ? 'scale-[1.03]' : 'scale-100'}`
+                  : 'opacity-0 scale-100'
+              }`}
+              priority={i === 0 && index < 3}
+              loading={i === 0 && index < 3 ? undefined : 'lazy'}
+            />
+          ))
         ) : (
           <div
             className="flex h-full w-full items-center justify-center"
-            style={{ background: 'linear-gradient(145deg, #ececf2 0%, #dcdce8 100%)' }}
+            style={{ background: 'linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' }}
           >
-            <span className="text-5xl font-extralight text-[#c7c7cc]" aria-hidden="true">
+            <span className="text-6xl font-extralight text-white/30" aria-hidden="true">
               {studio.nome.charAt(0).toUpperCase()}
             </span>
           </div>
         )}
 
+        {/* Bottom gradient overlay — bottom 35% */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[35%] bg-gradient-to-t from-black/50 to-transparent transition-all duration-300 group-hover:from-black/65"
+          aria-hidden="true"
+        />
+
+        {/* Text overlay */}
+        <div className="absolute inset-x-0 bottom-0 z-20 p-4">
+          <p className="line-clamp-1 text-[16px] font-semibold leading-snug text-white">
+            {studio.nome}
+          </p>
+          {studio.cidade && (
+            <p className="mt-0.5 text-[13px] font-normal text-white/80">{studio.cidade}</p>
+          )}
+          {igHandle && (
+            <p className="mt-0.5 text-[12px] font-normal text-white/70">{igHandle}</p>
+          )}
+          {studio.ano_fundacao && (
+            <p className="mt-0.5 text-[11px] font-normal text-white/60">Desde {studio.ano_fundacao}</p>
+          )}
+        </div>
+
+        {/* Dots — top-right when multiple images */}
+        {hasMultiple && (
+          <div
+            className="absolute right-3 top-3 z-20 flex gap-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+            aria-hidden="true"
+          >
+            {imgs.map((_, i) => (
+              <div
+                key={i}
+                className={`h-1.5 rounded-full bg-white shadow-sm transition-all duration-300 ${
+                  i === hoverIdx ? 'w-4' : 'w-1.5 opacity-60'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Premium badge — top-left */}
         {isPremium && (
-          <div className="absolute left-3 top-3 z-10">
+          <div className="absolute left-3 top-3 z-20">
             <span className="rounded-full bg-white/96 px-3 py-1 text-[10px] font-semibold text-[#007AFF] shadow-sm backdrop-blur-sm">
               ★ Em Destaque
             </span>
           </div>
-        )}
-      </div>
-
-      {/* Text */}
-      <div className="mt-3 px-0.5">
-        <h3 className="text-[17px] font-semibold leading-snug text-[#1a1a1a] transition-colors duration-200 group-hover:text-[#007AFF]">
-          {studio.nome}
-        </h3>
-        {subtitle && (
-          <p className="mt-0.5 text-[14px] font-normal text-[#666]">{subtitle}</p>
-        )}
-        {isPremium && (
-          <span className="mt-1.5 inline-flex items-center rounded-full bg-[#007AFF]/10 px-2.5 py-0.5 text-[11px] font-medium text-[#007AFF]">
-            Verificado
-          </span>
         )}
       </div>
     </Link>
@@ -166,7 +174,7 @@ export default function LandingPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      const fields = 'id, slug, nome, cidade, estado, estilo, especialidades, bio, rating, image_url, cover_url, destaque_marketplace'
+      const fields = 'id, slug, nome, cidade, estado, estilo, especialidades, bio, rating, image_url, cover_url, destaque_marketplace, instagram, ano_fundacao'
 
       const { data: raw } = await supabase
         .from('escritorios')
