@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { X, MapPin, Phone, Globe, Send, CheckCircle2, Loader2, Package, AtSign, Heart, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, MapPin, Phone, Globe, Send, CheckCircle2, Loader2, Package, AtSign, Heart, MessageCircle, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -20,6 +20,7 @@ interface FornecedorData {
   email: string | null
   image_url: string | null
   cover_url: string | null
+  selo_certificado: boolean | null
 }
 
 interface ProdutoImagem {
@@ -257,7 +258,7 @@ export default function FornecedorPublicPage() {
 
       const { data: forn } = await supabase
         .from('fornecedores')
-        .select('id, nome, segmento, cidade, bio, founded, instagram, whatsapp, website, email, image_url, cover_url')
+        .select('id, nome, segmento, cidade, bio, founded, instagram, whatsapp, website, email, image_url, cover_url, selo_certificado')
         .eq('slug', slug)
         .single()
 
@@ -417,7 +418,15 @@ export default function FornecedorPublicPage() {
           {/* Name + actions row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' as const, gap: 14, marginBottom: 12 }}>
             <div>
-              <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1a1a1a', margin: '0 0 8px', letterSpacing: '-0.01em' }}>{fornecedor.nome}</h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const, marginBottom: 8 }}>
+                <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em' }}>{fornecedor.nome}</h1>
+                {fornecedor.selo_certificado && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.25)', borderRadius: 20, padding: '4px 10px' }}>
+                    <ShieldCheck size={13} color="#007AFF" />
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#007AFF' }}>Parceiro Certificado ARC</span>
+                  </div>
+                )}
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const }}>
                 {fornecedor.segmento && (
                   <span style={{ background: `${segColor}14`, border: `1px solid ${segColor}33`, color: segColor, fontSize: 11.5, fontWeight: 700, padding: '3px 12px', borderRadius: 20 }}>

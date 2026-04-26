@@ -144,7 +144,7 @@ export default function CatalogoPage() {
       const { error: upErr } = await supabase.storage.from('fornecedores').upload(path, file, { upsert: false })
       if (!upErr) {
         const { data: { publicUrl } } = supabase.storage.from('fornecedores').getPublicUrl(path)
-        await supabase.from('fornecedor_produto_imagens').insert({ produto_id: prod.id, url: publicUrl, ordem: i })
+        await supabase.from('fornecedor_produto_imagens').insert({ produto_id: prod.id, url: publicUrl, ordem: i, tamanho: file.size })
       }
     }
 

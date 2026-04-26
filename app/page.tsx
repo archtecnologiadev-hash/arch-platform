@@ -17,7 +17,10 @@ interface Studio {
   rating: number | null
   image_url: string | null
   cover_url: string | null
+  destaque_marketplace: string | null
 }
+
+const DESTAQUE_ORDER: Record<string, number> = { premium: 0, padrao: 1, nenhum: 2 }
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -53,7 +56,7 @@ export default function LandingPage() {
       const supabase = createClient()
       const { data } = await supabase
         .from('escritorios')
-        .select('id, slug, nome, cidade, estado, estilo, especialidades, bio, rating, image_url, cover_url')
+        .select('id, slug, nome, cidade, estado, estilo, especialidades, bio, rating, image_url, cover_url, destaque_marketplace')
         .not('nome', 'is', null)
         .order('created_at', { ascending: false })
       setStudios(data ?? [])
@@ -69,13 +72,19 @@ export default function LandingPage() {
   const styles = ['Todos', ...Array.from(new Set(allEspecialidades))]
   const cities = ['Todas', ...Array.from(new Set(withProfile.map(s => s.cidade).filter(Boolean) as string[]))]
 
-  const filtered = withProfile.filter((s) => {
-    const espec = s.especialidades ?? (s.estilo ? [s.estilo] : [])
-    return (
-      (selectedStyle === 'Todos' || espec.includes(selectedStyle)) &&
-      (selectedCity === 'Todas' || s.cidade === selectedCity)
-    )
-  })
+  const filtered = withProfile
+    .filter((s) => {
+      const espec = s.especialidades ?? (s.estilo ? [s.estilo] : [])
+      return (
+        (selectedStyle === 'Todos' || espec.includes(selectedStyle)) &&
+        (selectedCity === 'Todas' || s.cidade === selectedCity)
+      )
+    })
+    .sort((a, b) => {
+      const ao = DESTAQUE_ORDER[a.destaque_marketplace ?? 'nenhum'] ?? 2
+      const bo = DESTAQUE_ORDER[b.destaque_marketplace ?? 'nenhum'] ?? 2
+      return ao - bo
+    })
 
   return (
     <div className="min-h-screen bg-[#f2f2f7] text-[#1a1a1a]">
@@ -139,7 +148,7 @@ export default function LandingPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-px bg-black/[0.06] sm:grid-cols-2 lg:grid-cols-3">
-            {withProfile.map((studio) => (
+            {filtered.map((studio) => (
               <Link
                 key={studio.id}
                 href={`/escritorio/${studio.slug}`}
@@ -150,13 +159,18 @@ export default function LandingPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
                   <div className="absolute inset-0 bg-white/0 transition-all duration-300 group-hover:bg-white/[0.04]" />
 
-                  {(studio.especialidades?.[0] || studio.estilo) && (
-                    <div className="absolute left-3 top-3">
+                  <div className="absolute left-3 top-3 flex gap-1.5">
+                    {(studio.especialidades?.[0] || studio.estilo) && (
                       <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-light text-[#3a3a3a] backdrop-blur-sm">
                         {studio.especialidades?.[0] ?? studio.estilo}
                       </span>
-                    </div>
-                  )}
+                    )}
+                    {studio.destaque_marketplace === 'premium' && (
+                      <span className="flex items-center gap-1 rounded-full bg-[#007AFF]/90 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
+                        ★ Em Destaque
+                      </span>
+                    )}
+                  </div>
 
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <p className="text-sm font-light text-white">{studio.nome}</p>
@@ -305,15 +319,20 @@ export default function LandingPage() {
                   href={`/escritorio/${studio.slug}`}
                   className="group block overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
                 >
-                  <div className="relative h-52 overflow-hidden">
+                  <div className="relative aspect-[4/3] overflow-hidden">
                     <StudioImage url={studio.image_url ?? studio.cover_url} alt={studio.nome} />
-                    {(studio.especialidades?.[0] || studio.estilo) && (
-                      <div className="absolute left-3 top-3">
+                    <div className="absolute left-3 top-3 flex gap-1.5">
+                      {(studio.especialidades?.[0] || studio.estilo) && (
                         <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-light text-[#3a3a3a] backdrop-blur-sm">
                           {studio.especialidades?.[0] ?? studio.estilo}
                         </span>
-                      </div>
-                    )}
+                      )}
+                      {studio.destaque_marketplace === 'premium' && (
+                        <span className="flex items-center gap-1 rounded-full bg-[#007AFF]/90 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
+                          ★ Em Destaque
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="p-4">
                     <h3 className="mb-0.5 text-sm font-light text-black">{studio.nome}</h3>

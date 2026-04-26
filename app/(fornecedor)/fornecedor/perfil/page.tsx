@@ -7,6 +7,7 @@ import WelcomeBanner from '@/components/WelcomeBanner'
 import { createClient } from '@/lib/supabase'
 import ImageCropModal, { type CropConfig } from '@/components/shared/ImageCropModal'
 import { usePlan } from '@/hooks/usePlan'
+import { useStorage } from '@/hooks/useStorage'
 
 function slugify(text: string): string {
   return text
@@ -55,6 +56,7 @@ export default function FornecedorPerfilPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [cropConfig, setCropConfig] = useState<CropConfig | null>(null)
   const planInfo = usePlan()
+  const storage = useStorage(userId)
 
   const logoInputRef = useRef<HTMLInputElement>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
@@ -125,6 +127,11 @@ export default function FornecedorPerfilPage() {
     if (file.size > 2 * 1024 * 1024) {
       showToast('Arquivo muito grande. Máximo 2 MB para o logo.', false); return
     }
+    if (planInfo.maxArmazenamentoGb !== null && !storage.loading) {
+      if (storage.usedBytes + file.size > planInfo.maxArmazenamentoGb * 1024 ** 3) {
+        showToast('Limite de armazenamento atingido. Faça upgrade do plano.', false); return
+      }
+    }
     const src = URL.createObjectURL(file)
     setCropConfig({
       src, aspect: 1, circular: true,
@@ -144,6 +151,11 @@ export default function FornecedorPerfilPage() {
     }
     if (file.size > 5 * 1024 * 1024) {
       showToast('Arquivo muito grande. Máximo 5 MB para a capa.', false); return
+    }
+    if (planInfo.maxArmazenamentoGb !== null && !storage.loading) {
+      if (storage.usedBytes + file.size > planInfo.maxArmazenamentoGb * 1024 ** 3) {
+        showToast('Limite de armazenamento atingido. Faça upgrade do plano.', false); return
+      }
     }
     const src = URL.createObjectURL(file)
     setCropConfig({
@@ -507,6 +519,34 @@ export default function FornecedorPerfilPage() {
               </div>
             )}
           </div>
+          {/* Storage bar */}
+          {planInfo.maxArmazenamentoGb !== null && !storage.loading && (() => {
+            const pct = planInfo.maxArmazenamentoGb! > 0
+              ? Math.min((storage.usedGb / planInfo.maxArmazenamentoGb!) * 100, 100)
+              : 0
+            const barColor = pct >= 90 ? '#ef4444' : pct >= 70 ? '#f97316' : '#34d399'
+            const usedLabel = storage.usedGb < 0.01
+              ? `${(storage.usedBytes / 1024).toFixed(0)} KB`
+              : storage.usedGb < 1
+                ? `${(storage.usedGb * 1024).toFixed(0)} MB`
+                : `${storage.usedGb.toFixed(2)} GB`
+            return (
+              <div style={{ marginTop: 14, padding: '14px 16px', background: '#f2f2f7', borderRadius: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                  <div style={{ fontSize: 10.5, color: '#8e8e93' }}>Armazenamento</div>
+                  <div style={{ fontSize: 11.5, fontWeight: 600, color: '#1a1a1a' }}>
+                    {usedLabel} de {planInfo.maxArmazenamentoGb} GB
+                  </div>
+                </div>
+                <div style={{ height: 6, background: '#e0e0e5', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${pct}%`, background: barColor, borderRadius: 3, transition: 'width 0.4s ease' }} />
+                </div>
+                <div style={{ fontSize: 10, color: pct >= 90 ? '#ef4444' : '#8e8e93', marginTop: 4 }}>
+                  {pct.toFixed(0)}% utilizado
+                </div>
+              </div>
+            )
+          })()}
           {(planInfo.status === 'trial' || planInfo.status === 'inadimplente') && (
             <Link href="/fornecedor/planos" style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,

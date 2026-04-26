@@ -22,6 +22,9 @@ export interface PlanInfo {
   valorMensal: number | null
   proximaCobranca: Date | null
   valorCobrado: number | null
+  analytics: boolean
+  suportePrioritario: boolean
+  destaqueMarketplace: string
 }
 
 const DEFAULTS: Omit<PlanInfo, 'loading'> = {
@@ -30,6 +33,7 @@ const DEFAULTS: Omit<PlanInfo, 'loading'> = {
   isExpired: false, hasAccess: true,
   maxProjetos: null, maxMembros: null, maxProdutos: null, maxArmazenamentoGb: null,
   valorMensal: null, proximaCobranca: null, valorCobrado: null,
+  analytics: false, suportePrioritario: false, destaqueMarketplace: 'nenhum',
 }
 
 export function usePlan(): PlanInfo {
@@ -79,6 +83,9 @@ export function usePlan(): PlanInfo {
           valorMensal: (plan?.valor_mensal as number) ?? null,
           proximaCobranca: sub.proxima_cobranca ? new Date(sub.proxima_cobranca as string) : null,
           valorCobrado: (sub.valor_cobrado as number) ?? null,
+          analytics: (plan?.analytics as boolean) ?? false,
+          suportePrioritario: (plan?.suporte_prioritario as boolean) ?? false,
+          destaqueMarketplace: (plan?.destaque_marketplace as string) ?? 'nenhum',
         })
       } catch {
         setInfo({ ...DEFAULTS, loading: false })
