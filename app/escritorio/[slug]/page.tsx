@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
+import CarrosselImagens from '@/components/shared/CarrosselImagens'
 import Link from 'next/link'
 import {
   Star, MapPin, ArrowLeft, CheckCircle2,
@@ -154,6 +155,7 @@ const TAB_LABELS: Record<Tab, string> = { portfolio: 'Portfólio', sobre: 'Sobre
 export default function EstudioPage({ params }: { params: { slug: string } }) {
   const [studio, setStudio] = useState<StudioData | null>(null)
   const [portfolio, setPortfolio] = useState<PortfolioProject[]>([])
+  const [galeria, setGaleria] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<Tab>('portfolio')
   const [loading, setLoading] = useState(true)
   const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(null)
@@ -214,6 +216,13 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
             }
           }))
         }
+
+        const { data: gal } = await supabase
+          .from('escritorio_galeria')
+          .select('url, ordem')
+          .eq('escritorio_id', data.id)
+          .order('ordem')
+        if (gal) setGaleria((gal as { url: string; ordem: number }[]).map(g => g.url))
       }
       setLoading(false)
     }
@@ -241,10 +250,6 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
     ? new Date().getFullYear() - new Date(studio.created_at).getFullYear()
     : 0
 
-  const coverBg = studio.cover_url
-    ? `url(${studio.cover_url})`
-    : 'linear-gradient(135deg, #1a1a2e, #16213e, #0f3460)'
-
   return (
     <div className="min-h-screen bg-[#f2f2f7] text-[#1a1a1a]">
 
@@ -268,16 +273,11 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
 
       {/* ── HERO ────────────────────────────────────────────────────── */}
       <section className="relative h-[72vh] max-h-[700px] min-h-[480px] pt-16">
-        {studio.cover_url ? (
-          <img src={studio.cover_url} alt={studio.nome}
-            className="absolute inset-0 h-full w-full object-cover" />
-        ) : (
-          <div className="absolute inset-0" style={{ background: coverBg }} />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent" />
+        <CarrosselImagens images={galeria} fallbackUrl={studio.cover_url} fill />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10 pointer-events-none" style={{ zIndex: 5 }} />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent pointer-events-none" style={{ zIndex: 5 }} />
 
-        <div className="absolute inset-x-0 bottom-0 pb-10">
+        <div className="absolute inset-x-0 bottom-0 pb-10" style={{ zIndex: 6 }}>
           <div className="mx-auto max-w-7xl px-6">
             {/* Avatar + info */}
             <div className="flex items-end gap-5 mb-2">
