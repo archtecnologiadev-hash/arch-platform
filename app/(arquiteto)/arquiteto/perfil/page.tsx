@@ -4,8 +4,9 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import ImageCropModal, { type CropConfig } from '@/components/shared/ImageCropModal'
+import { comprimirImagem } from '@/lib/image-compression'
 import {
-  Save, ExternalLink, Loader2, Camera, Plus, X, ImagePlus, CheckCircle2, CreditCard, ArrowRight, Zap,
+  Save, ExternalLink, Loader2, Camera, Plus, X, ImagePlus, CheckCircle2, CreditCard, ArrowRight, Zap, Upload,
 } from 'lucide-react'
 import WelcomeBanner from '@/components/WelcomeBanner'
 import { usePlan } from '@/hooks/usePlan'
@@ -21,7 +22,8 @@ const ESPECIALIDADES = ['Residencial','Comercial','Interiores','Corporativo','In
 const CATEGORIAS = ['Residencial','Comercial','Interiores','Corporativo','Institucional','Paisagismo','Outro']
 
 interface ImgPreview { url: string; file?: File }
-interface GaleriaItem { id?: string; url: string; ordem: number }
+interface GaleriaItem { id?: string; url: string; ordem: number; tamanho_bytes?: number | null }
+interface UploadingItem { tempId: string; previewUrl: string; status: 'compressing' | 'uploading' | 'error'; nome: string }
 interface ProjPortfolio {
   id?: string
   nome: string
@@ -92,6 +94,7 @@ export default function ArquitetoPerfilPage() {
 
   const [cropConfig, setCropConfig] = useState<CropConfig | null>(null)
   const [galeria, setGaleria] = useState<GaleriaItem[]>([])
+  const [galeriaUploading, setGaleriaUploading] = useState<UploadingItem[]>([])
   const [dragIdx, setDragIdx] = useState<number | null>(null)
 
   const perfilRef = useRef<HTMLInputElement>(null)
@@ -146,8 +149,8 @@ export default function ArquitetoPerfilPage() {
         }
 
         const { data: gal } = await supabase.from('escritorio_galeria')
-          .select('id, url, ordem').eq('escritorio_id', data.id).order('ordem')
-        if (gal) setGaleria((gal as { id: string; url: string; ordem: number }[]).map(g => ({ id: g.id, url: g.url, ordem: g.ordem })))
+          .select('id, url, ordem, tamanho_bytes').eq('escritorio_id', data.id).order('ordem')
+        if (gal) setGaleria((gal as { id: string; url: string; ordem: number; tamanho_bytes: number | null }[]).map(g => ({ id: g.id, url: g.url, ordem: g.ordem, tamanho_bytes: g.tamanho_bytes })))
       }
       setLoading(false)
     }
@@ -323,20 +326,70 @@ export default function ArquitetoPerfilPage() {
     setSavingProj(false)
   }
 
-  async function addGaleriaImage(f: File) {
-    if (!escritorioId || !userId) return
-    const ext = f.name.split('.').pop() ?? 'jpg'
-    const url = await uploadImg(f, `${userId}/galeria/${Date.now()}.${ext}`)
-    if (!url) { showToast('Erro ao fazer upload da imagem.', false); return }
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('escritorio_galeria')
-      .insert({ escritorio_id: escritorioId, url, ordem: galeria.length })
-      .select('id').single()
-    if (data) {
-      setGaleria(prev => [...prev, { id: data.id, url, ordem: prev.length }])
-      showToast('Imagem adicionada à galeria!')
-    }
+  function formatBytes(b: number): string {
+    if (b < 1024 * 1024) return `${(b / 1024).toFixed(0)} KB`
+    return `${(b / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  async function processarArquivosGaleria(files: FileList | File[]) {
+    const arr = Array.from(files)
+    const validos = arr.filter(f => {
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
+        showToast(`Formato inválido: ${f.name}. Use JPG, PNG ou WEBP.`, false); return false
+      }
+      if (f.size > 10 * 1024 * 1024) {
+        showToast(`${f.name} excede 10 MB.`, false); return false
+      }
+      return true
+    })
+
+    setGaleriaUploading(prev => {
+      const vagas = 8 - galeria.length - prev.length
+      if (vagas <= 0) { showToast('Limite de 8 imagens atingido.', false); return prev }
+      const toProcess = validos.slice(0, vagas)
+      if (validos.length > vagas) showToast(`Adicionando ${vagas} de ${validos.length} (limite de 8).`, false)
+
+      const novos: UploadingItem[] = toProcess.map(f => ({
+        tempId: `tmp_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        previewUrl: URL.createObjectURL(f),
+        status: 'compressing' as const,
+        nome: f.name,
+      }))
+
+      // Fire uploads in background
+      novos.forEach((item, idx) => {
+        const f = toProcess[idx]
+        ;(async () => {
+          try {
+            const meta = await comprimirImagem(f)
+            setGaleriaUploading(p => p.map(u => u.tempId === item.tempId ? { ...u, status: 'uploading' } : u))
+
+            if (!escritorioId || !userId) throw new Error('sem escritório')
+            const ext = meta.file.name.split('.').pop() ?? 'webp'
+            const url = await uploadImg(meta.file, `${userId}/galeria/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`)
+            if (!url) throw new Error('upload falhou')
+
+            const supabase = createClient()
+            const { data } = await supabase.from('escritorio_galeria')
+              .insert({ escritorio_id: escritorioId, url, ordem: 999, largura: meta.largura || null, altura: meta.altura || null, tamanho_bytes: meta.tamanho_bytes })
+              .select('id').single()
+
+            setGaleriaUploading(p => p.filter(u => u.tempId !== item.tempId))
+            URL.revokeObjectURL(item.previewUrl)
+            if (data) {
+              setGaleria(p => [...p, { id: data.id, url, ordem: p.length, tamanho_bytes: meta.tamanho_bytes }])
+              showToast('Imagem adicionada!')
+            }
+          } catch {
+            setGaleriaUploading(p => p.map(u => u.tempId === item.tempId ? { ...u, status: 'error' } : u))
+            showToast(`Erro ao enviar ${f.name}.`, false)
+            setTimeout(() => { setGaleriaUploading(p => p.filter(u => u.tempId !== item.tempId)); URL.revokeObjectURL(item.previewUrl) }, 3000)
+          }
+        })()
+      })
+
+      return [...prev, ...novos]
+    })
   }
 
   async function removeGaleriaImage(id: string) {
@@ -544,45 +597,36 @@ export default function ArquitetoPerfilPage() {
 
         {/* ── Galeria do Perfil Público ───────────────────────────────── */}
         <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 18 }}>
-          <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 5 }}>GALERIA DO PERFIL PÚBLICO</p>
-              <p style={{ fontSize: 12, color: '#8e8e93', lineHeight: 1.5 }}>
-                Adicione imagens já em formato quadrado 1:1 (recomendado 1080×1080px). Máx. 8 imagens · 10 MB por imagem.
-              </p>
-            </div>
-            {galeria.length < 8 && (
-              <button onClick={() => galeriaRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#007AFF', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
-                <Plus size={13} /> Adicionar imagem
-              </button>
-            )}
+          <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+            <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 5 }}>GALERIA DO PERFIL PÚBLICO</p>
+            <p style={{ fontSize: 12, color: '#8e8e93', lineHeight: 1.5 }}>
+              Adicione até 8 imagens em alta resolução. Recomendado: 4K ou Full HD. As imagens serão otimizadas automaticamente sem perder qualidade visual.
+            </p>
           </div>
 
-          <input ref={galeriaRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
-            onChange={e => {
-              const f = e.target.files?.[0]
-              if (!f) return
-              if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
-                showToast('Formato inválido. Use JPG, PNG ou WEBP.', false); e.target.value = ''; return
-              }
-              if (f.size > 10 * 1024 * 1024) {
-                showToast('Arquivo muito grande. Máximo 10 MB por imagem da galeria.', false); e.target.value = ''; return
-              }
-              if (galeria.length >= 8) {
-                showToast('Limite de 8 imagens atingido.', false); e.target.value = ''; return
-              }
-              addGaleriaImage(f)
-              e.target.value = ''
-            }} />
+          <input ref={galeriaRef} type="file" accept="image/jpeg,image/png,image/webp" multiple style={{ display: 'none' }}
+            onChange={e => { if (e.target.files && e.target.files.length > 0) processarArquivosGaleria(e.target.files); e.target.value = '' }} />
 
           <div style={{ padding: 20 }}>
-            {galeria.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '28px 0', color: '#8e8e93', fontSize: 13, border: '1.5px dashed rgba(0,0,0,0.12)', borderRadius: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><ImagePlus size={24} color="#c7c7cc" /></div>
-                <div>Nenhuma imagem na galeria ainda.</div>
-                <div style={{ fontSize: 11, marginTop: 4 }}>As fotos aparecerão no carrossel do seu perfil público.</div>
+            {/* Drop zone */}
+            {galeria.length + galeriaUploading.length < 8 && (
+              <div
+                onClick={() => galeriaRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = '#007AFF'; e.currentTarget.style.background = 'rgba(0,122,255,0.04)' }}
+                onDragLeave={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)'; e.currentTarget.style.background = 'transparent' }}
+                onDrop={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)'; e.currentTarget.style.background = 'transparent'; if (e.dataTransfer.files.length > 0) processarArquivosGaleria(e.dataTransfer.files) }}
+                style={{ border: '1.5px dashed rgba(0,0,0,0.12)', borderRadius: 12, padding: '28px 20px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.15s', marginBottom: galeria.length + galeriaUploading.length > 0 ? 16 : 0 }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><Upload size={22} color="#007AFF" /></div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', marginBottom: 4 }}>Arraste fotos aqui ou clique para selecionar</div>
+                <div style={{ fontSize: 11, color: '#aeaeb2' }}>
+                  JPG, PNG ou WEBP · Máx. 10 MB por imagem · {8 - galeria.length - galeriaUploading.length} vaga{8 - galeria.length - galeriaUploading.length !== 1 ? 's' : ''} restante{8 - galeria.length - galeriaUploading.length !== 1 ? 's' : ''}
+                </div>
               </div>
-            ) : (
+            )}
+
+            {/* Grid de imagens enviadas + em upload */}
+            {(galeria.length > 0 || galeriaUploading.length > 0) && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(148px, 1fr))', gap: 10 }}>
                 {galeria.map((img, i) => (
                   <div
@@ -601,25 +645,45 @@ export default function ArquitetoPerfilPage() {
                       updated.forEach(g => { if (g.id) supabase.from('escritorio_galeria').update({ ordem: g.ordem }).eq('id', g.id).then(() => {}) })
                       setDragIdx(null)
                     }}
-                    style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)', cursor: 'grab', background: '#f2f2f7', opacity: dragIdx === i ? 0.5 : 1, transition: 'opacity 0.15s' }}>
+                    style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)', cursor: 'grab', background: '#f2f2f7', opacity: dragIdx === i ? 0.5 : 1, transition: 'opacity 0.15s' }}
+                  >
                     <img src={img.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-                    <div style={{ position: 'absolute', top: 0, right: 0, padding: 5 }}>
-                      <button
-                        onClick={() => img.id && removeGaleriaImage(img.id)}
-                        style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                        <X size={11} color="#fff" />
-                      </button>
+                    <button
+                      onClick={() => img.id && removeGaleriaImage(img.id)}
+                      style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    >
+                      <X size={12} color="#fff" />
+                    </button>
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 7px 6px', background: 'linear-gradient(to top, rgba(0,0,0,0.55), transparent)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>{i + 1}</span>
+                      {img.tamanho_bytes ? (
+                        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', background: 'rgba(0,0,0,0.35)', borderRadius: 4, padding: '1px 5px' }}>
+                          {formatBytes(img.tamanho_bytes)}
+                        </span>
+                      ) : null}
                     </div>
-                    <div style={{ position: 'absolute', bottom: 4, left: 6, fontSize: 10, color: 'rgba(255,255,255,0.85)', background: 'rgba(0,0,0,0.45)', borderRadius: 4, padding: '1px 5px', backdropFilter: 'blur(4px)' }}>
-                      {i + 1}/{galeria.length}
+                  </div>
+                ))}
+
+                {galeriaUploading.map(u => (
+                  <div key={u.tempId} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)', background: '#f2f2f7' }}>
+                    <img src={u.previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                      {u.status === 'error'
+                        ? <><X size={20} color="#ef4444" /><span style={{ fontSize: 10, color: '#ef4444', fontWeight: 600 }}>Erro</span></>
+                        : <><Loader2 size={20} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} /><span style={{ fontSize: 10, color: '#007AFF', fontWeight: 600 }}>{u.status === 'compressing' ? 'Otimizando…' : 'Enviando…'}</span></>
+                      }
                     </div>
                   </div>
                 ))}
               </div>
             )}
-            <div style={{ marginTop: 10, fontSize: 11, color: '#aeaeb2' }}>
-              {galeria.length < 8 ? `${8 - galeria.length} espaço${8 - galeria.length !== 1 ? 's' : ''} disponível${8 - galeria.length !== 1 ? 'is' : ''} · ` : 'Limite atingido · '}
-              Arraste para reordenar · Máx. 10 MB por imagem · JPG, PNG ou WEBP
+
+            <div style={{ marginTop: 12, fontSize: 11, color: '#aeaeb2' }}>
+              {galeria.length + galeriaUploading.length < 8
+                ? `${8 - galeria.length - galeriaUploading.length} espaço${8 - galeria.length - galeriaUploading.length !== 1 ? 's' : ''} disponível${8 - galeria.length - galeriaUploading.length !== 1 ? 'is' : ''} · `
+                : 'Limite atingido · '}
+              Arraste para reordenar · Comprimido automaticamente para ~1.5 MB
             </div>
           </div>
         </div>
