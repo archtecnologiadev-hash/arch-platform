@@ -77,7 +77,7 @@ function Carousel({ imagens, nome }: { imagens: ProdutoImagem[]; nome: string })
 
   if (imagens.length === 0) {
     return (
-      <div style={{ width: '100%', aspectRatio: '1/1', background: 'linear-gradient(135deg, #e8e8f0, #d4d4dc)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '100%', aspectRatio: '4/5', background: 'linear-gradient(135deg, #e8e8f0, #d4d4dc)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Package size={32} color="#c7c7cc" />
       </div>
     )
@@ -87,7 +87,7 @@ function Carousel({ imagens, nome }: { imagens: ProdutoImagem[]; nome: string })
 
   return (
     <div
-      style={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', background: '#000', userSelect: 'none' }}
+      style={{ position: 'relative', aspectRatio: '4/5', overflow: 'hidden', background: '#000', userSelect: 'none' }}
       onTouchStart={e => { touchStartX.current = e.touches[0].clientX }}
       onTouchEnd={e => {
         if (touchStartX.current === null) return

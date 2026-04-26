@@ -14,8 +14,8 @@ interface CarrosselImagensProps {
 export default function CarrosselImagens({
   images,
   fallbackUrl,
-  aspectRatio = '1/1',
-  maxWidth = 600,
+  aspectRatio = '4/5',
+  maxWidth = 540,
   className = '',
 }: CarrosselImagensProps) {
   const allImages = images.length > 0 ? images : fallbackUrl ? [fallbackUrl] : []

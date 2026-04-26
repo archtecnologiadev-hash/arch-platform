@@ -79,7 +79,7 @@ function SortableGaleriaItem({
     <div
       ref={setNodeRef}
       style={{
-        position: 'relative', aspectRatio: '1/1', borderRadius: 12, overflow: 'hidden',
+        position: 'relative', aspectRatio: '4/5', borderRadius: 12, overflow: 'hidden',
         border: '1px solid rgba(0,0,0,0.08)', background: '#f2f2f7',
         opacity: isDragging ? 0.45 : 1,
         transform: CSS.Transform.toString(transform),
@@ -686,7 +686,7 @@ export default function ArquitetoPerfilPage() {
           <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
             <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 5 }}>GALERIA DO PERFIL PÚBLICO</p>
             <p style={{ fontSize: 12, color: '#8e8e93', lineHeight: 1.5 }}>
-              Adicione até 8 imagens em alta resolução. Recomendado: 4K ou Full HD. As imagens serão otimizadas automaticamente sem perder qualidade visual.
+              Adicione até 8 imagens em alta resolução. Recomendado: formato retrato 4:5 (1080×1350px) para melhor exibição. As imagens serão otimizadas automaticamente.
             </p>
           </div>
 
@@ -717,7 +717,7 @@ export default function ArquitetoPerfilPage() {
 
                 {/* Imagem principal — sempre primeiro, sem drag */}
                 {galeria.filter(g => g.eh_principal).map(img => (
-                  <div key={img.id} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 12, overflow: 'hidden', border: '2px solid #007AFF', background: '#f2f2f7' }}>
+                  <div key={img.id} style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 12, overflow: 'hidden', border: '2px solid #007AFF', background: '#f2f2f7' }}>
                     <img src={img.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
                     <button onClick={() => img.id && setGaleriaPrincipal(img.id)} title="Remover como capa"
                       style={{ position: 'absolute', top: 6, left: 6, zIndex: 20, background: 'rgba(230,160,0,0.92)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -754,7 +754,7 @@ export default function ArquitetoPerfilPage() {
 
                 {/* Em upload */}
                 {galeriaUploading.map(u => (
-                  <div key={u.tempId} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)', background: '#f2f2f7' }}>
+                  <div key={u.tempId} style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)', background: '#f2f2f7' }}>
                     <img src={u.previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                       {u.status === 'error'

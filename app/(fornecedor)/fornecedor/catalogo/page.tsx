@@ -245,8 +245,8 @@ export default function CatalogoPage() {
             return (
               <div key={prod.id} className="cat-card">
                 {firstImg
-                  ? <img src={firstImg} alt={prod.nome} style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }} />
-                  : <div style={{ width: '100%', height: 180, background: 'linear-gradient(135deg, #e8e8f0, #d4d4dc)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Package size={32} color="#c7c7cc" /></div>}
+                  ? <div style={{ position: 'relative', width: '100%', aspectRatio: '4/5', overflow: 'hidden' }}><img src={firstImg} alt={prod.nome} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /></div>
+                  : <div style={{ width: '100%', aspectRatio: '4/5', background: 'linear-gradient(135deg, #e8e8f0, #d4d4dc)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Package size={32} color="#c7c7cc" /></div>}
                 <div style={{ padding: '14px 16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', flex: 1, marginRight: 8 }}>{prod.nome}</div>
@@ -314,7 +314,7 @@ export default function CatalogoPage() {
                     {previews.length > 0 && (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                         {previews.map((src, i) => (
-                          <div key={i} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '1/1' }}>
+                          <div key={i} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '4/5' }}>
                             <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                             <button type="button" onClick={() => removeFile(i)}
                               style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
