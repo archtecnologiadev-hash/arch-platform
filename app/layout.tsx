@@ -6,8 +6,18 @@ import CookieBanner from '@/components/CookieBanner'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'ARC — Plataforma de Arquitetura',
-  description: 'Conectando arquitetos, clientes e fornecedores em um único ambiente digital.',
+  metadataBase: new URL('https://www.usearc.com.br'),
+  title: {
+    default: 'ARC — Plataforma de Arquitetura',
+    template: '%s | ARC',
+  },
+  description: 'Conecte-se com os melhores escritórios de arquitetura do Brasil. Portfólios reais, profissionais verificados, sem intermediários.',
+  openGraph: {
+    siteName: 'ARC Plataforma de Arquitetura',
+    locale: 'pt_BR',
+    type: 'website',
+  },
+  twitter: { card: 'summary_large_image' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

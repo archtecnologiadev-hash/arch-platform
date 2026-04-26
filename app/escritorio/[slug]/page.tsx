@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import CarrosselImagens from '@/components/shared/CarrosselImagens'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   Star, MapPin, CheckCircle2,
   Award, FolderOpen, Calendar, Globe,
@@ -212,12 +213,18 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
   const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(null)
   const [imgIdx, setImgIdx] = useState(0)
   const [scrolled, setScrolled] = useState(false)
+  const [contactModalOpen, setContactModalOpen] = useState(false)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  useEffect(() => {
+    document.body.style.overflow = contactModalOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [contactModalOpen])
 
   const openProject = useCallback((project: PortfolioProject) => {
     setSelectedProject(project)
@@ -327,6 +334,7 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
           <Link
             href="/"
             className="text-xl font-light tracking-[0.42em] text-[#1a1a1a] transition-opacity hover:opacity-60"
+            aria-label="ARC — Voltar ao marketplace"
           >
             ARC
           </Link>
@@ -334,9 +342,15 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
             onClick={() =>
               document.getElementById('contact-section')?.scrollIntoView({ behavior: 'smooth' })
             }
-            className="rounded-[10px] bg-[#007AFF] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#0066d6] active:scale-[0.97]"
+            className="hidden lg:block rounded-[10px] bg-[#007AFF] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#0066d6] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-offset-2"
           >
             Solicitar contato
+          </button>
+          <button
+            onClick={() => setContactModalOpen(true)}
+            className="lg:hidden rounded-[10px] bg-[#007AFF] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#0066d6] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-offset-2"
+          >
+            Contato
           </button>
         </div>
       </header>
@@ -438,13 +452,14 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
                         style={{ aspectRatio: '4/5' }}
                       >
                         {firstImg ? (
-                          <img
-                            src={firstImg} alt={project.nome} loading="lazy"
-                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                          <Image
+                            src={firstImg} alt={project.nome} fill loading="lazy"
+                            sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 280px"
+                            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                           />
                         ) : (
                           <div className="absolute inset-0 flex items-center justify-center bg-[#eee]">
-                            <FolderOpen size={28} className="text-[#c7c7cc]" />
+                            <FolderOpen size={28} className="text-[#c7c7cc]" aria-hidden="true" />
                           </div>
                         )}
 
@@ -639,14 +654,51 @@ export default function EstudioPage({ params }: { params: { slug: string } }) {
       {/* ── MOBILE FIXED CTA ───────────────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-black/[0.06] bg-white/92 p-4 backdrop-blur-md lg:hidden">
         <button
-          onClick={() =>
-            document.getElementById('contact-section')?.scrollIntoView({ behavior: 'smooth' })
-          }
-          className="w-full rounded-xl bg-[#007AFF] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#0066d6] active:scale-[0.98]"
+          onClick={() => setContactModalOpen(true)}
+          className="w-full rounded-xl bg-[#007AFF] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#0066d6] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:ring-offset-2"
+          aria-haspopup="dialog"
         >
           Solicitar contato
         </button>
       </div>
+
+      {/* ── CONTACT MODAL (mobile) ─────────────────────────────────────── */}
+      {contactModalOpen && (
+        <div
+          className="fixed inset-0 z-[300] lg:hidden"
+          style={{ animation: 'fadeOverlay 0.2s ease' }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Formulário de contato"
+        >
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setContactModalOpen(false)}
+          />
+          <div
+            className="absolute bottom-0 left-0 right-0 max-h-[90vh] overflow-y-auto rounded-t-3xl bg-white pb-8"
+            style={{ animation: 'slideUp 0.35s cubic-bezier(0.22,1,0.36,1)' }}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="h-1 w-10 rounded-full bg-black/10" />
+            </div>
+            <div className="flex items-center justify-between px-6 py-3">
+              <h3 className="text-lg font-bold text-[#1a1a1a]">Entre em contato</h3>
+              <button
+                onClick={() => setContactModalOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f2f2f7] transition-colors hover:bg-[#e5e5ea]"
+                aria-label="Fechar"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="px-6 pb-2">
+              <LeadForm studioId={studio.id} studioName={studio.nome} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── PORTFOLIO MODAL ─────────────────────────────────────────────── */}
       {selectedProject && (

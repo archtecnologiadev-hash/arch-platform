@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface CarrosselImagensProps {
@@ -18,11 +18,15 @@ export default function CarrosselImagens({
   maxWidth = 540,
   className = '',
 }: CarrosselImagensProps) {
-  const allImages = images.length > 0 ? images : fallbackUrl ? [fallbackUrl] : []
+  const allImages = useMemo(
+    () => (images.length > 0 ? images : fallbackUrl ? [fallbackUrl] : []),
+    [images, fallbackUrl]
+  )
   const multiple = allImages.length > 1
 
   const [current, setCurrent] = useState(0)
   const [paused, setPaused] = useState(false)
+  const touchStartX = useRef<number | null>(null)
 
   const prev = useCallback(
     () => setCurrent(i => (i - 1 + allImages.length) % allImages.length),
@@ -92,15 +96,24 @@ export default function CarrosselImagens({
           </button>
         )}
 
-        <div style={{
-          flex: 1,
-          position: 'relative',
-          aspectRatio,
-          borderRadius: 12,
-          overflow: 'hidden',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-          background: '#000',
-        }}>
+        <div
+          style={{
+            flex: 1,
+            position: 'relative',
+            aspectRatio,
+            borderRadius: 12,
+            overflow: 'hidden',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            background: '#000',
+          }}
+          onTouchStart={e => { touchStartX.current = e.touches[0].clientX }}
+          onTouchEnd={e => {
+            if (touchStartX.current === null) return
+            const dx = e.changedTouches[0].clientX - touchStartX.current
+            if (Math.abs(dx) > 40) { if (dx < 0) next(); else prev() }
+            touchStartX.current = null
+          }}
+        >
           {allImages.map((src, i) => (
             <img
               key={src}
