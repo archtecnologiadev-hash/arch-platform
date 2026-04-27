@@ -315,7 +315,7 @@ export default function ArquitetoDashboardPage() {
     <div style={{ minHeight: '100vh', background: '#f2f2f7', color: '#1a1a1a' }}>
 
       {/* ═══════════════════════════ HEADER ═══════════════════════════ */}
-      <div style={{
+      <div className="sticky-page-header" style={{
         padding: '0 32px', height: 70, borderBottom: '1px solid rgba(0,0,0,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         background: '#ffffff', position: 'sticky', top: 0, zIndex: 30,

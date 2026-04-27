@@ -335,7 +335,7 @@ export default function OrcamentoDetailPage() {
       `}</style>
 
       {/* Top bar */}
-      <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.08)', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', gap: 16, position: 'sticky', top: 0, zIndex: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+      <div className="sticky-page-header" style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.08)', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', gap: 16, position: 'sticky', top: 0, zIndex: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
         <button onClick={() => router.push('/fornecedor/orcamentos')}
           style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#007AFF', fontSize: 13.5, fontWeight: 600, padding: 0 }}>
           <ArrowLeft size={15} /> Orçamentos

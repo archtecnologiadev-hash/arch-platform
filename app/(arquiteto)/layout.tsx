@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, FolderOpen, Users, Calendar, Package,
   FileText, UserCircle, LogOut, MessageCircle, UsersRound, CreditCard, UserCog,
+  Menu, X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import TrialGate from '@/components/shared/TrialGate'
@@ -21,30 +22,36 @@ const NIVEL_BADGE: Record<string, { label: string; bg: string; color: string }> 
 }
 function rank(n: string) { return NIVEL_RANK[n] ?? 2 }
 
-// minRank = minimum rank to see. maxRank = maximum rank to see.
 const BASE_NAV = [
   { label: 'Dashboard',    href: '/arquiteto/dashboard',    icon: LayoutDashboard },
   { label: 'Projetos',     href: '/arquiteto/projetos',     icon: FolderOpen },
-  { label: 'Clientes',     href: '/arquiteto/clientes',     icon: Users,        minRank: 1 }, // gestor+
-  { label: 'Equipe',       href: '/arquiteto/equipe',       icon: UsersRound,   minRank: 2 }, // owner only
+  { label: 'Clientes',     href: '/arquiteto/clientes',     icon: Users,        minRank: 1 },
+  { label: 'Equipe',       href: '/arquiteto/equipe',       icon: UsersRound,   minRank: 2 },
   { label: 'Calendário',   href: '/arquiteto/calendario',   icon: Calendar },
-  { label: 'Fornecedores', href: '/arquiteto/fornecedores', icon: Package,      minRank: 1 }, // gestor+
+  { label: 'Fornecedores', href: '/arquiteto/fornecedores', icon: Package,      minRank: 1 },
   { label: 'Mensagens',    href: '/arquiteto/mensagens',    icon: MessageCircle },
-  { label: 'Orçamentos',   href: '/arquiteto/orcamentos',   icon: FileText,     minRank: 1 }, // gestor+
-  { label: 'Meu Perfil',   href: '/arquiteto/perfil',       icon: UserCircle,   minRank: 1 }, // gestor+
-  { label: 'Planos',       href: '/arquiteto/planos',       icon: CreditCard,   minRank: 2 }, // owner only
-  { label: 'Minha Conta',  href: '/arquiteto/conta',        icon: UserCog,      maxRank: 0 }, // operacional only
+  { label: 'Orçamentos',   href: '/arquiteto/orcamentos',   icon: FileText,     minRank: 1 },
+  { label: 'Meu Perfil',   href: '/arquiteto/perfil',       icon: UserCircle,   minRank: 1 },
+  { label: 'Planos',       href: '/arquiteto/planos',       icon: CreditCard,   minRank: 2 },
+  { label: 'Minha Conta',  href: '/arquiteto/conta',        icon: UserCog,      maxRank: 0 },
 ]
 
-function ArquitetoSidebar() {
+function ArquitetoSidebar({
+  isOpen, isMobile, mounted, onClose,
+}: {
+  isOpen: boolean
+  isMobile: boolean
+  mounted: boolean
+  onClose: () => void
+}) {
   const pathname = usePathname()
   const router = useRouter()
-  const [userName, setUserName]         = useState('Arquiteto')
-  const [userInitials, setUserInitials] = useState('A')
-  const [avatarUrl, setAvatarUrl]       = useState<string | null>(null)
-  const [unreadMsgs, setUnreadMsgs]     = useState(0)
+  const [userName, setUserName]             = useState('Arquiteto')
+  const [userInitials, setUserInitials]     = useState('A')
+  const [avatarUrl, setAvatarUrl]           = useState<string | null>(null)
+  const [unreadMsgs, setUnreadMsgs]         = useState(0)
   const [nivelPermissao, setNivelPermissao] = useState<string>('owner')
-  const [cargoLabel, setCargoLabel]     = useState('Arquiteto')
+  const [cargoLabel, setCargoLabel]         = useState('Arquiteto')
   const [escritorioNome, setEscritorioNome] = useState<string | null>(null)
 
   useEffect(() => {
@@ -67,7 +74,6 @@ function ArquitetoSidebar() {
 
       const userRank = rank(nivel)
       if (userRank < 2) {
-        // gestor/operacional: own avatar + studio name
         if (userData?.avatar_url) setAvatarUrl(userData.avatar_url)
         if (userData?.escritorio_vinculado_id) {
           const { data: escData } = await supabase
@@ -75,7 +81,6 @@ function ArquitetoSidebar() {
           if (escData?.nome) setEscritorioNome(escData.nome)
         }
       } else {
-        // owner: studio cover photo takes precedence
         const avatar = escOwnerData?.image_url || userData?.avatar_url || null
         if (avatar) setAvatarUrl(avatar)
       }
@@ -109,79 +114,176 @@ function ArquitetoSidebar() {
     return true
   })
 
+  const hidden = isMobile && !isOpen
+
   return (
-    <aside style={{
-      width: 248, minWidth: 248, height: '100vh',
-      background: '#ffffff', borderRight: '1px solid rgba(0,0,0,0.08)',
-      display: 'flex', flexDirection: 'column', position: 'fixed', left: 0, top: 0, zIndex: 40,
-    }}>
-      <div style={{ height: 64, display: 'flex', alignItems: 'center', paddingLeft: 24, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-        <span style={{ fontSize: 18, fontWeight: 300, letterSpacing: '0.35em', color: '#007AFF' }}>ARC</span>
-      </div>
-
-      <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
-        {navItems.map((item) => {
-          const Icon = item.icon
-          const isActive =
-            pathname === item.href ||
-            (item.href !== '/arquiteto/dashboard' && pathname.startsWith(item.href))
-          const showBadge = item.href === '/arquiteto/mensagens' && unreadMsgs > 0
-          return (
-            <Link key={item.href} href={item.href} style={{
-              display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderRadius: 10,
-              fontSize: 13.5, fontWeight: isActive ? 500 : 400, textDecoration: 'none',
-              transition: 'all 0.15s ease',
-              background: isActive ? 'rgba(0,122,255,0.08)' : 'transparent',
-              color: isActive ? '#007AFF' : '#6b6b6b',
-            }}>
-              <Icon size={16} strokeWidth={isActive ? 2 : 1.5} />
-              <span style={{ flex: 1 }}>{item.label}</span>
-              {showBadge && (
-                <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', background: '#007AFF', borderRadius: 10, padding: '1px 6px', lineHeight: '16px' }}>
-                  {unreadMsgs}
-                </span>
-              )}
-            </Link>
-          )
-        })}
-      </nav>
-
-      <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', background: 'rgba(0,122,255,0.1)', border: '1.5px solid rgba(0,122,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, color: '#007AFF', flexShrink: 0 }}>
-          {avatarUrl
-            ? <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : userInitials}
-        </div>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 400, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {userName}
-          </div>
-          {badge && userRank < 2 && escritorioNome ? (
-            <div style={{ fontSize: 10, marginTop: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
-              <span style={{ background: badge.bg, border: `1px solid ${badge.color}33`, borderRadius: 4, padding: '1px 5px', fontWeight: 700, color: badge.color, letterSpacing: '0.04em' }}>
-                {badge.label}
-              </span>
-              <span style={{ color: '#8e8e93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>· {escritorioNome}</span>
-            </div>
-          ) : (
-            <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 1 }}>{cargoLabel}</div>
+    <>
+      {isMobile && isOpen && (
+        <div
+          onClick={onClose}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+            zIndex: 39, backdropFilter: 'blur(2px)',
+          }}
+        />
+      )}
+      <aside style={{
+        width: 248, minWidth: 248, height: '100vh',
+        background: '#ffffff', borderRight: '1px solid rgba(0,0,0,0.08)',
+        display: 'flex', flexDirection: 'column', position: 'fixed', left: 0, top: 0, zIndex: 40,
+        transform: hidden ? 'translateX(-100%)' : 'translateX(0)',
+        transition: mounted ? 'transform 0.3s ease' : 'none',
+        boxShadow: isMobile && isOpen ? '4px 0 20px rgba(0,0,0,0.12)' : 'none',
+      }}>
+        <div style={{
+          height: 64, display: 'flex', alignItems: 'center', paddingLeft: 24,
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
+          justifyContent: 'space-between', paddingRight: isMobile ? 12 : 24,
+        }}>
+          <span style={{ fontSize: 18, fontWeight: 300, letterSpacing: '0.35em', color: '#007AFF' }}>ARC</span>
+          {isMobile && (
+            <button
+              onClick={onClose}
+              aria-label="Fechar menu"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 6, display: 'flex', alignItems: 'center' }}
+            >
+              <X size={20} />
+            </button>
           )}
         </div>
-        <button onClick={handleLogout} title="Sair" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c7c7cc', padding: 4, display: 'flex', alignItems: 'center', transition: 'color 0.15s', flexShrink: 0 }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#ff3b30')}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#c7c7cc')}>
-          <LogOut size={15} strokeWidth={1.5} />
-        </button>
-      </div>
-    </aside>
+
+        <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isActive =
+              pathname === item.href ||
+              (item.href !== '/arquiteto/dashboard' && pathname.startsWith(item.href))
+            const showBadge = item.href === '/arquiteto/mensagens' && unreadMsgs > 0
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={isMobile ? onClose : undefined}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderRadius: 10,
+                  fontSize: 13.5, fontWeight: isActive ? 500 : 400, textDecoration: 'none',
+                  transition: 'all 0.15s ease',
+                  background: isActive ? 'rgba(0,122,255,0.08)' : 'transparent',
+                  color: isActive ? '#007AFF' : '#6b6b6b',
+                }}
+              >
+                <Icon size={16} strokeWidth={isActive ? 2 : 1.5} />
+                <span style={{ flex: 1 }}>{item.label}</span>
+                {showBadge && (
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', background: '#007AFF', borderRadius: 10, padding: '1px 6px', lineHeight: '16px' }}>
+                    {unreadMsgs}
+                  </span>
+                )}
+              </Link>
+            )
+          })}
+        </nav>
+
+        <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', background: 'rgba(0,122,255,0.1)', border: '1.5px solid rgba(0,122,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, color: '#007AFF', flexShrink: 0 }}>
+            {avatarUrl
+              ? <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : userInitials}
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 400, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {userName}
+            </div>
+            {badge && userRank < 2 && escritorioNome ? (
+              <div style={{ fontSize: 10, marginTop: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ background: badge.bg, border: `1px solid ${badge.color}33`, borderRadius: 4, padding: '1px 5px', fontWeight: 700, color: badge.color, letterSpacing: '0.04em' }}>
+                  {badge.label}
+                </span>
+                <span style={{ color: '#8e8e93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>· {escritorioNome}</span>
+              </div>
+            ) : (
+              <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 1 }}>{cargoLabel}</div>
+            )}
+          </div>
+          <button
+            onClick={handleLogout}
+            title="Sair"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c7c7cc', padding: 4, display: 'flex', alignItems: 'center', transition: 'color 0.15s', flexShrink: 0 }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#ff3b30')}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#c7c7cc')}
+          >
+            <LogOut size={15} strokeWidth={1.5} />
+          </button>
+        </div>
+      </aside>
+    </>
   )
 }
 
 export default function ArquitetoLayout({ children }: { children: React.ReactNode }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isMobile, setIsMobile]       = useState(false)
+  const [mounted, setMounted]         = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1024)
+    check()
+    setMounted(true)
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  // Close sidebar when resizing to desktop
+  useEffect(() => {
+    if (!isMobile) setSidebarOpen(false)
+  }, [isMobile])
+
+  // Prevent body scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (isMobile && sidebarOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [isMobile, sidebarOpen])
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f2f2f7' }}>
-      <ArquitetoSidebar />
-      <main style={{ flex: 1, marginLeft: 248, minHeight: '100vh', background: '#f2f2f7', overflowX: 'hidden' }}>
+      {isMobile && (
+        <header style={{
+          position: 'fixed', top: 0, left: 0, right: 0, height: 56,
+          background: '#ffffff', borderBottom: '1px solid rgba(0,0,0,0.08)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 16px', zIndex: 38,
+        }}>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Abrir menu"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a', padding: 6, display: 'flex', alignItems: 'center' }}
+          >
+            <Menu size={24} />
+          </button>
+          <span style={{ fontSize: 16, fontWeight: 300, letterSpacing: '0.35em', color: '#007AFF' }}>ARC</span>
+          <div style={{ width: 36 }} />
+        </header>
+      )}
+
+      <ArquitetoSidebar
+        isOpen={sidebarOpen}
+        isMobile={isMobile}
+        mounted={mounted}
+        onClose={() => setSidebarOpen(false)}
+      />
+
+      <main style={{
+        flex: 1,
+        marginLeft: isMobile ? 0 : 248,
+        minHeight: '100vh',
+        background: '#f2f2f7',
+        overflowX: 'hidden',
+        paddingTop: isMobile ? 56 : 0,
+      }}>
         <TrialGate tipo="arquiteto">
           {children}
         </TrialGate>

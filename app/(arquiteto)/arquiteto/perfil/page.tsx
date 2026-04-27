@@ -526,7 +526,7 @@ export default function ArquitetoPerfilPage() {
       )}
 
       {/* ── Top bar ─────────────────────────────────────────────────── */}
-      <div style={{
+      <div className="sticky-page-header" style={{
         background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.08)',
         padding: '0 24px', height: 56,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',

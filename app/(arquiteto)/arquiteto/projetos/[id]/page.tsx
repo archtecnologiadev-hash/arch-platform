@@ -763,7 +763,7 @@ export default function ProjetoDetailPage() {
       </div>
 
       {/* ═══════════════════ TIMELINE ═══════════════════ */}
-      <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.08)', padding: '0 28px', position: 'sticky', top: 0, zIndex: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+      <div className="sticky-page-header" style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.08)', padding: '0 28px', position: 'sticky', top: 0, zIndex: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', padding: '16px 0', overflowX: 'auto' }}>
           {STAGES.map((stage, i) => {
             const done = i < stageIndex
