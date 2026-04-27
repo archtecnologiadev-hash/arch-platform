@@ -4,11 +4,12 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import {
-  ArrowLeft, Upload, FileText, ImageIcon, File, MessageCircle,
+  ArrowLeft, Upload, File, MessageCircle,
   Mail, Calendar, Plus, Package, DollarSign, Check, Pencil,
   Star, ExternalLink, Send, X, CheckCircle2, MapPin, Loader2,
   Download, AlertCircle, Heart, ChevronLeft, ChevronDown, UserPlus, Search, History,
 } from 'lucide-react'
+import ProjetoArquivos from '@/components/shared/ProjetoArquivos'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import CalendarioObra, { CalendarioEvent, EVENT_META, EventType, getMeta } from '@/components/shared/CalendarioObra'
 import { createClient } from '@/lib/supabase'
@@ -111,29 +112,6 @@ const SEG_COLOR: Record<string, string> = {
   Gesseiro: '#f97316', Pintura: '#ef4444', Iluminação: '#007AFF', Outro: '#6b6b6b',
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function detectTipo(filename: string): string {
-  const ext = filename.split('.').pop()?.toLowerCase() ?? ''
-  if (ext === 'pdf') return 'pdf'
-  if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return 'image'
-  if (['dwg', 'dxf'].includes(ext)) return 'dwg'
-  return 'file'
-}
-
-function fmtBytes(bytes: number | null): string {
-  if (!bytes) return ''
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
-function FileTypeIcon({ tipo }: { tipo: string | null }) {
-  if (tipo === 'pdf') return <FileText size={15} color="#ef4444" />
-  if (tipo === 'image') return <ImageIcon size={15} color="#34d399" />
-  if (tipo === 'dwg') return <File size={15} color="#4f9cf9" />
-  return <File size={15} color="#6b6b6b" />
-}
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -174,10 +152,6 @@ export default function ProjetoDetailPage() {
   const [stageIndex, setStageIndex] = useState(0)
 
   const [activeTab, setActiveTab] = useState<TabId>('arquivos')
-  const [dragOver, setDragOver] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [noteText, setNoteText] = useState('')
   const [savingNote, setSavingNote] = useState(false)
@@ -469,31 +443,6 @@ export default function ProjetoDetailPage() {
       .from('fornecedores').select('user_id').eq('id', fornecedorDbId).single()
     if (!forn?.user_id) return
     await handleIniciarConversa(forn.user_id, 'fornecedor', fornecedorDbId)
-  }
-
-  async function handleFiles(files: FileList | null) {
-    if (!files || !files.length || !currentUser || !projeto) return
-    setUploading(true)
-    setUploadError(null)
-    const supabase = createClient()
-
-    for (const file of Array.from(files)) {
-      const safeName = file.name.replace(/[^a-zA-Z0-9._\-]/g, '_')
-      const path = `${currentUser.id}/${projeto.id}/${Date.now()}_${safeName}`
-      const { error: upErr } = await supabase.storage.from('projetos').upload(path, file, { upsert: false })
-      if (upErr) {
-        console.error('[arquivos] upload error:', upErr)
-        setUploadError(`Erro ao enviar ${file.name}: ${upErr.message}`)
-        continue
-      }
-      const { data: { publicUrl } } = supabase.storage.from('projetos').getPublicUrl(path)
-      const { data: arq, error: dbErr } = await supabase
-        .from('arquivos_projeto')
-        .insert({ projeto_id: projeto.id, nome: file.name, url: publicUrl, tipo: detectTipo(file.name), tamanho: file.size, enviado_por: currentUser.id, enviado_por_nome: currentUser.nome })
-        .select('*').single()
-      if (!dbErr && arq) setArquivos(prev => [arq as ArquivoProjeto, ...prev])
-    }
-    setUploading(false)
   }
 
   async function addNote() {
@@ -835,61 +784,7 @@ export default function ProjetoDetailPage() {
 
           {/* ══ TAB: Arquivos ══ */}
           {activeTab === 'arquivos' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <input ref={fileInputRef} type="file" multiple accept="*/*" style={{ display: 'none' }}
-                onChange={e => { handleFiles(e.target.files); e.target.value = '' }} />
-
-              {/* Drop zone */}
-              <div
-                onDragOver={e => { e.preventDefault(); setDragOver(true) }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files) }}
-                onClick={() => fileInputRef.current?.click()}
-                style={{ border: `2px dashed ${dragOver ? '#007AFF' : 'rgba(0,0,0,0.15)'}`, borderRadius: 12, padding: '30px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, cursor: 'pointer', background: dragOver ? 'rgba(0,122,255,0.04)' : '#fff', transition: 'border-color 0.2s, background 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {uploading ? <Loader2 size={18} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={18} color="#007AFF" />}
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: '#1a1a1a' }}>{uploading ? 'Enviando...' : 'Arraste arquivos aqui'}</div>
-                  <div style={{ fontSize: 11.5, color: '#8e8e93', marginTop: 3 }}>ou clique para selecionar · PDF, DWG, JPG, PNG e outros</div>
-                </div>
-              </div>
-
-              {uploadError && (
-                <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 12, color: '#ef4444' }}>
-                  {uploadError}
-                </div>
-              )}
-
-              {/* File list */}
-              <div style={panel}>
-                <div style={{ padding: '13px 20px', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>Arquivos do Projeto</span>
-                  <span style={{ fontSize: 11, color: '#8e8e93' }}>{arquivos.length} arquivo{arquivos.length !== 1 ? 's' : ''}</span>
-                </div>
-                {arquivos.length === 0 ? (
-                  <div style={{ padding: '32px 20px', textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>Nenhum arquivo enviado ainda</div>
-                ) : arquivos.map((file, i) => (
-                  <div key={file.id} className="proj-file-row" style={{ padding: '13px 20px', display: 'flex', alignItems: 'center', gap: 13, borderBottom: i < arquivos.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', transition: 'background 0.12s' }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 8, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <FileTypeIcon tipo={file.tipo} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{file.nome}</div>
-                      <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>
-                        {fmtBytes(file.tamanho)}{file.enviado_por_nome ? ` · ${file.enviado_por_nome}` : ''}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 11, color: '#8e8e93', flexShrink: 0 }}>
-                      {new Date(file.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                    </div>
-                    <a href={file.url} download={file.nome} target="_blank" rel="noopener noreferrer" style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#007AFF', textDecoration: 'none' }}>
-                      <Download size={13} />
-                    </a>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ProjetoArquivos projetoId={projectId} currentUser={currentUser} />
           )}
 
           {/* ══ TAB: Anotações ══ */}

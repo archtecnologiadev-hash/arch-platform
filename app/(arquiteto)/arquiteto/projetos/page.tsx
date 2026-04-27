@@ -142,6 +142,13 @@ export default function ProjetosPage() {
       console.error('[projetos] insert error:', JSON.stringify({ code: error.code, message: error.message, details: error.details, hint: error.hint }))
       setFormError(error.message ?? 'Erro ao criar projeto. Tente novamente.')
     } else if (data) {
+      const { data: { user } } = await supabase.auth.getUser()
+      const pastas = ['Fotos de Obra', 'Croquis e Esboços', 'Plantas e Projetos', 'Documentos', 'Referências']
+      if (user) {
+        await supabase.from('projeto_pastas').insert(
+          pastas.map((nome, ordem) => ({ projeto_id: data.id, nome, pasta_pai_id: null, criado_por: user.id, ordem }))
+        )
+      }
       setProjetos(prev => [data as Projeto, ...prev])
       setModalOpen(false)
       setForm({ nome: '', tipo: 'residencial', descricao: '' })
