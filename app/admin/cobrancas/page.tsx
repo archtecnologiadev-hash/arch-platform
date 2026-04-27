@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Plus, Search, Loader2, CheckCircle2, XCircle, RefreshCw,
+  Plus, Search, Loader2, CheckCircle2, RefreshCw,
   Upload, Trash2, X, AlertTriangle, DollarSign, Clock, Ban,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
