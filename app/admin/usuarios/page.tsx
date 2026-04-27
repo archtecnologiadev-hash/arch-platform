@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Search, Filter, Loader2, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
+import { Search, Filter, Loader2, Pencil, Trash2, AlertTriangle, X, ShieldOff, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 interface UserRow {
@@ -42,6 +42,9 @@ export default function AdminUsuarios() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
 
+  // Suspend/activate state
+  const [togglingId, setTogglingId] = useState<string | null>(null)
+
   const load = useCallback(async () => {
     setLoading(true)
     const supabase = createClient()
@@ -60,6 +63,18 @@ export default function AdminUsuarios() {
   }, [search, tipoFilter, statusFilter])
 
   useEffect(() => { load() }, [load])
+
+  async function handleToggleSuspend(u: UserRow) {
+    const novoStatus = u.status_conta === 'suspenso' ? 'ativo' : 'suspenso'
+    setTogglingId(u.id)
+    await fetch(`/api/admin/usuario/${u.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status_conta: novoStatus }),
+    })
+    setUsers(prev => prev.map(x => x.id === u.id ? { ...x, status_conta: novoStatus } : x))
+    setTogglingId(null)
+  }
 
   async function handleDelete(userId: string) {
     setDeleting(true)
@@ -156,7 +171,7 @@ export default function AdminUsuarios() {
                   <td style={{ padding: '12px 16px' }}><Badge text={u.status_conta ?? 'ativo'} color={STATUS_COLOR[u.status_conta ?? 'ativo']} /></td>
                   <td style={{ padding: '12px 16px', fontSize: 11, color: '#8e8e93' }}>{new Date(u.created_at).toLocaleDateString('pt-BR')}</td>
                   <td style={{ padding: '12px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' as const }}>
                       <Link href={`/admin/usuarios/${u.id}`} style={{
                         display: 'inline-flex', alignItems: 'center', gap: 5,
                         fontSize: 11.5, color: '#007AFF', textDecoration: 'none',
@@ -167,6 +182,26 @@ export default function AdminUsuarios() {
                         onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,122,255,0.06)' }}>
                         <Pencil size={11} /> Editar
                       </Link>
+                      {u.tipo !== 'admin' && (
+                        <button
+                          onClick={() => handleToggleSuspend(u)}
+                          disabled={togglingId === u.id}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 5,
+                            fontSize: 11.5, cursor: togglingId === u.id ? 'not-allowed' : 'pointer',
+                            color: u.status_conta === 'suspenso' ? '#22c55e' : '#f59e0b',
+                            background: u.status_conta === 'suspenso' ? 'rgba(34,197,94,0.06)' : 'rgba(245,158,11,0.06)',
+                            border: u.status_conta === 'suspenso' ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(245,158,11,0.2)',
+                            borderRadius: 6, padding: '5px 10px', transition: 'all 0.15s',
+                            opacity: togglingId === u.id ? 0.6 : 1,
+                          }}>
+                          {togglingId === u.id
+                            ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} />
+                            : u.status_conta === 'suspenso' ? <ShieldCheck size={11} /> : <ShieldOff size={11} />
+                          }
+                          {u.status_conta === 'suspenso' ? 'Ativar' : 'Suspender'}
+                        </button>
+                      )}
                       <button onClick={() => { setConfirmDeleteId(u.id); setDeleteError('') }} style={{
                         display: 'inline-flex', alignItems: 'center', gap: 5,
                         fontSize: 11.5, color: '#ef4444', background: 'rgba(239,68,68,0.06)',

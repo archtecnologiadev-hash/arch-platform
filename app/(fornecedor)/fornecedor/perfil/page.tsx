@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase'
 import ImageCropModal, { type CropConfig } from '@/components/shared/ImageCropModal'
 import { usePlan } from '@/hooks/usePlan'
 import { useStorage } from '@/hooks/useStorage'
+import MinhasCobrancas from '@/components/shared/MinhasCobrancas'
 
 function slugify(text: string): string {
   return text
@@ -559,6 +560,8 @@ export default function FornecedorPerfilPage() {
           )}
         </div>
       )}
+
+      <MinhasCobrancas />
     </div>
   )
 }

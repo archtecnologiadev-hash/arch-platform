@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Users, Building2, Package, MessageSquare, TrendingUp, AlertTriangle, Clock, Loader2, FlaskConical, Trash2, Check } from 'lucide-react'
+import { Users, Building2, Package, MessageSquare, TrendingUp, AlertTriangle, Clock, Loader2, FlaskConical, Trash2, Check, DollarSign, Hourglass } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 interface Metric { label: string; value: number | string; icon: React.ReactNode; color: string; sub?: string }
+interface FinanceCard { label: string; value: string; icon: React.ReactNode; color: string; sub: string }
 interface RecentUser {
   id: string; nome: string; email: string; tipo: string
   plano: string; status_conta: string; created_at: string
@@ -26,6 +27,7 @@ function Badge({ text, color }: { text: string; color: string }) {
 
 export default function AdminDashboard() {
   const [metrics, setMetrics] = useState<Metric[]>([])
+  const [financeCards, setFinanceCards] = useState<FinanceCard[]>([])
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([])
   const [loading, setLoading] = useState(true)
   const [testCount, setTestCount] = useState(0)
@@ -48,6 +50,8 @@ export default function AdminDashboard() {
         { count: trials },
         { count: inadim },
         { data: recentes },
+        { data: cobPagoMes },
+        { data: cobPendente },
       ] = await Promise.all([
         supabase.from('users').select('*', { count: 'exact', head: true }).eq('tipo', 'arquiteto'),
         supabase.from('users').select('*', { count: 'exact', head: true }).eq('tipo', 'fornecedor'),
@@ -58,6 +62,17 @@ export default function AdminDashboard() {
         supabase.from('users').select('*', { count: 'exact', head: true }).eq('status_conta', 'suspenso'),
         supabase.from('users').select('id, nome, email, tipo, plano, status_conta, created_at')
           .order('created_at', { ascending: false }).limit(10),
+        supabase.from('cobrancas').select('valor').eq('status', 'pago').gte('pago_em', startOfMonth.toISOString()),
+        supabase.from('cobrancas').select('valor').in('status', ['pendente', 'atrasado']),
+      ])
+
+      const receitaMes = (cobPagoMes ?? []).reduce((s: number, c: { valor: number }) => s + Number(c.valor), 0)
+      const pendente = (cobPendente ?? []).reduce((s: number, c: { valor: number }) => s + Number(c.valor), 0)
+      const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+
+      setFinanceCards([
+        { label: 'Receita do mês', value: fmt(receitaMes), icon: <DollarSign size={18} />, color: '#22c55e', sub: 'cobranças pagas no mês corrente' },
+        { label: 'Pendente de recebimento', value: fmt(pendente), icon: <Hourglass size={18} />, color: '#f59e0b', sub: 'cobranças pendentes e atrasadas' },
       ])
 
       setMetrics([
@@ -107,6 +122,20 @@ export default function AdminDashboard() {
         <p style={{ fontSize: 13, color: '#8e8e93' }}>
           {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
+      </div>
+
+      {/* Finance cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14, marginBottom: 20 }}>
+        {financeCards.map(m => (
+          <div key={m.label} style={{ background: '#ffffff', border: `1px solid ${m.color}25`, borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{ fontSize: 11, color: '#8e8e93', fontWeight: 500, letterSpacing: '0.04em' }}>{m.label}</span>
+              <div style={{ color: m.color }}>{m.icon}</div>
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: m.color, lineHeight: 1, marginBottom: 6 }}>{m.value}</div>
+            <div style={{ fontSize: 10.5, color: '#8e8e93' }}>{m.sub}</div>
+          </div>
+        ))}
       </div>
 
       {/* Metrics grid */}

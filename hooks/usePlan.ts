@@ -61,8 +61,10 @@ export function usePlan(): PlanInfo {
           ? Math.max(0, Math.ceil((trialFim.getTime() - now.getTime()) / 86400000))
           : 0
         const isExpired = sub.status === 'trial' && !!trialFim && trialFim < now
-        const hasAccess = ['ativa', 'fundador'].includes(sub.status as string) ||
-          (sub.status === 'trial' && !isExpired)
+        // Bloqueio por plano temporariamente desativado — cobrança manual via admin
+        // const hasAccess = ['ativa', 'fundador'].includes(sub.status as string) ||
+        //   (sub.status === 'trial' && !isExpired)
+        const hasAccess = true
 
         setInfo({
           loading: false,

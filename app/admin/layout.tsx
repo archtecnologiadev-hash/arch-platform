@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Users, UserPlus, TicketCheck, ScrollText, LogOut, ShieldCheck, CreditCard, FlaskConical, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Users, UserPlus, TicketCheck, ScrollText, LogOut, ShieldCheck, CreditCard, FlaskConical, Menu, X, Receipt } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 const NAV = [
   { label: 'Dashboard',      href: '/admin',             icon: LayoutDashboard, exact: true },
+  { label: 'Cobranças',      href: '/admin/cobrancas',   icon: Receipt },
   { label: 'Assinaturas',    href: '/admin/assinaturas', icon: CreditCard },
   { label: 'Dados de Teste', href: '/admin/dados-teste', icon: FlaskConical },
   { label: 'Usuários',       href: '/admin/usuarios',    icon: Users },

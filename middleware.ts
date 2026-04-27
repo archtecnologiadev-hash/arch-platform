@@ -17,6 +17,7 @@ interface UserInfo {
   role: string | null
   tipo: string
   nivel_permissao: string | null
+  status_conta: string | null
 }
 
 // Queries public.users directly with service role — bypasses RLS entirely
@@ -29,7 +30,7 @@ async function getUserInfoFromDB(userId: string): Promise<UserInfo | null> {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
       .from('users')
-      .select('role, tipo, nivel_permissao')
+      .select('role, tipo, nivel_permissao, status_conta')
       .eq('id', userId)
       .single()
     if (!data) return null
@@ -37,6 +38,7 @@ async function getUserInfoFromDB(userId: string): Promise<UserInfo | null> {
       role: data.role ?? null,
       tipo: data.tipo ?? 'cliente',
       nivel_permissao: data.nivel_permissao ?? null,
+      status_conta: data.status_conta ?? null,
     }
   } catch {
     return null
@@ -111,6 +113,11 @@ export async function middleware(request: NextRequest) {
   // ── 3. Non-admin rules ─────────────────────────────────────────────────────
   if (isAdminPath) {
     return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // Conta suspensa — bloqueia acesso a rotas protegidas
+  if (dbInfo?.status_conta === 'suspenso' && isProtected && pathname !== '/conta-suspensa') {
+    return NextResponse.redirect(new URL('/conta-suspensa', request.url))
   }
 
   // DB tipo is authoritative; fall back to metadata only when DB row not yet created

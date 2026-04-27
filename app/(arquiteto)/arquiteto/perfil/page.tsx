@@ -14,6 +14,7 @@ import {
 import WelcomeBanner from '@/components/WelcomeBanner'
 import { usePlan } from '@/hooks/usePlan'
 import { useStorage } from '@/hooks/useStorage'
+import MinhasCobrancas from '@/components/shared/MinhasCobrancas'
 
 function slugify(t: string) {
   return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -982,6 +983,8 @@ export default function ArquitetoPerfilPage() {
             )}
           </div>
         )}
+
+        <MinhasCobrancas />
       </div>
 
       {/* ── Crop Modal ─────────────────────────────────────────────── */}
