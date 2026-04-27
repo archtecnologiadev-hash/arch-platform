@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Send, Search, MessageCircle, Paperclip, FileText, ImageIcon, File, Download, Loader2 } from 'lucide-react'
+import { Send, Search, MessageCircle, Paperclip, FileText, ImageIcon, File, Download, Loader2, ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 type UserType = 'arquiteto' | 'cliente' | 'fornecedor'
@@ -122,11 +122,20 @@ function ChatInner({ userType }: { userType: UserType }) {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>(initConvId ? 'chat' : 'list')
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const selectedConversa = conversas.find(c => c.id === selectedId) ?? null
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1024)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     const supabase = createClient()
@@ -355,12 +364,17 @@ function ChatInner({ userType }: { userType: UserType }) {
   function ConvItem({ c }: { c: Conversa }) {
     const isActive = c.id === selectedId
     return (
-      <button onClick={() => setSelectedId(c.id)} style={{
-        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-        padding: '10px 16px',
-        background: isActive ? 'rgba(0,122,255,0.08)' : 'transparent',
-        border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background 0.1s',
-      }}>
+      <button
+        onClick={() => {
+          setSelectedId(c.id)
+          if (isMobile) setMobileView('chat')
+        }}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+          padding: '10px 16px',
+          background: isActive ? 'rgba(0,122,255,0.08)' : 'transparent',
+          border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background 0.1s',
+        }}>
         <Avatar nome={c.participante_nome} url={c.participante_avatar} size={40} color={isActive ? '#007AFF' : '#6b6b6b'} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 4 }}>
@@ -391,188 +405,254 @@ function ChatInner({ userType }: { userType: UserType }) {
     )
   }
 
+  const showList = !isMobile || mobileView === 'list'
+  const showChat = !isMobile || mobileView === 'chat'
+
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#f2f2f7', overflow: 'hidden' }}>
+    <div className="chat-outer" style={{ display: 'flex', background: '#f2f2f7', overflow: 'hidden' }}>
+
       {/* Left: conversation list */}
-      <div style={{ width: 300, minWidth: 300, background: '#fff', borderRight: '1px solid rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', flexShrink: 0 }}>
-          <span style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1a' }}>Mensagens</span>
-        </div>
-        <div style={{ padding: '8px 10px', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f2f2f7', borderRadius: 10, padding: '6px 10px' }}>
-            <Search size={13} color="#8e8e93" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..."
-              style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 13, color: '#1a1a1a' }} />
+      {showList && (
+        <div style={{
+          width: isMobile ? '100%' : 300,
+          minWidth: isMobile ? undefined : 300,
+          background: '#fff',
+          borderRight: isMobile ? 'none' : '1px solid rgba(0,0,0,0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+        }}>
+          <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', flexShrink: 0 }}>
+            <span style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1a' }}>Mensagens</span>
+          </div>
+          <div style={{ padding: '8px 10px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f2f2f7', borderRadius: 10, padding: '6px 10px' }}>
+              <Search size={13} color="#8e8e93" />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..."
+                style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 13, color: '#1a1a1a' }} />
+            </div>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {loading ? (
+              <div style={{ padding: 24, textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>Carregando...</div>
+            ) : conversas.length === 0 ? (
+              <div style={{ padding: 32, textAlign: 'center', color: '#8e8e93' }}>
+                <MessageCircle size={32} color="#c7c7cc" style={{ margin: '0 auto 8px' }} />
+                <div style={{ fontSize: 13 }}>Nenhuma conversa ainda</div>
+              </div>
+            ) : (
+              <>
+                {userType === 'arquiteto' ? (
+                  <>
+                    {filtClientes.length > 0 && (
+                      <>
+                        <div style={{ padding: '10px 16px 4px', fontSize: 11, fontWeight: 600, color: '#8e8e93', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Clientes</div>
+                        {filtClientes.map(c => <ConvItem key={c.id} c={c} />)}
+                      </>
+                    )}
+                    {filtFornecedores.length > 0 && (
+                      <>
+                        <div style={{ padding: '10px 16px 4px', fontSize: 11, fontWeight: 600, color: '#8e8e93', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Fornecedores</div>
+                        {filtFornecedores.map(c => <ConvItem key={c.id} c={c} />)}
+                      </>
+                    )}
+                    {filtered.length === 0 && search && (
+                      <div style={{ padding: 16, textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>Nenhum resultado</div>
+                    )}
+                  </>
+                ) : (
+                  filtered.map(c => <ConvItem key={c.id} c={c} />)
+                )}
+              </>
+            )}
           </div>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          {loading ? (
-            <div style={{ padding: 24, textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>Carregando...</div>
-          ) : conversas.length === 0 ? (
-            <div style={{ padding: 32, textAlign: 'center', color: '#8e8e93' }}>
-              <MessageCircle size={32} color="#c7c7cc" style={{ margin: '0 auto 8px' }} />
-              <div style={{ fontSize: 13 }}>Nenhuma conversa ainda</div>
-            </div>
-          ) : (
-            <>
-              {userType === 'arquiteto' ? (
-                <>
-                  {filtClientes.length > 0 && (
-                    <>
-                      <div style={{ padding: '10px 16px 4px', fontSize: 11, fontWeight: 600, color: '#8e8e93', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Clientes</div>
-                      {filtClientes.map(c => <ConvItem key={c.id} c={c} />)}
-                    </>
-                  )}
-                  {filtFornecedores.length > 0 && (
-                    <>
-                      <div style={{ padding: '10px 16px 4px', fontSize: 11, fontWeight: 600, color: '#8e8e93', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Fornecedores</div>
-                      {filtFornecedores.map(c => <ConvItem key={c.id} c={c} />)}
-                    </>
-                  )}
-                  {filtered.length === 0 && search && (
-                    <div style={{ padding: 16, textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>Nenhum resultado</div>
-                  )}
-                </>
-              ) : (
-                filtered.map(c => <ConvItem key={c.id} c={c} />)
-              )}
-            </>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* Right: chat area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0 }}>
-        {selectedConversa ? (
-          <>
-            {/* Header */}
-            <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 16px', borderBottom: '1px solid rgba(0,0,0,0.08)', background: '#fff', gap: 10, flexShrink: 0 }}>
-              <Avatar nome={selectedConversa.participante_nome} url={selectedConversa.participante_avatar} size={34} />
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>
-                  {selectedConversa.participante_nome}
-                  {selectedConversa.projeto_nome && (
-                    <span style={{ fontWeight: 400, color: '#8b5cf6' }}>{' — Projeto: '}{selectedConversa.projeto_nome}</span>
-                  )}
-                </div>
-                <div style={{ fontSize: 11, color: '#8e8e93' }}>{selectedConversa.participante_email}</div>
-              </div>
-            </div>
-
-            {/* Messages */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 8px', display: 'flex', flexDirection: 'column', gap: 0, background: '#f2f2f7' }}>
-              {mensagens.length === 0 ? (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ textAlign: 'center', color: '#8e8e93' }}>
-                    <MessageCircle size={32} color="#c7c7cc" style={{ margin: '0 auto 8px' }} />
-                    <div style={{ fontSize: 13 }}>Inicie a conversa</div>
-                  </div>
-                </div>
-              ) : (
-                mensagens.map((msg, idx) => {
-                  const isMine = msg.remetente_id === userId
-                  const prevMsg = idx > 0 ? mensagens[idx - 1] : null
-                  const nextMsg = idx < mensagens.length - 1 ? mensagens[idx + 1] : null
-
-                  const showDate = !prevMsg || new Date(msg.created_at).toDateString() !== new Date(prevMsg.created_at).toDateString()
-                  const groupedWithPrev = !!prevMsg && !showDate && isGrouped(prevMsg, msg)
-                  const groupedWithNext = !!nextMsg && isGrouped(msg, nextMsg) && new Date(nextMsg.created_at).toDateString() === new Date(msg.created_at).toDateString()
-                  const isLastInGroup = !groupedWithNext
-
-                  // Tail only on last message of group
-                  const borderRadius = isMine
-                    ? isLastInGroup ? '18px 18px 4px 18px' : '18px 18px 18px 18px'
-                    : isLastInGroup ? '18px 18px 18px 4px' : '18px 18px 18px 18px'
-
-                  const marginTop = groupedWithPrev ? 2 : 8
-                  const isFile = !!(msg.arquivo_url && msg.arquivo_nome)
-
-                  return (
-                    <div key={msg.id}>
-                      {showDate && (
-                        <div style={{ textAlign: 'center', margin: '12px 0 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
-                          <span style={{ fontSize: 11, color: '#8e8e93', fontWeight: 500, whiteSpace: 'nowrap' }}>
-                            {formatDateSep(msg.created_at)}
-                          </span>
-                          <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
+      {showChat && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0 }}>
+          {selectedConversa ? (
+            <>
+              {/* Header */}
+              <div style={{
+                height: 56,
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 16px',
+                borderBottom: '1px solid rgba(0,0,0,0.08)',
+                background: '#fff',
+                flexShrink: 0,
+                gap: isMobile ? 0 : 10,
+              }}>
+                {isMobile ? (
+                  <>
+                    <button
+                      onClick={() => setMobileView('list')}
+                      style={{
+                        width: 36, height: 36, border: 'none', background: 'transparent',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', padding: 0, flexShrink: 0,
+                      }}
+                    >
+                      <ChevronLeft size={24} color="#007AFF" />
+                    </button>
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, overflow: 'hidden' }}>
+                      <Avatar nome={selectedConversa.participante_nome} url={selectedConversa.participante_avatar} size={32} />
+                      <div style={{ overflow: 'hidden', textAlign: 'center' }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {selectedConversa.participante_nome}
                         </div>
-                      )}
-                      <div style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', marginTop, marginBottom: 0 }}>
-                        <div style={{
-                          maxWidth: '70%',
-                          background: isMine ? '#007AFF' : '#ffffff',
-                          color: isMine ? '#ffffff' : '#1a1a1a',
-                          borderRadius,
-                          padding: isFile ? '8px' : '8px 12px',
-                          fontSize: 14, lineHeight: 1.4,
-                          boxShadow: isMine ? 'none' : '0 1px 2px rgba(0,0,0,0.08)',
-                          wordBreak: 'break-word',
-                        }}>
-                          {isFile ? (
-                            <FileAttachment url={msg.arquivo_url!} nome={msg.arquivo_nome!} isMine={isMine} />
-                          ) : (
-                            <span>{msg.texto}</span>
-                          )}
-                          {isLastInGroup && (
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3, marginTop: 3 }}>
-                              <span style={{ fontSize: 10, opacity: 0.65 }}>{fmtTime(msg.created_at)}</span>
-                              {isMine && (
-                                <span style={{ fontSize: 10, color: msg.lida ? '#90caf9' : 'rgba(255,255,255,0.6)', letterSpacing: '-1px', lineHeight: 1 }}>
-                                  {msg.lida ? '✓✓' : '✓'}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                        {selectedConversa.projeto_nome && (
+                          <div style={{ fontSize: 11, color: '#8b5cf6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {selectedConversa.projeto_nome}
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )
-                })
-              )}
-              <div ref={bottomRef} />
-            </div>
+                    <div style={{ width: 36, flexShrink: 0 }} />
+                  </>
+                ) : (
+                  <>
+                    <Avatar nome={selectedConversa.participante_nome} url={selectedConversa.participante_avatar} size={34} />
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>
+                        {selectedConversa.participante_nome}
+                        {selectedConversa.projeto_nome && (
+                          <span style={{ fontWeight: 400, color: '#8b5cf6' }}>{' — Projeto: '}{selectedConversa.projeto_nome}</span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#8e8e93' }}>{selectedConversa.participante_email}</div>
+                    </div>
+                  </>
+                )}
+              </div>
 
-            {/* Input area */}
-            <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(0,0,0,0.08)', background: '#fff', display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
-              <input ref={fileRef} type="file" onChange={handleFileSelect}
-                accept=".pdf,.dwg,.jpg,.jpeg,.png,.zip,.rar,.docx,.xlsx"
-                style={{ display: 'none' }} />
-              <button
-                onClick={() => fileRef.current?.click()}
-                disabled={uploadingFile}
-                title="Enviar arquivo"
-                style={{ width: 36, height: 36, borderRadius: '50%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.15s' }}
-              >
-                {uploadingFile
-                  ? <Loader2 size={15} color="#8e8e93" style={{ animation: 'spin 1s linear infinite' }} />
-                  : <Paperclip size={15} color="#8e8e93" />
-                }
-              </button>
-              <textarea
-                ref={inputRef} value={texto} onChange={e => setTexto(e.target.value)}
-                onKeyDown={handleKey} placeholder="Mensagem..." rows={1}
-                style={{ flex: 1, border: '1px solid rgba(0,0,0,0.12)', borderRadius: 20, padding: '8px 14px', fontSize: 14, outline: 'none', resize: 'none', background: '#f2f2f7', color: '#1a1a1a', maxHeight: 120, overflowY: 'auto', lineHeight: 1.4, fontFamily: 'inherit' }}
-              />
-              <button
-                onClick={sendMessage} disabled={!texto.trim() || sending}
-                style={{ width: 36, height: 36, borderRadius: '50%', background: texto.trim() && !sending ? '#007AFF' : '#c7c7cc', border: 'none', cursor: texto.trim() && !sending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.15s' }}>
-                <Send size={15} color="#fff" />
-              </button>
+              {/* Messages */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 8px', display: 'flex', flexDirection: 'column', gap: 0, background: '#f2f2f7' }}>
+                {mensagens.length === 0 ? (
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ textAlign: 'center', color: '#8e8e93' }}>
+                      <MessageCircle size={32} color="#c7c7cc" style={{ margin: '0 auto 8px' }} />
+                      <div style={{ fontSize: 13 }}>Inicie a conversa</div>
+                    </div>
+                  </div>
+                ) : (
+                  mensagens.map((msg, idx) => {
+                    const isMine = msg.remetente_id === userId
+                    const prevMsg = idx > 0 ? mensagens[idx - 1] : null
+                    const nextMsg = idx < mensagens.length - 1 ? mensagens[idx + 1] : null
+
+                    const showDate = !prevMsg || new Date(msg.created_at).toDateString() !== new Date(prevMsg.created_at).toDateString()
+                    const groupedWithPrev = !!prevMsg && !showDate && isGrouped(prevMsg, msg)
+                    const groupedWithNext = !!nextMsg && isGrouped(msg, nextMsg) && new Date(nextMsg.created_at).toDateString() === new Date(msg.created_at).toDateString()
+                    const isLastInGroup = !groupedWithNext
+
+                    const borderRadius = isMine
+                      ? isLastInGroup ? '18px 18px 4px 18px' : '18px 18px 18px 18px'
+                      : isLastInGroup ? '18px 18px 18px 4px' : '18px 18px 18px 18px'
+
+                    const marginTop = groupedWithPrev ? 2 : 8
+                    const isFile = !!(msg.arquivo_url && msg.arquivo_nome)
+
+                    return (
+                      <div key={msg.id}>
+                        {showDate && (
+                          <div style={{ textAlign: 'center', margin: '12px 0 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
+                            <span style={{ fontSize: 11, color: '#8e8e93', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                              {formatDateSep(msg.created_at)}
+                            </span>
+                            <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', marginTop, marginBottom: 0 }}>
+                          <div style={{
+                            maxWidth: '75%',
+                            background: isMine ? '#007AFF' : '#ffffff',
+                            color: isMine ? '#ffffff' : '#1a1a1a',
+                            borderRadius,
+                            padding: isFile ? '8px' : '8px 12px',
+                            fontSize: 14, lineHeight: 1.4,
+                            boxShadow: isMine ? 'none' : '0 1px 2px rgba(0,0,0,0.08)',
+                            wordBreak: 'break-word',
+                          }}>
+                            {isFile ? (
+                              <FileAttachment url={msg.arquivo_url!} nome={msg.arquivo_nome!} isMine={isMine} />
+                            ) : (
+                              <span>{msg.texto}</span>
+                            )}
+                            {isLastInGroup && (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3, marginTop: 3 }}>
+                                <span style={{ fontSize: 10, opacity: 0.65 }}>{fmtTime(msg.created_at)}</span>
+                                {isMine && (
+                                  <span style={{ fontSize: 10, color: msg.lida ? '#90caf9' : 'rgba(255,255,255,0.6)', letterSpacing: '-1px', lineHeight: 1 }}>
+                                    {msg.lida ? '✓✓' : '✓'}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+                <div ref={bottomRef} />
+              </div>
+
+              {/* Input area */}
+              <div className="chat-input-safe" style={{ padding: '10px 12px', borderTop: '1px solid rgba(0,0,0,0.08)', background: '#fff', display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+                <input ref={fileRef} type="file" onChange={handleFileSelect}
+                  accept=".pdf,.dwg,.jpg,.jpeg,.png,.zip,.rar,.docx,.xlsx"
+                  style={{ display: 'none' }} />
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploadingFile}
+                  title="Enviar arquivo"
+                  style={{ width: 36, height: 36, borderRadius: '50%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.15s' }}
+                >
+                  {uploadingFile
+                    ? <Loader2 size={15} color="#8e8e93" style={{ animation: 'spin 1s linear infinite' }} />
+                    : <Paperclip size={15} color="#8e8e93" />
+                  }
+                </button>
+                <textarea
+                  ref={inputRef} value={texto} onChange={e => setTexto(e.target.value)}
+                  onKeyDown={handleKey} placeholder="Mensagem..." rows={1}
+                  style={{ flex: 1, border: '1px solid rgba(0,0,0,0.12)', borderRadius: 20, padding: '8px 14px', fontSize: 14, outline: 'none', resize: 'none', background: '#f2f2f7', color: '#1a1a1a', maxHeight: 120, overflowY: 'auto', lineHeight: 1.4, fontFamily: 'inherit' }}
+                />
+                <button
+                  onClick={sendMessage} disabled={!texto.trim() || sending}
+                  style={{ width: 36, height: 36, borderRadius: '50%', background: texto.trim() && !sending ? '#007AFF' : '#c7c7cc', border: 'none', cursor: texto.trim() && !sending ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.15s' }}>
+                  <Send size={15} color="#fff" />
+                </button>
+              </div>
+            </>
+          ) : !isMobile ? (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f2f2f7' }}>
+              <div style={{ textAlign: 'center', color: '#8e8e93' }}>
+                <MessageCircle size={48} color="#c7c7cc" style={{ margin: '0 auto 12px' }} />
+                <div style={{ fontSize: 15, fontWeight: 500, color: '#3a3a3c' }}>Selecione uma conversa</div>
+                <div style={{ marginTop: 4, fontSize: 13 }}>Escolha uma conversa para começar</div>
+              </div>
             </div>
-          </>
-        ) : (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f2f2f7' }}>
-            <div style={{ textAlign: 'center', color: '#8e8e93' }}>
-              <MessageCircle size={48} color="#c7c7cc" style={{ margin: '0 auto 12px' }} />
-              <div style={{ fontSize: 15, fontWeight: 500, color: '#3a3a3c' }}>Selecione uma conversa</div>
-              <div style={{ marginTop: 4, fontSize: 13 }}>Escolha uma conversa para começar</div>
-            </div>
-          </div>
-        )}
-      </div>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+          ) : null}
+        </div>
+      )}
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        .chat-outer {
+          height: 100vh;
+          height: -webkit-fill-available;
+          height: 100dvh;
+        }
+        .chat-input-safe {
+          padding-bottom: max(10px, env(safe-area-inset-bottom, 10px)) !important;
+        }
+      `}</style>
     </div>
   )
 }
