@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import {
   Folder, FolderOpen, ChevronRight, Upload, Camera, PenLine,
-  X, Download, ZoomIn, ArrowLeft, Loader2, RotateCcw, Trash2,
+  X, Download, ZoomIn, Loader2, RotateCcw, Trash2,
   Image as ImageIcon, FileText, File, Check, Plus,
 } from 'lucide-react'
 
