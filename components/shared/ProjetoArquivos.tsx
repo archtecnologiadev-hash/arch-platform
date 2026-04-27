@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase'
 import {
   Folder, FolderOpen, ChevronRight, Upload, Camera, PenLine,
   X, Download, ZoomIn, Loader2, RotateCcw, Trash2,
-  Image as ImageIcon, FileText, File, Check, Plus,
+  Image as ImageIcon, FileText, File as LucideFile, Check, Plus,
 } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ function FileIcon({ tipo }: { tipo: string | null }) {
   if (tipo === 'imagem') return <ImageIcon size={15} color="#007AFF" />
   if (tipo === 'pdf') return <FileText size={15} color="#ef4444" />
   if (tipo === 'cad') return <FileText size={15} color="#f59e0b" />
-  return <File size={15} color="#8e8e93" />
+  return <LucideFile size={15} color="#8e8e93" />
 }
 
 // ─── Camera Tool ─────────────────────────────────────────────────────────────
