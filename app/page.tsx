@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import {
   ArrowRight, Check, ChevronDown, Menu, X, Pause, Play,
-  FolderOpen, Users, BarChart3, MessageSquare, Calendar, FileText,
+  FolderOpen, MessageSquare, Calendar, FileText,
 } from 'lucide-react'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -27,25 +27,19 @@ const NAV_LINKS = [
 
 const BENEFITS = [
   {
-    icon: BarChart3,
     num: '01',
     title: 'Pipeline Visual',
     desc: 'Acompanhe cada projeto em etapas claras. Nunca mais perca um prazo ou esqueça uma entrega.',
-    color: '#007AFF',
   },
   {
-    icon: Users,
     num: '02',
     title: 'Portal do Cliente',
     desc: 'Seu cliente acompanha o projeto em tempo real. Menos reuniões, mais confiança.',
-    color: '#10b981',
   },
   {
-    icon: FolderOpen,
     num: '03',
     title: 'Equipe Integrada',
     desc: 'Permissões, tarefas e comunicação de toda a equipe organizados em um único lugar.',
-    color: '#8b5cf6',
   },
 ]
 
@@ -449,6 +443,122 @@ function Reveal({ children, delay = 0, x = 0 }: { children: React.ReactNode; del
   )
 }
 
+// ─── Benefit icons (custom SVG, black/white, animated) ───────────────────────
+
+function IconPipeline() {
+  const [hov, setHov] = useState(false)
+  return (
+    <svg
+      width="40" height="28" viewBox="0 0 40 28" fill="none"
+      strokeLinecap="round" overflow="visible"
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+    >
+      {/* Three Gantt bars — on hover they rebalance, simulating work flowing */}
+      <motion.rect x={0} y={0}    width={38} height={7} rx={3.5}
+        stroke="#0a0a0a" strokeWidth={1.4}
+        animate={{ scaleX: hov ? 0.68 : 1 }}
+        style={{ transformOrigin: '0px 3.5px' }}
+        transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+      />
+      <motion.rect x={0} y={10.5} width={26} height={7} rx={3.5}
+        stroke="#0a0a0a" strokeWidth={1.4}
+        animate={{ scaleX: hov ? 1.46 : 1 }}
+        style={{ transformOrigin: '0px 14px' }}
+        transition={{ duration: 0.42, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
+      />
+      <motion.rect x={0} y={21}   width={16} height={7} rx={3.5}
+        stroke="#0a0a0a" strokeWidth={1.4}
+        animate={{ scaleX: hov ? 2.0 : 1 }}
+        style={{ transformOrigin: '0px 24.5px' }}
+        transition={{ duration: 0.42, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+      />
+    </svg>
+  )
+}
+
+function IconPortal() {
+  const [hov, setHov] = useState(false)
+  return (
+    <svg
+      width="38" height="32" viewBox="0 0 38 32" fill="none" strokeLinecap="round"
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+    >
+      {/* Browser frame */}
+      <rect x={1} y={1} width={36} height={30} rx={4} stroke="#0a0a0a" strokeWidth={1.4}/>
+      <line x1={1} y1={9} x2={37} y2={9} stroke="#0a0a0a" strokeWidth={1.4}/>
+      {/* Chrome dots */}
+      <circle cx={6.5}  cy={5} r={1.4} fill="#0a0a0a"/>
+      <circle cx={11.5} cy={5} r={1.4} fill="#0a0a0a"/>
+      <circle cx={16.5} cy={5} r={1.4} fill="#0a0a0a"/>
+      {/* User avatar — springs up on hover */}
+      <motion.g
+        animate={{ y: hov ? -1.5 : 0 }}
+        transition={{ type: 'spring', stiffness: 420, damping: 22 }}
+      >
+        <motion.circle cx={19} cy={18} r={4}
+          stroke="#0a0a0a"
+          animate={{ strokeWidth: hov ? 1.9 : 1.4 }}
+          transition={{ duration: 0.22 }}
+        />
+        <motion.path
+          d="M11 30 Q11 25 19 25 Q27 25 27 30"
+          stroke="#0a0a0a"
+          animate={{ strokeWidth: hov ? 1.9 : 1.4, opacity: hov ? 1 : 0.55 }}
+          transition={{ duration: 0.22 }}
+        />
+      </motion.g>
+    </svg>
+  )
+}
+
+function IconTeam() {
+  const [hov, setHov] = useState(false)
+  return (
+    <svg
+      width="38" height="34" viewBox="0 0 38 34" fill="none" strokeLinecap="round"
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+    >
+      {/* Connection lines — fade in on hover */}
+      <motion.line x1={15.5} y1={9.5} x2={8.5}  y2={23.5}
+        stroke="#0a0a0a" strokeWidth={1.2}
+        animate={{ opacity: hov ? 0.85 : 0.2 }}
+        transition={{ duration: 0.28 }}
+      />
+      <motion.line x1={22.5} y1={9.5} x2={29.5} y2={23.5}
+        stroke="#0a0a0a" strokeWidth={1.2}
+        animate={{ opacity: hov ? 0.85 : 0.2 }}
+        transition={{ duration: 0.28, delay: 0.05 }}
+      />
+      <motion.line x1={9.5}  y1={27}  x2={28.5} y2={27}
+        stroke="#0a0a0a" strokeWidth={1.2}
+        animate={{ opacity: hov ? 0.85 : 0.2 }}
+        transition={{ duration: 0.28, delay: 0.1 }}
+      />
+      {/* Nodes — spring-scale on hover */}
+      <motion.circle cx={19} cy={6}  r={4}
+        stroke="#0a0a0a" strokeWidth={1.4}
+        animate={{ scale: hov ? 1.14 : 1 }}
+        style={{ transformOrigin: '19px 6px' }}
+        transition={{ type: 'spring', stiffness: 420, damping: 22 }}
+      />
+      <motion.circle cx={6}  cy={27} r={3.5}
+        stroke="#0a0a0a" strokeWidth={1.3}
+        animate={{ scale: hov ? 1.1 : 1 }}
+        style={{ transformOrigin: '6px 27px' }}
+        transition={{ type: 'spring', stiffness: 420, damping: 22, delay: 0.05 }}
+      />
+      <motion.circle cx={32} cy={27} r={3.5}
+        stroke="#0a0a0a" strokeWidth={1.3}
+        animate={{ scale: hov ? 1.1 : 1 }}
+        style={{ transformOrigin: '32px 27px' }}
+        transition={{ type: 'spring', stiffness: 420, damping: 22, delay: 0.1 }}
+      />
+    </svg>
+  )
+}
+
+const BENEFIT_ICONS = [IconPipeline, IconPortal, IconTeam]
+
 // ─── Benefits ─────────────────────────────────────────────────────────────────
 
 function Benefits() {
@@ -474,7 +584,7 @@ function Benefits() {
           border: '1px solid rgba(0,0,0,0.07)', borderRadius: 20, overflow: 'hidden',
         }} className="benefits-grid">
           {BENEFITS.map((b, i) => {
-            const Icon = b.icon
+            const BIcon = BENEFIT_ICONS[i]
             return (
               <Reveal key={b.title} delay={i * 0.1}>
                 <motion.div
@@ -489,12 +599,8 @@ function Benefits() {
                   <span style={{ fontSize: 11, color: 'rgba(0,0,0,0.25)', fontWeight: 300, letterSpacing: '0.06em' }}>
                     {b.num}
                   </span>
-                  <div style={{
-                    width: 44, height: 44, borderRadius: 12, marginTop: 28, marginBottom: 28,
-                    background: `${b.color}14`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Icon size={20} color={b.color} />
+                  <div style={{ marginTop: 28, marginBottom: 28 }}>
+                    <BIcon />
                   </div>
                   <h3 style={{
                     fontSize: 17, fontWeight: 400, color: '#0a0a0a',
