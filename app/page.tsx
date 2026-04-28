@@ -271,29 +271,29 @@ function Hero() {
       position: 'relative', height: '100svh', minHeight: 640,
       overflow: 'hidden', background: '#080810',
     }}>
-      {/* Video (desktop) — fades in when ready */}
+      {/* Poster — always visible immediately (desktop + mobile) */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: `url(${HERO_POSTER})`,
+        backgroundSize: 'cover', backgroundPosition: 'center',
+        opacity: 0.62,
+      }} />
+
+      {/* Video — fades in over the poster when actually playing (desktop only) */}
       <video
         ref={videoRef}
         src={HERO_VIDEO}
-        poster={HERO_POSTER}
         autoPlay muted loop playsInline
-        onCanPlay={() => setVidReady(true)}
+        preload="auto"
+        onPlaying={() => setVidReady(true)}
         className="hero-video"
         style={{
           position: 'absolute', inset: 0, width: '100%', height: '100%',
           objectFit: 'cover', objectPosition: 'center',
-          opacity: vidReady ? 0.6 : 0,
-          transition: 'opacity 1.5s ease',
+          opacity: vidReady ? 0.62 : 0,
+          transition: 'opacity 1.8s ease',
         }}
       />
-
-      {/* Static poster (mobile / before video loads) */}
-      <div className="hero-mobile-bg" style={{
-        position: 'absolute', inset: 0, display: 'none',
-        backgroundImage: `url(${HERO_POSTER})`,
-        backgroundSize: 'cover', backgroundPosition: 'center',
-        opacity: 0.55,
-      }} />
 
       {/* Gradient overlays */}
       <div style={{
