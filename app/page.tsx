@@ -9,7 +9,7 @@ import {
   FolderOpen, Users, BarChart3, MessageSquare, Calendar, FileText,
 } from 'lucide-react'
 
-const HeroScene3D = dynamic(() => import('@/components/landing/HeroScene3D'), { ssr: false })
+const Scene3D     = dynamic(() => import('@/components/landing/Scene3D'),     { ssr: false })
 const CubeScene3D  = dynamic(() => import('@/components/landing/CubeScene3D'),  { ssr: false })
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -289,7 +289,7 @@ function Hero({ mouseRef }: { mouseRef: React.RefObject<{ x: number; y: number }
     <section style={{ position: 'relative', height: '100dvh', minHeight: 640, background: '#080912', overflow: 'hidden' }}>
       {/* 3D background */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
-        <HeroScene3D mouseRef={mouseRef} />
+        <Scene3D mouseRef={mouseRef} />
       </div>
 
       {/* Gradient overlays */}
