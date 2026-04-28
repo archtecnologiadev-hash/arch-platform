@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase'
 import {
   LogOut, Download, MessageCircle, FileText, ImageIcon, File,
   CalendarDays, FolderOpen, Activity, ArrowLeft, Check, DollarSign,
+  type LucideIcon,
 } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import CalendarioObra, { CalendarioEvent, EventType } from '@/components/shared/CalendarioObra'
@@ -56,7 +57,7 @@ interface HistoricoItem {
 const STAGES = ['Atendimento', 'Reunião', 'Briefing', '3D', 'Alteração 3D', 'Detalhamento', 'Orçamento', 'Execução']
 const STAGE_COLORS = ['#8b5cf6', '#007AFF', '#34d399', '#4f9cf9', '#f59e0b', '#f97316', '#ef4444', '#10b981']
 
-const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
+const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: 'andamento', label: 'Andamento', icon: Activity },
   { id: 'calendario', label: 'Calendário', icon: CalendarDays },
   { id: 'arquivos', label: 'Arquivos', icon: FolderOpen },

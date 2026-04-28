@@ -8,6 +8,7 @@ import {
   Mail, Calendar, Plus, Package, DollarSign, Check, Pencil,
   Star, ExternalLink, Send, X, CheckCircle2, MapPin, Loader2,
   Download, AlertCircle, Heart, ChevronLeft, ChevronDown, UserPlus, Search, History,
+  type LucideIcon,
 } from 'lucide-react'
 import ProjetoArquivos from '@/components/shared/ProjetoArquivos'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
@@ -120,7 +121,7 @@ const panelHeader = { padding: '13px 16px', borderBottom: '1px solid rgba(0,0,0,
 const iconBox = (color = '#6b6b6b') => ({ width: 28, height: 28, borderRadius: 7, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', display: 'flex' as const, alignItems: 'center' as const, justifyContent: 'center' as const, flexShrink: 0 as const, color })
 
 type TabId = 'arquivos' | 'anotacoes' | 'fornecedores' | 'calendario' | 'orcamento'
-const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
+const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: 'arquivos',    label: 'Arquivos',    icon: File },
   { id: 'anotacoes',  label: 'Anotações',   icon: Pencil },
   { id: 'calendario', label: 'Calendário',  icon: Calendar },
