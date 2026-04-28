@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
-import { Loader2, Star, CheckCircle2, XCircle, Filter, RefreshCw, AlertTriangle } from 'lucide-react'
+import { Loader2, Star, CheckCircle2, XCircle, RefreshCw, AlertTriangle, Zap } from 'lucide-react'
 
 interface SubRow {
   id: string
@@ -13,6 +13,10 @@ interface SubRow {
   valor_cobrado: number | null
   created_at: string
   user_id: string
+  asaas_customer_id: string | null
+  asaas_subscription_id: string | null
+  card_last4: string | null
+  card_brand: string | null
   users: { nome: string; email: string; tipo: string } | null
   planos: { nome: string; slug: string; valor_mensal: number } | null
 }
@@ -61,7 +65,7 @@ export default function AdminAssinaturas() {
     const supabase = createClient()
     let q = supabase
       .from('assinaturas')
-      .select('id, status, ciclo, trial_fim, proxima_cobranca, valor_cobrado, created_at, user_id, users(nome, email, tipo), planos(nome, slug, valor_mensal)', { count: 'exact' })
+      .select('id, status, ciclo, trial_fim, proxima_cobranca, valor_cobrado, created_at, user_id, asaas_customer_id, asaas_subscription_id, card_last4, card_brand, users(nome, email, tipo), planos(nome, slug, valor_mensal)', { count: 'exact' })
       .order('created_at', { ascending: false })
       .limit(200)
     if (filter !== 'todos') q = q.eq('status', filter)
@@ -72,6 +76,23 @@ export default function AdminAssinaturas() {
   }, [filter])
 
   useEffect(() => { load() }, [load])
+
+  async function handleForcarCobranca(row: SubRow) {
+    if (!row.asaas_subscription_id || !row.asaas_customer_id) {
+      setActionError('Assinatura sem dados Asaas'); return
+    }
+    setActioning(row.id + 'forcar')
+    setActionError('')
+    const res = await fetch('/api/admin/assinatura/forcar-cobranca', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assinaturaId: row.id }),
+    })
+    const data = await res.json()
+    if (data.error) setActionError(data.error)
+    else setActionError('')
+    setActioning(null)
+  }
 
   async function handleAction(subId: string, acao: string) {
     setActioning(subId + acao)
@@ -148,7 +169,7 @@ export default function AdminAssinaturas() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-                  {['Usuário', 'Tipo', 'Plano', 'Status', 'Trial / Cobrança', 'Valor', 'Ações'].map((h, i) => (
+                  {['Usuário', 'Tipo', 'Plano', 'Status', 'Trial / Cobrança', 'Valor', 'Cartão', 'Ações'].map((h, i) => (
                     <th key={i} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: '#8e8e93', fontWeight: 500, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
                       {h}
                     </th>
@@ -157,7 +178,7 @@ export default function AdminAssinaturas() {
               </thead>
               <tbody>
                 {rows.length === 0 && (
-                  <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>Nenhuma assinatura encontrada</td></tr>
+                  <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>Nenhuma assinatura encontrada</td></tr>
                 )}
                 {rows.map((row, i) => {
                   const isActioning = (k: string) => actioning === row.id + k
@@ -191,6 +212,11 @@ export default function AdminAssinaturas() {
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 12, color: '#1a1a1a' }}>
                         {row.valor_cobrado ? `R$ ${Number(row.valor_cobrado).toFixed(2).replace('.', ',')}` : '—'}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: 11.5, color: '#6b6b6b', whiteSpace: 'nowrap' }}>
+                        {row.card_last4
+                          ? <span>{row.card_brand ?? ''}•••• {row.card_last4}</span>
+                          : <span style={{ color: '#c7c7cc' }}>—</span>}
                       </td>
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -240,6 +266,22 @@ export default function AdminAssinaturas() {
                                 ? <Loader2 size={10} style={{ animation: 'spin 1s linear infinite' }} />
                                 : <XCircle size={10} />}
                               Cancelar
+                            </button>
+                          )}
+                          {row.asaas_subscription_id && row.status !== 'cancelada' && (
+                            <button
+                              onClick={() => handleForcarCobranca(row)}
+                              disabled={!!actioning}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: 4,
+                                padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                                background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', color: '#d97706',
+                                opacity: actioning ? 0.6 : 1,
+                              }}>
+                              {isActioning('forcar')
+                                ? <Loader2 size={10} style={{ animation: 'spin 1s linear infinite' }} />
+                                : <Zap size={10} />}
+                              Cobrar
                             </button>
                           )}
                         </div>

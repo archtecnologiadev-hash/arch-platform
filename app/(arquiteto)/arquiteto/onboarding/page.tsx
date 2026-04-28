@@ -438,63 +438,181 @@ function Step3({ userId, onNext, onSkip }: { userId: string; onNext: () => void;
 
 // ─── Step 4: Pagamento ────────────────────────────────────────────────────────
 
-function Step4({ userId, onNext }: { userId: string; onNext: () => void }) {
-  const [saving, setSaving] = useState(false)
+function detectCardBrand(num: string): string {
+  const n = num.replace(/\D/g, '')
+  if (/^4/.test(n)) return 'visa'
+  if (/^5[1-5]/.test(n) || /^2[2-7]/.test(n)) return 'mastercard'
+  if (/^3[47]/.test(n)) return 'amex'
+  if (/^(401178|438935|451416|457393|636368|627780)/.test(n)) return 'elo'
+  return ''
+}
 
-  async function finish() {
-    setSaving(true)
+const BRAND_LABELS: Record<string, string> = { visa: 'Visa', mastercard: 'Mastercard', amex: 'Amex', elo: 'Elo' }
+
+function Step4({ userId, onNext }: { userId: string; onNext: () => void }) {
+  const [holderName, setHolderName] = useState('')
+  const [cardNumber, setCardNumber] = useState('')
+  const [expiry, setExpiry] = useState('')
+  const [ccv, setCcv] = useState('')
+  const [cpf, setCpf] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [skipping, setSkipping] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const brand = detectCardBrand(cardNumber)
+  const isAmex = brand === 'amex'
+
+  function formatCardNumber(val: string) {
+    const digits = val.replace(/\D/g, '').slice(0, isAmex ? 15 : 16)
+    if (isAmex) return digits.replace(/(\d{4})(\d{6})(\d{0,5})/, (_, a, b, c) => [a, b, c].filter(Boolean).join(' '))
+    return digits.replace(/(.{4})/g, '$1 ').trim()
+  }
+
+  function formatExpiry(val: string) {
+    const digits = val.replace(/\D/g, '').slice(0, 4)
+    return digits.length >= 3 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits
+  }
+
+  function formatCpf(val: string) {
+    const d = val.replace(/\D/g, '').slice(0, 11)
+    if (d.length >= 10) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+    if (d.length >= 7) return d.replace(/(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3')
+    if (d.length >= 4) return d.replace(/(\d{3})(\d{0,3})/, '$1.$2')
+    return d
+  }
+
+  async function markDone() {
     const supabase = createClient()
     const { data: ud } = await supabase.from('users').select('onboarding_passos_completos').eq('id', userId).single()
     const passos: string[] = ud?.onboarding_passos_completos ?? []
     const novosPassos = Array.from(new Set([...passos, 'pagamento']))
-    await supabase.from('users').update({
-      onboarding_passos_completos: novosPassos,
-      onboarding_completo: true,
-    }).eq('id', userId)
+    await supabase.from('users').update({ onboarding_passos_completos: novosPassos, onboarding_completo: true }).eq('id', userId)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setSaving(true); setError(null)
+    const parts = expiry.split('/')
+    const expiryMonth = parts[0]?.trim()
+    const expiryYearShort = parts[1]?.trim()
+    if (!expiryMonth || !expiryYearShort) { setError('Validade inválida'); setSaving(false); return }
+
+    const res = await fetch('/api/assinatura/criar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        holderName,
+        number: cardNumber.replace(/\s/g, ''),
+        expiryMonth,
+        expiryYear: expiryYearShort.length === 2 ? `20${expiryYearShort}` : expiryYearShort,
+        ccv,
+        cpf,
+      }),
+    })
+    const data = await res.json()
+    if (data.error) { setError(data.error); setSaving(false); return }
+
+    await markDone()
     setSaving(false); onNext()
   }
+
+  async function skipCard() {
+    setSkipping(true)
+    await markDone()
+    setSkipping(false); onNext()
+  }
+
+  const canSubmit = holderName.trim() && cardNumber.replace(/\D/g, '').length >= 15 && expiry.length === 5 && ccv.length >= 3 && cpf.replace(/\D/g, '').length === 11
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>Período de teste gratuito</h2>
-        <p style={{ fontSize: 14, color: '#8e8e93', fontWeight: 300 }}>Você tem 14 dias para explorar tudo sem custo.</p>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>Ativar trial de 14 dias</h2>
+        <p style={{ fontSize: 14, color: '#8e8e93', fontWeight: 300 }}>Seu cartão só será cobrado após o trial. Cancele quando quiser.</p>
       </div>
 
-      <div style={{ background: 'rgba(0,122,255,0.04)', border: '1px solid rgba(0,122,255,0.15)', borderRadius: 12, padding: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CreditCard size={18} color="#007AFF" />
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {/* Card number */}
+        <div>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>
+            Número do cartão {brand && <span style={{ color: '#007AFF', fontWeight: 700 }}>{BRAND_LABELS[brand]}</span>}
+          </label>
+          <input
+            style={inp} value={cardNumber} inputMode="numeric" autoComplete="cc-number"
+            onChange={e => setCardNumber(formatCardNumber(e.target.value))}
+            placeholder="0000 0000 0000 0000"
+            onFocus={e => (e.target.style.borderColor = '#007AFF')}
+            onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+          />
+        </div>
+
+        {/* Holder name */}
+        <div>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>Nome no cartão</label>
+          <input
+            style={inp} value={holderName} autoComplete="cc-name"
+            onChange={e => setHolderName(e.target.value.toUpperCase())}
+            placeholder="NOME COMO NO CARTÃO"
+            onFocus={e => (e.target.style.borderColor = '#007AFF')}
+            onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+          />
+        </div>
+
+        {/* Expiry + CVV */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>Validade</label>
+            <input
+              style={inp} value={expiry} inputMode="numeric" autoComplete="cc-exp"
+              onChange={e => setExpiry(formatExpiry(e.target.value))}
+              placeholder="MM/AA"
+              onFocus={e => (e.target.style.borderColor = '#007AFF')}
+              onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+            />
           </div>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>14 dias grátis</div>
-            <div style={{ fontSize: 12, color: '#8e8e93' }}>Sem cartão de crédito agora</div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>CVV</label>
+            <input
+              style={inp} value={ccv} inputMode="numeric" autoComplete="cc-csc"
+              onChange={e => setCcv(e.target.value.replace(/\D/g, '').slice(0, isAmex ? 4 : 3))}
+              placeholder={isAmex ? '0000' : '000'}
+              onFocus={e => (e.target.style.borderColor = '#007AFF')}
+              onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+            />
           </div>
         </div>
-        {[
-          'Projetos ilimitados durante o trial',
-          'Acesso completo a todos os recursos',
-          'Suporte por email incluído',
-          'Cancele antes do fim — sem cobrança',
-        ].map((item, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <Check size={14} color="#22c55e" />
-            <span style={{ fontSize: 13, color: '#555' }}>{item}</span>
-          </div>
-        ))}
-      </div>
 
-      <div style={{ background: '#fff9e6', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 10, padding: '12px 16px' }}>
-        <p style={{ fontSize: 13, color: '#92400e', fontWeight: 400 }}>
-          Após os 14 dias, adicione um cartão para continuar sem interrupção. Você será avisado antes de qualquer cobrança.
-        </p>
-      </div>
+        {/* CPF */}
+        <div>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>CPF do titular</label>
+          <input
+            style={inp} value={cpf} inputMode="numeric"
+            onChange={e => setCpf(formatCpf(e.target.value))}
+            placeholder="000.000.000-00"
+            onFocus={e => (e.target.style.borderColor = '#007AFF')}
+            onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+          />
+        </div>
+
+        {error && (
+          <p style={{ fontSize: 13, color: '#ff3b30', background: 'rgba(255,59,48,0.06)', border: '1px solid rgba(255,59,48,0.15)', borderRadius: 8, padding: '10px 14px', margin: 0 }}>
+            {error}
+          </p>
+        )}
+
+        <button
+          type="submit" disabled={saving || !canSubmit}
+          style={{ width: '100%', padding: '14px', background: saving || !canSubmit ? '#a0c4ff' : '#007AFF', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: saving || !canSubmit ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4 }}
+        >
+          {saving ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Ativando...</> : <>Ativar trial de 14 dias <ArrowRight size={16} /></>}
+        </button>
+      </form>
 
       <button
-        onClick={finish} disabled={saving}
-        style={{ width: '100%', padding: '14px', background: saving ? '#a0c4ff' : '#007AFF', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+        onClick={skipCard} disabled={skipping}
+        style={{ width: '100%', padding: '12px', background: 'none', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 10, fontSize: 14, color: '#8e8e93', cursor: skipping ? 'not-allowed' : 'pointer' }}
       >
-        {saving ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Finalizando...</> : 'Configurar cartão depois →'}
+        {skipping ? 'Aguarde...' : 'Configurar cartão depois'}
       </button>
     </div>
   )

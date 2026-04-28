@@ -123,6 +123,20 @@ export default function ArquitetoPerfilPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const storage = useStorage(userId)
 
+  // assinatura / card
+  const [cardInfo, setCardInfo] = useState<{ last4: string; brand: string } | null>(null)
+  const [assinaturaAsaasId, setAssinaturaAsaasId] = useState<string | null>(null)
+  const [cancelando, setCancelando] = useState(false)
+  const [showTrocarCartao, setShowTrocarCartao] = useState(false)
+  const [tcHolder, setTcHolder] = useState('')
+  const [tcNumber, setTcNumber] = useState('')
+  const [tcExpiry, setTcExpiry] = useState('')
+  const [tcCcv, setTcCcv] = useState('')
+  const [tcCpf, setTcCpf] = useState('')
+  const [tcSaving, setTcSaving] = useState(false)
+  const [tcError, setTcError] = useState('')
+  const [cobrancas, setCobrancas] = useState<Array<{ id: string; valor: number; status: string; vencimento: string | null; pago_em: string | null }>>([])
+
   // form fields
   const [nome, setNome] = useState('')
   const [nomeResp, setNomeResp] = useState('')
@@ -214,6 +228,25 @@ export default function ArquitetoPerfilPage() {
           .select('id, url, ordem, tamanho_bytes, eh_principal').eq('escritorio_id', data.id).order('eh_principal', { ascending: false }).order('ordem')
         if (gal) setGaleria((gal as { id: string; url: string; ordem: number; tamanho_bytes: number | null; eh_principal: boolean }[]).map(g => ({ id: g.id, url: g.url, ordem: g.ordem, tamanho_bytes: g.tamanho_bytes, eh_principal: g.eh_principal })))
       }
+      // card / subscription info
+      const { data: sub } = await supabase
+        .from('assinaturas')
+        .select('id, asaas_subscription_id, card_last4, card_brand')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (sub?.card_last4) setCardInfo({ last4: sub.card_last4, brand: sub.card_brand ?? '' })
+      if (sub?.asaas_subscription_id) setAssinaturaAsaasId(sub.asaas_subscription_id)
+
+      if (sub?.id) {
+        const { data: cobs } = await supabase
+          .from('cobrancas_asaas')
+          .select('id, valor, status, vencimento, pago_em')
+          .eq('assinatura_id', sub.id)
+          .order('vencimento', { ascending: false })
+          .limit(12)
+        if (cobs) setCobrancas(cobs as typeof cobrancas)
+      }
+
       setLoading(false)
     }
     load()
@@ -222,6 +255,64 @@ export default function ArquitetoPerfilPage() {
   function showToast(msg: string, ok = true) {
     setToast({ msg, ok })
     setTimeout(() => setToast(null), 3500)
+  }
+
+  async function handleCancelarAssinatura() {
+    if (!confirm('Confirmar cancelamento da assinatura? Você perderá acesso ao fim do período pago.')) return
+    setCancelando(true)
+    const res = await fetch('/api/assinatura/cancelar', { method: 'POST' })
+    const data = await res.json()
+    setCancelando(false)
+    if (data.error) { showToast(data.error, false); return }
+    showToast('Assinatura cancelada')
+    setAssinaturaAsaasId(null)
+  }
+
+  function formatTcCardNumber(val: string) {
+    const digits = val.replace(/\D/g, '').slice(0, 16)
+    return digits.replace(/(.{4})/g, '$1 ').trim()
+  }
+
+  function formatTcExpiry(val: string) {
+    const d = val.replace(/\D/g, '').slice(0, 4)
+    return d.length >= 3 ? `${d.slice(0, 2)}/${d.slice(2)}` : d
+  }
+
+  function formatTcCpf(val: string) {
+    const d = val.replace(/\D/g, '').slice(0, 11)
+    if (d.length >= 10) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+    if (d.length >= 7) return d.replace(/(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3')
+    if (d.length >= 4) return d.replace(/(\d{3})(\d{0,3})/, '$1.$2')
+    return d
+  }
+
+  async function handleTrocarCartao(e: React.FormEvent) {
+    e.preventDefault()
+    setTcSaving(true); setTcError('')
+    const parts = tcExpiry.split('/')
+    const expiryMonth = parts[0]?.trim()
+    const expiryYearShort = parts[1]?.trim()
+    if (!expiryMonth || !expiryYearShort) { setTcError('Validade inválida'); setTcSaving(false); return }
+
+    const res = await fetch('/api/assinatura/trocar-cartao', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        holderName: tcHolder,
+        number: tcNumber.replace(/\s/g, ''),
+        expiryMonth,
+        expiryYear: expiryYearShort.length === 2 ? `20${expiryYearShort}` : expiryYearShort,
+        ccv: tcCcv,
+        cpf: tcCpf,
+      }),
+    })
+    const data = await res.json()
+    setTcSaving(false)
+    if (data.error) { setTcError(data.error); return }
+    setCardInfo({ last4: data.last4, brand: data.brand })
+    setShowTrocarCartao(false)
+    setTcHolder(''); setTcNumber(''); setTcExpiry(''); setTcCcv(''); setTcCpf('')
+    showToast('Cartão atualizado com sucesso!')
   }
 
   function maskPhone(val: string) {
@@ -981,6 +1072,94 @@ export default function ArquitetoPerfilPage() {
                 <Zap size={13} /> Fazer upgrade do plano
               </Link>
             )}
+
+            {/* Card info */}
+            {cardInfo && (
+              <div style={{ marginTop: 10, padding: '12px 16px', background: '#f2f2f7', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <CreditCard size={14} color="#8e8e93" />
+                  <span style={{ fontSize: 12.5, color: '#1a1a1a', fontWeight: 500 }}>
+                    {cardInfo.brand ? cardInfo.brand.charAt(0).toUpperCase() + cardInfo.brand.slice(1) : 'Cartão'} •••• {cardInfo.last4}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowTrocarCartao(v => !v)}
+                  style={{ background: 'none', border: 'none', color: '#007AFF', cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: 0 }}
+                >
+                  {showTrocarCartao ? 'Fechar' : 'Trocar'}
+                </button>
+              </div>
+            )}
+
+            {/* Trocar cartão form */}
+            {showTrocarCartao && (
+              <form onSubmit={handleTrocarCartao} style={{ marginTop: 10, padding: '16px', background: '#fff', border: '1px solid rgba(0,122,255,0.15)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <p style={{ fontSize: 12.5, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>Novo cartão</p>
+                <input style={INP} value={tcNumber} placeholder="Número do cartão"
+                  onChange={e => setTcNumber(formatTcCardNumber(e.target.value))}
+                  onFocus={e => (e.target.style.borderColor = '#007AFF')}
+                  onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                <input style={INP} value={tcHolder} placeholder="Nome no cartão"
+                  onChange={e => setTcHolder(e.target.value.toUpperCase())}
+                  onFocus={e => (e.target.style.borderColor = '#007AFF')}
+                  onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <input style={INP} value={tcExpiry} placeholder="MM/AA"
+                    onChange={e => setTcExpiry(formatTcExpiry(e.target.value))}
+                    onFocus={e => (e.target.style.borderColor = '#007AFF')}
+                    onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                  <input style={INP} value={tcCcv} placeholder="CVV"
+                    onChange={e => setTcCcv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    onFocus={e => (e.target.style.borderColor = '#007AFF')}
+                    onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                </div>
+                <input style={INP} value={tcCpf} placeholder="CPF do titular"
+                  onChange={e => setTcCpf(formatTcCpf(e.target.value))}
+                  onFocus={e => (e.target.style.borderColor = '#007AFF')}
+                  onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                {tcError && <p style={{ fontSize: 12, color: '#ef4444', margin: 0 }}>{tcError}</p>}
+                <button type="submit" disabled={tcSaving}
+                  style={{ padding: '10px', background: tcSaving ? '#a0c4ff' : '#007AFF', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: tcSaving ? 'not-allowed' : 'pointer' }}>
+                  {tcSaving ? 'Atualizando...' : 'Atualizar cartão'}
+                </button>
+              </form>
+            )}
+
+            {/* Cancelar assinatura */}
+            {assinaturaAsaasId && planInfo.status !== 'cancelada' && (
+              <button
+                onClick={handleCancelarAssinatura} disabled={cancelando}
+                style={{ marginTop: 10, width: '100%', padding: '10px', background: 'none', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, color: '#ef4444', fontSize: 12.5, fontWeight: 600, cursor: cancelando ? 'not-allowed' : 'pointer', opacity: cancelando ? 0.6 : 1 }}
+              >
+                {cancelando ? 'Cancelando...' : 'Cancelar assinatura'}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Histórico de cobranças Asaas */}
+        {cobrancas.length > 0 && (
+          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginTop: 14 }}>
+            <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 16 }}>COBRANÇAS</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {cobrancas.map(c => {
+                const statusColor = c.status === 'confirmed' ? '#059669' : c.status === 'overdue' ? '#ef4444' : '#8e8e93'
+                const statusLabel = c.status === 'confirmed' ? 'Pago' : c.status === 'overdue' ? 'Vencida' : 'Pendente'
+                return (
+                  <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f2f2f7', borderRadius: 9 }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>
+                        {c.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 })}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 1 }}>
+                        {c.vencimento ? new Date(c.vencimento).toLocaleDateString('pt-BR') : '—'}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: statusColor }}>{statusLabel}</span>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
 

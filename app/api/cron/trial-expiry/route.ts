@@ -2,60 +2,66 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
 
 export async function GET(req: NextRequest) {
+  // Accept Bearer token OR x-cron-secret header OR secret query param
   const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const cronSecret = req.headers.get('x-cron-secret') ?? req.nextUrl.searchParams.get('secret')
+  const isAuthorized =
+    authHeader === `Bearer ${process.env.CRON_SECRET}` ||
+    cronSecret === process.env.CRON_SECRET
+
+  if (!isAuthorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const supabase = createAdminClient()
-  const now = new Date().toISOString()
-
-  // Expire trials whose trial_fim has passed
-  const { data: expired, error: expireErr } = await supabase
-    .from('assinaturas')
-    .update({ status: 'cancelada' })
-    .eq('status', 'trial')
-    .lt('trial_fim', now)
-    .select('user_id')
-
-  if (expireErr) {
-    console.error('[cron/trial-expiry] expire error:', expireErr)
-    return NextResponse.json({ error: expireErr.message }, { status: 500 })
-  }
-
-  // Send warning emails to trials expiring in 1, 3 or 7 days
-  const warningDays = [1, 3, 7]
-  let warned = 0
+  const admin = createAdminClient()
+  const now = new Date()
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.usearc.com.br'
 
-  for (const days of warningDays) {
-    const start = new Date()
-    start.setDate(start.getDate() + days)
-    start.setHours(0, 0, 0, 0)
-    const end = new Date(start)
-    end.setHours(23, 59, 59, 999)
+  // Warn 3 days before trial ends
+  const in3 = new Date(now)
+  in3.setDate(in3.getDate() + 3)
+  const { data: expiring3 } = await admin
+    .from('assinaturas')
+    .select('user_id')
+    .eq('status', 'trial')
+    .gte('trial_fim', `${in3.toISOString().split('T')[0]}T00:00:00.000Z`)
+    .lte('trial_fim', `${in3.toISOString().split('T')[0]}T23:59:59.999Z`)
 
-    const { data: expiring } = await supabase
+  for (const row of expiring3 ?? []) {
+    await fetch(`${appUrl}/api/notifications/trial`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: row.user_id, dias_restantes: 3 }),
+    }).catch(() => {})
+  }
+
+  // Expire trials that ended — if they have Asaas subscription set ativa, else inadimplente
+  const { data: expired } = await admin
+    .from('assinaturas')
+    .select('id, user_id, asaas_subscription_id')
+    .eq('status', 'trial')
+    .lt('trial_fim', now.toISOString())
+
+  for (const sub of expired ?? []) {
+    const newStatus = sub.asaas_subscription_id ? 'ativa' : 'inadimplente'
+    await admin
       .from('assinaturas')
-      .select('user_id')
-      .eq('status', 'trial')
-      .gte('trial_fim', start.toISOString())
-      .lte('trial_fim', end.toISOString())
+      .update({ status: newStatus, updated_at: now.toISOString() })
+      .eq('id', sub.id)
 
-    for (const row of expiring ?? []) {
+    if (newStatus === 'inadimplente') {
       await fetch(`${appUrl}/api/notifications/trial`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: row.user_id, dias_restantes: days }),
+        body: JSON.stringify({ user_id: sub.user_id, dias_restantes: 0 }),
       }).catch(() => {})
-      warned++
     }
   }
 
   return NextResponse.json({
     ok: true,
+    warned3days: expiring3?.length ?? 0,
     expired: expired?.length ?? 0,
-    warned,
-    timestamp: now,
+    timestamp: now.toISOString(),
   })
 }
