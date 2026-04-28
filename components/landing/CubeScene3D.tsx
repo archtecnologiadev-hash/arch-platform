@@ -1,101 +1,135 @@
 'use client'
-import { useRef } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import * as THREE from 'three'
+import { useEffect, useRef, useState, useCallback } from 'react'
 
-const FACE_COLORS = ['#1a56db', '#0044b5', '#2563eb', '#003999', '#1e4ec8', '#0050d0']
-
-function FeatureCube() {
-  const meshRef  = useRef<THREE.Mesh>(null)
-  const edgeRef  = useRef<THREE.Mesh>(null)
-  const isDrag   = useRef(false)
-  const lastPos  = useRef({ x: 0, y: 0 })
-  const velocity = useRef({ x: 0, y: 0 })
-  const { gl }   = useThree()
-
-  useFrame(({ clock }) => {
-    const mesh = meshRef.current
-    const edge = edgeRef.current
-    if (!mesh) return
-
-    if (!isDrag.current) {
-      // Decay velocity, auto-rotate when idle
-      velocity.current.x *= 0.93
-      velocity.current.y *= 0.93
-      if (Math.abs(velocity.current.x) < 0.001 && Math.abs(velocity.current.y) < 0.001) {
-        mesh.rotation.y += 0.006
-        mesh.rotation.x += 0.0015
-      } else {
-        mesh.rotation.y += velocity.current.x
-        mesh.rotation.x += velocity.current.y
-      }
-    }
-
-    if (edge) {
-      ;(edge.material as THREE.MeshBasicMaterial).opacity = 0.25 + Math.sin(clock.elapsedTime * 1.5) * 0.1
-    }
-  })
-
-  const onPointerDown = (e: { clientX: number; clientY: number }) => {
-    isDrag.current = true
-    lastPos.current = { x: e.clientX, y: e.clientY }
-    velocity.current = { x: 0, y: 0 }
-    gl.domElement.style.cursor = 'grabbing'
-  }
-  const onPointerUp = () => {
-    isDrag.current = false
-    gl.domElement.style.cursor = 'grab'
-  }
-  const onPointerMove = (e: { clientX: number; clientY: number }) => {
-    if (!isDrag.current || !meshRef.current) return
-    const dx = (e.clientX - lastPos.current.x) * 0.01
-    const dy = (e.clientY - lastPos.current.y) * 0.01
-    meshRef.current.rotation.y += dx
-    meshRef.current.rotation.x += dy
-    velocity.current = { x: dx, y: dy }
-    lastPos.current = { x: e.clientX, y: e.clientY }
-  }
-
-  return (
-    <group>
-      <mesh
-        ref={meshRef}
-        onPointerDown={onPointerDown as never}
-        onPointerUp={onPointerUp}
-        onPointerMove={onPointerMove as never}
-        onPointerLeave={onPointerUp}
-      >
-        <boxGeometry args={[2.4, 2.4, 2.4]} />
-        {FACE_COLORS.map((color, i) => (
-          <meshStandardMaterial
-            key={i}
-            attach={`material-${i}`}
-            color={color}
-            roughness={0.12}
-            metalness={0.88}
-          />
-        ))}
-      </mesh>
-      <mesh ref={edgeRef}>
-        <boxGeometry args={[2.44, 2.44, 2.44]} />
-        <meshBasicMaterial color="#60a5fa" wireframe transparent opacity={0.3} />
-      </mesh>
-    </group>
-  )
-}
+const FACES = [
+  { transform: 'translateZ(120px)',                       bg: 'rgba(26,86,219,0.9)'  },
+  { transform: 'translateZ(-120px) rotateY(180deg)',      bg: 'rgba(0,68,181,0.9)'   },
+  { transform: 'rotateY(90deg)  translateZ(120px)',       bg: 'rgba(37,99,235,0.9)'  },
+  { transform: 'rotateY(-90deg) translateZ(120px)',       bg: 'rgba(0,57,153,0.9)'   },
+  { transform: 'rotateX(90deg)  translateZ(120px)',       bg: 'rgba(30,78,200,0.9)'  },
+  { transform: 'rotateX(-90deg) translateZ(120px)',       bg: 'rgba(0,80,208,0.9)'   },
+]
 
 export default function CubeScene3D() {
+  const [rotX, setRotX] = useState(20)
+  const [rotY, setRotY] = useState(0)
+  const isDragging = useRef(false)
+  const lastPos    = useRef({ x: 0, y: 0 })
+  const velocityY  = useRef(0)
+  const autoRotY   = useRef(0)
+  const rafRef     = useRef<number>(0)
+  const manualRotX = useRef(20)
+  const manualRotY = useRef(0)
+
+  useEffect(() => {
+    const tick = () => {
+      if (!isDragging.current) {
+        velocityY.current *= 0.93
+        autoRotY.current  += Math.abs(velocityY.current) > 0.05 ? velocityY.current : 0.35
+        manualRotY.current = autoRotY.current
+        setRotY(autoRotY.current)
+      }
+      rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [])
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    isDragging.current = true
+    lastPos.current = { x: e.clientX, y: e.clientY }
+    velocityY.current = 0
+  }, [])
+
+  const onMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging.current) return
+    const dx = e.clientX - lastPos.current.x
+    const dy = e.clientY - lastPos.current.y
+    velocityY.current  = dx * 0.4
+    manualRotY.current += dx * 0.4
+    manualRotX.current  = Math.max(-40, Math.min(40, manualRotX.current + dy * 0.3))
+    autoRotY.current    = manualRotY.current
+    setRotY(manualRotY.current)
+    setRotX(manualRotX.current)
+    lastPos.current = { x: e.clientX, y: e.clientY }
+  }, [])
+
+  const onMouseUp = useCallback(() => { isDragging.current = false }, [])
+
+  // Touch support
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    isDragging.current = true
+    lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    velocityY.current = 0
+  }, [])
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDragging.current) return
+    const dx = e.touches[0].clientX - lastPos.current.x
+    const dy = e.touches[0].clientY - lastPos.current.y
+    velocityY.current  = dx * 0.4
+    manualRotY.current += dx * 0.4
+    manualRotX.current  = Math.max(-40, Math.min(40, manualRotX.current + dy * 0.3))
+    autoRotY.current    = manualRotY.current
+    setRotY(manualRotY.current)
+    setRotX(manualRotX.current)
+    lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+  }, [])
+
   return (
-    <Canvas
-      camera={{ position: [0, 0, 6.5], fov: 42 }}
-      gl={{ antialias: true, alpha: true }}
-      style={{ width: '100%', height: '100%', cursor: 'grab' }}
+    <div
+      style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isDragging.current ? 'grabbing' : 'grab' }}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onMouseUp}
     >
-      <ambientLight intensity={0.4} />
-      <pointLight position={[5, 5, 5]} intensity={2.5} color="#3b82f6" />
-      <pointLight position={[-5, -4, -5]} intensity={1.2} color="#1d4ed8" />
-      <directionalLight position={[0, 6, 6]} intensity={1.2} color="#ffffff" />
-      <FeatureCube />
-    </Canvas>
+      <div style={{ perspective: 800, userSelect: 'none' }}>
+        <div style={{
+          width: 240, height: 240,
+          position: 'relative',
+          transformStyle: 'preserve-3d',
+          transform: `rotateX(${rotX}deg) rotateY(${rotY}deg)`,
+        }}>
+          {FACES.map((f, i) => (
+            <div key={i} style={{
+              position: 'absolute', inset: 0,
+              background: f.bg,
+              transform: f.transform,
+              border: '1px solid rgba(96,165,250,0.5)',
+              backdropFilter: 'blur(2px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {/* Face edge highlight */}
+              <div style={{
+                position: 'absolute', inset: 6,
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 2,
+              }} />
+              {/* Center dot */}
+              <div style={{
+                width: 8, height: 8, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.2)',
+                boxShadow: '0 0 12px rgba(96,165,250,0.6)',
+              }} />
+            </div>
+          ))}
+
+          {/* Wireframe overlay (slightly larger) */}
+          {FACES.map((f, i) => (
+            <div key={`e${i}`} style={{
+              position: 'absolute',
+              inset: -2,
+              transform: f.transform,
+              border: '1px solid rgba(96,165,250,0.25)',
+              pointerEvents: 'none',
+            }} />
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
