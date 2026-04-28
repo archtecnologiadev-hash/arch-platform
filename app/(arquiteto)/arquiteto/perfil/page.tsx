@@ -1069,7 +1069,7 @@ export default function ArquitetoPerfilPage() {
                 background: '#007AFF', color: '#fff', textDecoration: 'none',
                 fontSize: 13, fontWeight: 700,
               }}>
-                <Zap size={13} /> Fazer upgrade do plano
+                <Zap size={13} /> {planInfo.status === 'inadimplente' ? 'Regularizar assinatura' : 'Configurar pagamento'}
               </Link>
             )}
 

@@ -20,16 +20,16 @@ export function trialEmail(p: TrialEmailProps): string {
         ⏱ ${p.diasRestantes} dia${p.diasRestantes !== 1 ? 's' : ''} restante${p.diasRestantes !== 1 ? 's' : ''}
       </p>
       <p style="margin:0;font-size:13px;color:#1a1a1a;line-height:1.5;">
-        Escolha um plano para continuar usando todos os recursos sem interrupção.
+        Ative o ARC Pro para continuar usando todos os recursos sem interrupção.
       </p>
     </div>
 
-    ${btn(p.planosUrl, 'Escolher plano')}
+    ${btn(p.planosUrl, 'Ativar ARC Pro')}
 
     ${divider()}
 
     <p style="margin:0;font-size:12px;color:#8e8e93;">
-      Após o trial, sua conta será limitada ao plano gratuito. Faça upgrade para manter todos os recursos.
+      Após o trial, você será cobrado R$149/mês no plano ARC Pro. Cancele quando quiser antes do fim do período.
     </p>
   `)
 }

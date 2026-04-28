@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
-import { Check, X, Zap, Star, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react'
+import { Check, Zap, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react'
 
 interface Plano {
   id: string
@@ -11,76 +11,51 @@ interface Plano {
   slug: string
   valor_mensal: number
   valor_anual: number | null
-  descricao: string | null
-  ordem: number
-  max_projetos: number | null
-  max_membros: number | null
-  max_armazenamento_gb: number | null
-  destaque_marketplace: string
-  analytics: boolean
-  suporte_prioritario: boolean
 }
 
-const FEATURES: Record<string, { label: string; included: boolean }[]> = {
-  'arquiteto-starter': [
-    { label: '1 projeto ativo', included: true },
-    { label: '1 membro na equipe', included: true },
-    { label: '2 GB de armazenamento', included: true },
-    { label: 'Perfil público e portfólio', included: true },
-    { label: 'Acesso ao marketplace', included: true },
-    { label: 'Analytics e relatórios', included: false },
-    { label: 'Suporte prioritário', included: false },
-  ],
-  'arquiteto-profissional': [
-    { label: '10 projetos ativos', included: true },
-    { label: '5 membros na equipe', included: true },
-    { label: '20 GB de armazenamento', included: true },
-    { label: 'Perfil público e portfólio', included: true },
-    { label: 'Destaque padrão no marketplace', included: true },
-    { label: 'Analytics e relatórios', included: true },
-    { label: 'Suporte prioritário', included: false },
-  ],
-  'arquiteto-escritorio': [
-    { label: 'Projetos ilimitados', included: true },
-    { label: 'Membros ilimitados', included: true },
-    { label: '100 GB de armazenamento', included: true },
-    { label: 'Perfil público e portfólio', included: true },
-    { label: 'Destaque premium no marketplace', included: true },
-    { label: 'Analytics e relatórios', included: true },
-    { label: 'Suporte prioritário', included: true },
-  ],
-}
+const ARC_PRO_FEATURES = [
+  'Projetos ilimitados',
+  'Até 10 membros na equipe',
+  '50 GB de armazenamento',
+  'Portal do cliente integrado',
+  'Pipeline visual de projetos',
+  'Calendário e agenda',
+  'Chat com clientes e fornecedores',
+  'Suporte por chat',
+]
 
 const STATUS_LABEL: Record<string, { label: string; color: string; bg: string }> = {
-  trial:       { label: 'Em trial', color: '#f97316', bg: 'rgba(249,115,22,0.1)' },
-  ativa:       { label: 'Ativo', color: '#059669', bg: 'rgba(5,150,105,0.1)' },
-  fundador:    { label: 'Fundador', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)' },
-  inadimplente:{ label: 'Inadimplente', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
-  cancelada:   { label: 'Cancelado', color: '#6b6b6b', bg: 'rgba(0,0,0,0.06)' },
+  trial:        { label: 'Em trial',     color: '#f97316', bg: 'rgba(249,115,22,0.1)'  },
+  ativa:        { label: 'Ativo',        color: '#059669', bg: 'rgba(5,150,105,0.1)'   },
+  fundador:     { label: 'Fundador',     color: '#7c3aed', bg: 'rgba(124,58,237,0.1)'  },
+  inadimplente: { label: 'Inadimplente', color: '#ef4444', bg: 'rgba(239,68,68,0.1)'   },
+  cancelada:    { label: 'Cancelado',    color: '#6b6b6b', bg: 'rgba(0,0,0,0.06)'      },
 }
 
 export default function ArquitetoPlanos() {
-  const [planos, setPlanos] = useState<Plano[]>([])
+  const [plano, setPlano] = useState<Plano | null>(null)
   const [loading, setLoading] = useState(true)
   const [ciclo, setCiclo] = useState<'mensal' | 'anual'>('mensal')
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null)
   const [currentStatus, setCurrentStatus] = useState<string | null>(null)
-  const [trialDaysLeft, setTrialDaysLeft] = useState<number>(0)
+  const [trialDaysLeft, setTrialDaysLeft] = useState(0)
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null)
-  const [selecting, setSelecting] = useState<string | null>(null)
-  const [successPlanId, setSuccessPlanId] = useState<string | null>(null)
+  const [selecting, setSelecting] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   useEffect(() => {
     const timeout = setTimeout(() => setLoading(false), 8000)
-
     async function load() {
       try {
         const supabase = createClient()
         const [{ data: planosData }, { data: authData }] = await Promise.all([
-          supabase.from('planos').select('*').eq('tipo_usuario', 'arquiteto').eq('ativo', true).order('ordem'),
+          supabase.from('planos')
+            .select('id, nome, slug, valor_mensal, valor_anual')
+            .eq('tipo_usuario', 'arquiteto').eq('ativo', true)
+            .order('ordem').limit(1),
           supabase.auth.getUser(),
         ])
-        setPlanos((planosData ?? []) as Plano[])
+        if (planosData?.[0]) setPlano(planosData[0] as Plano)
 
         const user = authData?.user
         if (user) {
@@ -106,13 +81,12 @@ export default function ArquitetoPlanos() {
       }
     }
     load()
-
     return () => clearTimeout(timeout)
   }, [])
 
-  async function handleSelect(plano: Plano) {
-    if (!subscriptionId) return
-    setSelecting(plano.id)
+  async function handleAssinar() {
+    if (!subscriptionId || !plano) return
+    setSelecting(true)
     const supabase = createClient()
     const { error } = await supabase
       .from('assinaturas')
@@ -120,14 +94,18 @@ export default function ArquitetoPlanos() {
       .eq('id', subscriptionId)
     if (!error) {
       setCurrentPlanId(plano.id)
-      setSuccessPlanId(plano.id)
-      setTimeout(() => setSuccessPlanId(null), 3000)
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3500)
     }
-    setSelecting(null)
+    setSelecting(false)
   }
 
   const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })
-  const descAnual = (p: Plano) => p.valor_anual ? Math.round(100 - (p.valor_anual / (p.valor_mensal * 12)) * 100) : 0
+  const anualMensal = plano?.valor_anual ? plano.valor_anual / 12 : 124
+  const priceMonthly = ciclo === 'anual' ? anualMensal : (plano?.valor_mensal ?? 149)
+  const discount = plano?.valor_anual
+    ? Math.round(100 - (plano.valor_anual / ((plano.valor_mensal) * 12)) * 100)
+    : 17
 
   if (loading) {
     return (
@@ -138,6 +116,7 @@ export default function ArquitetoPlanos() {
     )
   }
 
+  const isCurrent = !!plano && plano.id === currentPlanId
   const statusMeta = currentStatus ? STATUS_LABEL[currentStatus] : null
 
   return (
@@ -147,13 +126,15 @@ export default function ArquitetoPlanos() {
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 36 }}>
         <p style={{ fontSize: 11.5, color: '#007AFF', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 8 }}>
-          PLANOS E PREÇOS
+          SEU PLANO
         </p>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#1a1a1a', marginBottom: 10 }}>
-          Escolha seu plano
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#1a1a1a', marginBottom: 8 }}>
+          ARC Pro
         </h1>
+        <p style={{ fontSize: 14, color: '#6b6b6b', fontWeight: 300, marginBottom: 20 }}>
+          Tudo que você precisa para gerenciar seu escritório.
+        </p>
 
-        {/* Trial / status banner */}
         {currentStatus === 'trial' && (
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -202,8 +183,10 @@ export default function ArquitetoPlanos() {
             }}>
             Anual
             <span style={{
-              fontSize: 10, fontWeight: 700, background: ciclo === 'anual' ? 'rgba(255,255,255,0.25)' : 'rgba(0,122,255,0.1)',
-              color: ciclo === 'anual' ? '#fff' : '#007AFF', padding: '2px 7px', borderRadius: 10,
+              fontSize: 10, fontWeight: 700,
+              background: ciclo === 'anual' ? 'rgba(255,255,255,0.25)' : 'rgba(0,122,255,0.1)',
+              color: ciclo === 'anual' ? '#fff' : '#007AFF',
+              padding: '2px 7px', borderRadius: 10,
             }}>
               2 meses grátis
             </span>
@@ -211,168 +194,110 @@ export default function ArquitetoPlanos() {
         </div>
       </div>
 
-      {/* Plan cards */}
-      {planos.length === 0 ? (
-        <div style={{ textAlign: 'center', color: '#8e8e93', fontSize: 14, padding: '48px 0' }}>
-          Nenhum plano disponível no momento.
-        </div>
-      ) : (
+      {/* Plan card */}
+      <div style={{ maxWidth: 480, margin: '0 auto' }}>
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${planos.length}, minmax(260px, 340px))`,
-          gap: 20, justifyContent: 'center', maxWidth: 1100, margin: '0 auto',
+          background: '#fff',
+          border: '2px solid #007AFF',
+          borderRadius: 20,
+          boxShadow: '0 8px 32px rgba(0,122,255,0.12)',
+          overflow: 'hidden',
+          position: 'relative',
         }}>
-          {planos.map(plano => {
-            const isPopular = plano.descricao === 'Mais popular'
-            const isCurrent = plano.id === currentPlanId
-            const features = FEATURES[plano.slug] ?? []
-            const price = ciclo === 'anual' && plano.valor_anual
-              ? plano.valor_anual / 12
-              : plano.valor_mensal
-            const discount = descAnual(plano)
-            const isSelecting = selecting === plano.id
-            const isSuccess = successPlanId === plano.id
+          {isCurrent && (
+            <div style={{
+              position: 'absolute', top: 0, right: 24,
+              background: '#34d399', color: '#fff',
+              fontSize: 10, fontWeight: 700, padding: '4px 12px', borderRadius: '0 0 8px 8px',
+            }}>
+              PLANO ATUAL
+            </div>
+          )}
 
-            return (
-              <div key={plano.id} style={{
-                background: '#fff',
-                border: isPopular ? '2px solid #007AFF' : isCurrent ? '2px solid #34d399' : '1px solid rgba(0,0,0,0.08)',
-                borderRadius: 18,
-                padding: '28px 28px 24px',
-                boxShadow: isPopular ? '0 8px 32px rgba(0,122,255,0.12)' : '0 1px 4px rgba(0,0,0,0.08)',
-                display: 'flex', flexDirection: 'column',
-                position: 'relative',
-                transition: 'box-shadow 0.2s',
-              }}>
-                {/* Popular badge */}
-                {isPopular && (
-                  <div style={{
-                    position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
-                    background: '#007AFF', color: '#fff',
-                    fontSize: 11, fontWeight: 700, padding: '4px 16px', borderRadius: 20,
-                    display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
-                  }}>
-                    <Star size={10} fill="#fff" color="#fff" /> Mais popular
-                  </div>
-                )}
-
-                {/* Current plan badge */}
-                {isCurrent && !isPopular && (
-                  <div style={{
-                    position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)',
-                    background: '#34d399', color: '#fff',
-                    fontSize: 11, fontWeight: 700, padding: '4px 14px', borderRadius: 20,
-                    whiteSpace: 'nowrap',
-                  }}>
-                    Plano atual
-                  </div>
-                )}
-                {isCurrent && isPopular && (
-                  <div style={{
-                    position: 'absolute', top: -14, right: 20,
-                    background: '#34d399', color: '#fff',
-                    fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
-                  }}>
-                    Atual
-                  </div>
-                )}
-
-                <div style={{ marginBottom: 6 }}>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#1a1a1a' }}>{plano.nome}</div>
-                  {plano.descricao && plano.descricao !== 'Mais popular' && (
-                    <div style={{ fontSize: 12.5, color: '#6b6b6b', marginTop: 3 }}>{plano.descricao}</div>
-                  )}
-                </div>
-
-                <div style={{ marginBottom: 20, paddingBottom: 20, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                    <span style={{ fontSize: 36, fontWeight: 800, color: '#1a1a1a' }}>
-                      {fmtBRL(price)}
-                    </span>
-                    <span style={{ fontSize: 13, color: '#8e8e93' }}>/mês</span>
-                  </div>
-                  {ciclo === 'anual' && plano.valor_anual && (
-                    <div style={{ fontSize: 12, color: '#059669', marginTop: 4 }}>
-                      {fmtBRL(plano.valor_anual)}/ano · economize {discount}%
-                    </div>
-                  )}
-                  {ciclo === 'mensal' && discount > 0 && (
-                    <div style={{ fontSize: 11.5, color: '#8e8e93', marginTop: 3 }}>
-                      ou {fmtBRL(plano.valor_anual! / 12)}/mês no plano anual
-                    </div>
-                  )}
-                </div>
-
-                {/* Features */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
-                  {features.map((f, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
-                      <div style={{
-                        width: 18, height: 18, borderRadius: '50%', flexShrink: 0, marginTop: 1,
-                        background: f.included ? 'rgba(0,122,255,0.1)' : 'rgba(0,0,0,0.04)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        {f.included
-                          ? <Check size={10} color="#007AFF" strokeWidth={3} />
-                          : <X size={9} color="#c7c7cc" strokeWidth={3} />}
-                      </div>
-                      <span style={{ fontSize: 13, color: f.included ? '#1a1a1a' : '#aeaeb2', lineHeight: 1.4 }}>
-                        {f.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* CTA */}
-                {isCurrent ? (
-                  <div style={{
-                    padding: '12px', borderRadius: 10, textAlign: 'center',
-                    background: 'rgba(52,211,153,0.08)', border: '1.5px solid rgba(52,211,153,0.3)',
-                    fontSize: 13, fontWeight: 700, color: '#059669',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  }}>
-                    <CheckCircle2 size={14} /> Plano atual
-                  </div>
-                ) : isSuccess ? (
-                  <div style={{
-                    padding: '12px', borderRadius: 10, textAlign: 'center',
-                    background: 'rgba(52,211,153,0.08)', border: '1.5px solid rgba(52,211,153,0.3)',
-                    fontSize: 13, fontWeight: 700, color: '#059669',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  }}>
-                    <CheckCircle2 size={14} /> Selecionado!
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleSelect(plano)}
-                    disabled={!!selecting}
-                    style={{
-                      padding: '12px', borderRadius: 10, fontSize: 13, fontWeight: 700,
-                      cursor: selecting ? 'not-allowed' : 'pointer',
-                      background: isPopular ? '#007AFF' : 'rgba(0,122,255,0.08)',
-                      color: isPopular ? '#fff' : '#007AFF',
-                      border: isPopular ? 'none' : '1.5px solid rgba(0,122,255,0.3)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                      opacity: selecting && selecting !== plano.id ? 0.5 : 1,
-                      transition: 'all 0.15s',
-                    }}>
-                    {isSelecting
-                      ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Selecionando...</>
-                      : <><Zap size={13} /> Assinar {plano.nome}</>}
-                  </button>
-                )}
+          {/* Price */}
+          <div style={{ padding: '32px 32px 26px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#007AFF', letterSpacing: '0.1em', marginBottom: 10 }}>
+              ARC PRO
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
+              <span style={{ fontSize: 52, fontWeight: 800, color: '#1a1a1a', letterSpacing: '-0.02em' }}>
+                {fmtBRL(priceMonthly)}
+              </span>
+              <span style={{ fontSize: 14, color: '#8e8e93' }}>/mês</span>
+            </div>
+            {ciclo === 'anual' && plano?.valor_anual && (
+              <div style={{ fontSize: 12.5, color: '#059669', fontWeight: 500 }}>
+                {fmtBRL(plano.valor_anual)}/ano · economize {discount}%
               </div>
-            )
-          })}
+            )}
+            {ciclo === 'mensal' && (
+              <div style={{ fontSize: 12, color: '#8e8e93' }}>
+                ou {fmtBRL(anualMensal)}/mês no plano anual · 2 meses grátis
+              </div>
+            )}
+          </div>
+
+          {/* Features + CTA */}
+          <div style={{ padding: '28px 32px 32px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 13, marginBottom: 28 }}>
+              {ARC_PRO_FEATURES.map(f => (
+                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                  <div style={{
+                    width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                    background: 'rgba(0,122,255,0.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Check size={11} color="#007AFF" strokeWidth={3} />
+                  </div>
+                  <span style={{ fontSize: 13.5, color: '#1a1a1a' }}>{f}</span>
+                </div>
+              ))}
+            </div>
+
+            {isCurrent ? (
+              <div style={{
+                padding: '14px', borderRadius: 11, textAlign: 'center',
+                background: 'rgba(52,211,153,0.08)', border: '1.5px solid rgba(52,211,153,0.3)',
+                fontSize: 13.5, fontWeight: 700, color: '#059669',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              }}>
+                <CheckCircle2 size={15} /> Plano ativo
+              </div>
+            ) : success ? (
+              <div style={{
+                padding: '14px', borderRadius: 11, textAlign: 'center',
+                background: 'rgba(52,211,153,0.08)', border: '1.5px solid rgba(52,211,153,0.3)',
+                fontSize: 13.5, fontWeight: 700, color: '#059669',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              }}>
+                <CheckCircle2 size={15} /> Plano ativado!
+              </div>
+            ) : (
+              <button
+                onClick={handleAssinar}
+                disabled={selecting}
+                style={{
+                  width: '100%', padding: '14px', borderRadius: 11,
+                  fontSize: 14, fontWeight: 700,
+                  cursor: selecting ? 'not-allowed' : 'pointer',
+                  background: '#007AFF', color: '#fff', border: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  opacity: selecting ? 0.7 : 1, transition: 'opacity 0.15s',
+                }}>
+                {selecting
+                  ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Ativando...</>
+                  : <><Zap size={14} /> Assinar agora</>}
+              </button>
+            )}
+          </div>
         </div>
-      )}
 
-      {/* Payment note */}
-      <p style={{ textAlign: 'center', fontSize: 12, color: '#8e8e93', marginTop: 32 }}>
-        Pagamentos via Asaas · Após selecionar o plano, nossa equipe entrará em contato para configurar a cobrança.
-      </p>
+        <p style={{ textAlign: 'center', fontSize: 12, color: '#8e8e93', marginTop: 20 }}>
+          Pagamentos via Asaas · Nossa equipe entrará em contato para configurar a cobrança.
+        </p>
+      </div>
 
-      {successPlanId && (
+      {success && (
         <div style={{
           position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
           background: '#1a1a1a', color: '#fff', padding: '13px 22px', borderRadius: 12,
