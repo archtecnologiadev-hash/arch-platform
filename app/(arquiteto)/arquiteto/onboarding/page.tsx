@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { Check, Loader2, Upload, Plus, X, ArrowRight, Sparkles, CreditCard } from 'lucide-react'
+import { Check, Loader2, Upload, Plus, X, ArrowRight, Sparkles } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
