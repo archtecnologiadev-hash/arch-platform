@@ -123,7 +123,6 @@ type TabId = 'arquivos' | 'anotacoes' | 'fornecedores' | 'calendario' | 'orcamen
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'arquivos',    label: 'Arquivos',    icon: File },
   { id: 'anotacoes',  label: 'Anotações',   icon: Pencil },
-  { id: 'fornecedores', label: 'Fornecedores', icon: Package },
   { id: 'calendario', label: 'Calendário',  icon: Calendar },
   { id: 'orcamento',  label: 'Orçamento',   icon: DollarSign },
 ]

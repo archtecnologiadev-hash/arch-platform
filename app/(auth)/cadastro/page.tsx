@@ -5,12 +5,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
-const TIPOS = [
-  { value: 'cliente', label: 'Cliente', desc: 'Quero contratar um arquiteto' },
-  { value: 'arquiteto', label: 'Arquiteto', desc: 'Quero captar projetos e clientes' },
-  { value: 'fornecedor', label: 'Fornecedor', desc: 'Quero oferecer produtos e serviços' },
-]
-
 const inputBase: React.CSSProperties = {
   width: '100%',
   padding: '12px 14px',
@@ -30,7 +24,6 @@ export default function CadastroPage() {
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [tipo, setTipo] = useState<'cliente' | 'arquiteto' | 'fornecedor'>('cliente')
   const [termos, setTermos] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -44,7 +37,7 @@ export default function CadastroPage() {
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { nome, tipo } },
+      options: { data: { nome, tipo: 'arquiteto' } },
     })
 
     if (signUpError) {
@@ -66,9 +59,7 @@ export default function CadastroPage() {
       return
     }
 
-    if (tipo === 'arquiteto') router.push('/arquiteto/perfil?welcome=1')
-    else if (tipo === 'fornecedor') router.push('/fornecedor/perfil?welcome=1')
-    else router.push('/cliente/projetos')
+    router.push('/arquiteto/perfil?welcome=1')
     router.refresh()
   }
 
@@ -83,64 +74,13 @@ export default function CadastroPage() {
       }}
     >
       <h1 style={{ fontSize: 22, fontWeight: 300, color: '#1a1a1a', marginBottom: 6 }}>
-        Criar conta
+        Criar conta de arquiteto
       </h1>
       <p style={{ fontSize: 13, fontWeight: 300, color: '#8e8e93', marginBottom: 28 }}>
-        Escolha seu perfil e comece a usar a plataforma
+        Comece a gerenciar seu escritório em minutos.
       </p>
 
       <form onSubmit={handleCadastro} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {/* Tipo de conta */}
-        <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: '#6b6b6b', marginBottom: 8 }}>
-            Tipo de conta
-          </label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {TIPOS.map((t) => (
-              <button
-                key={t.value}
-                type="button"
-                onClick={() => setTipo(t.value as typeof tipo)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '11px 14px',
-                  background: tipo === t.value ? 'rgba(0,122,255,0.06)' : '#f2f2f7',
-                  border: `1px solid ${tipo === t.value ? '#007AFF' : 'rgba(0,0,0,0.1)'}`,
-                  borderRadius: 10,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.15s',
-                }}
-              >
-                <div
-                  style={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    border: `2px solid ${tipo === t.value ? '#007AFF' : 'rgba(0,0,0,0.2)'}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  {tipo === t.value && (
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#007AFF' }} />
-                  )}
-                </div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 400, color: tipo === t.value ? '#007AFF' : '#1a1a1a' }}>
-                    {t.label}
-                  </div>
-                  <div style={{ fontSize: 11, fontWeight: 300, color: '#8e8e93', marginTop: 2 }}>{t.desc}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: '#6b6b6b', marginBottom: 6 }}>
             Nome completo

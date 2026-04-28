@@ -33,7 +33,7 @@ export default function AdminUsuarios() {
   const [users, setUsers] = useState<UserRow[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [tipoFilter, setTipoFilter] = useState('')
+  const [tipoFilter, setTipoFilter] = useState('arquiteto')
   const [statusFilter, setStatusFilter] = useState('')
   const [total, setTotal] = useState(0)
 
