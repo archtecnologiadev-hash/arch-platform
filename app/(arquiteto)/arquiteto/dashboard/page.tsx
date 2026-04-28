@@ -111,6 +111,8 @@ export default function ArquitetoDashboardPage() {
   const [escritorioId, setEscritorioId] = useState<string | null>(null)
   const [loadingProjects, setLoadingProjects] = useState(true)
   const [totalOrcamento, setTotalOrcamento] = useState<number>(0)
+  const [onboardingCompleto, setOnboardingCompleto] = useState<boolean | null>(null)
+  const [onboardingPassos, setOnboardingPassos] = useState<string[]>([])
 
   const [novoOpen, setNovoOpen] = useState(false)
   const [novoForm, setNovoForm] = useState({ nome: '', tipo: 'residencial', descricao: '', metragem: '', endereco: '', email_cliente: '', tipo_contrato: '' })
@@ -130,8 +132,10 @@ export default function ArquitetoDashboardPage() {
       setUserName(nome)
       setUserEmail(user.email ?? '')
 
-      const { data: userData } = await supabase.from('users').select('role, nivel_permissao').eq('id', user.id).maybeSingle()
+      const { data: userData } = await supabase.from('users').select('role, nivel_permissao, onboarding_completo, onboarding_passos_completos').eq('id', user.id).maybeSingle()
       if (userData?.role === 'admin' || user.user_metadata?.role === 'admin') setIsAdmin(true)
+      setOnboardingCompleto(userData?.onboarding_completo ?? false)
+      setOnboardingPassos((userData?.onboarding_passos_completos ?? []) as string[])
 
       const NIVEL_RANK: Record<string, number> = { estagiario: 0, junior: 1, pleno: 2, senior: 3, admin: 4, owner: 5 }
       const nivel = userData?.nivel_permissao ?? 'owner'
@@ -431,6 +435,32 @@ export default function ArquitetoDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* ═══════════════════════════ ONBOARDING BANNER ═══════════════════════════ */}
+      {onboardingCompleto === false && nivelRank >= 2 && (
+        <Link href="/arquiteto/onboarding" style={{ textDecoration: 'none', display: 'block' }}>
+          <div style={{
+            background: 'linear-gradient(90deg, rgba(0,122,255,0.08) 0%, rgba(0,122,255,0.04) 100%)',
+            borderBottom: '1px solid rgba(0,122,255,0.15)',
+            padding: '12px 32px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+            cursor: 'pointer',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#007AFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>!</span>
+              </div>
+              <div>
+                <span style={{ fontSize: 13.5, fontWeight: 600, color: '#007AFF' }}>Complete a configuração do seu escritório </span>
+                <span style={{ fontSize: 13, color: '#555', fontWeight: 300 }}>— {onboardingPassos.length} de 4 passos completos</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#007AFF', fontWeight: 600, flexShrink: 0 }}>
+              Continuar <ArrowRight size={14} />
+            </div>
+          </div>
+        </Link>
+      )}
 
       {/* ═══════════════════════════ CONTENT ═══════════════════════════ */}
       <div style={{ padding: '28px 32px' }}>

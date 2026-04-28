@@ -59,7 +59,7 @@ export default function CadastroPage() {
       return
     }
 
-    router.push('/arquiteto/perfil?welcome=1')
+    router.push('/arquiteto/onboarding')
     router.refresh()
   }
 
