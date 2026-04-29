@@ -13,7 +13,7 @@ import CalendarioObra, { CalendarioEvent, EventType } from '@/components/shared/
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type TabId = 'andamento' | 'calendario' | 'arquivos' | 'orcamento'
+type TabId = 'andamento' | 'calendario' | 'arquivos' | 'orcamento' | 'financeiro'
 
 interface OrcItem {
   id: string
@@ -58,10 +58,11 @@ const STAGES = ['Atendimento', 'Reunião', 'Briefing', '3D', 'Alteração 3D', '
 const STAGE_COLORS = ['#8b5cf6', '#007AFF', '#34d399', '#4f9cf9', '#f59e0b', '#f97316', '#ef4444', '#10b981']
 
 const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
-  { id: 'andamento', label: 'Andamento', icon: Activity },
+  { id: 'andamento',  label: 'Andamento',  icon: Activity },
   { id: 'calendario', label: 'Calendário', icon: CalendarDays },
-  { id: 'arquivos', label: 'Arquivos', icon: FolderOpen },
-  { id: 'orcamento', label: 'Orçamento', icon: DollarSign },
+  { id: 'arquivos',   label: 'Arquivos',   icon: FolderOpen },
+  { id: 'orcamento',  label: 'Orçamento',  icon: DollarSign },
+  { id: 'financeiro', label: 'Financeiro', icon: FileText },
 ]
 
 const ORC_CATS = ['Projeto', 'Execução', 'Marcenaria', 'Decoração', 'Elétrica', 'Hidráulica', 'Pintura', 'Outros']
@@ -107,6 +108,7 @@ export default function ClienteProjetoPage() {
   const [calEvents, setCalEvents] = useState<CalendarioEvent[]>([])
   const [historico, setHistorico] = useState<HistoricoItem[]>([])
   const [orcItems, setOrcItems] = useState<OrcItem[]>([])
+  const [finItems, setFinItems] = useState<{ id: string; tipo: string; descricao: string; valor: number; status: string; data_vencimento: string | null; data_pagamento: string | null; categoria: string | null }[]>([])
   const [userId, setUserId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabId>('andamento')
   const [startingConv, setStartingConv] = useState(false)
@@ -146,15 +148,17 @@ export default function ClienteProjetoPage() {
         escritorio_nome: proj.escritorios?.nome ?? null,
       })
 
-      const [{ data: arqs }, { data: evs }, { data: hist }, { data: orcData }] = await Promise.all([
+      const [{ data: arqs }, { data: evs }, { data: hist }, { data: orcData }, { data: finData }] = await Promise.all([
         supabase.from('arquivos_projeto').select('*').eq('projeto_id', projetoId).order('created_at', { ascending: false }),
         supabase.from('eventos').select('*').eq('projeto_id', projetoId).order('data_inicio'),
         supabase.from('projeto_historico').select('*').eq('projeto_id', projetoId).order('created_at', { ascending: false }).limit(20),
         supabase.from('orcamento_itens').select('id,categoria,descricao,valor,quantidade,observacao').eq('projeto_id', projetoId).order('created_at'),
+        supabase.from('transacoes_financeiras').select('id,tipo,descricao,valor,status,data_vencimento,data_pagamento,categoria').eq('projeto_id', projetoId).order('created_at', { ascending: false }),
       ])
 
       if (arqs) setArquivos(arqs as Arquivo[])
       if (orcData) setOrcItems(orcData as OrcItem[])
+      if (finData) setFinItems(finData as typeof finItems)
       if (evs) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapped = evs.map((e: any) => ({
@@ -543,6 +547,81 @@ export default function ClienteProjetoPage() {
             )}
           </div>
         )}
+
+        {/* Tab: Financeiro (read-only) */}
+        {activeTab === 'financeiro' && (() => {
+          const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+          const fmtDt  = (d: string | null) => d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '—'
+          const totalEntrada = finItems.filter(t => t.tipo === 'entrada' && t.status !== 'cancelado').reduce((s, t) => s + Number(t.valor), 0)
+          const totalSaida   = finItems.filter(t => t.tipo === 'saida'   && t.status !== 'cancelado').reduce((s, t) => s + Number(t.valor), 0)
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {finItems.length > 0 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                  {[
+                    { label: 'Entradas', value: fmtBRL(totalEntrada), color: '#10b981' },
+                    { label: 'Saídas',   value: fmtBRL(totalSaida),   color: '#ef4444' },
+                    { label: 'Saldo',    value: fmtBRL(totalEntrada - totalSaida), color: totalEntrada - totalSaida >= 0 ? '#10b981' : '#ef4444' },
+                  ].map(c => (
+                    <div key={c.label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px', boxShadow: 'var(--shadow-card)' }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.label}</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: c.color }}>{c.value}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+                {finItems.length === 0 ? (
+                  <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-3)' }}>
+                    <DollarSign size={36} color="#c7c7cc" style={{ margin: '0 auto 12px' }} />
+                    <div style={{ fontSize: 14 }}>Nenhum lançamento financeiro para este projeto</div>
+                  </div>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                        {['Tipo', 'Descrição', 'Valor', 'Status', 'Vencimento'].map(h => (
+                          <th key={h} style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {finItems.map((t, i) => {
+                        const statusColors: Record<string, string> = { pendente: '#f59e0b', pago: '#10b981', atrasado: '#ef4444', cancelado: '#8e8e93' }
+                        const statusLabels: Record<string, string> = { pendente: 'Pendente', pago: 'Pago', atrasado: 'Atrasado', cancelado: 'Cancelado' }
+                        const sc = statusColors[t.status] ?? '#8e8e93'
+                        return (
+                          <tr key={t.id} style={{ borderBottom: i < finItems.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
+                            <td style={{ padding: '11px 16px' }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6,
+                                background: t.tipo === 'entrada' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                                color: t.tipo === 'entrada' ? '#10b981' : '#ef4444' }}>
+                                {t.tipo === 'entrada' ? '+ Entrada' : '− Saída'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '11px 16px', color: 'var(--text)', fontWeight: 500 }}>
+                              {t.descricao}
+                              {t.categoria && <span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 6 }}>· {t.categoria}</span>}
+                            </td>
+                            <td style={{ padding: '11px 16px', fontWeight: 700, color: t.tipo === 'entrada' ? '#10b981' : '#ef4444', whiteSpace: 'nowrap' }}>
+                              {t.tipo === 'entrada' ? '+' : '−'} {fmtBRL(Number(t.valor))}
+                            </td>
+                            <td style={{ padding: '11px 16px' }}>
+                              <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 20, background: `${sc}18`, color: sc }}>
+                                {statusLabels[t.status] ?? t.status}
+                              </span>
+                            </td>
+                            <td style={{ padding: '11px 16px', color: 'var(--text-2)', whiteSpace: 'nowrap' }}>{fmtDt(t.data_vencimento)}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )
+        })()}
       </div>
     </div>
   )

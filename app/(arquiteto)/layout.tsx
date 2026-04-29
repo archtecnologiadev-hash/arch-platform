@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, FolderOpen, Users, Calendar,
   FileText, UserCircle, LogOut, MessageCircle, UsersRound, CreditCard, UserCog,
-  Menu, X,
+  Menu, X, DollarSign,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import TrialGate from '@/components/shared/TrialGate'
@@ -29,6 +29,7 @@ const BASE_NAV = [
   { label: 'Clientes',     href: '/arquiteto/clientes',     icon: Users,        minRank: 1 },
   { label: 'Equipe',       href: '/arquiteto/equipe',       icon: UsersRound,   minRank: 2 },
   { label: 'Calendário',   href: '/arquiteto/calendario',   icon: Calendar },
+  { label: 'Financeiro',   href: '/arquiteto/financeiro',   icon: DollarSign,   minRank: 1 },
   { label: 'Mensagens',    href: '/arquiteto/mensagens',    icon: MessageCircle },
   { label: 'Orçamentos',   href: '/arquiteto/orcamentos',   icon: FileText,     minRank: 1 },
   { label: 'Meu Perfil',   href: '/arquiteto/perfil',       icon: UserCircle,   minRank: 1 },

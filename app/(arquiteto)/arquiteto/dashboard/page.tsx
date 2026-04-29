@@ -111,6 +111,8 @@ export default function ArquitetoDashboardPage() {
   const [escritorioId, setEscritorioId] = useState<string | null>(null)
   const [loadingProjects, setLoadingProjects] = useState(true)
   const [totalOrcamento, setTotalOrcamento] = useState<number>(0)
+  const [receitaMes, setReceitaMes] = useState<number>(0)
+  const [pendentesReceber, setPendentesReceber] = useState<number>(0)
   const [onboardingCompleto, setOnboardingCompleto] = useState<boolean | null>(null)
   const [onboardingPassos, setOnboardingPassos] = useState<string[]>([])
 
@@ -251,6 +253,22 @@ export default function ArquitetoDashboardPage() {
           .order('created_at', { ascending: false })
           .limit(10)
         if (leadsData) setLeads(leadsData as Lead[])
+
+        // Financial summary
+        const mesAtual = new Date().toISOString().slice(0, 7)
+        const { data: txData } = await supabase
+          .from('transacoes_financeiras')
+          .select('tipo, valor, status, data_pagamento')
+          .eq('escritorio_id', escritorio.id)
+          .eq('tipo', 'entrada')
+        if (txData) {
+          const pago = txData.filter((t: { tipo: string; valor: number; status: string; data_pagamento: string | null }) =>
+            t.status === 'pago' && t.data_pagamento?.slice(0, 7) === mesAtual
+          )
+          setReceitaMes(pago.reduce((s: number, t: { valor: number }) => s + Number(t.valor), 0))
+          const pend = txData.filter((t: { status: string }) => t.status === 'pendente')
+          setPendentesReceber(pend.reduce((s: number, t: { valor: number }) => s + Number(t.valor), 0))
+        }
       }
       setLoadingProjects(false)
     }
@@ -313,6 +331,8 @@ export default function ArquitetoDashboardPage() {
     { title: 'Clientes Ativos',    value: loadingProjects ? '—' : String(clientesAtivos),      delta: '', icon: Clock,       color: '#a78bfa' },
     { title: 'Projetos Concluídos', value: loadingProjects ? '—' : String(projConcluidos),     delta: '', icon: FileText,    color: '#34d399' },
     { title: 'Valor Orçado (Ativos)', value: loadingProjects ? '—' : fmtBRL(totalOrcamento),  delta: '', icon: DollarSign,  color: '#34d399' },
+    { title: 'Receita do Mês',     value: loadingProjects ? '—' : fmtBRL(receitaMes),          delta: '', icon: DollarSign,  color: '#10b981' },
+    { title: 'Pend. Receber',      value: loadingProjects ? '—' : fmtBRL(pendentesReceber),    delta: '', icon: DollarSign,  color: '#f59e0b' },
   ]
 
   return (
@@ -504,7 +524,7 @@ export default function ArquitetoDashboardPage() {
             {/* ── Pipeline ── */}
             <div style={card}>
               <style>{`
-                .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 24px; }
+                .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
                 @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
                 @media (max-width: 800px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
                 @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } }
