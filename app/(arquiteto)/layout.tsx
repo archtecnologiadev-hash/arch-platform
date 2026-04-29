@@ -52,16 +52,19 @@ function ArquitetoSidebar({
   const [nivelPermissao, setNivelPermissao] = useState<string>('owner')
   const [cargoLabel, setCargoLabel]         = useState('Arquiteto')
   const [escritorioNome, setEscritorioNome] = useState<string | null>(null)
+  const [isFounder, setIsFounder]           = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return
 
-      const [{ data: userData }, { data: escOwnerData }] = await Promise.all([
+      const [{ data: userData }, { data: escOwnerData }, { data: subData }] = await Promise.all([
         supabase.from('users').select('nome, nivel_permissao, cargo, avatar_url, escritorio_vinculado_id').eq('id', data.user.id).maybeSingle(),
         supabase.from('escritorios').select('image_url, nome').eq('user_id', data.user.id).maybeSingle(),
+        supabase.from('assinaturas').select('status').eq('user_id', data.user.id).maybeSingle(),
       ])
+      if (subData?.status === 'fundador') setIsFounder(true)
 
       const nome = userData?.nome?.trim() || data.user.user_metadata?.nome || data.user.email?.split('@')[0] || 'Arquiteto'
       setUserName(nome)
@@ -193,7 +196,13 @@ function ArquitetoSidebar({
             <div style={{ fontSize: 13, fontWeight: 400, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {userName}
             </div>
-            {badge && userRank < 2 && escritorioNome ? (
+            {isFounder && userRank >= 2 ? (
+              <div style={{ fontSize: 10, marginTop: 1 }}>
+                <span style={{ background: 'rgba(251,191,36,0.15)', border: '1px solid rgba(251,191,36,0.4)', borderRadius: 4, padding: '1px 6px', fontWeight: 700, color: '#92400e', letterSpacing: '0.04em' }}>
+                  ★ Fundador
+                </span>
+              </div>
+            ) : badge && userRank < 2 && escritorioNome ? (
               <div style={{ fontSize: 10, marginTop: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
                 <span style={{ background: badge.bg, border: `1px solid ${badge.color}33`, borderRadius: 4, padding: '1px 5px', fontWeight: 700, color: badge.color, letterSpacing: '0.04em' }}>
                   {badge.label}

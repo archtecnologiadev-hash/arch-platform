@@ -977,54 +977,64 @@ export default function ArquitetoPerfilPage() {
 
         {/* ── Meu Plano ──────────────────────────────────────────────── */}
         {!planInfo.loading && planInfo.status && (
-          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginTop: 14 }}>
+          <div style={{ background: '#fff', border: `1px solid ${planInfo.status === 'fundador' ? 'rgba(251,191,36,0.3)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginTop: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(0,122,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <CreditCard size={16} color="#007AFF" />
+                <div style={{ width: 34, height: 34, borderRadius: 9, background: planInfo.status === 'fundador' ? 'rgba(251,191,36,0.12)' : 'rgba(0,122,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+                  {planInfo.status === 'fundador' ? '★' : <CreditCard size={16} color="#007AFF" />}
                 </div>
-                <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', fontWeight: 700 }}>MEU PLANO</p>
+                <p style={{ fontSize: 11, color: planInfo.status === 'fundador' ? '#92400e' : '#007AFF', letterSpacing: '0.07em', fontWeight: 700 }}>MEU PLANO</p>
               </div>
-              <Link href="/arquiteto/planos" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>
-                Gerenciar plano <ArrowRight size={12} />
-              </Link>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14 }}>
-              <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
-                <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Plano atual</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>{planInfo.planNome ?? '—'}</div>
-              </div>
-              <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
-                <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Status</div>
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  fontSize: 12.5, fontWeight: 700,
-                  color: planInfo.status === 'trial' ? '#f97316' : planInfo.status === 'ativa' ? '#059669' : planInfo.status === 'fundador' ? '#7c3aed' : '#ef4444',
-                }}>
-                  {planInfo.status === 'trial' ? `Trial · ${planInfo.trialDaysLeft}d restantes`
-                    : planInfo.status === 'ativa' ? 'Ativo'
-                    : planInfo.status === 'fundador' ? 'Fundador'
-                    : planInfo.status === 'inadimplente' ? 'Inadimplente'
-                    : 'Cancelado'}
-                </div>
-              </div>
-              {planInfo.proximaCobranca && (
-                <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Próxima cobrança</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>
-                    {planInfo.proximaCobranca.toLocaleDateString('pt-BR')}
-                  </div>
-                </div>
-              )}
-              {planInfo.valorMensal && (
-                <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Valor</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>
-                    {planInfo.valorMensal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })}/mês
-                  </div>
-                </div>
+              {planInfo.status !== 'fundador' && (
+                <Link href="/arquiteto/planos" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>
+                  Gerenciar plano <ArrowRight size={12} />
+                </Link>
               )}
             </div>
+
+            {/* Founder special display */}
+            {planInfo.status === 'fundador' ? (
+              <div style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 12, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#92400e' }}>★ Plano Fundador</div>
+                <div style={{ fontSize: 13, color: '#78350f' }}>Acesso vitalício — sem cobranças</div>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14 }}>
+                <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
+                  <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Plano atual</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>{planInfo.planNome ?? '—'}</div>
+                </div>
+                <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
+                  <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Status</div>
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    fontSize: 12.5, fontWeight: 700,
+                    color: planInfo.status === 'trial' ? '#f97316' : planInfo.status === 'ativa' ? '#059669' : '#ef4444',
+                  }}>
+                    {planInfo.status === 'trial' ? `Trial · ${planInfo.trialDaysLeft}d restantes`
+                      : planInfo.status === 'ativa' ? 'Ativo'
+                      : planInfo.status === 'inadimplente' ? 'Inadimplente'
+                      : 'Cancelado'}
+                  </div>
+                </div>
+                {planInfo.proximaCobranca && (
+                  <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
+                    <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Próxima cobrança</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>
+                      {planInfo.proximaCobranca.toLocaleDateString('pt-BR')}
+                    </div>
+                  </div>
+                )}
+                {planInfo.valorMensal && (
+                  <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
+                    <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Valor</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>
+                      {planInfo.valorMensal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })}/mês
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             {/* Storage bar */}
             {planInfo.maxArmazenamentoGb !== null && !storage.loading && (() => {
               const pct = planInfo.maxArmazenamentoGb! > 0

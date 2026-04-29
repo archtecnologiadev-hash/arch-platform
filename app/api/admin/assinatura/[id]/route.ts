@@ -16,7 +16,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if (!admin_user) return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
 
   const body = await request.json()
-  const { acao } = body
+  const { acao, nova_data, observacao_admin } = body
   const assinaturaId = params.id
   const admin = createAdminClient()
 
@@ -29,12 +29,28 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if (acao === 'marcar_fundador') {
     const { data: plano } = await admin
       .from('planos').select('id').eq('slug', 'arquiteto-profissional').maybeSingle()
-    const proxima = new Date()
-    proxima.setMonth(proxima.getMonth() + 3)
+    const trialFim = new Date()
+    trialFim.setFullYear(trialFim.getFullYear() + 10)
     update = {
       status: 'fundador',
       plano_id: plano?.id ?? null,
-      proxima_cobranca: proxima.toISOString(),
+      trial_fim: trialFim.toISOString(),
+      observacao_admin: observacao_admin ?? null,
+      updated_at: new Date().toISOString(),
+    }
+  } else if (acao === 'remover_fundador') {
+    const trialFim = new Date()
+    trialFim.setDate(trialFim.getDate() + 14)
+    update = {
+      status: 'trial',
+      trial_fim: trialFim.toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+  } else if (acao === 'estender_trial') {
+    if (!nova_data) return NextResponse.json({ error: 'nova_data obrigatória' }, { status: 400 })
+    update = {
+      status: 'trial',
+      trial_fim: new Date(nova_data).toISOString(),
       updated_at: new Date().toISOString(),
     }
   } else if (acao === 'ativar') {

@@ -618,6 +618,48 @@ function Step4({ userId, onNext }: { userId: string; onNext: () => void }) {
   )
 }
 
+// ─── Step 4: Fundador ─────────────────────────────────────────────────────────
+
+function FounderStep({ onNext, userId }: { onNext: () => void; userId: string }) {
+  const [marking, setMarking] = useState(false)
+
+  async function handleContinue() {
+    setMarking(true)
+    const supabase = createClient()
+    const { data: ud } = await supabase.from('users').select('onboarding_passos_completos').eq('id', userId).single()
+    const passos: string[] = ud?.onboarding_passos_completos ?? []
+    const novosPassos = Array.from(new Set([...passos, 'pagamento']))
+    await supabase.from('users').update({ onboarding_passos_completos: novosPassos, onboarding_completo: true }).eq('id', userId)
+    setMarking(false)
+    onNext()
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 20, paddingTop: 8 }}>
+      <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(251,191,36,0.12)', border: '2px solid rgba(251,191,36,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
+        ★
+      </div>
+      <div>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginBottom: 8 }}>Você é Fundador!</h2>
+        <p style={{ fontSize: 14, color: '#8e8e93', fontWeight: 300, lineHeight: 1.6 }}>
+          Seu acesso à ARC é vitalício e gratuito.<br />
+          Não é necessário cartão de crédito.
+        </p>
+      </div>
+      <div style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 12, padding: '14px 24px', fontSize: 13, color: '#92400e', fontWeight: 500 }}>
+        Plano Fundador — Acesso vitalício incluído
+      </div>
+      <button
+        onClick={handleContinue}
+        disabled={marking}
+        style={{ padding: '14px 36px', background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: marking ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: marking ? 0.7 : 1 }}
+      >
+        {marking ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Aguarde...</> : <>Ir para o painel <ArrowRight size={16} /></>}
+      </button>
+    </div>
+  )
+}
+
 // ─── Success screen ───────────────────────────────────────────────────────────
 
 function SuccessScreen({ onGo }: { onGo: () => void }) {
@@ -652,6 +694,7 @@ export default function OnboardingPage() {
   const [completed, setCompleted] = useState<StepId[]>([])
   const [done, setDone] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [isFounder, setIsFounder] = useState(false)
 
   useEffect(() => {
     async function init() {
@@ -662,7 +705,11 @@ export default function OnboardingPage() {
       setUserId(user.id)
       setUserName(user.user_metadata?.nome?.split(' ')[0] ?? 'arquiteto')
 
-      const { data: ud } = await supabase.from('users').select('onboarding_completo, onboarding_passos_completos, nivel_permissao').eq('id', user.id).maybeSingle()
+      const [{ data: ud }, { data: subData }] = await Promise.all([
+        supabase.from('users').select('onboarding_completo, onboarding_passos_completos, nivel_permissao').eq('id', user.id).maybeSingle(),
+        supabase.from('assinaturas').select('status').eq('user_id', user.id).maybeSingle(),
+      ])
+      if (subData?.status === 'fundador') setIsFounder(true)
 
       // Non-owners skip onboarding
       if (ud?.nivel_permissao && ud.nivel_permissao !== 'owner') {
@@ -747,7 +794,11 @@ export default function OnboardingPage() {
                 {userId && currentStep === 'perfil'    && <Step1 userId={userId} onNext={() => nextStep('perfil')} />}
                 {userId && currentStep === 'projeto'   && <Step2 userId={userId} onNext={() => nextStep('projeto')} onSkip={() => nextStep('projeto')} />}
                 {userId && currentStep === 'equipe'    && <Step3 userId={userId} onNext={() => nextStep('equipe')} onSkip={() => nextStep('equipe')} />}
-                {userId && currentStep === 'pagamento' && <Step4 userId={userId} onNext={() => nextStep('pagamento')} />}
+                {userId && currentStep === 'pagamento' && (
+                  isFounder
+                    ? <FounderStep onNext={() => nextStep('pagamento')} userId={userId} />
+                    : <Step4 userId={userId} onNext={() => nextStep('pagamento')} />
+                )}
               </div>
             </>
           ) : (

@@ -8,7 +8,6 @@ function generatePassword(): string {
 }
 
 export async function POST(request: NextRequest) {
-  // Verify requester is admin
   const supabaseUser = createClient()
   const { data: { user } } = await supabaseUser.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
@@ -19,7 +18,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { nome, email, telefone, tipo, plano, trial_dias, cidade } = body
+  const { nome, email, telefone, tipo, plano, trial_dias, cidade, isFundador, observacao_admin } = body
 
   if (!nome || !email || !tipo) {
     return NextResponse.json({ error: 'nome, email e tipo são obrigatórios' }, { status: 400 })
@@ -28,7 +27,6 @@ export async function POST(request: NextRequest) {
   const senha = generatePassword()
   const admin = createAdminClient()
 
-  // Create auth user
   const { data: authData, error: authError } = await admin.auth.admin.createUser({
     email,
     password: senha,
@@ -45,32 +43,70 @@ export async function POST(request: NextRequest) {
     ? new Date(Date.now() + trial_dias * 86_400_000).toISOString()
     : null
 
-  // Update users row (trigger already created the row)
   await admin
     .from('users')
     .update({
       telefone: telefone ?? null,
       plano: plano ?? 'free',
-      status_conta: trial_dias ? 'trial' : 'ativo',
+      status_conta: isFundador ? 'fundador' : (trial_dias ? 'trial' : 'ativo'),
       trial_ate,
+      nivel_permissao: 'owner',
     })
     .eq('id', uid)
 
-  // Update escritorios city if arquiteto
   if (cidade && tipo === 'arquiteto') {
-    const { data: esc } = await admin.from('escritorios').select('id').eq('user_id', uid).single()
+    const { data: esc } = await admin.from('escritorios').select('id').eq('user_id', uid).maybeSingle()
     if (esc) {
       await admin.from('escritorios').update({ cidade }).eq('id', esc.id)
     }
   }
 
-  // Log the action
+  // Create assinatura for founders
+  if (isFundador && tipo === 'arquiteto') {
+    const { data: arcPro } = await admin
+      .from('planos').select('id').eq('slug', 'arquiteto-profissional').maybeSingle()
+
+    const trialFim = new Date()
+    trialFim.setFullYear(trialFim.getFullYear() + 10)
+
+    const { data: existingSub } = await admin
+      .from('assinaturas').select('id').eq('user_id', uid).maybeSingle()
+
+    const subPayload = {
+      status: 'fundador',
+      plano_id: arcPro?.id ?? null,
+      ciclo: 'mensal',
+      trial_fim: trialFim.toISOString(),
+      observacao_admin: observacao_admin ?? null,
+      updated_at: new Date().toISOString(),
+    }
+
+    if (existingSub?.id) {
+      await admin.from('assinaturas').update(subPayload).eq('id', existingSub.id)
+    } else {
+      await admin.from('assinaturas').insert({ user_id: uid, ...subPayload })
+    }
+  }
+
   await admin.from('admin_log').insert({
     admin_id: user.id,
     target_user_id: uid,
-    acao: 'criar_usuario',
-    detalhes: { nome, email, tipo, plano, trial_dias },
+    acao: isFundador ? 'criar_fundador' : 'criar_usuario',
+    detalhes: { nome, email, tipo, plano, trial_dias, isFundador: isFundador ?? false, observacao_admin },
   })
 
-  return NextResponse.json({ success: true, senha_provisoria: senha, user_id: uid })
+  if (isFundador) {
+    try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.usearc.com.br'
+      await fetch(`${appUrl}/api/notifications/fundador`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: uid, senha }),
+      })
+    } catch (emailErr) {
+      console.error('[criar-usuario] email fundador error:', emailErr)
+    }
+  }
+
+  return NextResponse.json({ success: true, senha_provisoria: senha, user_id: uid, isFundador: isFundador ?? false })
 }
