@@ -6,6 +6,7 @@ import {
   Folder, FolderOpen, ChevronRight, Upload, Camera, PenLine,
   X, Download, ZoomIn, Loader2, RotateCcw, Trash2,
   Image as ImageIcon, FileText, File as LucideFile, Check, Plus,
+  Star, CheckCircle2,
 } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -319,6 +320,8 @@ export default function ProjetoArquivos({ projetoId, currentUser }: Props) {
   const [savingFolder, setSavingFolder] = useState(false)
 
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [settingCoverId, setSettingCoverId] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
 
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -414,6 +417,15 @@ export default function ProjetoArquivos({ projetoId, currentUser }: Props) {
     setDeletingId(null)
   }
 
+  async function setCoverFromFile(arq: Arquivo) {
+    setSettingCoverId(arq.id)
+    const supabase = createClient()
+    await supabase.from('projetos').update({ cover_url: arq.url }).eq('id', projetoId)
+    setSettingCoverId(null)
+    setToast({ msg: 'Capa atualizada!', ok: true })
+    setTimeout(() => setToast(null), 2500)
+  }
+
   const actionBtn = (label: string, icon: React.ReactNode, onClick: () => void, primary = false) => (
     <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 7, background: primary ? '#007AFF' : 'rgba(0,122,255,0.08)', border: primary ? 'none' : '1px solid rgba(0,122,255,0.2)', borderRadius: 10, padding: '11px 16px', color: primary ? '#fff' : '#007AFF', cursor: 'pointer', fontSize: 13, fontWeight: 600, minHeight: 44 }}>
       {icon}{label}
@@ -428,6 +440,17 @@ export default function ProjetoArquivos({ projetoId, currentUser }: Props) {
 
   return (
     <>
+      {toast && (
+        <div style={{
+          position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)',
+          background: '#1a1a1a', color: '#fff', padding: '12px 20px', borderRadius: 12,
+          fontSize: 13, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8,
+          boxShadow: '0 8px 30px rgba(0,0,0,0.3)', whiteSpace: 'nowrap',
+        }}>
+          <CheckCircle2 size={15} color="#34d399" />
+          {toast.msg}
+        </div>
+      )}
       {showCamera && <CameraCapture onSave={handleCameraCapture} onClose={() => setShowCamera(false)} />}
       {showDraw && <DrawingTool onSave={handleDrawSave} onClose={() => setShowDraw(false)} />}
       {lightbox && <Lightbox url={lightbox.url} nome={lightbox.nome} onClose={() => setLightbox(null)} />}
@@ -534,6 +557,16 @@ export default function ProjetoArquivos({ projetoId, currentUser }: Props) {
 
               {/* Actions */}
               <div style={{ display: 'flex', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                {isImage(arq.tipo) && (
+                  <button
+                    onClick={() => setCoverFromFile(arq)}
+                    disabled={settingCoverId === arq.id}
+                    title="Definir como capa"
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '7px', background: 'none', border: 'none', borderRight: '1px solid rgba(0,0,0,0.06)', color: '#f59e0b', cursor: 'pointer' }}
+                  >
+                    {settingCoverId === arq.id ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Star size={14} />}
+                  </button>
+                )}
                 <a href={arq.url} download={arq.nome} target="_blank" rel="noopener noreferrer"
                   style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '7px', color: 'var(--accent)', textDecoration: 'none' }}>
                   <Download size={14} />

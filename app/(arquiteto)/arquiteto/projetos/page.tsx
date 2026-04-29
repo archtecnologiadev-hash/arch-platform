@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { FolderOpen, Plus, ArrowRight, X, AlertCircle, LayoutGrid, List, Search, Download, Filter } from 'lucide-react'
-import CoverUploadButton from '@/components/shared/CoverUploadButton'
 import { usePlan } from '@/hooks/usePlan'
 import KanbanBoard, { KanbanProjeto, diasDesde } from '@/components/shared/KanbanBoard'
 
@@ -203,10 +202,6 @@ export default function ProjetosPage() {
       setForm({ nome: '', tipo: 'residencial', descricao: '' })
     }
     setSaving(false)
-  }
-
-  function handleCoverUpdate(id: string, url: string) {
-    setProjetos(prev => prev.map(p => p.id === id ? { ...p, cover_url: url } : p))
   }
 
   async function handleKanbanMove(projetoId: string, novaEtapa: string) {
@@ -527,12 +522,6 @@ export default function ProjetosPage() {
                         <span style={{ fontSize: 11, color: '#aeaeb2', fontWeight: 500 }}>Sem capa</span>
                       </div>
                     )}
-                    <CoverUploadButton
-                      projectId={proj.id}
-                      hasCover={hasCover}
-                      onUpdate={(url) => handleCoverUpdate(proj.id, url)}
-                      btnClassName={hasCover ? 'cover-edit-btn' : undefined}
-                    />
                     <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.92)', color: 'var(--accent)', backdropFilter: 'blur(8px)', border: '1px solid rgba(0,122,255,0.3)' }}>
                       {etapaLabel}
                     </div>

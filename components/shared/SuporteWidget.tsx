@@ -219,7 +219,7 @@ export default function SuporteWidget() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 4px 20px rgba(0,0,0,0.18)',
             transition: 'transform 0.2s, box-shadow 0.2s',
-            color: '#fff',
+            color: 'var(--accent-text)',
           }}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.08)' }}
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
@@ -247,14 +247,14 @@ export default function SuporteWidget() {
             flexShrink: 0,
           }}>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 14, color: '#fff' }}>Suporte ARC</div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', marginTop: 2 }}>
+              <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--accent-text)' }}>Suporte ARC</div>
+              <div style={{ fontSize: 11, color: 'var(--accent-text)', opacity: 0.7, marginTop: 2 }}>
                 {isResolved ? 'Conversa encerrada' : 'Respondemos em até 24h úteis'}
               </div>
             </div>
             <button
               onClick={() => setOpen(false)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.85)', display: 'flex', padding: 4 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-text)', display: 'flex', padding: 4 }}
             >
               <X size={18} />
             </button>
@@ -373,7 +373,7 @@ export default function SuporteWidget() {
                 style={{
                   width: 36, height: 36, borderRadius: '50%', border: 'none',
                   background: text.trim() ? 'var(--accent)' : 'var(--border)',
-                  color: text.trim() ? '#fff' : 'var(--text-3)',
+                  color: text.trim() ? 'var(--accent-text)' : 'var(--text-3)',
                   cursor: text.trim() ? 'pointer' : 'default',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   flexShrink: 0, transition: 'background 0.15s',
