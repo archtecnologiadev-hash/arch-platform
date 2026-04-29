@@ -33,45 +33,71 @@ export default function CadastroPage() {
     setError('')
     setLoading(true)
 
-    const supabase = createClient()
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { nome, tipo: 'arquiteto' } },
-    })
+    try {
+      console.log('[cadastro] 1. iniciando signUp para:', email)
 
-    console.log('[cadastro] signUp result:', { user: data?.user?.id, error: signUpError?.message })
+      const supabase = createClient()
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { nome, tipo: 'arquiteto' } },
+      })
 
-    if (signUpError) {
-      console.error('[cadastro] signUp error:', signUpError.message)
-      const msg = signUpError.message.toLowerCase()
-      if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already')) {
-        setError('Este email já está cadastrado. Faça login ou recupere sua senha.')
-      } else if (msg.includes('invalid email')) {
-        setError('Email inválido. Verifique o endereço informado.')
-      } else if (msg.includes('password') && msg.includes('6')) {
-        setError('A senha deve ter no mínimo 8 caracteres.')
-      } else if (msg.includes('weak password') || msg.includes('should be at least')) {
-        setError('A senha deve ter no mínimo 8 caracteres.')
-      } else if (msg.includes('rate limit') || msg.includes('too many')) {
-        setError('Muitas tentativas. Aguarde alguns minutos e tente novamente.')
-      } else {
-        setError(`Erro ao criar conta: ${signUpError.message}`)
+      console.log('[cadastro] 2. signUp retornou:', {
+        userId: data?.user?.id ?? null,
+        identities: data?.user?.identities?.length ?? 'null user',
+        hasSession: !!data?.session,
+        error: signUpError?.message ?? null,
+      })
+
+      if (signUpError) {
+        const msg = signUpError.message.toLowerCase()
+        if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already')) {
+          setError('Este email já está cadastrado. Faça login ou recupere sua senha.')
+        } else if (msg.includes('invalid email')) {
+          setError('Email inválido. Verifique o endereço informado.')
+        } else if (msg.includes('password') && msg.includes('6')) {
+          setError('A senha deve ter no mínimo 8 caracteres.')
+        } else if (msg.includes('weak password') || msg.includes('should be at least')) {
+          setError('A senha deve ter no mínimo 8 caracteres.')
+        } else if (msg.includes('rate limit') || msg.includes('too many')) {
+          setError('Muitas tentativas. Aguarde alguns minutos e tente novamente.')
+        } else if (msg.includes('signup') && msg.includes('disabled')) {
+          setError('Cadastro desabilitado. Entre em contato com o suporte.')
+        } else {
+          setError(`Erro ao criar conta: ${signUpError.message}`)
+        }
+        setLoading(false)
+        return
       }
-      setLoading(false)
-      return
-    }
 
-    // Supabase returns success silently for duplicate emails when confirm is ON
-    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-      console.warn('[cadastro] identities empty — email already registered:', email)
-      setError('Este email já está cadastrado. Faça login ou recupere sua senha.')
-      setLoading(false)
-      return
-    }
+      // Supabase returns success silently for duplicate emails when confirm is ON
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        console.warn('[cadastro] 3. identities vazio — email já cadastrado')
+        setError('Este email já está cadastrado. Faça login ou recupere sua senha.')
+        setLoading(false)
+        return
+      }
 
-    console.log('[cadastro] user created, redirecting to OTP page:', data.user?.id)
-    router.push(`/confirmar-email/codigo?email=${encodeURIComponent(email)}`)
+      const targetUrl = `/confirmar-email/codigo?email=${encodeURIComponent(email)}`
+      console.log('[cadastro] 3. sucesso, redirecionando para:', targetUrl)
+
+      setLoading(false)
+      router.push(targetUrl)
+
+      // Fallback: se router.push não navegar em 800ms, força via window.location
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && window.location.pathname.includes('/cadastro')) {
+          console.warn('[cadastro] fallback redirect via window.location')
+          window.location.href = targetUrl
+        }
+      }, 800)
+
+    } catch (err) {
+      console.error('[cadastro] erro inesperado:', err)
+      setError('Erro inesperado. Tente novamente.')
+      setLoading(false)
+    }
   }
 
   return (
