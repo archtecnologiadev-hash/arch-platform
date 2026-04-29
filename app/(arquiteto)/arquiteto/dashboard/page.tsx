@@ -828,57 +828,34 @@ export default function ArquitetoDashboardPage() {
                 </div>
               </div>
 
-              {/* Team + Leads */}
-              {(membros.length > 0 || leads.length > 0) && (
-                <div className="dg2">
-                  {membros.length > 0 && (
-                    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14 }}>
-                      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Equipe</div>
-                        <Link href="/arquiteto/equipe" style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none' }}>Gerenciar →</Link>
-                      </div>
-                      <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {membros.slice(0, 6).map(m => {
-                          const initials = (m.nome ?? '?').split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
-                          const projCount = membroProjetosMap[m.id] ?? 0
-                          const nivelLbl: Record<string, string> = { owner: 'Dono', admin: 'Admin', pleno: 'Pleno', operacional: 'Operacional', gestor: 'Gestor' }
-                          return (
-                            <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8 }}
-                              onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg)')}
-                              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                              <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>{initials}</div>
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nome}</div>
-                                <div style={{ fontSize: 10, color: 'var(--text-3)' }}>
-                                  {m.cargo ?? nivelLbl[m.nivel_permissao ?? ''] ?? m.nivel_permissao}
-                                  {projCount > 0 && ` · ${projCount} projeto${projCount !== 1 ? 's' : ''}`}
-                                </div>
-                              </div>
+              {/* Team */}
+              {membros.length > 0 && (
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14 }}>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Equipe</div>
+                    <Link href="/arquiteto/equipe" style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none' }}>Gerenciar →</Link>
+                  </div>
+                  <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {membros.slice(0, 6).map(m => {
+                      const initials = (m.nome ?? '?').split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
+                      const projCount = membroProjetosMap[m.id] ?? 0
+                      const nivelLbl: Record<string, string> = { owner: 'Dono', admin: 'Admin', pleno: 'Pleno', operacional: 'Operacional', gestor: 'Gestor' }
+                      return (
+                        <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8 }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                          <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>{initials}</div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nome}</div>
+                            <div style={{ fontSize: 10, color: 'var(--text-3)' }}>
+                              {m.cargo ?? nivelLbl[m.nivel_permissao ?? ''] ?? m.nivel_permissao}
+                              {projCount > 0 && ` · ${projCount} projeto${projCount !== 1 ? 's' : ''}`}
                             </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {leads.length > 0 && (
-                    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14 }}>
-                      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Leads Recentes</div>
-                        <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{leads.length} contato{leads.length !== 1 ? 's' : ''}</span>
-                      </div>
-                      <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {leads.slice(0, 7).map(l => (
-                          <div key={l.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', borderRadius: 8 }}
-                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg)')}
-                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{l.nome}</span>
-                            <span style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{new Date(l.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</span>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
             </section>
