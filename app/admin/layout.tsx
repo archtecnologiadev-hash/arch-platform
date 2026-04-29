@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Users, UserPlus, TicketCheck, ScrollText, LogOut, ShieldCheck, CreditCard, FlaskConical, Menu, X, Receipt } from 'lucide-react'
+import { LayoutDashboard, Users, UserPlus, TicketCheck, ScrollText, LogOut, ShieldCheck, CreditCard, FlaskConical, Menu, X, Receipt, MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import ThemeToggle from '@/components/ThemeToggle'
 
@@ -14,6 +14,7 @@ const NAV = [
   { label: 'Dados de Teste', href: '/admin/dados-teste', icon: FlaskConical },
   { label: 'Usuários',       href: '/admin/usuarios',    icon: Users },
   { label: 'Cadastrar',      href: '/admin/cadastrar',   icon: UserPlus },
+  { label: 'Suporte',        href: '/admin/suporte',     icon: MessageSquare },
   { label: 'Tickets',        href: '/admin/tickets',     icon: TicketCheck },
   { label: 'Logs',           href: '/admin/logs',        icon: ScrollText },
 ]
@@ -28,6 +29,30 @@ function AdminSidebar({
 }) {
   const pathname = usePathname()
   const router = useRouter()
+  const [unreadSuporte, setUnreadSuporte] = useState(0)
+
+  useEffect(() => {
+    const supabase = createClient()
+    const check = async () => {
+      const { count } = await supabase
+        .from('suporte_mensagens')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_admin', false)
+        .eq('lida', false)
+      setUnreadSuporte(count ?? 0)
+    }
+    check()
+    const interval = setInterval(check, 30000)
+    const channel = supabase
+      .channel('admin_suporte_unread')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'suporte_mensagens' }, check)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'suporte_mensagens' }, check)
+      .subscribe()
+    return () => {
+      clearInterval(interval)
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   async function handleLogout() {
     const supabase = createClient()
@@ -93,6 +118,7 @@ function AdminSidebar({
             const isActive = item.exact
               ? pathname === item.href
               : pathname === item.href || pathname.startsWith(item.href + '/')
+            const showBadge = item.href === '/admin/suporte' && unreadSuporte > 0
             return (
               <Link
                 key={item.href}
@@ -107,7 +133,12 @@ function AdminSidebar({
                 }}
               >
                 <Icon size={16} strokeWidth={isActive ? 2 : 1.5} />
-                <span>{item.label}</span>
+                <span style={{ flex: 1 }}>{item.label}</span>
+                {showBadge && (
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', background: '#ef4444', borderRadius: 10, padding: '1px 6px', lineHeight: '16px' }}>
+                    {unreadSuporte}
+                  </span>
+                )}
               </Link>
             )
           })}

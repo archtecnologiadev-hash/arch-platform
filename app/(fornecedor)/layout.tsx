@@ -7,6 +7,7 @@ import { LayoutDashboard, UserCircle, Package, FileText, MessageCircle, LogOut, 
 import { createClient } from '@/lib/supabase'
 import TrialGate from '@/components/shared/TrialGate'
 import ThemeToggle from '@/components/ThemeToggle'
+import SuporteWidget from '@/components/shared/SuporteWidget'
 
 const NAV_ITEMS = [
   { label: 'Dashboard',  href: '/fornecedor/dashboard', icon: LayoutDashboard },
@@ -261,6 +262,7 @@ export default function FornecedorLayout({ children }: { children: React.ReactNo
           {children}
         </TrialGate>
       </main>
+      <SuporteWidget />
     </div>
   )
 }

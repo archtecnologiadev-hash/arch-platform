@@ -11,6 +11,7 @@ import {
 import { createClient } from '@/lib/supabase'
 import TrialGate from '@/components/shared/TrialGate'
 import ThemeToggle from '@/components/ThemeToggle'
+import SuporteWidget from '@/components/shared/SuporteWidget'
 
 // Rank: higher = more privileged
 const NIVEL_RANK: Record<string, number> = {
@@ -300,6 +301,7 @@ export default function ArquitetoLayout({ children }: { children: React.ReactNod
           {children}
         </TrialGate>
       </main>
+      <SuporteWidget />
     </div>
   )
 }

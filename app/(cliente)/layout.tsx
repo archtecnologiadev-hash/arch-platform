@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { FolderOpen, LogOut, MessageCircle, UserCircle, Menu, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import ThemeToggle from '@/components/ThemeToggle'
+import SuporteWidget from '@/components/shared/SuporteWidget'
 
 const NAV_ITEMS = [
   { label: 'Meus Projetos', href: '/cliente/projetos',  icon: FolderOpen },
@@ -238,6 +239,7 @@ export default function ClienteLayout({ children }: { children: React.ReactNode 
       }}>
         {children}
       </main>
+      <SuporteWidget />
     </div>
   )
 }
