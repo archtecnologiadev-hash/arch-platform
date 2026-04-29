@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import {
   LogOut, Download, MessageCircle, FileText, ImageIcon, File,
-  CalendarDays, FolderOpen, Activity, ArrowLeft, Check, DollarSign,
+  CalendarDays, FolderOpen, Activity, ArrowLeft, Check, DollarSign, ScrollText, X,
   type LucideIcon,
 } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
@@ -13,7 +13,7 @@ import CalendarioObra, { CalendarioEvent, EventType } from '@/components/shared/
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type TabId = 'andamento' | 'calendario' | 'arquivos' | 'orcamento' | 'financeiro'
+type TabId = 'andamento' | 'calendario' | 'arquivos' | 'orcamento' | 'financeiro' | 'contratos'
 
 interface OrcItem {
   id: string
@@ -63,6 +63,7 @@ const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: 'arquivos',   label: 'Arquivos',   icon: FolderOpen },
   { id: 'orcamento',  label: 'Orçamento',  icon: DollarSign },
   { id: 'financeiro', label: 'Financeiro', icon: FileText },
+  { id: 'contratos',  label: 'Contratos',  icon: ScrollText },
 ]
 
 const ORC_CATS = ['Projeto', 'Execução', 'Marcenaria', 'Decoração', 'Elétrica', 'Hidráulica', 'Pintura', 'Outros']
@@ -101,6 +102,9 @@ export default function ClienteProjetoPage() {
   const router = useRouter()
   const projetoId = params?.id as string
 
+  // Read ?tab= from URL
+  const urlTab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') as TabId | null : null
+
   const [loading, setLoading] = useState(true)
   const [denied, setDenied] = useState(false)
   const [projeto, setProjeto] = useState<Projeto | null>(null)
@@ -109,8 +113,14 @@ export default function ClienteProjetoPage() {
   const [historico, setHistorico] = useState<HistoricoItem[]>([])
   const [orcItems, setOrcItems] = useState<OrcItem[]>([])
   const [finItems, setFinItems] = useState<{ id: string; tipo: string; descricao: string; valor: number; status: string; data_vencimento: string | null; data_pagamento: string | null; categoria: string | null }[]>([])
+  const [contratoItems, setContratoItems] = useState<{ id: string; titulo: string; status: string; valor: number | null; conteudo_final: string; assinatura_cliente: string | null; assinatura_arquiteto: string | null; assinado_em: string | null; created_at: string }[]>([])
+  const [viewingContrato, setViewingContrato] = useState<typeof contratoItems[0] | null>(null)
+  const [signModal, setSignModal] = useState<{ id: string } | null>(null)
+  const [signNome, setSignNome] = useState('')
+  const [signAceite, setSignAceite] = useState(false)
+  const [signing, setSigning] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<TabId>('andamento')
+  const [activeTab, setActiveTab] = useState<TabId>(urlTab ?? 'andamento')
   const [startingConv, setStartingConv] = useState(false)
 
   useEffect(() => {
@@ -148,17 +158,19 @@ export default function ClienteProjetoPage() {
         escritorio_nome: proj.escritorios?.nome ?? null,
       })
 
-      const [{ data: arqs }, { data: evs }, { data: hist }, { data: orcData }, { data: finData }] = await Promise.all([
+      const [{ data: arqs }, { data: evs }, { data: hist }, { data: orcData }, { data: finData }, { data: ctData }] = await Promise.all([
         supabase.from('arquivos_projeto').select('*').eq('projeto_id', projetoId).order('created_at', { ascending: false }),
         supabase.from('eventos').select('*').eq('projeto_id', projetoId).order('data_inicio'),
         supabase.from('projeto_historico').select('*').eq('projeto_id', projetoId).order('created_at', { ascending: false }).limit(20),
         supabase.from('orcamento_itens').select('id,categoria,descricao,valor,quantidade,observacao').eq('projeto_id', projetoId).order('created_at'),
         supabase.from('transacoes_financeiras').select('id,tipo,descricao,valor,status,data_vencimento,data_pagamento,categoria').eq('projeto_id', projetoId).order('created_at', { ascending: false }),
+        supabase.from('contratos').select('id,titulo,status,valor,conteudo_final,assinatura_cliente,assinatura_arquiteto,assinado_em,created_at').eq('projeto_id', projetoId).neq('status', 'cancelado').order('created_at', { ascending: false }),
       ])
 
       if (arqs) setArquivos(arqs as Arquivo[])
       if (orcData) setOrcItems(orcData as OrcItem[])
       if (finData) setFinItems(finData as typeof finItems)
+      if (ctData) setContratoItems(ctData as typeof contratoItems)
       if (evs) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapped = evs.map((e: any) => ({
@@ -179,6 +191,41 @@ export default function ClienteProjetoPage() {
     }
     load()
   }, [projetoId, router])
+
+  async function handleAssinar() {
+    if (!signModal || !signNome.trim() || !signAceite) return
+    setSigning(true)
+    const supabase = createClient()
+    await supabase.from('contratos').update({
+      status: 'assinado',
+      assinatura_cliente: signNome.trim(),
+      assinado_em: new Date().toISOString(),
+      visualizado_em: new Date().toISOString(),
+    }).eq('id', signModal.id)
+
+    setContratoItems(prev => prev.map(c => c.id === signModal.id
+      ? { ...c, status: 'assinado', assinatura_cliente: signNome.trim(), assinado_em: new Date().toISOString() }
+      : c))
+    setViewingContrato(prev => prev?.id === signModal.id
+      ? { ...prev, status: 'assinado', assinatura_cliente: signNome.trim(), assinado_em: new Date().toISOString() }
+      : prev)
+    setSigning(false)
+    setSignModal(null)
+    setSignNome('')
+    setSignAceite(false)
+
+    // Mark as viewed too and notify
+    await fetch('/api/notifications/contrato', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tipo: 'assinado', email: '', // arquiteto email handled server-side via lookup
+        nomeCliente: signNome.trim(), tituloProjeto: projeto?.nome ?? '',
+        tituloContrato: contratoItems.find(c => c.id === signModal.id)?.titulo ?? '',
+        assinadoEm: new Date().toLocaleDateString('pt-BR'), linkContrato: window.location.href,
+      }),
+    }).catch(() => {})
+  }
 
   async function handleLogout() {
     const supabase = createClient()
@@ -619,6 +666,134 @@ export default function ClienteProjetoPage() {
                   </table>
                 )}
               </div>
+            </div>
+          )
+        })()}
+
+        {/* Tab: Contratos */}
+        {activeTab === 'contratos' && (() => {
+          const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+          const STATUS_C: Record<string, { label: string; color: string; bg: string }> = {
+            rascunho:    { label: 'Rascunho',    color: '#8e8e93', bg: 'rgba(142,142,147,0.12)' },
+            enviado:     { label: 'Enviado',     color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+            visualizado: { label: 'Visualizado', color: '#007AFF', bg: 'rgba(0,122,255,0.12)' },
+            assinado:    { label: 'Assinado',    color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
+          }
+          return (
+            <div>
+              <style>{`.ct-content h2{font-size:16px;font-weight:700;margin:18px 0 8px;} .ct-content h3{font-size:14px;font-weight:700;margin:14px 0 5px;} .ct-content p{margin:0 0 10px;} .ct-content ul,.ct-content ol{margin:6px 0 10px;padding-left:20px;} .ct-content li{margin-bottom:3px;}`}</style>
+              {contratoItems.length === 0 ? (
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '60px 24px', textAlign: 'center', boxShadow: 'var(--shadow-card)' }}>
+                  <ScrollText size={36} color="#c7c7cc" style={{ margin: '0 auto 12px' }} />
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Nenhum contrato disponível</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-3)' }}>Quando o escritório enviar um contrato, ele aparecerá aqui.</div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {contratoItems.map(c => {
+                    const sm = STATUS_C[c.status] ?? STATUS_C.enviado
+                    const podeAssinar = c.status === 'enviado' || c.status === 'visualizado'
+                    return (
+                      <div key={c.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 20px', boxShadow: 'var(--shadow-card)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: podeAssinar ? 14 : 0 }}>
+                          <div style={{ width: 36, height: 36, borderRadius: 9, background: sm.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <ScrollText size={16} color={sm.color} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.titulo}</div>
+                            <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
+                              {c.valor ? fmtBRL(c.valor) + ' · ' : ''}
+                              {new Date(c.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </div>
+                          </div>
+                          <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: sm.bg, color: sm.color, whiteSpace: 'nowrap' }}>{sm.label}</span>
+                          <button onClick={() => setViewingContrato(c)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', background: 'var(--bg)', border: '1px solid var(--border-input)', borderRadius: 8, fontSize: 12, color: 'var(--text-2)', cursor: 'pointer' }}>
+                            <FileText size={13} /> Ler
+                          </button>
+                        </div>
+                        {podeAssinar && (
+                          <button
+                            onClick={() => { setSignModal({ id: c.id }); setSignNome(''); setSignAceite(false) }}
+                            style={{ width: '100%', padding: '11px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 10, color: '#10b981', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                          >
+                            <Check size={15} /> Aceitar e assinar contrato
+                          </button>
+                        )}
+                        {c.status === 'assinado' && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#10b981', fontSize: 12, fontWeight: 600, marginTop: 0 }}>
+                            <Check size={13} strokeWidth={3} />
+                            Assinado em {c.assinado_em ? new Date(c.assinado_em).toLocaleDateString('pt-BR') : '—'} por {c.assinatura_cliente}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* View contrato modal */}
+              {viewingContrato && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 200, display: 'flex', padding: 16, backdropFilter: 'blur(4px)' }} onClick={e => { if (e.target === e.currentTarget) setViewingContrato(null) }}>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: 16, width: '100%', maxWidth: 760, margin: 'auto', maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}>
+                    <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{viewingContrato.titulo}</div>
+                      <button onClick={() => setViewingContrato(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}><X size={18} /></button>
+                    </div>
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
+                      <div className="ct-content" style={{ fontSize: 13.5, lineHeight: 1.7, color: 'var(--text)' }} dangerouslySetInnerHTML={{ __html: viewingContrato.conteudo_final }} />
+                    </div>
+                    {(viewingContrato.status === 'enviado' || viewingContrato.status === 'visualizado') && (
+                      <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+                        <button onClick={() => { setViewingContrato(null); setSignModal({ id: viewingContrato.id }); setSignNome(''); setSignAceite(false) }} style={{ width: '100%', padding: '12px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 10, color: '#10b981', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                          <Check size={16} /> Aceitar e assinar contrato
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Signature modal */}
+              {signModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backdropFilter: 'blur(4px)' }}>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: 16, width: '100%', maxWidth: 440, padding: 28, boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Assinar contrato</div>
+                    <div style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 20 }}>
+                      Sua assinatura digital tem validade jurídica conforme a legislação brasileira.
+                    </div>
+                    <div style={{ marginBottom: 16 }}>
+                      <label style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-3)', display: 'block', marginBottom: 5, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Nome completo *</label>
+                      <input
+                        value={signNome}
+                        onChange={e => setSignNome(e.target.value)}
+                        placeholder="Digite seu nome completo..."
+                        style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border-input)', background: 'var(--bg-input)', color: 'var(--text)', fontSize: 14, outline: 'none', boxSizing: 'border-box' as const }}
+                      />
+                    </div>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 24 }}>
+                      <input type="checkbox" checked={signAceite} onChange={e => setSignAceite(e.target.checked)} style={{ marginTop: 2, width: 15, height: 15, accentColor: '#10b981', flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
+                        Li e concordo com todos os termos e cláusulas do contrato apresentado.
+                      </span>
+                    </label>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button onClick={() => setSignModal(null)} style={{ flex: 1, padding: '11px', background: 'var(--bg-input)', border: '1px solid var(--border-input)', borderRadius: 9, fontSize: 13, color: 'var(--text-2)', cursor: 'pointer', fontWeight: 500 }}>
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleAssinar}
+                        disabled={signing || !signNome.trim() || !signAceite}
+                        style={{ flex: 2, padding: '11px', background: '#10b981', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', opacity: (!signNome.trim() || !signAceite) ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                      >
+                        <Check size={15} /> {signing ? 'Assinando...' : 'Confirmar assinatura'}
+                      </button>
+                    </div>
+                    <div style={{ marginTop: 14, fontSize: 11, color: 'var(--text-3)', textAlign: 'center', lineHeight: 1.5 }}>
+                      Data e hora registradas automaticamente: {new Date().toLocaleString('pt-BR')}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )
         })()}
