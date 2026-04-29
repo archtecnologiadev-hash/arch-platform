@@ -6,6 +6,11 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { Mail, CheckCircle2, RotateCcw, ArrowLeft } from 'lucide-react'
 
+// Supabase default OTP length is 6 digits; Pro plans may use up to 8.
+// Accept 6–8 to be flexible regardless of project configuration.
+const OTP_MIN = 6
+const OTP_MAX = 8
+
 const inputBase: React.CSSProperties = {
   width: '100%',
   padding: '12px 14px',
@@ -24,23 +29,23 @@ function ConfirmarCodigoForm() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const codeRef      = useRef<HTMLInputElement>(null)
+  const autoTimer    = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const [email, setEmail]       = useState('')
-  const [code, setCode]         = useState('')
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState('')
-  const [confirmed, setConfirmed] = useState(false)
-  const [cooldown, setCooldown] = useState(0)
-  const [resending, setResending] = useState(false)
-  const [resendMsg, setResendMsg] = useState('')
+  const [email, setEmail]           = useState('')
+  const [code, setCode]             = useState('')
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState('')
+  const [confirmed, setConfirmed]   = useState(false)
+  const [cooldown, setCooldown]     = useState(0)
+  const [resending, setResending]   = useState(false)
+  const [resendMsg, setResendMsg]   = useState('')
 
   useEffect(() => {
     const emailParam = searchParams.get('email')
-    if (emailParam) setEmail(emailParam)
+    if (emailParam) setEmail(decodeURIComponent(emailParam))
     setTimeout(() => codeRef.current?.focus(), 100)
   }, [searchParams])
 
-  // Auto-redirect after confirmation
   useEffect(() => {
     if (!confirmed) return
     const t = setTimeout(() => router.push('/login?msg=email-confirmado'), 2000)
@@ -49,36 +54,53 @@ function ConfirmarCodigoForm() {
 
   async function handleVerify(e?: React.FormEvent) {
     e?.preventDefault()
+    if (autoTimer.current) { clearTimeout(autoTimer.current); autoTimer.current = null }
+
     if (!email) { setError('Informe o email.'); return }
-    if (code.length !== 8) { setError('O código deve ter exatamente 8 dígitos.'); return }
+    if (code.length < OTP_MIN) { setError(`O código deve ter pelo menos ${OTP_MIN} dígitos.`); return }
+
     setError('')
     setLoading(true)
 
+    console.log('[confirmar-email] verifyOtp →', { email, tokenLength: code.length, type: 'signup' })
+
     const supabase = createClient()
-    const { error: otpError } = await supabase.auth.verifyOtp({
+    const { data, error: otpError } = await supabase.auth.verifyOtp({
       email,
       token: code,
       type: 'signup',
     })
 
+    console.log('[confirmar-email] verifyOtp result →', {
+      session: !!data?.session,
+      user: data?.user?.id,
+      error: otpError?.message ?? null,
+    })
+
     if (otpError) {
-      setError('Código inválido ou expirado. Solicite um novo código.')
+      setError(`Código inválido ou expirado. Solicite um novo código. (${otpError.message})`)
+      setCode('')
       setLoading(false)
+      setTimeout(() => codeRef.current?.focus(), 50)
       return
     }
 
-    // Sign out so user goes through normal login after confirmation
     await supabase.auth.signOut()
     setLoading(false)
     setConfirmed(true)
   }
 
   function handleCodeChange(val: string) {
-    const digits = val.replace(/\D/g, '').slice(0, 8)
+    const digits = val.replace(/\D/g, '').slice(0, OTP_MAX)
     setCode(digits)
     setError('')
-    if (digits.length === 8) {
-      setTimeout(() => handleVerify(), 50)
+
+    if (autoTimer.current) clearTimeout(autoTimer.current)
+
+    // Auto-submit: fire 400ms after last keystroke once code is at least OTP_MIN digits.
+    // The debounce prevents partial submission when the user pastes or types quickly.
+    if (digits.length >= OTP_MIN) {
+      autoTimer.current = setTimeout(() => handleVerify(), 400)
     }
   }
 
@@ -87,6 +109,9 @@ function ConfirmarCodigoForm() {
     setResending(true)
     setResendMsg('')
     setError('')
+
+    console.log('[confirmar-email] resend →', { email })
+
     try {
       const res = await fetch('/api/auth/reenviar-confirmacao', {
         method: 'POST',
@@ -94,6 +119,8 @@ function ConfirmarCodigoForm() {
         body: JSON.stringify({ email }),
       })
       const data = await res.json()
+      console.log('[confirmar-email] resend result →', data)
+
       if (data.error) {
         setResendMsg(data.error)
       } else {
@@ -108,7 +135,8 @@ function ConfirmarCodigoForm() {
         }, 1000)
         setTimeout(() => codeRef.current?.focus(), 50)
       }
-    } catch {
+    } catch (err) {
+      console.error('[confirmar-email] resend error:', err)
       setResendMsg('Erro ao reenviar. Tente novamente.')
     } finally {
       setResending(false)
@@ -143,6 +171,8 @@ function ConfirmarCodigoForm() {
     )
   }
 
+  const isReady = code.length >= OTP_MIN
+
   return (
     <div style={card}>
       <div style={{
@@ -157,7 +187,7 @@ function ConfirmarCodigoForm() {
         Confirme sua conta
       </h1>
       <p style={{ fontSize: 13, fontWeight: 300, color: '#8e8e93', marginBottom: 28, lineHeight: 1.6 }}>
-        Enviamos um código de 8 dígitos para seu email.<br />
+        Digite o código enviado para seu email.<br />
         Verifique sua caixa de entrada e pasta de spam.
       </p>
 
@@ -180,7 +210,7 @@ function ConfirmarCodigoForm() {
 
         <div>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: '#6b6b6b', marginBottom: 6 }}>
-            Código de 8 dígitos
+            Código de confirmação
           </label>
           <input
             ref={codeRef}
@@ -189,18 +219,21 @@ function ConfirmarCodigoForm() {
             autoComplete="one-time-code"
             value={code}
             onChange={e => handleCodeChange(e.target.value)}
-            placeholder="00000000"
+            placeholder="000000"
             required
             style={{
               ...inputBase,
-              fontSize: 26,
+              fontSize: 28,
               fontWeight: 500,
-              letterSpacing: '0.25em',
+              letterSpacing: '0.3em',
               textAlign: 'center',
             }}
             onFocus={e => (e.target.style.borderColor = '#007AFF')}
             onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
           />
+          <p style={{ fontSize: 11, color: '#b0b0b8', marginTop: 5, textAlign: 'center' }}>
+            {code.length}/{OTP_MIN} dígitos{code.length > OTP_MIN ? ` (${code.length} digitados)` : ''}
+          </p>
         </div>
 
         {error && (
@@ -215,13 +248,13 @@ function ConfirmarCodigoForm() {
 
         <button
           type="submit"
-          disabled={loading || code.length !== 8}
+          disabled={loading || !isReady}
           style={{
             width: '100%', padding: '13px',
-            background: loading || code.length !== 8 ? '#a0c4ff' : '#007AFF',
+            background: loading || !isReady ? '#a0c4ff' : '#007AFF',
             color: '#ffffff', border: 'none', borderRadius: 10,
             fontSize: 15, fontWeight: 400,
-            cursor: loading || code.length !== 8 ? 'not-allowed' : 'pointer',
+            cursor: loading || !isReady ? 'not-allowed' : 'pointer',
             transition: 'background 0.2s', marginTop: 4,
           }}
         >
