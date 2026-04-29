@@ -150,13 +150,19 @@ export default function CadastroPage() {
     setLoading(true)
 
     const supabase = createClient()
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { nome, tipo: 'arquiteto' } },
+      options: {
+        data: { nome, tipo: 'arquiteto' },
+        emailRedirectTo: 'https://www.usearc.com.br/auth/confirm',
+      },
     })
 
+    console.log('[cadastro] signUp result:', { data, error: signUpError })
+
     if (signUpError) {
+      console.error('[cadastro] signUp error:', signUpError.message)
       const msg = signUpError.message.toLowerCase()
       if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already')) {
         setError('Este email já está cadastrado. Faça login ou recupere sua senha.')
@@ -169,12 +175,22 @@ export default function CadastroPage() {
       } else if (msg.includes('rate limit') || msg.includes('too many')) {
         setError('Muitas tentativas. Aguarde alguns minutos e tente novamente.')
       } else {
-        setError('Erro ao criar conta. Tente novamente.')
+        setError(`Erro ao criar conta: ${signUpError.message}`)
       }
       setLoading(false)
       return
     }
 
+    // When email confirmation is ON, Supabase returns success for duplicate emails
+    // but data.user.identities will be empty — detect and surface the error
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      console.warn('[cadastro] identities empty — email already registered:', email)
+      setError('Este email já está cadastrado. Faça login ou recupere sua senha.')
+      setLoading(false)
+      return
+    }
+
+    console.log('[cadastro] user created, awaiting confirmation:', data.user?.id)
     setSentEmail(email)
     setStep('pending')
     setLoading(false)
