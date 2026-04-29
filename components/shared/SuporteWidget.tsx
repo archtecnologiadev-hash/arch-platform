@@ -35,7 +35,6 @@ export default function SuporteWidget() {
   const [sending, setSending]   = useState(false)
   const [unread, setUnread]     = useState(0)
   const [userId, setUserId]     = useState<string | null>(null)
-  const [userName, setUserName] = useState('Usuário')
   const [loading, setLoading]   = useState(false)
   const [subject, setSubject]   = useState('')
   const [showSubject, setShowSubject] = useState(false)
@@ -48,8 +47,6 @@ export default function SuporteWidget() {
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return
       setUserId(data.user.id)
-      const { data: u } = await supabase.from('users').select('nome').eq('id', data.user.id).maybeSingle()
-      if (u?.nome) setUserName(u.nome.split(' ')[0])
     })
   }, [])
 
@@ -158,11 +155,9 @@ export default function SuporteWidget() {
       lida: false,
     })
     // Insert user message
-    const { data: sentMsg } = await supabase
+    await supabase
       .from('suporte_mensagens')
       .insert({ conversa_id: newConv.id, remetente_id: userId, conteudo: content, is_admin: false, lida: false })
-      .select('id, conteudo, is_admin, lida, created_at')
-      .single()
     // Update ultima_mensagem_em
     await supabase.from('suporte_conversas').update({ ultima_mensagem_em: new Date().toISOString() }).eq('id', newConv.id)
     // Load full messages
