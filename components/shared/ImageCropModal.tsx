@@ -57,7 +57,15 @@ export default function ImageCropModal({ src, aspect, circular = false, onConfir
 
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
     const { width, height } = e.currentTarget
-    setCrop(initCrop(width, height, aspect))
+    const pct = initCrop(width, height, aspect)
+    setCrop(pct)
+    setCompletedCrop({
+      unit: 'px',
+      x: Math.round((pct.x / 100) * width),
+      y: Math.round((pct.y / 100) * height),
+      width: Math.round((pct.width / 100) * width),
+      height: Math.round((pct.height / 100) * height),
+    })
   }
 
   async function handleConfirm() {
