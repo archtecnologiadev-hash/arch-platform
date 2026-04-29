@@ -6,9 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { Mail, CheckCircle2, RotateCcw, ArrowLeft } from 'lucide-react'
 
-// Supabase default OTP length is 6 digits; Pro plans may use up to 8.
-// Accept 6–8 to be flexible regardless of project configuration.
-const OTP_MIN = 6
+const OTP_MIN = 8
 const OTP_MAX = 8
 
 const inputBase: React.CSSProperties = {
@@ -187,7 +185,7 @@ function ConfirmarCodigoForm() {
         Confirme sua conta
       </h1>
       <p style={{ fontSize: 13, fontWeight: 300, color: '#8e8e93', marginBottom: 28, lineHeight: 1.6 }}>
-        Digite o código enviado para seu email.<br />
+        Digite o código de 8 dígitos enviado para seu email.<br />
         Verifique sua caixa de entrada e pasta de spam.
       </p>
 
@@ -219,7 +217,7 @@ function ConfirmarCodigoForm() {
             autoComplete="one-time-code"
             value={code}
             onChange={e => handleCodeChange(e.target.value)}
-            placeholder="000000"
+            placeholder="00000000"
             required
             style={{
               ...inputBase,
@@ -232,7 +230,7 @@ function ConfirmarCodigoForm() {
             onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
           />
           <p style={{ fontSize: 11, color: '#b0b0b8', marginTop: 5, textAlign: 'center' }}>
-            {code.length}/{OTP_MIN} dígitos{code.length > OTP_MIN ? ` (${code.length} digitados)` : ''}
+            {code.length}/8 dígitos
           </p>
         </div>
 
