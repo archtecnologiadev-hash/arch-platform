@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, RotateCcw } from 'lucide-react'
 
 const inputBase: React.CSSProperties = {
   width: '100%',
@@ -23,21 +23,30 @@ const inputBase: React.CSSProperties = {
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail]           = useState('')
+  const [password, setPassword]     = useState('')
+  const [error, setError]           = useState('')
+  const [loading, setLoading]       = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
+  const [showResend, setShowResend] = useState(false)
+  const [resending, setResending]   = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
+  const [resendMsg, setResendMsg]   = useState('')
 
   useEffect(() => {
-    if (searchParams.get('msg') === 'senha-alterada') {
+    const msg = searchParams.get('msg')
+    if (msg === 'senha-alterada') {
       setSuccessMsg('Senha alterada com sucesso! Faça login para continuar.')
+    } else if (msg === 'email-confirmado') {
+      setSuccessMsg('Email confirmado! Agora você já pode entrar.')
     }
   }, [searchParams])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    setShowResend(false)
+    setResendMsg('')
     setLoading(true)
 
     const supabase = createClient()
@@ -46,7 +55,8 @@ function LoginForm() {
     if (authError) {
       const msg = authError.message.toLowerCase()
       if (msg.includes('email not confirmed') || msg.includes('email link')) {
-        setError('Confirme seu email antes de entrar. Verifique sua caixa de entrada.')
+        setError('Confirme seu email antes de fazer login. Verifique sua caixa de entrada.')
+        setShowResend(true)
       } else if (msg.includes('rate limit') || msg.includes('too many')) {
         setError('Muitas tentativas. Aguarde alguns minutos e tente novamente.')
       } else {
@@ -59,6 +69,36 @@ function LoginForm() {
     const tipo = data.user?.user_metadata?.tipo ?? 'cliente'
     router.push(`/${tipo}/dashboard`)
     router.refresh()
+  }
+
+  async function handleResend() {
+    if (resendCooldown > 0 || resending || !email) return
+    setResending(true)
+    setResendMsg('')
+    try {
+      const res = await fetch('/api/auth/reenviar-confirmacao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (data.error) {
+        setResendMsg(data.error)
+      } else {
+        setResendMsg('Email reenviado! Verifique sua caixa de entrada.')
+        let secs = 60
+        setResendCooldown(secs)
+        const iv = setInterval(() => {
+          secs -= 1
+          setResendCooldown(secs)
+          if (secs <= 0) clearInterval(iv)
+        }, 1000)
+      }
+    } catch {
+      setResendMsg('Erro ao reenviar. Tente novamente.')
+    } finally {
+      setResending(false)
+    }
   }
 
   return (
@@ -125,13 +165,44 @@ function LoginForm() {
         </div>
 
         {error && (
-          <p style={{
-            fontSize: 13, color: '#ff3b30', textAlign: 'center', margin: 0,
+          <div style={{
             padding: '10px 14px', background: 'rgba(255,59,48,0.06)',
             borderRadius: 8, border: '1px solid rgba(255,59,48,0.15)',
           }}>
-            {error}
-          </p>
+            <p style={{ fontSize: 13, color: '#ff3b30', margin: 0, textAlign: 'center' }}>
+              {error}
+            </p>
+            {showResend && (
+              <div style={{ marginTop: 10 }}>
+                {resendMsg && (
+                  <p style={{
+                    fontSize: 12, margin: '0 0 8px',
+                    color: resendMsg.startsWith('Email reenviado') ? '#059669' : '#ff3b30',
+                    textAlign: 'center',
+                  }}>
+                    {resendMsg}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendCooldown > 0 || resending || !email}
+                  style={{
+                    width: '100%', padding: '9px',
+                    background: resendCooldown > 0 ? '#f2f2f7' : 'rgba(0,122,255,0.08)',
+                    border: `1px solid ${resendCooldown > 0 ? 'rgba(0,0,0,0.08)' : 'rgba(0,122,255,0.2)'}`,
+                    color: resendCooldown > 0 ? '#8e8e93' : '#007AFF',
+                    borderRadius: 8, fontSize: 12, fontWeight: 500,
+                    cursor: resendCooldown > 0 || resending || !email ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  }}
+                >
+                  <RotateCcw size={12} />
+                  {resending ? 'Enviando…' : resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : 'Reenviar email de confirmação'}
+                </button>
+              </div>
+            )}
+          </div>
         )}
 
         <button

@@ -55,7 +55,9 @@ export async function middleware(request: NextRequest) {
     pathname === '/auth/confirm' ||
     pathname === '/nova-senha' ||
     pathname === '/recuperar-senha' ||
-    pathname === '/recuperar-senha/codigo'
+    pathname === '/recuperar-senha/codigo' ||
+    pathname === '/confirmar-email' ||
+    pathname === '/confirmar-email-pendente'
   ) {
     return NextResponse.next({ request: { headers: request.headers } })
   }
@@ -118,6 +120,11 @@ export async function middleware(request: NextRequest) {
   // Conta suspensa — bloqueia acesso a rotas protegidas
   if (dbInfo?.status_conta === 'suspenso' && isProtected && pathname !== '/conta-suspensa') {
     return NextResponse.redirect(new URL('/conta-suspensa', request.url))
+  }
+
+  // Email não confirmado — bloqueia acesso a rotas protegidas
+  if (!session.user.email_confirmed_at && isProtected) {
+    return NextResponse.redirect(new URL('/confirmar-email-pendente', request.url))
   }
 
   // DB tipo is authoritative; fall back to metadata only when DB row not yet created

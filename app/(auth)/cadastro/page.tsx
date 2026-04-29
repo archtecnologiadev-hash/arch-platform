@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { Mail, RotateCcw, CheckCircle2 } from 'lucide-react'
 
 const inputBase: React.CSSProperties = {
   width: '100%',
@@ -19,14 +19,130 @@ const inputBase: React.CSSProperties = {
   transition: 'border-color 0.15s',
 }
 
+function PendingScreen({ email, onBack }: { email: string; onBack: () => void }) {
+  const [cooldown, setCooldown]   = useState(0)
+  const [resending, setResending] = useState(false)
+  const [toast, setToast]         = useState('')
+
+  async function handleResend() {
+    if (cooldown > 0 || resending) return
+    setResending(true)
+    setToast('')
+    try {
+      const res = await fetch('/api/auth/reenviar-confirmacao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (data.error) {
+        setToast(data.error)
+      } else {
+        setToast('Email reenviado!')
+        let secs = 60
+        setCooldown(secs)
+        const iv = setInterval(() => {
+          secs -= 1
+          setCooldown(secs)
+          if (secs <= 0) clearInterval(iv)
+        }, 1000)
+      }
+    } catch {
+      setToast('Erro ao reenviar. Tente novamente.')
+    } finally {
+      setResending(false)
+    }
+  }
+
+  return (
+    <div style={{
+      background: '#ffffff',
+      border: '1px solid rgba(0,0,0,0.08)',
+      borderRadius: 16,
+      padding: '40px 32px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+      textAlign: 'center',
+    }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: '50%',
+        background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.15)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px',
+      }}>
+        <Mail size={24} color="#007AFF" />
+      </div>
+
+      <h1 style={{ fontSize: 20, fontWeight: 400, color: '#1a1a1a', marginBottom: 8 }}>
+        Confirmação enviada
+      </h1>
+      <p style={{ fontSize: 13, color: '#6b6b6b', lineHeight: 1.6, marginBottom: 6 }}>
+        Enviamos um link de confirmação para
+      </p>
+      <p style={{ fontSize: 14, fontWeight: 500, color: '#1a1a1a', marginBottom: 20 }}>
+        {email}
+      </p>
+      <p style={{ fontSize: 13, color: '#8e8e93', lineHeight: 1.6, marginBottom: 28 }}>
+        Verifique sua caixa de entrada e clique no link para ativar sua conta.
+        Não esqueça de checar a pasta de spam.
+      </p>
+
+      {toast && (
+        <div style={{
+          marginBottom: 16,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          fontSize: 13,
+          color: toast === 'Email reenviado!' ? '#059669' : '#ff3b30',
+          padding: '10px 14px',
+          background: toast === 'Email reenviado!' ? 'rgba(5,150,105,0.06)' : 'rgba(255,59,48,0.06)',
+          borderRadius: 8,
+          border: `1px solid ${toast === 'Email reenviado!' ? 'rgba(5,150,105,0.2)' : 'rgba(255,59,48,0.15)'}`,
+        }}>
+          {toast === 'Email reenviado!' && <CheckCircle2 size={14} />}
+          {toast}
+        </div>
+      )}
+
+      <button
+        onClick={handleResend}
+        disabled={cooldown > 0 || resending}
+        style={{
+          width: '100%', padding: '12px', marginBottom: 12,
+          background: cooldown > 0 || resending ? '#f2f2f7' : 'rgba(0,122,255,0.08)',
+          border: `1px solid ${cooldown > 0 || resending ? 'rgba(0,0,0,0.08)' : 'rgba(0,122,255,0.2)'}`,
+          color: cooldown > 0 || resending ? '#8e8e93' : '#007AFF',
+          borderRadius: 10, fontSize: 14, fontWeight: 500,
+          cursor: cooldown > 0 || resending ? 'not-allowed' : 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+          transition: 'all 0.15s',
+        }}
+      >
+        <RotateCcw size={14} />
+        {resending ? 'Enviando…' : cooldown > 0 ? `Reenviar em ${cooldown}s` : 'Reenviar email'}
+      </button>
+
+      <button
+        onClick={onBack}
+        style={{
+          width: '100%', padding: '12px',
+          background: 'transparent', border: '1px solid rgba(0,0,0,0.1)',
+          color: '#6b6b6b', borderRadius: 10, fontSize: 14,
+          cursor: 'pointer', transition: 'all 0.15s',
+        }}
+      >
+        Trocar email
+      </button>
+    </div>
+  )
+}
+
 export default function CadastroPage() {
-  const router = useRouter()
-  const [nome, setNome] = useState('')
-  const [email, setEmail] = useState('')
+  const [step, setStep]         = useState<'form' | 'pending'>('form')
+  const [sentEmail, setSentEmail] = useState('')
+  const [nome, setNome]         = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [termos, setTermos] = useState(false)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [termos, setTermos]     = useState(false)
+  const [error, setError]       = useState('')
+  const [loading, setLoading]   = useState(false)
 
   async function handleCadastro(e: React.FormEvent) {
     e.preventDefault()
@@ -59,8 +175,13 @@ export default function CadastroPage() {
       return
     }
 
-    router.push('/arquiteto/onboarding')
-    router.refresh()
+    setSentEmail(email)
+    setStep('pending')
+    setLoading(false)
+  }
+
+  if (step === 'pending') {
+    return <PendingScreen email={sentEmail} onBack={() => { setStep('form'); setEmail(''); setPassword('') }} />
   }
 
   return (
