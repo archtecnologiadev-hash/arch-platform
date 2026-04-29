@@ -112,14 +112,14 @@ export default function SuporteWidget() {
   // Realtime subscription
   useEffect(() => {
     if (!open || !conv) return
-    console.log('[suporte-widget] subscribing conv:', conv.id)
+    console.log(`[suporte-widget] ▶ subscribe | conv=${conv.id} | userId=${userId}`)
     const channel = supabase
       .channel(`suporte-widget-${conv.id}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'suporte_mensagens', filter: `conversa_id=eq.${conv.id}` },
         async (payload) => {
-          console.log('[suporte-widget] msg recebida:', payload.new)
+          console.log('[suporte-widget] ✅ msg recebida via realtime:', payload.new)
           const newMsg = payload.new as Msg
           setMsgs(prev => {
             if (prev.find(m => m.id === newMsg.id)) return prev
@@ -130,11 +130,17 @@ export default function SuporteWidget() {
           }
         }
       )
-      .subscribe((status) => {
-        console.log('[suporte-widget] status canal:', status)
+      .subscribe((status, err) => {
+        console.log(`[suporte-widget] canal status: ${status}`, err ?? '')
+        if (status === 'CHANNEL_ERROR') {
+          console.error('[suporte-widget] ❌ CHANNEL_ERROR — verifique RLS e REPLICA IDENTITY FULL')
+        }
+        if (status === 'TIMED_OUT') {
+          console.error('[suporte-widget] ❌ TIMED_OUT — verifique se a tabela está na publicação supabase_realtime')
+        }
       })
     return () => {
-      console.log('[suporte-widget] removendo canal')
+      console.log('[suporte-widget] ◀ removendo canal')
       supabase.removeChannel(channel)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -189,7 +195,7 @@ export default function SuporteWidget() {
       await createConvAndSend(txt)
       return
     }
-    console.log('[suporte-widget] enviando mensagem')
+    console.log(`[suporte-widget] ▶ enviando | conv=${conv.id} | userId=${userId}`)
     setSending(true)
     setText('')
 
@@ -197,11 +203,12 @@ export default function SuporteWidget() {
     const tempMsg: Msg = { id: tempId, conteudo: txt, is_admin: false, lida: false, created_at: new Date().toISOString() }
     setMsgs(prev => [...prev, tempMsg])
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('suporte_mensagens')
       .insert({ conversa_id: conv.id, remetente_id: userId, conteudo: txt, is_admin: false, lida: false })
       .select('id, conteudo, is_admin, lida, created_at')
       .single()
+    console.log(`[suporte-widget] insert result | data=${data?.id} | error=${error?.message}`)
 
     setMsgs(prev => {
       if (data) {

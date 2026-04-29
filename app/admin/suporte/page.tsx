@@ -168,8 +168,14 @@ export default function AdminSuportePage() {
           }
         }
       )
-      .subscribe((status) => {
-        console.log('[admin-suporte] status canal:', status)
+      .subscribe((status, err) => {
+        console.log(`[admin-suporte] canal status: ${status}`, err ?? '')
+        if (status === 'CHANNEL_ERROR') {
+          console.error('[admin-suporte] ❌ CHANNEL_ERROR — verifique RLS e REPLICA IDENTITY FULL')
+        }
+        if (status === 'TIMED_OUT') {
+          console.error('[admin-suporte] ❌ TIMED_OUT — verifique se a tabela está na publicação supabase_realtime')
+        }
       })
     return () => {
       console.log('[admin-suporte] removendo canal')
@@ -191,7 +197,7 @@ export default function AdminSuportePage() {
   async function sendMsg(content?: string) {
     const txt = (content ?? text).trim()
     if (!txt || !selected || sending) return
-    console.log('[admin-suporte] enviando mensagem')
+    console.log(`[admin-suporte] ▶ enviando | conv=${selected.id}`)
     setSending(true)
     setText('')
 
@@ -199,11 +205,12 @@ export default function AdminSuportePage() {
     const tempMsg: Msg = { id: tempId, conteudo: txt, is_admin: true, lida: false, created_at: new Date().toISOString(), remetente_id: null }
     setMsgs(prev => [...prev, tempMsg])
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('suporte_mensagens')
       .insert({ conversa_id: selected.id, conteudo: txt, is_admin: true, lida: false })
       .select('id, conteudo, is_admin, lida, created_at, remetente_id')
       .single()
+    console.log(`[admin-suporte] insert result | data=${data?.id} | error=${error?.message}`)
 
     setMsgs(prev => {
       if (data) {
