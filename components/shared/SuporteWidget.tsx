@@ -6,8 +6,8 @@ import { createClient } from '@/lib/supabase'
 
 interface Msg {
   id: string
-  conteudo: string
-  is_admin: boolean
+  texto: string
+  eh_admin: boolean
   lida: boolean
   created_at: string
 }
@@ -65,12 +65,12 @@ export default function SuporteWidget() {
       setConv(convData)
       const { data: msgData } = await supabase
         .from('suporte_mensagens')
-        .select('id, conteudo, is_admin, lida, created_at')
+        .select('id, texto, eh_admin, lida, created_at')
         .eq('conversa_id', convData.id)
         .order('created_at', { ascending: true })
       setMsgs(msgData ?? [])
       // mark admin msgs as read
-      const unreadIds = (msgData ?? []).filter(m => m.is_admin && !m.lida).map(m => m.id)
+      const unreadIds = (msgData ?? []).filter(m => m.eh_admin && !m.lida).map(m => m.id)
       if (unreadIds.length > 0) {
         await supabase.from('suporte_mensagens').update({ lida: true }).in('id', unreadIds)
         setUnread(0)
@@ -93,7 +93,7 @@ export default function SuporteWidget() {
         .from('suporte_mensagens')
         .select('id', { count: 'exact', head: true })
         .eq('conversa_id', convData.id)
-        .eq('is_admin', true)
+        .eq('eh_admin', true)
         .eq('lida', false)
       setUnread(count ?? 0)
     }
@@ -125,7 +125,7 @@ export default function SuporteWidget() {
             if (prev.find(m => m.id === newMsg.id)) return prev
             return [...prev, newMsg]
           })
-          if (newMsg.is_admin) {
+          if (newMsg.eh_admin) {
             await supabase.from('suporte_mensagens').update({ lida: true }).eq('id', newMsg.id)
           }
         }
@@ -165,20 +165,20 @@ export default function SuporteWidget() {
     // Insert welcome message from admin side
     await supabase.from('suporte_mensagens').insert({
       conversa_id: newConv.id,
-      conteudo: WELCOME,
-      is_admin: true,
+      texto: WELCOME,
+      eh_admin: true,
       lida: false,
     })
     // Insert user message
     await supabase
       .from('suporte_mensagens')
-      .insert({ conversa_id: newConv.id, remetente_id: userId, conteudo: content, is_admin: false, lida: false })
+      .insert({ conversa_id: newConv.id, remetente_id: userId, texto: content, eh_admin: false, lida: false })
     // Update ultima_mensagem_em
     await supabase.from('suporte_conversas').update({ ultima_mensagem_em: new Date().toISOString() }).eq('id', newConv.id)
     // Load full messages
     const { data: msgData } = await supabase
       .from('suporte_mensagens')
-      .select('id, conteudo, is_admin, lida, created_at')
+      .select('id, texto, eh_admin, lida, created_at')
       .eq('conversa_id', newConv.id)
       .order('created_at', { ascending: true })
     setMsgs(msgData ?? [])
@@ -200,13 +200,13 @@ export default function SuporteWidget() {
     setText('')
 
     const tempId = `temp-${Date.now()}`
-    const tempMsg: Msg = { id: tempId, conteudo: txt, is_admin: false, lida: false, created_at: new Date().toISOString() }
+    const tempMsg: Msg = { id: tempId, texto: txt, eh_admin: false, lida: false, created_at: new Date().toISOString() }
     setMsgs(prev => [...prev, tempMsg])
 
     const { data, error } = await supabase
       .from('suporte_mensagens')
-      .insert({ conversa_id: conv.id, remetente_id: userId, conteudo: txt, is_admin: false, lida: false })
-      .select('id, conteudo, is_admin, lida, created_at')
+      .insert({ conversa_id: conv.id, remetente_id: userId, texto: txt, eh_admin: false, lida: false })
+      .select('id, texto, eh_admin, lida, created_at')
       .single()
     console.log(`[suporte-widget] insert result | data=${data?.id} | error=${error?.message}`)
 
@@ -337,19 +337,19 @@ export default function SuporteWidget() {
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  alignItems: m.is_admin ? 'flex-start' : 'flex-end',
+                  alignItems: m.eh_admin ? 'flex-start' : 'flex-end',
                 }}
               >
                 <div style={{
-                  background: m.is_admin ? 'var(--bg)' : 'var(--accent)',
-                  color: m.is_admin ? 'var(--text)' : '#fff',
+                  background: m.eh_admin ? 'var(--bg)' : 'var(--accent)',
+                  color: m.eh_admin ? 'var(--text)' : '#fff',
                   borderRadius: 12,
-                  borderBottomLeftRadius: m.is_admin ? 4 : 12,
-                  borderBottomRightRadius: m.is_admin ? 12 : 4,
+                  borderBottomLeftRadius: m.eh_admin ? 4 : 12,
+                  borderBottomRightRadius: m.eh_admin ? 12 : 4,
                   padding: '8px 12px', fontSize: 13, maxWidth: '85%', lineHeight: 1.5,
                   wordBreak: 'break-word',
                 }}>
-                  {m.conteudo}
+                  {m.texto}
                 </div>
                 <span style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3 }}>
                   {fmtTime(m.created_at)}

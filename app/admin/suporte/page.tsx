@@ -19,8 +19,8 @@ interface Conv {
 
 interface Msg {
   id: string
-  conteudo: string
-  is_admin: boolean
+  texto: string
+  eh_admin: boolean
   lida: boolean
   created_at: string
   remetente_id: string | null
@@ -97,13 +97,13 @@ export default function AdminSuportePage() {
       .select('id, nome, email')
       .in('id', userIds)
 
-    // Fetch unread counts (msgs from user not read by admin — is_admin=false AND lida=false)
+    // Fetch unread counts (msgs from user not read by admin — eh_admin=false AND lida=false)
     const convIds = data.map(c => c.id)
     const { data: unreadData } = await supabase
       .from('suporte_mensagens')
       .select('conversa_id')
       .in('conversa_id', convIds)
-      .eq('is_admin', false)
+      .eq('eh_admin', false)
       .eq('lida', false)
 
     const unreadMap: Record<string, number> = {}
@@ -137,13 +137,13 @@ export default function AdminSuportePage() {
     setLoadingMsgs(true)
     const { data } = await supabase
       .from('suporte_mensagens')
-      .select('id, conteudo, is_admin, lida, created_at, remetente_id')
+      .select('id, texto, eh_admin, lida, created_at, remetente_id')
       .eq('conversa_id', convId)
       .order('created_at', { ascending: true })
     setMsgs(data ?? [])
     setLoadingMsgs(false)
     // Mark user messages as read
-    const unreadIds = (data ?? []).filter(m => !m.is_admin && !m.lida).map(m => m.id)
+    const unreadIds = (data ?? []).filter(m => !m.eh_admin && !m.lida).map(m => m.id)
     if (unreadIds.length > 0) {
       await supabase.from('suporte_mensagens').update({ lida: true }).in('id', unreadIds)
       setConvs(prev => prev.map(c => c.id === convId ? { ...c, unread: 0 } : c))
@@ -163,7 +163,7 @@ export default function AdminSuportePage() {
           console.log('[admin-suporte] msg recebida:', payload.new)
           const newMsg = payload.new as Msg
           setMsgs(prev => prev.find(m => m.id === newMsg.id) ? prev : [...prev, newMsg])
-          if (!newMsg.is_admin) {
+          if (!newMsg.eh_admin) {
             await supabase.from('suporte_mensagens').update({ lida: true }).eq('id', newMsg.id)
           }
         }
@@ -202,13 +202,13 @@ export default function AdminSuportePage() {
     setText('')
 
     const tempId = `temp-${Date.now()}`
-    const tempMsg: Msg = { id: tempId, conteudo: txt, is_admin: true, lida: false, created_at: new Date().toISOString(), remetente_id: null }
+    const tempMsg: Msg = { id: tempId, texto: txt, eh_admin: true, lida: false, created_at: new Date().toISOString(), remetente_id: null }
     setMsgs(prev => [...prev, tempMsg])
 
     const { data, error } = await supabase
       .from('suporte_mensagens')
-      .insert({ conversa_id: selected.id, conteudo: txt, is_admin: true, lida: false })
-      .select('id, conteudo, is_admin, lida, created_at, remetente_id')
+      .insert({ conversa_id: selected.id, texto: txt, eh_admin: true, lida: false })
+      .select('id, texto, eh_admin, lida, created_at, remetente_id')
       .single()
     console.log(`[admin-suporte] insert result | data=${data?.id} | error=${error?.message}`)
 
@@ -418,21 +418,21 @@ export default function AdminSuportePage() {
                 </div>
               )}
               {msgs.map(m => (
-                <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: m.is_admin ? 'flex-end' : 'flex-start' }}>
+                <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: m.eh_admin ? 'flex-end' : 'flex-start' }}>
                   <div style={{
-                    background: m.is_admin ? 'var(--accent)' : 'var(--bg-card)',
-                    color: m.is_admin ? '#fff' : 'var(--text)',
-                    border: m.is_admin ? 'none' : '1px solid var(--border)',
+                    background: m.eh_admin ? 'var(--accent)' : 'var(--bg-card)',
+                    color: m.eh_admin ? '#fff' : 'var(--text)',
+                    border: m.eh_admin ? 'none' : '1px solid var(--border)',
                     borderRadius: 12,
-                    borderBottomRightRadius: m.is_admin ? 4 : 12,
-                    borderBottomLeftRadius: m.is_admin ? 12 : 4,
+                    borderBottomRightRadius: m.eh_admin ? 4 : 12,
+                    borderBottomLeftRadius: m.eh_admin ? 12 : 4,
                     padding: '8px 12px', fontSize: 13, maxWidth: '70%', lineHeight: 1.5,
                     wordBreak: 'break-word',
                   }}>
-                    {m.conteudo}
+                    {m.texto}
                   </div>
                   <span style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3 }}>
-                    {m.is_admin ? 'Admin · ' : ''}{fmtFull(m.created_at)}
+                    {m.eh_admin ? 'Admin · ' : ''}{fmtFull(m.created_at)}
                   </span>
                 </div>
               ))}
