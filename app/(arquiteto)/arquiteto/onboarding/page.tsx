@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -19,9 +19,9 @@ const STEPS: StepDef[] = [
 ]
 
 const inp: React.CSSProperties = {
-  width: '100%', padding: '12px 14px', background: '#f2f2f7',
-  border: '1px solid rgba(0,0,0,0.1)', borderRadius: 10,
-  color: '#1a1a1a', fontSize: 14, outline: 'none',
+  width: '100%', padding: '12px 14px', background: 'var(--bg)',
+  border: '1px solid var(--border-input)', borderRadius: 10,
+  color: 'var(--text)', fontSize: 14, outline: 'none',
   boxSizing: 'border-box', fontFamily: 'inherit', transition: 'border-color 0.15s',
 }
 
@@ -140,8 +140,8 @@ function Step1({ userId, onNext }: { userId: string; onNext: () => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>Complete seu perfil</h2>
-        <p style={{ fontSize: 14, color: '#8e8e93', fontWeight: 300 }}>Essas informações aparecem no seu escritório na plataforma.</p>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Complete seu perfil</h2>
+        <p style={{ fontSize: 14, color: 'var(--text-3)', fontWeight: 300 }}>Essas informações aparecem no seu escritório na plataforma.</p>
       </div>
 
       {/* Avatar */}
@@ -158,20 +158,20 @@ function Step1({ userId, onNext }: { userId: string; onNext: () => void }) {
         >
           {avatarPreview
             ? <img src={avatarPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : <Upload size={20} color="#007AFF" />}
+            : <Upload size={20} color="var(--accent)" />}
         </div>
         <div>
-          <button onClick={() => fileRef.current?.click()} style={{ background: 'none', border: '1px solid rgba(0,122,255,0.25)', borderRadius: 8, padding: '7px 14px', color: '#007AFF', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+          <button onClick={() => fileRef.current?.click()} style={{ background: 'none', border: '1px solid rgba(0,122,255,0.25)', borderRadius: 8, padding: '7px 14px', color: 'var(--accent)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
             {avatarPreview ? 'Trocar foto' : 'Adicionar foto'}
           </button>
-          <p style={{ fontSize: 11.5, color: '#8e8e93', marginTop: 4 }}>Opcional · JPG ou PNG</p>
+          <p style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 4 }}>Opcional · JPG ou PNG</p>
         </div>
         <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatar} />
       </div>
 
       {/* Nome do escritório */}
       <div>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>Nome do escritório *</label>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}>Nome do escritório *</label>
         <input
           style={inp} value={nomeEscritorio} onChange={e => setNomeEscritorio(e.target.value)}
           placeholder="Ex: Silva Arquitetura"
@@ -182,7 +182,7 @@ function Step1({ userId, onNext }: { userId: string; onNext: () => void }) {
 
       {/* Cidade */}
       <div>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>Cidade</label>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}>Cidade</label>
         <input
           style={inp} value={cidade} onChange={e => setCidade(e.target.value)}
           placeholder="Ex: São Paulo, SP"
@@ -193,7 +193,7 @@ function Step1({ userId, onNext }: { userId: string; onNext: () => void }) {
 
       {/* Bio */}
       <div>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>Descrição do escritório <span style={{ color: '#c7c7cc' }}>(opcional)</span></label>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}>Descrição do escritório <span style={{ color: 'var(--logout-btn)' }}>(opcional)</span></label>
         <textarea
           style={{ ...inp, resize: 'none' as const, lineHeight: 1.6 }}
           value={bio} onChange={e => setBio(e.target.value)}
@@ -267,12 +267,12 @@ function Step2({ userId, onNext, onSkip }: { userId: string; onNext: () => void;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>Crie seu primeiro projeto</h2>
-        <p style={{ fontSize: 14, color: '#8e8e93', fontWeight: 300 }}>Você pode criar mais projetos a qualquer momento no painel.</p>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Crie seu primeiro projeto</h2>
+        <p style={{ fontSize: 14, color: 'var(--text-3)', fontWeight: 300 }}>Você pode criar mais projetos a qualquer momento no painel.</p>
       </div>
 
       <div>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>Nome do projeto *</label>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}>Nome do projeto *</label>
         <input
           style={inp} value={nome} onChange={e => setNome(e.target.value)}
           placeholder="Ex: Residência Família Souza"
@@ -282,7 +282,7 @@ function Step2({ userId, onNext, onSkip }: { userId: string; onNext: () => void;
       </div>
 
       <div>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 8 }}>Tipo de projeto</label>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 8 }}>Tipo de projeto</label>
         <div style={{ display: 'flex', gap: 8 }}>
           {TIPOS.map(t => (
             <button key={t.value} onClick={() => setTipo(t.value)} type="button"
@@ -294,7 +294,7 @@ function Step2({ userId, onNext, onSkip }: { userId: string; onNext: () => void;
       </div>
 
       <div>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>Email do cliente <span style={{ color: '#c7c7cc' }}>(opcional)</span></label>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}>Email do cliente <span style={{ color: 'var(--logout-btn)' }}>(opcional)</span></label>
         <input
           style={inp} type="email" value={emailCliente} onChange={e => setEmailCliente(e.target.value)}
           placeholder="cliente@email.com"
@@ -310,7 +310,7 @@ function Step2({ userId, onNext, onSkip }: { userId: string; onNext: () => void;
         >
           {saving ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Criando...</> : <>Criar projeto e continuar <ArrowRight size={16} /></>}
         </button>
-        <button onClick={skip} style={{ width: '100%', padding: '12px', background: 'none', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 10, fontSize: 14, color: '#8e8e93', cursor: 'pointer' }}>
+        <button onClick={skip} style={{ width: '100%', padding: '12px', background: 'none', border: '1px solid var(--border-input)', borderRadius: 10, fontSize: 14, color: 'var(--text-3)', cursor: 'pointer' }}>
           Pular este passo
         </button>
       </div>
@@ -373,8 +373,8 @@ function Step3({ userId, onNext, onSkip }: { userId: string; onNext: () => void;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>Convide sua equipe</h2>
-        <p style={{ fontSize: 14, color: '#8e8e93', fontWeight: 300 }}>Trabalha sozinho? Pode pular este passo — você convida depois em Equipe.</p>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Convide sua equipe</h2>
+        <p style={{ fontSize: 14, color: 'var(--text-3)', fontWeight: 300 }}>Trabalha sozinho? Pode pular este passo — você convida depois em Equipe.</p>
       </div>
 
       {/* Add member form */}
@@ -407,12 +407,12 @@ function Step3({ userId, onNext, onSkip }: { userId: string; onNext: () => void;
       {convidados.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {convidados.map((c, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, padding: '10px 14px' }}>
+            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 9, padding: '10px 14px' }}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{c.nome}</div>
-                <div style={{ fontSize: 12, color: '#8e8e93' }}>{c.email}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{c.nome}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-3)' }}>{c.email}</div>
               </div>
-              <button onClick={() => setConvidados(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c7c7cc', padding: 4, display: 'flex', alignItems: 'center' }}>
+              <button onClick={() => setConvidados(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--logout-btn)', padding: 4, display: 'flex', alignItems: 'center' }}>
                 <X size={14} />
               </button>
             </div>
@@ -428,7 +428,7 @@ function Step3({ userId, onNext, onSkip }: { userId: string; onNext: () => void;
         >
           {saving ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</> : convidados.length > 0 ? <>Convidar e continuar <ArrowRight size={16} /></> : <>Continuar <ArrowRight size={16} /></>}
         </button>
-        <button onClick={skip} style={{ width: '100%', padding: '12px', background: 'none', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 10, fontSize: 14, color: '#8e8e93', cursor: 'pointer' }}>
+        <button onClick={skip} style={{ width: '100%', padding: '12px', background: 'none', border: '1px solid var(--border-input)', borderRadius: 10, fontSize: 14, color: 'var(--text-3)', cursor: 'pointer' }}>
           Pular este passo
         </button>
       </div>
@@ -527,15 +527,15 @@ function Step4({ userId, onNext }: { userId: string; onNext: () => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>Ativar trial de 14 dias</h2>
-        <p style={{ fontSize: 14, color: '#8e8e93', fontWeight: 300 }}>R$149/mês após 14 dias grátis · Cancele quando quiser.</p>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Ativar trial de 14 dias</h2>
+        <p style={{ fontSize: 14, color: 'var(--text-3)', fontWeight: 300 }}>R$149/mês após 14 dias grátis · Cancele quando quiser.</p>
       </div>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {/* Card number */}
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>
-            Número do cartão {brand && <span style={{ color: '#007AFF', fontWeight: 700 }}>{BRAND_LABELS[brand]}</span>}
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}>
+            Número do cartão {brand && <span style={{ color: 'var(--accent)', fontWeight: 700 }}>{BRAND_LABELS[brand]}</span>}
           </label>
           <input
             style={inp} value={cardNumber} inputMode="numeric" autoComplete="cc-number"
@@ -548,7 +548,7 @@ function Step4({ userId, onNext }: { userId: string; onNext: () => void }) {
 
         {/* Holder name */}
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>Nome no cartão</label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}>Nome no cartão</label>
           <input
             style={inp} value={holderName} autoComplete="cc-name"
             onChange={e => setHolderName(e.target.value.toUpperCase())}
@@ -561,7 +561,7 @@ function Step4({ userId, onNext }: { userId: string; onNext: () => void }) {
         {/* Expiry + CVV */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>Validade</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}>Validade</label>
             <input
               style={inp} value={expiry} inputMode="numeric" autoComplete="cc-exp"
               onChange={e => setExpiry(formatExpiry(e.target.value))}
@@ -571,7 +571,7 @@ function Step4({ userId, onNext }: { userId: string; onNext: () => void }) {
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>CVV</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}>CVV</label>
             <input
               style={inp} value={ccv} inputMode="numeric" autoComplete="cc-csc"
               onChange={e => setCcv(e.target.value.replace(/\D/g, '').slice(0, isAmex ? 4 : 3))}
@@ -584,7 +584,7 @@ function Step4({ userId, onNext }: { userId: string; onNext: () => void }) {
 
         {/* CPF */}
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#6b6b6b', marginBottom: 6 }}>CPF do titular</label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-2)', marginBottom: 6 }}>CPF do titular</label>
           <input
             style={inp} value={cpf} inputMode="numeric"
             onChange={e => setCpf(formatCpf(e.target.value))}
@@ -610,7 +610,7 @@ function Step4({ userId, onNext }: { userId: string; onNext: () => void }) {
 
       <button
         onClick={skipCard} disabled={skipping}
-        style={{ width: '100%', padding: '12px', background: 'none', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 10, fontSize: 14, color: '#8e8e93', cursor: skipping ? 'not-allowed' : 'pointer' }}
+        style={{ width: '100%', padding: '12px', background: 'none', border: '1px solid var(--border-input)', borderRadius: 10, fontSize: 14, color: 'var(--text-3)', cursor: skipping ? 'not-allowed' : 'pointer' }}
       >
         {skipping ? 'Aguarde...' : 'Configurar cartão depois'}
       </button>
@@ -640,8 +640,8 @@ function FounderStep({ onNext, userId }: { onNext: () => void; userId: string })
         ★
       </div>
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginBottom: 8 }}>Você é Fundador!</h2>
-        <p style={{ fontSize: 14, color: '#8e8e93', fontWeight: 300, lineHeight: 1.6 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Você é Fundador!</h2>
+        <p style={{ fontSize: 14, color: 'var(--text-3)', fontWeight: 300, lineHeight: 1.6 }}>
           Seu acesso à ARC é vitalício e gratuito.<br />
           Não é necessário cartão de crédito.
         </p>
@@ -652,7 +652,7 @@ function FounderStep({ onNext, userId }: { onNext: () => void; userId: string })
       <button
         onClick={handleContinue}
         disabled={marking}
-        style={{ padding: '14px 36px', background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: marking ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: marking ? 0.7 : 1 }}
+        style={{ padding: '14px 36px', background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: marking ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: marking ? 0.7 : 1 }}
       >
         {marking ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Aguarde...</> : <>Ir para o painel <ArrowRight size={16} /></>}
       </button>
@@ -669,14 +669,14 @@ function SuccessScreen({ onGo }: { onGo: () => void }) {
         <Sparkles size={34} color="#22c55e" />
       </div>
       <div>
-        <h2 style={{ fontSize: 26, fontWeight: 700, color: '#1a1a1a', marginBottom: 8 }}>Tudo pronto!</h2>
-        <p style={{ fontSize: 15, color: '#8e8e93', fontWeight: 300, lineHeight: 1.6 }}>
+        <h2 style={{ fontSize: 26, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Tudo pronto!</h2>
+        <p style={{ fontSize: 15, color: 'var(--text-3)', fontWeight: 300, lineHeight: 1.6 }}>
           Bem-vindo à ARC. Seu escritório está configurado<br />e pronto para os primeiros projetos.
         </p>
       </div>
       <button
         onClick={onGo}
-        style={{ padding: '14px 40px', background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+        style={{ padding: '14px 40px', background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
       >
         Ir para o painel <ArrowRight size={16} />
       </button>
@@ -760,24 +760,24 @@ export default function OnboardingPage() {
 
   if (loading) {
     return (
-      <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Loader2 size={28} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ position: 'fixed', inset: 0, background: 'var(--bg-card)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Loader2 size={28} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 999, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'var(--bg-card)', zIndex: 999, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-        <span style={{ fontSize: 16, fontWeight: 300, letterSpacing: '0.35em', color: '#007AFF' }}>ARC</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid var(--border-subtle)' }}>
+        <span style={{ fontSize: 16, fontWeight: 300, letterSpacing: '0.35em', color: 'var(--accent)' }}>ARC</span>
         {!done && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <span style={{ fontSize: 13, color: '#8e8e93', fontWeight: 300 }}>Olá, {userName}</span>
-            <button onClick={skipAll} style={{ background: 'none', border: 'none', color: '#8e8e93', cursor: 'pointer', fontSize: 13, fontWeight: 400, textDecoration: 'underline', textDecorationColor: 'rgba(142,142,147,0.4)', padding: '4px 0' }}>
+            <span style={{ fontSize: 13, color: 'var(--text-3)', fontWeight: 300 }}>Olá, {userName}</span>
+            <button onClick={skipAll} style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', fontSize: 13, fontWeight: 400, textDecoration: 'underline', textDecorationColor: 'rgba(142,142,147,0.4)', padding: '4px 0' }}>
               Pular por enquanto
             </button>
           </div>
@@ -790,7 +790,7 @@ export default function OnboardingPage() {
           {!done ? (
             <>
               <ProgressBar current={currentStep} completed={completed} />
-              <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, padding: '32px', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: '32px', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
                 {userId && currentStep === 'perfil'    && <Step1 userId={userId} onNext={() => nextStep('perfil')} />}
                 {userId && currentStep === 'projeto'   && <Step2 userId={userId} onNext={() => nextStep('projeto')} onSkip={() => nextStep('projeto')} />}
                 {userId && currentStep === 'equipe'    && <Step3 userId={userId} onNext={() => nextStep('equipe')} onSkip={() => nextStep('equipe')} />}
@@ -802,7 +802,7 @@ export default function OnboardingPage() {
               </div>
             </>
           ) : (
-            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, padding: '40px 32px', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: '40px 32px', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
               <SuccessScreen onGo={goToDashboard} />
             </div>
           )}

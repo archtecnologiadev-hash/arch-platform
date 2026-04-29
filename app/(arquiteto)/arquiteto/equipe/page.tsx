@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
@@ -33,21 +33,21 @@ interface Escritorio {
 }
 
 const NIVEIS = [
-  { value: 'gestor',      label: 'Gestor',      desc: 'Acesso completo aos projetos, equipe e métricas', bg: 'rgba(0,122,255,0.08)',  color: '#007AFF' },
+  { value: 'gestor',      label: 'Gestor',      desc: 'Acesso completo aos projetos, equipe e métricas', bg: 'rgba(0,122,255,0.08)',  color: 'var(--accent)' },
   { value: 'operacional', label: 'Operacional', desc: 'Trabalha em projetos atribuídos',                  bg: 'rgba(52,211,153,0.08)', color: '#059669' },
 ]
 
 const NIVEL_META: Record<string, { bg: string; color: string; label: string }> = {
   owner:       { bg: 'rgba(139,92,246,0.12)',  color: '#7c3aed', label: 'Owner' },
-  gestor:      { bg: 'rgba(0,122,255,0.10)',   color: '#007AFF', label: 'Gestor' },
+  gestor:      { bg: 'rgba(0,122,255,0.10)',   color: 'var(--accent)', label: 'Gestor' },
   operacional: { bg: 'rgba(52,211,153,0.12)',  color: '#059669', label: 'Operacional' },
 }
 function nivelMeta(n: string) { return NIVEL_META[n] ?? NIVEL_META.operacional }
 
 const inp: React.CSSProperties = {
-  width: '100%', padding: '9px 12px', background: '#f2f2f7',
-  border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 13,
-  color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+  width: '100%', padding: '9px 12px', background: 'var(--bg)',
+  border: '1px solid var(--border)', borderRadius: 8, fontSize: 13,
+  color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
 }
 
 export default function EquipePage() {
@@ -233,22 +233,22 @@ export default function EquipePage() {
   const canManage = nivelAtual === 'owner'
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#f2f2f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Loader2 size={28} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Loader2 size={28} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 
   if (denied) return (
-    <div style={{ minHeight: '100vh', background: '#f2f2f7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
       <Users size={40} color="#c7c7cc" />
       <div style={{ fontSize: 15, fontWeight: 600, color: '#3a3a3c' }}>Acesso restrito</div>
-      <div style={{ fontSize: 13, color: '#8e8e93' }}>Apenas o owner pode gerenciar a equipe.</div>
+      <div style={{ fontSize: 13, color: 'var(--text-3)' }}>Apenas o owner pode gerenciar a equipe.</div>
     </div>
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f2f2f7', padding: '28px 32px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '28px 32px' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} .menu-btn:hover{background:rgba(0,0,0,0.06)!important}`}</style>
 
       {/* Toast */}
@@ -261,17 +261,17 @@ export default function EquipePage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
-          <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 4 }}>ESCRITÓRIO</p>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Users size={20} color="#007AFF" /> Equipe
+          <p style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 4 }}>ESCRITÓRIO</p>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Users size={20} color="var(--accent)" /> Equipe
           </h1>
-          <p style={{ fontSize: 13, color: '#6b6b6b', marginTop: 4 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>
             {membros.length} membro{membros.length !== 1 ? 's' : ''}{convites.length > 0 ? ` · ${convites.length} convite${convites.length !== 1 ? 's' : ''} pendente${convites.length !== 1 ? 's' : ''}` : ''}
           </p>
         </div>
         {canManage && (
           <button onClick={() => { setModalOpen(true); setFormError(null); setLinkGerado(null) }}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
             <Plus size={14} /> Convidar Membro
           </button>
         )}
@@ -279,9 +279,9 @@ export default function EquipePage() {
 
       {/* Active members */}
       <div style={{ marginBottom: 32 }}>
-        <p style={{ fontSize: 11, fontWeight: 600, color: '#8e8e93', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 14 }}>Membros Ativos</p>
+        <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 14 }}>Membros Ativos</p>
         {membros.length === 0 ? (
-          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '40px 20px', textAlign: 'center', color: '#8e8e93' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '40px 20px', textAlign: 'center', color: 'var(--text-3)' }}>
             <Users size={32} color="#c7c7cc" style={{ marginBottom: 10 }} />
             <div style={{ fontSize: 13 }}>Nenhum membro ainda.</div>
           </div>
@@ -293,33 +293,33 @@ export default function EquipePage() {
               const isMenuOpen = menuAberto === m.id
               const isAlterandoNivel = alterandoNivel === m.id
               return (
-                <div key={m.id} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', position: 'relative' }}>
+                <div key={m.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px', boxShadow: 'var(--shadow-card)', position: 'relative' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                     <div style={{ width: 46, height: 46, borderRadius: '50%', background: meta.bg, border: `2px solid ${meta.color}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: meta.color, flexShrink: 0, overflow: 'hidden' }}>
                       {m.avatar_url ? <img src={m.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', marginBottom: 3 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>{m.nome}</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{m.nome}</span>
                         <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: meta.bg, color: meta.color, flexShrink: 0, border: `1px solid ${meta.color}22` }}>
                           {meta.label}
                         </span>
                       </div>
-                      {m.cargo && <div style={{ fontSize: 11.5, color: '#6b6b6b', marginBottom: 2 }}>{m.cargo}</div>}
+                      {m.cargo && <div style={{ fontSize: 11.5, color: 'var(--text-2)', marginBottom: 2 }}>{m.cargo}</div>}
                       {m.email && <div style={{ fontSize: 11, color: '#aeaeb2' }}>{m.email}</div>}
                     </div>
                     {canManage && !m.is_owner && (
                       <div ref={isMenuOpen ? menuRef : undefined} style={{ position: 'relative', flexShrink: 0 }}>
                         <button className="menu-btn" onClick={() => { setMenuAberto(isMenuOpen ? null : m.id); setAlterandoNivel(null) }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 6, borderRadius: 7, display: 'flex', transition: 'background 0.15s' }}>
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 6, borderRadius: 7, display: 'flex', transition: 'background 0.15s' }}>
                           <MoreVertical size={16} />
                         </button>
                         {isMenuOpen && (
-                          <div style={{ position: 'absolute', right: 0, top: 30, background: '#fff', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 10, padding: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 20, minWidth: 200 }}>
+                          <div style={{ position: 'absolute', right: 0, top: 30, background: 'var(--bg-card)', border: '1px solid var(--border-input)', borderRadius: 10, padding: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 20, minWidth: 200 }}>
                             {!isAlterandoNivel ? (
                               <>
                                 <button onClick={() => setAlterandoNivel(m.id)}
-                                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a', fontSize: 12.5, fontWeight: 500, borderRadius: 7 }}>
+                                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', fontSize: 12.5, fontWeight: 500, borderRadius: 7 }}>
                                   <ChevronDown size={13} /> Alterar nível
                                 </button>
                                 <div style={{ height: 1, background: 'rgba(0,0,0,0.07)', margin: '3px 0' }} />
@@ -330,11 +330,11 @@ export default function EquipePage() {
                               </>
                             ) : (
                               <div style={{ padding: '4px 2px' }}>
-                                <div style={{ fontSize: 10, fontWeight: 700, color: '#8e8e93', letterSpacing: '0.06em', padding: '4px 8px 6px', textTransform: 'uppercase' }}>Novo nível</div>
+                                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.06em', padding: '4px 8px 6px', textTransform: 'uppercase' }}>Novo nível</div>
                                 {m.nivel_permissao !== 'gestor' && (
                                   <button onClick={() => { setConfirmNivel({ userId: m.id, nome: m.nome, novoNivel: 'gestor' }); setAlterandoNivel(null); setMenuAberto(null) }}
-                                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 500, color: '#007AFF', borderRadius: 7 }}>
-                                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#007AFF', flexShrink: 0 }} />
+                                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 500, color: 'var(--accent)', borderRadius: 7 }}>
+                                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--btn-bg)', flexShrink: 0 }} />
                                     Promover a Gestor
                                   </button>
                                 )}
@@ -362,28 +362,28 @@ export default function EquipePage() {
       {/* Pending invites */}
       {convites.length > 0 && (
         <div>
-          <p style={{ fontSize: 11, fontWeight: 600, color: '#8e8e93', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 14 }}>Convites Pendentes</p>
+          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-3)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 14 }}>Convites Pendentes</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {convites.map(c => {
               const meta = nivelMeta(c.nivel_permissao)
               const link = `${typeof window !== 'undefined' ? window.location.origin : 'https://www.usearc.com.br'}/aceitar-convite?token=${c.token}`
               return (
-                <div key={c.id} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '14px 18px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#f2f2f7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div key={c.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 18px', boxShadow: 'var(--shadow-card)', display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Mail size={16} color="#8e8e93" />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1a1a1a' }}>{c.nome}</span>
+                      <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{c.nome}</span>
                       <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: meta.bg, color: meta.color, border: `1px solid ${meta.color}22` }}>
                         {meta.label}
                       </span>
                     </div>
-                    <div style={{ fontSize: 11.5, color: '#6b6b6b' }}>{c.email}{c.cargo ? ` · ${c.cargo}` : ''}</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-2)' }}>{c.email}{c.cargo ? ` · ${c.cargo}` : ''}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                     <button onClick={() => copiarLink(link)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.2)', borderRadius: 7, color: '#007AFF', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}>
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: 'rgba(0,122,255,0.07)', border: '1px solid var(--accent-soft-border)', borderRadius: 7, color: 'var(--accent)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}>
                       <Copy size={11} /> Copiar link
                     </button>
                     <button onClick={() => cancelarConvite(c.id)}
@@ -401,19 +401,19 @@ export default function EquipePage() {
       {/* Confirm remove modal */}
       {confirmRemover && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 28, maxWidth: 400, width: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.14)' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: 28, maxWidth: 400, width: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.14)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <AlertTriangle size={18} color="#ef4444" />
               </div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>Remover membro</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Remover membro</div>
             </div>
-            <p style={{ fontSize: 13, color: '#6b6b6b', marginBottom: 24, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 24, lineHeight: 1.6 }}>
               Tem certeza que deseja remover <strong>{confirmRemover.nome}</strong>? Isso vai excluir permanentemente a conta dele e todos os dados vinculados.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setConfirmRemover(null)} disabled={!!removendo}
-                style={{ flex: 1, padding: '11px', background: '#f2f2f7', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b6b6b', cursor: 'pointer' }}>
+                style={{ flex: 1, padding: '11px', background: 'var(--bg)', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, color: 'var(--text-2)', cursor: 'pointer' }}>
                 Cancelar
               </button>
               <button onClick={executarRemocao} disabled={!!removendo}
@@ -429,22 +429,22 @@ export default function EquipePage() {
       {/* Confirm nivel change dialog */}
       {confirmNivel && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 28, maxWidth: 400, width: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.14)' }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a', marginBottom: 10 }}>Alterar nível</div>
-            <p style={{ fontSize: 13, color: '#6b6b6b', marginBottom: 12 }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: 28, maxWidth: 400, width: '100%', boxShadow: '0 8px 24px rgba(0,0,0,0.14)' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 10 }}>Alterar nível</div>
+            <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12 }}>
               Confirmar alteração do nível de <strong>{confirmNivel.nome}</strong> para{' '}
               <strong style={{ color: nivelMeta(confirmNivel.novoNivel).color }}>{nivelMeta(confirmNivel.novoNivel).label}</strong>?
             </p>
-            <p style={{ fontSize: 11.5, color: '#8e8e93', marginBottom: 24 }}>
+            <p style={{ fontSize: 11.5, color: 'var(--text-3)', marginBottom: 24 }}>
               {NIVEIS.find(n => n.value === confirmNivel.novoNivel)?.desc}
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setConfirmNivel(null)}
-                style={{ flex: 1, padding: '11px', background: '#f2f2f7', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b6b6b', cursor: 'pointer' }}>
+                style={{ flex: 1, padding: '11px', background: 'var(--bg)', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, color: 'var(--text-2)', cursor: 'pointer' }}>
                 Cancelar
               </button>
               <button onClick={aplicarNovoNivel} disabled={aplicandoNivel}
-                style={{ flex: 1, padding: '11px', background: '#007AFF', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                style={{ flex: 1, padding: '11px', background: 'var(--btn-bg)', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
                 {aplicandoNivel ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={14} />}
                 Confirmar
               </button>
@@ -457,19 +457,19 @@ export default function EquipePage() {
       {modalOpen && (
         <div onClick={e => { if (e.target === e.currentTarget) closeModal() }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 480, padding: 28, boxShadow: '0 8px 24px rgba(0,0,0,0.14)', border: '1px solid rgba(0,0,0,0.08)', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 16, width: '100%', maxWidth: 480, padding: 28, boxShadow: '0 8px 24px rgba(0,0,0,0.14)', border: '1px solid var(--border)', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>Convidar Membro</div>
-              <button onClick={closeModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93' }}><X size={18} /></button>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Convidar Membro</div>
+              <button onClick={closeModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)' }}><X size={18} /></button>
             </div>
 
             {linkGerado ? (
               <div>
-                <div style={{ background: 'rgba(0,122,255,0.06)', border: '1px solid rgba(0,122,255,0.2)', borderRadius: 10, padding: '16px 18px', marginBottom: 18 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#007AFF', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ background: 'rgba(0,122,255,0.06)', border: '1px solid var(--accent-soft-border)', borderRadius: 10, padding: '16px 18px', marginBottom: 18 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <UserCheck size={15} /> Convite criado com sucesso!
                   </div>
-                  <div style={{ fontSize: 11.5, color: '#1a1a1a', wordBreak: 'break-all', background: '#f2f2f7', borderRadius: 6, padding: '8px 10px', fontFamily: 'monospace', marginBottom: 12 }}>
+                  <div style={{ fontSize: 11.5, color: 'var(--text)', wordBreak: 'break-all', background: 'var(--bg)', borderRadius: 6, padding: '8px 10px', fontFamily: 'monospace', marginBottom: 12 }}>
                     {linkGerado}
                   </div>
                   <button onClick={() => copiarLink(linkGerado)}
@@ -477,7 +477,7 @@ export default function EquipePage() {
                     {copiado ? <><Check size={14} /> Copiado!</> : <><Copy size={14} /> Copiar link de convite</>}
                   </button>
                 </div>
-                <p style={{ fontSize: 12, color: '#8e8e93', textAlign: 'center' }}>Envie o link para o membro. Ele expira após ser aceito.</p>
+                <p style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'center' }}>Envie o link para o membro. Ele expira após ser aceito.</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -487,24 +487,24 @@ export default function EquipePage() {
                   </div>
                 )}
                 <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Nome completo *</label>
+                  <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Nome completo *</label>
                   <input value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} placeholder="Ex: João Silva" style={inp}
                     onFocus={e => (e.target.style.borderColor = '#007AFF')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>E-mail *</label>
+                  <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>E-mail *</label>
                   <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="joao@exemplo.com" style={inp}
                     onFocus={e => (e.target.style.borderColor = '#007AFF')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Cargo (opcional)</label>
+                  <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Cargo (opcional)</label>
                   <input value={form.cargo} onChange={e => setForm(f => ({ ...f, cargo: e.target.value }))} placeholder="Ex: Arquiteto Sênior" style={inp}
                     onFocus={e => (e.target.style.borderColor = '#007AFF')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
                 </div>
 
                 {/* Level selector */}
                 <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 8, fontWeight: 600 }}>Nível de permissão</label>
+                  <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 8, fontWeight: 600 }}>Nível de permissão</label>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {NIVEIS.map(n => {
                       const sel = form.nivel_permissao === n.value
@@ -514,7 +514,7 @@ export default function EquipePage() {
                           <span style={{ width: 10, height: 10, borderRadius: '50%', background: n.color, flexShrink: 0 }} />
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 13, fontWeight: sel ? 700 : 500, color: sel ? n.color : '#1a1a1a' }}>{n.label}</div>
-                            <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 1 }}>{n.desc}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>{n.desc}</div>
                           </div>
                           {sel && <Check size={14} color={n.color} />}
                         </button>

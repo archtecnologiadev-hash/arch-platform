@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
@@ -24,7 +24,7 @@ function Badge({ text, color }: { text: string; color: string }) {
 }
 
 const inp: React.CSSProperties = {
-  background: '#ffffff', border: '1px solid rgba(0,0,0,0.12)', color: '#1a1a1a',
+  background: 'var(--bg-card)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--text)',
   borderRadius: 8, padding: '8px 12px', fontSize: 13, outline: 'none',
 }
 const sel: React.CSSProperties = { ...inp, cursor: 'pointer' }
@@ -96,12 +96,12 @@ export default function AdminUsuarios() {
   const confirmTarget = users.find(u => u.id === confirmDeleteId)
 
   return (
-    <div style={{ padding: 32, color: '#1a1a1a', background: '#f2f2f7', minHeight: '100vh' }}>
+    <div style={{ padding: 32, color: 'var(--text)', background: 'var(--bg)', minHeight: '100vh' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 500, color: '#1a1a1a', marginBottom: 4 }}>Usuários</h1>
-        <p style={{ fontSize: 13, color: '#8e8e93' }}>{total} usuário{total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}</p>
+        <h1 style={{ fontSize: 22, fontWeight: 500, color: 'var(--text)', marginBottom: 4 }}>Usuários</h1>
+        <p style={{ fontSize: 13, color: 'var(--text-3)' }}>{total} usuário{total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}</p>
       </div>
 
       {/* Filters */}
@@ -130,8 +130,8 @@ export default function AdminUsuarios() {
           <option value="suspenso">Suspenso</option>
         </select>
         <button onClick={load} style={{
-          background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.25)',
-          color: '#007AFF', borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
+          background: 'var(--accent-soft)', border: '1px solid rgba(0,122,255,0.25)',
+          color: 'var(--accent)', borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
           fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
         }}>
           <Filter size={13} /> Filtrar
@@ -139,17 +139,17 @@ export default function AdminUsuarios() {
       </div>
 
       {/* Table */}
-      <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
         {loading ? (
           <div style={{ padding: 48, display: 'flex', justifyContent: 'center' }}>
-            <Loader2 size={24} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+            <Loader2 size={24} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
                 {['Nome', 'Email', 'Tipo', 'Plano', 'Status', 'Cadastro', ''].map((h, i) => (
-                  <th key={i} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: '#8e8e93', fontWeight: 500, letterSpacing: '0.04em' }}>
+                  <th key={i} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: 'var(--text-3)', fontWeight: 500, letterSpacing: '0.04em' }}>
                     {h}
                   </th>
                 ))}
@@ -157,25 +157,25 @@ export default function AdminUsuarios() {
             </thead>
             <tbody>
               {users.length === 0 && (
-                <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>Nenhum usuário encontrado</td></tr>
+                <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>Nenhum usuário encontrado</td></tr>
               )}
               {users.map((u, i) => (
                 <tr key={u.id}
                   style={{ borderBottom: i < users.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', transition: 'background 0.12s' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.03)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                  <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 500, color: '#1a1a1a' }}>{u.nome}</td>
-                  <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b6b6b', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{u.email}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{u.nome}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-2)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{u.email}</td>
                   <td style={{ padding: '12px 16px' }}><Badge text={u.tipo} color={TIPO_COLOR[u.tipo] ?? '#666'} /></td>
-                  <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b6b6b' }}>{u.plano ?? 'free'}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-2)' }}>{u.plano ?? 'free'}</td>
                   <td style={{ padding: '12px 16px' }}><Badge text={u.status_conta ?? 'ativo'} color={STATUS_COLOR[u.status_conta ?? 'ativo']} /></td>
-                  <td style={{ padding: '12px 16px', fontSize: 11, color: '#8e8e93' }}>{new Date(u.created_at).toLocaleDateString('pt-BR')}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 11, color: 'var(--text-3)' }}>{new Date(u.created_at).toLocaleDateString('pt-BR')}</td>
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' as const }}>
                       <Link href={`/admin/usuarios/${u.id}`} style={{
                         display: 'inline-flex', alignItems: 'center', gap: 5,
-                        fontSize: 11.5, color: '#007AFF', textDecoration: 'none',
-                        background: 'rgba(0,122,255,0.06)', border: '1px solid rgba(0,122,255,0.2)', borderRadius: 6, padding: '5px 10px',
+                        fontSize: 11.5, color: 'var(--accent)', textDecoration: 'none',
+                        background: 'rgba(0,122,255,0.06)', border: '1px solid var(--accent-soft-border)', borderRadius: 6, padding: '5px 10px',
                         transition: 'all 0.15s',
                       }}
                         onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,122,255,0.12)' }}
@@ -229,7 +229,7 @@ export default function AdminUsuarios() {
         }}
           onClick={e => { if (e.target === e.currentTarget && !deleting) setConfirmDeleteId(null) }}>
           <div style={{
-            background: '#fff', borderRadius: 16, padding: 28, maxWidth: 420, width: '100%',
+            background: 'var(--bg-card)', borderRadius: 16, padding: 28, maxWidth: 420, width: '100%',
             boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
@@ -238,12 +238,12 @@ export default function AdminUsuarios() {
                   <AlertTriangle size={18} color="#ef4444" />
                 </div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Excluir usuário</div>
-                  <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 2 }}>Ação irreversível</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Excluir usuário</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>Ação irreversível</div>
                 </div>
               </div>
               {!deleting && (
-                <button onClick={() => setConfirmDeleteId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}>
+                <button onClick={() => setConfirmDeleteId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}>
                   <X size={18} />
                 </button>
               )}
@@ -252,7 +252,7 @@ export default function AdminUsuarios() {
             <p style={{ fontSize: 13, color: '#3a3a3c', lineHeight: 1.6, marginBottom: 8 }}>
               Tem certeza que deseja excluir <strong>{confirmTarget.nome}</strong>?
             </p>
-            <p style={{ fontSize: 12, color: '#8e8e93', lineHeight: 1.6, marginBottom: 20 }}>
+            <p style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.6, marginBottom: 20 }}>
               Isso apagará permanentemente o usuário e <strong>todos os dados vinculados</strong> — projetos, orçamentos, conversas e arquivos. Essa ação não pode ser desfeita.
             </p>
 
@@ -265,7 +265,7 @@ export default function AdminUsuarios() {
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => { setConfirmDeleteId(null); setDeleteError('') }} disabled={deleting} style={{
                 flex: 1, padding: '11px', borderRadius: 9, fontSize: 13, fontWeight: 500,
-                background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b',
+                background: 'var(--bg)', border: '1px solid var(--border-input)', color: 'var(--text-2)',
                 cursor: deleting ? 'not-allowed' : 'pointer',
               }}>
                 Cancelar

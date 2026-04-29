@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
@@ -74,23 +74,23 @@ export default function MinhasCobrancas() {
 
   return (
     <div style={{ marginTop: 32 }}>
-      <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <DollarSign size={16} color="#007AFF" />
+      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <DollarSign size={16} color="var(--accent)" />
         Minhas cobranças
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {cobrancas.map(c => (
           <div key={c.id} style={{
-            background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12,
-            padding: '16px 18px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+            background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12,
+            padding: '16px 18px', boxShadow: 'var(--shadow-card)',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: '#1a1a1a', marginBottom: 3 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', marginBottom: 3 }}>
                   {c.descricao || 'Cobrança ARC'}
                 </div>
-                <div style={{ fontSize: 12, color: '#8e8e93' }}>
+                <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
                   Vencimento: {new Date(c.vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
                   {c.pago_em && (
                     <span style={{ marginLeft: 10, color: '#22c55e' }}>
@@ -100,7 +100,7 @@ export default function MinhasCobrancas() {
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
                   R$ {Number(c.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
                 <Badge status={c.status} />
@@ -109,10 +109,10 @@ export default function MinhasCobrancas() {
 
             {/* Chave PIX */}
             {c.pix_chave && ['pendente', 'atrasado'].includes(c.status) && (
-              <div style={{ marginTop: 12, background: '#f2f2f7', borderRadius: 9, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+              <div style={{ marginTop: 12, background: 'var(--bg)', borderRadius: 9, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                 <div>
-                  <div style={{ fontSize: 10.5, color: '#8e8e93', fontWeight: 600, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chave PIX</div>
-                  <div style={{ fontFamily: 'monospace', fontSize: 13, color: '#1a1a1a', wordBreak: 'break-all' }}>{c.pix_chave}</div>
+                  <div style={{ fontSize: 10.5, color: 'var(--text-3)', fontWeight: 600, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chave PIX</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: 13, color: 'var(--text)', wordBreak: 'break-all' }}>{c.pix_chave}</div>
                 </div>
                 <button
                   onClick={() => copyPix(c.pix_chave!)}
@@ -127,7 +127,7 @@ export default function MinhasCobrancas() {
             {c.comprovante_url && (
               <div style={{ marginTop: 10 }}>
                 <a href={c.comprovante_url} target="_blank" rel="noopener noreferrer"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#007AFF', textDecoration: 'none' }}>
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--accent)', textDecoration: 'none' }}>
                   <ExternalLink size={12} /> Ver comprovante
                 </a>
               </div>
@@ -136,9 +136,9 @@ export default function MinhasCobrancas() {
         ))}
       </div>
 
-      <p style={{ marginTop: 12, fontSize: 12, color: '#8e8e93' }}>
+      <p style={{ marginTop: 12, fontSize: 12, color: 'var(--text-3)' }}>
         Dúvidas? Entre em contato em{' '}
-        <a href="mailto:contato@usearc.com.br" style={{ color: '#007AFF', textDecoration: 'none' }}>contato@usearc.com.br</a>
+        <a href="mailto:contato@usearc.com.br" style={{ color: 'var(--accent)', textDecoration: 'none' }}>contato@usearc.com.br</a>
       </p>
     </div>
   )

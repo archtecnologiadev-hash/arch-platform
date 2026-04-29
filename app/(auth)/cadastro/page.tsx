@@ -8,10 +8,10 @@ import { createClient } from '@/lib/supabase'
 const inputBase: React.CSSProperties = {
   width: '100%',
   padding: '12px 14px',
-  background: '#f2f2f7',
-  border: '1px solid rgba(0,0,0,0.1)',
+  background: 'var(--bg-input)',
+  border: '1px solid var(--border-input)',
   borderRadius: 10,
-  color: '#1a1a1a',
+  color: 'var(--text)',
   fontSize: 15,
   fontWeight: 300,
   outline: 'none',
@@ -102,22 +102,22 @@ export default function CadastroPage() {
 
   return (
     <div style={{
-      background: '#ffffff',
-      border: '1px solid rgba(0,0,0,0.08)',
+      background: 'var(--bg-card)',
+      border: '1px solid var(--border)',
       borderRadius: 16,
       padding: '36px 32px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+      boxShadow: 'var(--shadow-card)',
     }}>
-      <h1 style={{ fontSize: 22, fontWeight: 300, color: '#1a1a1a', marginBottom: 6 }}>
+      <h1 style={{ fontSize: 22, fontWeight: 300, color: 'var(--text)', marginBottom: 6 }}>
         Criar conta de arquiteto
       </h1>
-      <p style={{ fontSize: 13, fontWeight: 300, color: '#8e8e93', marginBottom: 28 }}>
+      <p style={{ fontSize: 13, fontWeight: 300, color: 'var(--text-3)', marginBottom: 28 }}>
         Comece a gerenciar seu escritório em minutos.
       </p>
 
       <form onSubmit={handleCadastro} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: '#6b6b6b', marginBottom: 6 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: 'var(--text-2)', marginBottom: 6 }}>
             Nome completo
           </label>
           <input
@@ -127,13 +127,13 @@ export default function CadastroPage() {
             placeholder="João Silva"
             required
             style={inputBase}
-            onFocus={(e) => (e.target.style.borderColor = '#007AFF')}
-            onBlur={(e) => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+            onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+            onBlur={(e) => (e.target.style.borderColor = 'var(--border-input)')}
           />
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: '#6b6b6b', marginBottom: 6 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: 'var(--text-2)', marginBottom: 6 }}>
             Email
           </label>
           <input
@@ -143,13 +143,13 @@ export default function CadastroPage() {
             placeholder="seu@email.com"
             required
             style={inputBase}
-            onFocus={(e) => (e.target.style.borderColor = '#007AFF')}
-            onBlur={(e) => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+            onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+            onBlur={(e) => (e.target.style.borderColor = 'var(--border-input)')}
           />
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: '#6b6b6b', marginBottom: 6 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: 'var(--text-2)', marginBottom: 6 }}>
             Senha
           </label>
           <input
@@ -160,8 +160,8 @@ export default function CadastroPage() {
             minLength={8}
             required
             style={inputBase}
-            onFocus={(e) => (e.target.style.borderColor = '#007AFF')}
-            onBlur={(e) => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+            onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+            onBlur={(e) => (e.target.style.borderColor = 'var(--border-input)')}
           />
         </div>
 
@@ -170,15 +170,15 @@ export default function CadastroPage() {
             type="checkbox"
             checked={termos}
             onChange={e => setTermos(e.target.checked)}
-            style={{ marginTop: 2, accentColor: '#007AFF', width: 15, height: 15, flexShrink: 0 }}
+            style={{ marginTop: 2, accentColor: 'var(--accent)', width: 15, height: 15, flexShrink: 0 }}
           />
-          <span style={{ fontSize: 12, fontWeight: 300, color: '#6b6b6b', lineHeight: 1.6 }}>
+          <span style={{ fontSize: 12, fontWeight: 300, color: 'var(--text-2)', lineHeight: 1.6 }}>
             Li e concordo com os{' '}
-            <a href="/termos-de-uso" target="_blank" rel="noopener noreferrer" style={{ color: '#007AFF', textDecoration: 'none' }}>
+            <a href="/termos-de-uso" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text)', textDecoration: 'none', fontWeight: 500 }}>
               Termos de Uso
             </a>{' '}
             e a{' '}
-            <a href="/privacidade" target="_blank" rel="noopener noreferrer" style={{ color: '#007AFF', textDecoration: 'none' }}>
+            <a href="/privacidade" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text)', textDecoration: 'none', fontWeight: 500 }}>
               Política de Privacidade
             </a>
           </span>
@@ -199,8 +199,8 @@ export default function CadastroPage() {
           disabled={loading || !termos}
           style={{
             width: '100%', padding: '13px',
-            background: loading || !termos ? '#a0c4ff' : '#007AFF',
-            color: '#ffffff', border: 'none', borderRadius: 10,
+            background: loading || !termos ? 'var(--btn-disabled)' : 'var(--btn-bg)',
+            color: 'var(--btn-text)', border: 'none', borderRadius: 10,
             fontSize: 15, fontWeight: 400,
             cursor: loading || !termos ? 'not-allowed' : 'pointer',
             transition: 'opacity 0.2s', marginTop: 4,
@@ -210,9 +210,9 @@ export default function CadastroPage() {
         </button>
       </form>
 
-      <p style={{ marginTop: 24, textAlign: 'center', fontSize: 13, fontWeight: 300, color: '#8e8e93' }}>
+      <p style={{ marginTop: 24, textAlign: 'center', fontSize: 13, fontWeight: 300, color: 'var(--text-3)' }}>
         Já tem conta?{' '}
-        <Link href="/login" style={{ color: '#007AFF', textDecoration: 'none' }}>
+        <Link href="/login" style={{ color: 'var(--text)', textDecoration: 'none', fontWeight: 500 }}>
           Entrar
         </Link>
       </p>

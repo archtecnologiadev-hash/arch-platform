@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -46,7 +46,7 @@ const STATUS_LABEL: Record<string, { label: string; color: string; bg: string }>
   ativa:       { label: 'Ativo', color: '#059669', bg: 'rgba(5,150,105,0.1)' },
   fundador:    { label: 'Fundador', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)' },
   inadimplente:{ label: 'Inadimplente', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
-  cancelada:   { label: 'Cancelado', color: '#6b6b6b', bg: 'rgba(0,0,0,0.06)' },
+  cancelada:   { label: 'Cancelado', color: 'var(--text-2)', bg: 'rgba(0,0,0,0.06)' },
 }
 
 export default function FornecedorPlanos() {
@@ -110,8 +110,8 @@ export default function FornecedorPlanos() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f2f2f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Loader2 size={26} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Loader2 size={26} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
@@ -120,14 +120,14 @@ export default function FornecedorPlanos() {
   const statusMeta = currentStatus ? STATUS_LABEL[currentStatus] : null
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f2f2f7', padding: '36px 32px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '36px 32px' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       <div style={{ textAlign: 'center', marginBottom: 36 }}>
-        <p style={{ fontSize: 11.5, color: '#007AFF', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 8 }}>
+        <p style={{ fontSize: 11.5, color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 8 }}>
           PLANOS E PREÇOS
         </p>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#1a1a1a', marginBottom: 10 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text)', marginBottom: 10 }}>
           Escolha seu plano
         </h1>
 
@@ -190,7 +190,7 @@ export default function FornecedorPlanos() {
       </div>
 
       {planos.length === 0 ? (
-        <div style={{ textAlign: 'center', color: '#8e8e93', fontSize: 14, padding: '48px 0' }}>
+        <div style={{ textAlign: 'center', color: 'var(--text-3)', fontSize: 14, padding: '48px 0' }}>
           Nenhum plano disponível no momento.
         </div>
       ) : (
@@ -212,7 +212,7 @@ export default function FornecedorPlanos() {
 
             return (
               <div key={plano.id} style={{
-                background: '#fff',
+                background: 'var(--bg-card)',
                 border: isDestaque ? '2px solid #007AFF' : isCurrent ? '2px solid #34d399' : '1px solid rgba(0,0,0,0.08)',
                 borderRadius: 18, padding: '28px 28px 24px',
                 boxShadow: isDestaque ? '0 8px 32px rgba(0,122,255,0.12)' : '0 1px 4px rgba(0,0,0,0.08)',
@@ -222,7 +222,7 @@ export default function FornecedorPlanos() {
                 {isDestaque && (
                   <div style={{
                     position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
-                    background: '#007AFF', color: '#fff',
+                    background: 'var(--btn-bg)', color: '#fff',
                     fontSize: 11, fontWeight: 700, padding: '4px 16px', borderRadius: 20,
                     display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
                   }}>
@@ -249,16 +249,16 @@ export default function FornecedorPlanos() {
                 )}
 
                 <div style={{ marginBottom: 6 }}>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#1a1a1a' }}>{plano.nome}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>{plano.nome}</div>
                   {plano.descricao && (
-                    <div style={{ fontSize: 12.5, color: '#6b6b6b', marginTop: 3 }}>{plano.descricao}</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--text-2)', marginTop: 3 }}>{plano.descricao}</div>
                   )}
                 </div>
 
-                <div style={{ marginBottom: 20, paddingBottom: 20, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                <div style={{ marginBottom: 20, paddingBottom: 20, borderBottom: '1px solid var(--border-subtle)' }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                    <span style={{ fontSize: 36, fontWeight: 800, color: '#1a1a1a' }}>{fmtBRL(price)}</span>
-                    <span style={{ fontSize: 13, color: '#8e8e93' }}>/mês</span>
+                    <span style={{ fontSize: 36, fontWeight: 800, color: 'var(--text)' }}>{fmtBRL(price)}</span>
+                    <span style={{ fontSize: 13, color: 'var(--text-3)' }}>/mês</span>
                   </div>
                   {ciclo === 'anual' && plano.valor_anual && (
                     <div style={{ fontSize: 12, color: '#059669', marginTop: 4 }}>
@@ -266,7 +266,7 @@ export default function FornecedorPlanos() {
                     </div>
                   )}
                   {ciclo === 'mensal' && discount > 0 && (
-                    <div style={{ fontSize: 11.5, color: '#8e8e93', marginTop: 3 }}>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 3 }}>
                       ou {fmtBRL(plano.valor_anual! / 12)}/mês no plano anual
                     </div>
                   )}
@@ -281,7 +281,7 @@ export default function FornecedorPlanos() {
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
                         {f.included
-                          ? <Check size={10} color="#007AFF" strokeWidth={3} />
+                          ? <Check size={10} color="var(--accent)" strokeWidth={3} />
                           : <X size={9} color="#c7c7cc" strokeWidth={3} />}
                       </div>
                       <span style={{ fontSize: 13, color: f.included ? '#1a1a1a' : '#aeaeb2', lineHeight: 1.4 }}>
@@ -334,7 +334,7 @@ export default function FornecedorPlanos() {
         </div>
       )}
 
-      <p style={{ textAlign: 'center', fontSize: 12, color: '#8e8e93', marginTop: 32 }}>
+      <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-3)', marginTop: 32 }}>
         Pagamentos via Asaas · Após selecionar o plano, nossa equipe entrará em contato para configurar a cobrança.
       </p>
 
@@ -351,7 +351,7 @@ export default function FornecedorPlanos() {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 24 }}>
-        <Link href="/fornecedor/dashboard" style={{ fontSize: 13, color: '#8e8e93', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+        <Link href="/fornecedor/dashboard" style={{ fontSize: 13, color: 'var(--text-3)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
           <ArrowRight size={13} style={{ transform: 'rotate(180deg)' }} /> Voltar ao dashboard
         </Link>
       </div>

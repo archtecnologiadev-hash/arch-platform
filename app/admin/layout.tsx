@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { LayoutDashboard, Users, UserPlus, TicketCheck, ScrollText, LogOut, ShieldCheck, CreditCard, FlaskConical, Menu, X, Receipt } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const NAV = [
   { label: 'Dashboard',      href: '/admin',             icon: LayoutDashboard, exact: true },
@@ -49,38 +50,41 @@ function AdminSidebar({
         />
       )}
       <aside style={{
-        width: 232, minWidth: 232, height: '100vh', background: '#ffffff',
-        borderRight: '1px solid rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column',
+        width: 232, minWidth: 232, height: '100vh', background: 'var(--bg-card)',
+        borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column',
         position: 'fixed', left: 0, top: 0, zIndex: 40,
         transform: hidden ? 'translateX(-100%)' : 'translateX(0)',
         transition: mounted ? 'transform 0.3s ease' : 'none',
-        boxShadow: isMobile && isOpen ? '4px 0 20px rgba(0,0,0,0.12)' : 'none',
+        boxShadow: isMobile && isOpen ? 'var(--shadow-sidebar)' : 'none',
       }}>
         <div style={{
           height: 64, display: 'flex', alignItems: 'center', gap: 10,
-          paddingLeft: 20, borderBottom: '1px solid rgba(0,0,0,0.06)',
-          justifyContent: 'space-between', paddingRight: isMobile ? 12 : 20,
+          paddingLeft: 20, borderBottom: '1px solid var(--border-subtle)',
+          justifyContent: 'space-between', paddingRight: isMobile ? 8 : 12,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <ShieldCheck size={16} color="#007AFF" strokeWidth={1.5} />
+            <ShieldCheck size={16} color="var(--text)" strokeWidth={1.5} />
             <div>
-              <span style={{ fontSize: 16, fontWeight: 300, letterSpacing: '0.3em', color: '#007AFF' }}>
+              <span style={{ fontSize: 16, fontWeight: 300, letterSpacing: '0.3em', color: 'var(--text)' }}>
                 ARC
               </span>
-              <span style={{ fontSize: 9, display: 'block', color: '#8e8e93', letterSpacing: '0.2em', fontWeight: 500, marginTop: -1, textTransform: 'uppercase' }}>
+              <span style={{ fontSize: 9, display: 'block', color: 'var(--text-3)', letterSpacing: '0.2em', fontWeight: 500, marginTop: -1, textTransform: 'uppercase' }}>
                 Admin
               </span>
             </div>
           </div>
-          {isMobile && (
-            <button
-              onClick={onClose}
-              aria-label="Fechar menu"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 6, display: 'flex', alignItems: 'center' }}
-            >
-              <X size={20} />
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <ThemeToggle size={15} />
+            {isMobile && (
+              <button
+                onClick={onClose}
+                aria-label="Fechar menu"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 6, display: 'flex', alignItems: 'center' }}
+              >
+                <X size={20} />
+              </button>
+            )}
+          </div>
         </div>
 
         <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -97,9 +101,9 @@ function AdminSidebar({
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '9px 14px', borderRadius: 10, fontSize: 13.5, fontWeight: isActive ? 500 : 400,
-                  textDecoration: 'none', transition: 'all 0.15s',
-                  background: isActive ? 'rgba(0,122,255,0.08)' : 'transparent',
-                  color: isActive ? '#007AFF' : '#6b6b6b',
+                  textDecoration: 'none', transition: 'background 0.15s, color 0.15s',
+                  background: isActive ? 'var(--nav-active-bg)' : 'transparent',
+                  color: isActive ? 'var(--nav-active)' : 'var(--nav-inactive)',
                 }}
               >
                 <Icon size={16} strokeWidth={isActive ? 2 : 1.5} />
@@ -109,23 +113,23 @@ function AdminSidebar({
           })}
         </nav>
 
-        <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
             width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-            background: 'rgba(0,122,255,0.1)', border: '1.5px solid rgba(0,122,255,0.2)',
+            background: 'var(--accent-soft)', border: '1.5px solid var(--accent-soft-border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 11, fontWeight: 500, color: '#007AFF',
+            fontSize: 11, fontWeight: 500, color: 'var(--accent)',
           }}>A</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 400, color: '#1a1a1a' }}>Administrador</div>
-            <div style={{ fontSize: 10, color: '#8e8e93', marginTop: 1 }}>Painel interno</div>
+            <div style={{ fontSize: 12, fontWeight: 400, color: 'var(--text)' }}>Administrador</div>
+            <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>Painel interno</div>
           </div>
           <button
             onClick={handleLogout}
             title="Sair"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c7c7cc', padding: 4, display: 'flex', alignItems: 'center', transition: 'color 0.15s' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--logout-btn)', padding: 4, display: 'flex', alignItems: 'center', transition: 'color 0.15s' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#ff3b30')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#c7c7cc')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--logout-btn)')}
           >
             <LogOut size={15} strokeWidth={1.5} />
           </button>
@@ -162,26 +166,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [isMobile, sidebarOpen])
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f2f2f7' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
       {isMobile && (
         <header style={{
           position: 'fixed', top: 0, left: 0, right: 0, height: 56,
-          background: '#ffffff', borderBottom: '1px solid rgba(0,0,0,0.08)',
+          background: 'var(--bg-card)', borderBottom: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '0 16px', zIndex: 38,
         }}>
           <button
             onClick={() => setSidebarOpen(true)}
             aria-label="Abrir menu"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a', padding: 6, display: 'flex', alignItems: 'center' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', padding: 6, display: 'flex', alignItems: 'center' }}
           >
             <Menu size={24} />
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <ShieldCheck size={14} color="#007AFF" strokeWidth={1.5} />
-            <span style={{ fontSize: 15, fontWeight: 300, letterSpacing: '0.3em', color: '#007AFF' }}>ARC</span>
+            <ShieldCheck size={14} color="var(--text)" strokeWidth={1.5} />
+            <span style={{ fontSize: 15, fontWeight: 300, letterSpacing: '0.3em', color: 'var(--text)' }}>ARC</span>
           </div>
-          <div style={{ width: 36 }} />
+          <ThemeToggle size={15} />
         </header>
       )}
 
@@ -196,7 +200,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         flex: 1,
         marginLeft: isMobile ? 0 : 232,
         minHeight: '100vh',
-        background: '#f2f2f7',
+        background: 'var(--bg)',
         overflowX: 'hidden',
         paddingTop: isMobile ? 56 : 0,
       }}>

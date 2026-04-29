@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
@@ -58,7 +58,7 @@ function isImage(tipo: string | null) {
 }
 
 function FileIcon({ tipo }: { tipo: string | null }) {
-  if (tipo === 'imagem') return <ImageIcon size={15} color="#007AFF" />
+  if (tipo === 'imagem') return <ImageIcon size={15} color="var(--accent)" />
   if (tipo === 'pdf') return <FileText size={15} color="#ef4444" />
   if (tipo === 'cad') return <FileText size={15} color="#f59e0b" />
   return <LucideFile size={15} color="#8e8e93" />
@@ -141,7 +141,7 @@ function CameraCapture({ onSave, onClose }: { onSave: (blob: Blob, desc: string)
             <button onClick={retake} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 10, padding: '12px 20px', color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>
               <RotateCcw size={16} /> Refazer
             </button>
-            <button onClick={save} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#007AFF', border: 'none', borderRadius: 10, padding: '12px 24px', color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 700 }}>
+            <button onClick={save} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--btn-bg)', border: 'none', borderRadius: 10, padding: '12px 24px', color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 700 }}>
               <Check size={16} /> Salvar foto
             </button>
           </div>
@@ -149,7 +149,7 @@ function CameraCapture({ onSave, onClose }: { onSave: (blob: Blob, desc: string)
       ) : (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
           <video ref={videoRef} playsInline muted style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 10 }} />
-          <button onClick={capture} style={{ width: 70, height: 70, borderRadius: '50%', background: '#fff', border: '4px solid rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={capture} style={{ width: 70, height: 70, borderRadius: '50%', background: 'var(--bg-card)', border: '4px solid rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Camera size={28} color="#000" />
           </button>
         </div>
@@ -231,7 +231,7 @@ function DrawingTool({ onSave, onClose }: { onSave: (blob: Blob, desc: string) =
           <button onClick={clear} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '8px 14px', color: '#fff', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
             <RotateCcw size={14} /> Limpar
           </button>
-          <button onClick={save} style={{ background: '#007AFF', border: 'none', borderRadius: 8, padding: '8px 16px', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={save} style={{ background: 'var(--btn-bg)', border: 'none', borderRadius: 8, padding: '8px 16px', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
             <Check size={14} /> Salvar
           </button>
         </div>
@@ -245,10 +245,10 @@ function DrawingTool({ onSave, onClose }: { onSave: (blob: Blob, desc: string) =
           ))}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 8 }}>
-          <span style={{ color: '#8e8e93', fontSize: 12 }}>Espessura:</span>
+          <span style={{ color: 'var(--text-3)', fontSize: 12 }}>Espessura:</span>
           {[2, 4, 8, 14].map(s => (
             <button key={s} onClick={() => setSize(s)} style={{ width: 28, height: 28, borderRadius: 6, background: size === s ? 'rgba(0,122,255,0.3)' : 'rgba(255,255,255,0.08)', border: size === s ? '1px solid #007AFF' : '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ width: s, height: s, borderRadius: '50%', background: '#fff' }} />
+              <div style={{ width: s, height: s, borderRadius: '50%', background: 'var(--bg-card)' }} />
             </button>
           ))}
         </div>
@@ -259,7 +259,7 @@ function DrawingTool({ onSave, onClose }: { onSave: (blob: Blob, desc: string) =
         <canvas
           ref={canvasRef}
           width={900} height={600}
-          style={{ background: '#fff', borderRadius: 10, cursor: 'crosshair', maxWidth: '100%', maxHeight: 'calc(100% - 80px)', touchAction: 'none' }}
+          style={{ background: 'var(--bg-card)', borderRadius: 10, cursor: 'crosshair', maxWidth: '100%', maxHeight: 'calc(100% - 80px)', touchAction: 'none' }}
           onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
           onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw}
         />
@@ -422,7 +422,7 @@ export default function ProjetoArquivos({ projetoId, currentUser }: Props) {
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
-      <Loader2 size={22} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <Loader2 size={22} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
     </div>
   )
 
@@ -465,12 +465,12 @@ export default function ProjetoArquivos({ projetoId, currentUser }: Props) {
             autoFocus value={newFolderName} onChange={e => setNewFolderName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') createFolder(); if (e.key === 'Escape') setShowNewFolder(false) }}
             placeholder="Nome da pasta"
-            style={{ flex: 1, background: '#fff', border: '1px solid rgba(0,122,255,0.4)', borderRadius: 8, padding: '10px 14px', fontSize: 13, outline: 'none', color: '#1a1a1a' }}
+            style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid rgba(0,122,255,0.4)', borderRadius: 8, padding: '10px 14px', fontSize: 13, outline: 'none', color: 'var(--text)' }}
           />
-          <button onClick={createFolder} disabled={savingFolder || !newFolderName.trim()} style={{ background: '#007AFF', border: 'none', borderRadius: 8, padding: '10px 16px', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+          <button onClick={createFolder} disabled={savingFolder || !newFolderName.trim()} style={{ background: 'var(--btn-bg)', border: 'none', borderRadius: 8, padding: '10px 16px', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
             {savingFolder ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : 'Criar'}
           </button>
-          <button onClick={() => setShowNewFolder(false)} style={{ background: 'rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 8, padding: '10px 14px', color: '#8e8e93', cursor: 'pointer', fontSize: 13 }}>
+          <button onClick={() => setShowNewFolder(false)} style={{ background: 'rgba(0,0,0,0.06)', border: '1px solid var(--border-input)', borderRadius: 8, padding: '10px 14px', color: 'var(--text-3)', cursor: 'pointer', fontSize: 13 }}>
             <X size={14} />
           </button>
         </div>
@@ -485,8 +485,8 @@ export default function ProjetoArquivos({ projetoId, currentUser }: Props) {
           onClick={() => fileInputRef.current?.click()}
           style={{ border: `2px dashed ${dragOver ? '#007AFF' : 'rgba(0,0,0,0.15)'}`, borderRadius: 12, padding: '36px 24px', textAlign: 'center', cursor: 'pointer', background: dragOver ? 'rgba(0,122,255,0.04)' : '#fff', transition: 'border-color 0.2s', marginBottom: 16 }}>
           <Upload size={24} color="#8e8e93" style={{ marginBottom: 10 }} />
-          <div style={{ fontSize: 13.5, fontWeight: 600, color: '#1a1a1a' }}>Arraste arquivos ou use os botões acima</div>
-          <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 4 }}>PDF, DWG, JPG, PNG e outros</div>
+          <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Arraste arquivos ou use os botões acima</div>
+          <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4 }}>PDF, DWG, JPG, PNG e outros</div>
         </div>
       )}
 
@@ -494,9 +494,9 @@ export default function ProjetoArquivos({ projetoId, currentUser }: Props) {
       {childPastas.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10, marginBottom: 20 }}>
           {childPastas.map(p => (
-            <button key={p.id} onClick={() => enterFolder(p)} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, padding: '14px 16px', cursor: 'pointer', textAlign: 'left', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', transition: 'border-color 0.15s, box-shadow 0.15s', minHeight: 56 }}>
+            <button key={p.id} onClick={() => enterFolder(p)} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px', cursor: 'pointer', textAlign: 'left', boxShadow: 'var(--shadow-card)', transition: 'border-color 0.15s, box-shadow 0.15s', minHeight: 56 }}>
               <Folder size={20} color="#f59e0b" fill="rgba(245,158,11,0.15)" />
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nome}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nome}</span>
               <ChevronRight size={14} color="#8e8e93" />
             </button>
           ))}
@@ -507,10 +507,10 @@ export default function ProjetoArquivos({ projetoId, currentUser }: Props) {
       {currentArquivos.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>
           {currentArquivos.map(arq => (
-            <div key={arq.id} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', position: 'relative' }}>
+            <div key={arq.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', boxShadow: 'var(--shadow-card)', position: 'relative' }}>
               {/* Thumbnail or icon */}
               {isImage(arq.tipo) ? (
-                <div onClick={() => setLightbox(arq)} style={{ cursor: 'pointer', position: 'relative', paddingTop: '75%', background: '#f2f2f7', overflow: 'hidden' }}>
+                <div onClick={() => setLightbox(arq)} style={{ cursor: 'pointer', position: 'relative', paddingTop: '75%', background: 'var(--bg)', overflow: 'hidden' }}>
                   <img src={arq.url} alt={arq.nome} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0)', transition: 'background 0.15s' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.25)'; const icon = e.currentTarget.querySelector('.zoom-icon') as HTMLElement | null; if (icon) icon.style.opacity = '1' }}
@@ -519,7 +519,7 @@ export default function ProjetoArquivos({ projetoId, currentUser }: Props) {
                   </div>
                 </div>
               ) : (
-                <div style={{ paddingTop: '75%', background: '#f2f2f7', position: 'relative' }}>
+                <div style={{ paddingTop: '75%', background: 'var(--bg)', position: 'relative' }}>
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <FileIcon tipo={arq.tipo} />
                   </div>
@@ -528,14 +528,14 @@ export default function ProjetoArquivos({ projetoId, currentUser }: Props) {
 
               {/* Info */}
               <div style={{ padding: '8px 10px' }}>
-                <div style={{ fontSize: 11.5, fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={arq.nome}>{arq.nome}</div>
-                <div style={{ fontSize: 10.5, color: '#8e8e93', marginTop: 2 }}>{fmtBytes(arq.tamanho)}</div>
+                <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={arq.nome}>{arq.nome}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 2 }}>{fmtBytes(arq.tamanho)}</div>
               </div>
 
               {/* Actions */}
               <div style={{ display: 'flex', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
                 <a href={arq.url} download={arq.nome} target="_blank" rel="noopener noreferrer"
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '7px', color: '#007AFF', textDecoration: 'none' }}>
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '7px', color: 'var(--accent)', textDecoration: 'none' }}>
                   <Download size={14} />
                 </a>
                 <button onClick={() => deleteFile(arq)} disabled={deletingId === arq.id}
@@ -554,7 +554,7 @@ export default function ProjetoArquivos({ projetoId, currentUser }: Props) {
           onDragOver={e => { e.preventDefault(); setDragOver(true) }}
           onDragLeave={() => setDragOver(false)}
           onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files) }}
-          style={{ marginTop: 16, border: `2px dashed ${dragOver ? '#007AFF' : 'rgba(0,0,0,0.10)'}`, borderRadius: 10, padding: '14px', textAlign: 'center', cursor: 'default', background: dragOver ? 'rgba(0,122,255,0.04)' : 'transparent', transition: 'border-color 0.15s, background 0.15s', fontSize: 12, color: '#8e8e93' }}>
+          style={{ marginTop: 16, border: `2px dashed ${dragOver ? '#007AFF' : 'rgba(0,0,0,0.10)'}`, borderRadius: 10, padding: '14px', textAlign: 'center', cursor: 'default', background: dragOver ? 'rgba(0,122,255,0.04)' : 'transparent', transition: 'border-color 0.15s, background 0.15s', fontSize: 12, color: 'var(--text-3)' }}>
           Arraste arquivos aqui para adicionar à pasta atual
         </div>
       )}

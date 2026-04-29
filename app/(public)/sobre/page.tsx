@@ -1,16 +1,16 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 
 export const metadata = { title: 'Sobre a ARC' }
 
 export default function SobrePage() {
   return (
-    <div style={{ background: '#f2f2f7', minHeight: '100vh', padding: '48px 16px' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', padding: '48px 16px' }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
 
-        <h1 style={{ fontSize: 30, fontWeight: 300, color: '#1a1a1a', marginBottom: 12, letterSpacing: '-0.3px' }}>
+        <h1 style={{ fontSize: 30, fontWeight: 300, color: 'var(--text)', marginBottom: 12, letterSpacing: '-0.3px' }}>
           O que é a ARC
         </h1>
-        <p style={{ fontSize: 16, fontWeight: 300, color: '#8e8e93', marginBottom: 48, lineHeight: 1.7 }}>
+        <p style={{ fontSize: 16, fontWeight: 300, color: 'var(--text-3)', marginBottom: 48, lineHeight: 1.7 }}>
           Uma plataforma que conecta arquitetos, clientes e fornecedores em um único ambiente digital — eliminando planilhas, emails dispersos e processos manuais na gestão de projetos de arquitetura e design de interiores.
         </p>
 
@@ -21,7 +21,7 @@ export default function SobrePage() {
         <Section title="Para quem é a ARC">
           <Card
             label="Clientes"
-            color="#007AFF"
+            color="var(--accent)"
             description="Você quer reformar, construir ou decorar e não sabe como gerenciar tudo isso. Na ARC você encontra arquitetos verificados, acompanha o andamento do projeto em tempo real, aprova orçamentos e se comunica diretamente com o profissional — sem intermediários."
           />
           <Card
@@ -50,14 +50,14 @@ export default function SobrePage() {
 
         <div style={{ marginTop: 48, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <Link href="/cadastro" style={{
-            padding: '12px 24px', background: '#007AFF', color: '#fff',
+            padding: '12px 24px', background: 'var(--btn-bg)', color: '#fff',
             borderRadius: 10, fontSize: 14, fontWeight: 400, textDecoration: 'none',
           }}>
             Criar conta grátis
           </Link>
           <Link href="/contato" style={{
-            padding: '12px 24px', background: 'rgba(0,122,255,0.08)',
-            border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF',
+            padding: '12px 24px', background: 'var(--accent-soft)',
+            border: '1px solid var(--accent-soft-border)', color: 'var(--accent)',
             borderRadius: 10, fontSize: 14, fontWeight: 400, textDecoration: 'none',
           }}>
             Falar com a equipe
@@ -71,7 +71,7 @@ export default function SobrePage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 40 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 300, color: '#1a1a1a', marginBottom: 16 }}>{title}</h2>
+      <h2 style={{ fontSize: 18, fontWeight: 300, color: 'var(--text)', marginBottom: 16 }}>{title}</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</div>
     </div>
   )
@@ -84,7 +84,7 @@ function P({ children }: { children: React.ReactNode }) {
 function Card({ label, color, description }: { label: string; color: string; description: string }) {
   return (
     <div style={{
-      background: '#ffffff', borderRadius: 12, padding: '20px 20px',
+      background: 'var(--bg-card)', borderRadius: 12, padding: '20px 20px',
       border: '1px solid rgba(0,0,0,0.07)',
     }}>
       <span style={{
@@ -103,9 +103,9 @@ function Step({ n, text }: { n: string; text: string }) {
   return (
     <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
       <div style={{
-        width: 26, height: 26, borderRadius: '50%', background: 'rgba(0,122,255,0.1)',
-        border: '1px solid rgba(0,122,255,0.2)', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', flexShrink: 0, fontSize: 12, fontWeight: 500, color: '#007AFF',
+        width: 26, height: 26, borderRadius: '50%', background: 'var(--accent-soft)',
+        border: '1px solid var(--accent-soft-border)', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', flexShrink: 0, fontSize: 12, fontWeight: 500, color: 'var(--accent)',
       }}>
         {n}
       </div>

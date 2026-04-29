@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { TicketCheck, Send, Loader2, X, Check } from 'lucide-react'
@@ -106,11 +106,11 @@ export default function AdminTickets() {
   }
 
   return (
-    <div style={{ padding: 32, color: '#1a1a1a', background: '#f2f2f7', height: 'calc(100vh - 0px)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ padding: 32, color: 'var(--text)', background: 'var(--bg)', height: 'calc(100vh - 0px)', display: 'flex', flexDirection: 'column' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 500, color: '#1a1a1a', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <TicketCheck size={20} color="#007AFF" /> Tickets de Suporte
+        <h1 style={{ fontSize: 22, fontWeight: 500, color: 'var(--text)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <TicketCheck size={20} color="var(--accent)" /> Tickets de Suporte
         </h1>
       </div>
 
@@ -120,7 +120,7 @@ export default function AdminTickets() {
         <div style={{ width: 340, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
           {/* Filter */}
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{
-            background: '#ffffff', border: '1px solid rgba(0,0,0,0.12)', color: '#1a1a1a',
+            background: 'var(--bg-card)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--text)',
             borderRadius: 8, padding: '8px 12px', fontSize: 13, outline: 'none', cursor: 'pointer',
           }}>
             <option value="">Todos os status</option>
@@ -133,10 +133,10 @@ export default function AdminTickets() {
           <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {loading ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}>
-                <Loader2 size={22} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+                <Loader2 size={22} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
               </div>
             ) : tickets.length === 0 ? (
-              <div style={{ textAlign: 'center', color: '#8e8e93', fontSize: 13, padding: '32px 0' }}>Nenhum ticket</div>
+              <div style={{ textAlign: 'center', color: 'var(--text-3)', fontSize: 13, padding: '32px 0' }}>Nenhum ticket</div>
             ) : tickets.map(t => (
               <button key={t.id} onClick={() => openTicket(t)} style={{
                 width: '100%', textAlign: 'left',
@@ -148,30 +148,30 @@ export default function AdminTickets() {
                 onMouseEnter={e => { if (selected?.id !== t.id) e.currentTarget.style.borderColor = 'rgba(0,0,0,0.15)' }}
                 onMouseLeave={e => { if (selected?.id !== t.id) e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: '#1a1a1a', lineHeight: 1.3, flex: 1, marginRight: 8 }}>{t.titulo}</span>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', lineHeight: 1.3, flex: 1, marginRight: 8 }}>{t.titulo}</span>
                   <Badge status={t.status} />
                 </div>
-                <div style={{ fontSize: 11, color: '#6b6b6b' }}>{t.users?.nome ?? 'Anônimo'} · #{t.id}</div>
-                <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 4 }}>{new Date(t.created_at).toLocaleDateString('pt-BR')}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-2)' }}>{t.users?.nome ?? 'Anônimo'} · #{t.id}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>{new Date(t.created_at).toLocaleDateString('pt-BR')}</div>
               </button>
             ))}
           </div>
         </div>
 
         {/* Ticket detail */}
-        <div style={{ flex: 1, background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+        <div style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
           {!selected ? (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8e8e93', flexDirection: 'column', gap: 10 }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)', flexDirection: 'column', gap: 10 }}>
               <TicketCheck size={36} color="#8e8e93" />
               <span style={{ fontSize: 13 }}>Selecione um ticket</span>
             </div>
           ) : (
             <>
               {/* Header */}
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: '#1a1a1a' }}>{selected.titulo}</div>
-                  <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{selected.titulo}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
                     {selected.users?.nome ?? 'Anônimo'} · {selected.users?.email} · #{selected.id}
                   </div>
                 </div>
@@ -186,7 +186,7 @@ export default function AdminTickets() {
                     </button>
                   )}
                   <Badge status={selected.status} />
-                  <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', color: '#8e8e93', cursor: 'pointer', padding: 4 }}>
+                  <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 4 }}>
                     <X size={16} />
                   </button>
                 </div>
@@ -195,16 +195,16 @@ export default function AdminTickets() {
               {/* Messages */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {/* Original message */}
-                <div style={{ background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 10, padding: '12px 14px', alignSelf: 'flex-start', maxWidth: '80%' }}>
-                  <div style={{ fontSize: 10, color: '#8e8e93', marginBottom: 6, fontWeight: 500 }}>
+                <div style={{ background: 'var(--bg)', border: '1px solid var(--border-subtle)', borderRadius: 10, padding: '12px 14px', alignSelf: 'flex-start', maxWidth: '80%' }}>
+                  <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 6, fontWeight: 500 }}>
                     {selected.users?.nome ?? 'Usuário'} · {new Date(selected.created_at).toLocaleString('pt-BR')}
                   </div>
-                  <div style={{ fontSize: 13, color: '#1a1a1a', lineHeight: 1.6 }}>{selected.mensagem}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.6 }}>{selected.mensagem}</div>
                 </div>
 
                 {loadingResp ? (
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <Loader2 size={18} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+                    <Loader2 size={18} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
                   </div>
                 ) : respostas.map(r => (
                   <div key={r.id} style={{
@@ -217,7 +217,7 @@ export default function AdminTickets() {
                     <div style={{ fontSize: 10, color: r.is_admin ? '#007AFF' : '#8e8e93', marginBottom: 6, fontWeight: 500 }}>
                       {r.is_admin ? '🛡 Admin' : (r.users?.nome ?? 'Usuário')} · {new Date(r.created_at).toLocaleString('pt-BR')}
                     </div>
-                    <div style={{ fontSize: 13, color: '#1a1a1a', lineHeight: 1.6 }}>{r.mensagem}</div>
+                    <div style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.6 }}>{r.mensagem}</div>
                   </div>
                 ))}
                 <div ref={bottomRef} />
@@ -225,7 +225,7 @@ export default function AdminTickets() {
 
               {/* Reply */}
               {selected.status !== 'resolvido' && (
-                <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(0,0,0,0.08)', display: 'flex', gap: 10 }}>
+                <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: 10 }}>
                   <textarea
                     value={reply}
                     onChange={e => setReply(e.target.value)}
@@ -233,7 +233,7 @@ export default function AdminTickets() {
                     placeholder="Responder... (Ctrl+Enter para enviar)"
                     rows={2}
                     style={{
-                      flex: 1, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#1a1a1a',
+                      flex: 1, background: 'var(--bg)', border: '1px solid var(--border-input)', color: 'var(--text)',
                       borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none',
                       resize: 'none' as const, fontFamily: 'inherit',
                     }}

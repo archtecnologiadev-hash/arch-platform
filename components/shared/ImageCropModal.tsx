@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useRef } from 'react'
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop'
@@ -81,9 +81,9 @@ export default function ImageCropModal({ src, aspect, circular = false, onConfir
       onClick={e => { if (e.target === e.currentTarget) onCancel() }}
     >
       <div style={{
-        background: '#ffffff', borderRadius: 16, overflow: 'hidden',
+        background: 'var(--bg-card)', borderRadius: 16, overflow: 'hidden',
         boxShadow: '0 24px 80px rgba(0,0,0,0.22)', maxWidth: 580, width: '100%',
-        border: '1px solid rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column',
+        border: '1px solid var(--border)', display: 'flex', flexDirection: 'column',
       }}>
         {/* Header */}
         <div style={{
@@ -93,12 +93,12 @@ export default function ImageCropModal({ src, aspect, circular = false, onConfir
         }}>
           <span style={{ fontSize: 15, fontWeight: 700, color: '#1c1c1e' }}>Ajustar imagem</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 11, color: '#8e8e93', background: '#f2f2f7', padding: '3px 9px', borderRadius: 6 }}>
+            <span style={{ fontSize: 11, color: 'var(--text-3)', background: 'var(--bg)', padding: '3px 9px', borderRadius: 6 }}>
               {aspectLabel(aspect)}{circular ? ' · circular' : ''}
             </span>
             <button
               onClick={onCancel}
-              style={{ background: '#f2f2f7', border: 'none', borderRadius: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6c6c70' }}
+              style={{ background: 'var(--bg)', border: 'none', borderRadius: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6c6c70' }}
               onMouseEnter={e => (e.currentTarget.style.background = '#e5e5ea')}
               onMouseLeave={e => (e.currentTarget.style.background = '#f2f2f7')}
             >
@@ -134,7 +134,7 @@ export default function ImageCropModal({ src, aspect, circular = false, onConfir
         }}>
           <button
             onClick={onCancel}
-            style={{ padding: '9px 18px', borderRadius: 10, border: 'none', background: '#f2f2f7', color: '#3a3a3c', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
+            style={{ padding: '9px 18px', borderRadius: 10, border: 'none', background: 'var(--bg)', color: '#3a3a3c', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
             onMouseEnter={e => (e.currentTarget.style.background = '#e5e5ea')}
             onMouseLeave={e => (e.currentTarget.style.background = '#f2f2f7')}
           >

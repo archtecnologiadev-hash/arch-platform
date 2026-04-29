@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -184,15 +184,15 @@ export default function ArquitetoFornecedoresPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f2f2f7' }}>
-        <Loader2 size={26} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg)' }}>
+        <Loader2 size={26} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
   }
 
   return (
-    <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1a1a1a', background: '#f2f2f7' }}>
+    <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: 'var(--text)', background: 'var(--bg)' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
         .af-card { background:#fff; border:1px solid rgba(0,0,0,0.08); border-radius:12px; overflow:hidden; transition:border-color 0.2s, box-shadow 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
@@ -209,8 +209,8 @@ export default function ArquitetoFornecedoresPage() {
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>Fornecedores</h1>
-        <p style={{ fontSize: 13, color: '#8e8e93', margin: '5px 0 0' }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Fornecedores</h1>
+        <p style={{ fontSize: 13, color: 'var(--text-3)', margin: '5px 0 0' }}>
           Diretório de fornecedores parceiros certificados pela plataforma ARC
         </p>
       </div>
@@ -235,14 +235,14 @@ export default function ArquitetoFornecedoresPage() {
             </button>
           )
         })}
-        <div style={{ marginLeft: 'auto', fontSize: 12, color: '#8e8e93' }}>
+        <div style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-3)' }}>
           {sortedFiltered.length} fornecedor{sortedFiltered.length !== 1 ? 'es' : ''} encontrado{sortedFiltered.length !== 1 ? 's' : ''}
         </div>
       </div>
 
       {/* Grid */}
       {sortedFiltered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#8e8e93', fontSize: 14 }}>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>
           {suppliers.length === 0
             ? 'Nenhum fornecedor cadastrado ainda.'
             : 'Nenhum fornecedor nesse segmento.'}
@@ -293,16 +293,16 @@ export default function ArquitetoFornecedoresPage() {
 
                 {/* Body */}
                 <div style={{ padding: '16px 18px' }}>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a', marginBottom: 5 }}>{sup.name}</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 5 }}>{sup.name}</div>
 
                   {(sup.city || sup.segment) && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8, fontSize: 11.5, color: '#6b6b6b' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8, fontSize: 11.5, color: 'var(--text-2)' }}>
                       {sup.city && <><MapPin size={10} />{sup.city}</>}
                     </div>
                   )}
 
                   {sup.bio && (
-                    <p style={{ fontSize: 12.5, color: '#6b6b6b', lineHeight: 1.6, margin: '0 0 14px' }}>
+                    <p style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.6, margin: '0 0 14px' }}>
                       {sup.bio.length > 100 ? sup.bio.slice(0, 100) + '…' : sup.bio}
                     </p>
                   )}
@@ -317,18 +317,18 @@ export default function ArquitetoFornecedoresPage() {
                   <div style={{ display: 'flex', gap: 6 }}>
                     {sup.slug && (
                       <Link href={`/fornecedor/${sup.slug}`} target="_blank"
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, padding: '7px 10px', borderRadius: 8, background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: '#6b6b6b', textDecoration: 'none', fontWeight: 500 }}>
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, padding: '7px 10px', borderRadius: 8, background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--text-2)', textDecoration: 'none', fontWeight: 500 }}>
                         <ExternalLink size={11} />
                       </Link>
                     )}
                     <button
                       onClick={() => handleMensagem(sup)}
                       disabled={msgLoading === sup.id}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, padding: '7px 10px', borderRadius: 8, background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: '#6b6b6b', cursor: 'pointer', fontWeight: 500 }}>
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, padding: '7px 10px', borderRadius: 8, background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--text-2)', cursor: 'pointer', fontWeight: 500 }}>
                       <MessageCircle size={11} />
                     </button>
                     <button onClick={() => { setQuoteTarget(sup); setForm({ descricao: '' }); setSent(false) }}
-                      style={{ flex: 1, fontSize: 12, padding: '7px', borderRadius: 8, background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', cursor: 'pointer', fontWeight: 600 }}>
+                      style={{ flex: 1, fontSize: 12, padding: '7px', borderRadius: 8, background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)', color: 'var(--accent)', cursor: 'pointer', fontWeight: 600 }}>
                       Solicitar Orçamento
                     </button>
                   </div>
@@ -344,27 +344,27 @@ export default function ArquitetoFornecedoresPage() {
         <div onClick={e => { if (e.target === e.currentTarget) setQuoteTarget(null) }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div className="af-modal-box"
-            style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 16, width: '100%', maxWidth: 500, padding: 30, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-input)', borderRadius: 16, width: '100%', maxWidth: 500, padding: 30, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
             {sent ? (
               <div style={{ textAlign: 'center' as const, padding: '22px 0' }}>
                 <CheckCircle2 size={52} color="#34d399" style={{ marginBottom: 16 }} />
-                <div style={{ fontSize: 19, fontWeight: 600, color: '#1a1a1a', marginBottom: 8 }}>Orçamento solicitado!</div>
-                <div style={{ fontSize: 13, color: '#6b6b6b' }}>{quoteTarget.name} receberá sua solicitação em breve.</div>
+                <div style={{ fontSize: 19, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>Orçamento solicitado!</div>
+                <div style={{ fontSize: 13, color: 'var(--text-2)' }}>{quoteTarget.name} receberá sua solicitação em breve.</div>
               </div>
             ) : (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 22 }}>
                   <div>
-                    <div style={{ fontSize: 17, fontWeight: 600, color: '#1a1a1a' }}>Solicitar Orçamento</div>
-                    <div style={{ fontSize: 12.5, color: '#6b6b6b', marginTop: 3 }}>
+                    <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>Solicitar Orçamento</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--text-2)', marginTop: 3 }}>
                       {quoteTarget.name}{quoteTarget.segment ? ` · ${quoteTarget.segment}` : ''}
                     </div>
                   </div>
-                  <button onClick={() => setQuoteTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}><X size={18} /></button>
+                  <button onClick={() => setQuoteTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}><X size={18} /></button>
                 </div>
                 <form onSubmit={handleSend} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div>
-                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>Descrição do serviço *</label>
+                    <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 6, fontWeight: 600 }}>Descrição do serviço *</label>
                     <textarea className="af-inp" required rows={4}
                       placeholder="Descreva o serviço necessário, materiais, dimensões, prazo..."
                       value={form.descricao}
@@ -372,27 +372,27 @@ export default function ArquitetoFornecedoresPage() {
                       style={{ resize: 'vertical' as const }} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>Arquivo (opcional)</label>
+                    <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 6, fontWeight: 600 }}>Arquivo (opcional)</label>
                     <input ref={quoteFileRef} type="file" accept=".pdf,.dwg,.png,.jpg,.jpeg,.zip" style={{ display: 'none' }}
                       onChange={e => setQuoteFile(e.target.files?.[0] ?? null)} />
                     {quoteFile ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(0,122,255,0.06)', border: '1px solid rgba(0,122,255,0.2)', borderRadius: 8 }}>
-                        <FileText size={14} color="#007AFF" />
-                        <span style={{ flex: 1, fontSize: 12.5, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{quoteFile.name}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(0,122,255,0.06)', border: '1px solid var(--accent-soft-border)', borderRadius: 8 }}>
+                        <FileText size={14} color="var(--accent)" />
+                        <span style={{ flex: 1, fontSize: 12.5, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{quoteFile.name}</span>
                         <button type="button" onClick={() => { setQuoteFile(null); if (quoteFileRef.current) quoteFileRef.current.value = '' }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 0 }}>
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 0 }}>
                           <X size={13} />
                         </button>
                       </div>
                     ) : (
                       <button type="button" onClick={() => quoteFileRef.current?.click()}
-                        style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1.5px dashed rgba(0,0,0,0.15)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#8e8e93', fontSize: 12.5 }}>
+                        style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1.5px dashed rgba(0,0,0,0.15)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--text-3)', fontSize: 12.5 }}>
                         <Upload size={14} /> Anexar PDF, DWG ou imagem
                       </button>
                     )}
                   </div>
                   <button type="submit" disabled={sending}
-                    style={{ marginTop: 4, background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 600, cursor: sending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: sending ? 0.7 : 1 }}>
+                    style={{ marginTop: 4, background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 600, cursor: sending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: sending ? 0.7 : 1 }}>
                     {sending ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Enviando...</> : <><Send size={14} /> Enviar Solicitação</>}
                   </button>
                 </form>

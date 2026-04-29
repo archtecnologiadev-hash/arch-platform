@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import {
@@ -50,7 +50,7 @@ function Badge({ status }: { status: string }) {
 }
 
 const inp: React.CSSProperties = {
-  background: '#fff', border: '1px solid rgba(0,0,0,0.12)', color: '#1a1a1a',
+  background: 'var(--bg-card)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--text)',
   borderRadius: 8, padding: '8px 12px', fontSize: 13, outline: 'none', width: '100%',
   boxSizing: 'border-box', fontFamily: 'inherit',
 }
@@ -194,20 +194,20 @@ export default function AdminCobrancasPage() {
   const totalPendente = cobrancas.filter(c => ['pendente', 'atrasado'].includes(c.status)).reduce((s, c) => s + Number(c.valor), 0)
 
   return (
-    <div style={{ padding: 32, color: '#1a1a1a', background: '#f2f2f7', minHeight: '100vh' }}>
+    <div style={{ padding: 32, color: 'var(--text)', background: 'var(--bg)', minHeight: '100vh' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {/* Header */}
       <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 500, color: '#1a1a1a', marginBottom: 4 }}>Cobranças</h1>
-          <p style={{ fontSize: 13, color: '#8e8e93' }}>{total} cobrança{total !== 1 ? 's' : ''}</p>
+          <h1 style={{ fontSize: 22, fontWeight: 500, color: 'var(--text)', marginBottom: 4 }}>Cobranças</h1>
+          <p style={{ fontSize: 13, color: 'var(--text-3)' }}>{total} cobrança{total !== 1 ? 's' : ''}</p>
         </div>
         <button
           onClick={() => { setShowModal(true); resetModal() }}
           style={{
             display: 'flex', alignItems: 'center', gap: 7,
-            background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10,
+            background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 10,
             padding: '10px 18px', fontSize: 13.5, fontWeight: 600, cursor: 'pointer',
           }}
         >
@@ -221,9 +221,9 @@ export default function AdminCobrancasPage() {
           { label: 'Recebido (exibido)', value: `R$ ${totalPago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: <CheckCircle2 size={18} />, color: '#22c55e' },
           { label: 'Pendente de recebimento', value: `R$ ${totalPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: <Clock size={18} />, color: '#f59e0b' },
         ].map(m => (
-          <div key={m.label} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          <div key={m.label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 20px', boxShadow: 'var(--shadow-card)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{ fontSize: 11, color: '#8e8e93', fontWeight: 500 }}>{m.label}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500 }}>{m.label}</span>
               <div style={{ color: m.color }}>{m.icon}</div>
             </div>
             <div style={{ fontSize: 20, fontWeight: 600, color: m.color }}>{m.value}</div>
@@ -251,19 +251,19 @@ export default function AdminCobrancasPage() {
           <option value="pago">Pago</option>
           <option value="cancelado">Cancelado</option>
         </select>
-        <button onClick={load} style={{ background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.25)', color: '#007AFF', borderRadius: 8, padding: '8px 14px', cursor: 'pointer', fontSize: 12.5, fontWeight: 600 }}>
+        <button onClick={load} style={{ background: 'var(--accent-soft)', border: '1px solid rgba(0,122,255,0.25)', color: 'var(--accent)', borderRadius: 8, padding: '8px 14px', cursor: 'pointer', fontSize: 12.5, fontWeight: 600 }}>
           Atualizar
         </button>
       </div>
 
       {/* Table */}
-      <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
         {loading ? (
           <div style={{ padding: 48, display: 'flex', justifyContent: 'center' }}>
-            <Loader2 size={24} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+            <Loader2 size={24} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
           </div>
         ) : cobrancas.length === 0 ? (
-          <div style={{ padding: 48, textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>
+          <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>
             <DollarSign size={32} color="#c7c7cc" style={{ margin: '0 auto 10px' }} />
             <div>Nenhuma cobrança encontrada</div>
           </div>
@@ -271,9 +271,9 @@ export default function AdminCobrancasPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {['Usuário', 'Descrição', 'Valor', 'Vencimento', 'Status', 'Ações'].map(h => (
-                    <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, color: '#8e8e93', fontWeight: 500, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, color: 'var(--text-3)', fontWeight: 500, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -282,16 +282,16 @@ export default function AdminCobrancasPage() {
                   <tr key={c.id}
                     style={{ borderBottom: i < cobrancas.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
                     <td style={{ padding: '12px 14px' }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: '#1a1a1a' }}>{c.users?.nome ?? '—'}</div>
-                      <div style={{ fontSize: 11, color: '#8e8e93' }}>{c.users?.email ?? '—'}</div>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{c.users?.nome ?? '—'}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{c.users?.email ?? '—'}</div>
                     </td>
                     <td style={{ padding: '12px 14px', fontSize: 12.5, color: '#3a3a3c', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {c.descricao ?? <span style={{ color: '#c7c7cc' }}>—</span>}
+                      {c.descricao ?? <span style={{ color: 'var(--logout-btn)' }}>—</span>}
                     </td>
-                    <td style={{ padding: '12px 14px', fontSize: 13.5, fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '12px 14px', fontSize: 13.5, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
                       R$ {Number(c.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </td>
-                    <td style={{ padding: '12px 14px', fontSize: 12, color: '#6b6b6b', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '12px 14px', fontSize: 12, color: 'var(--text-2)', whiteSpace: 'nowrap' }}>
                       {new Date(c.vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
                       {c.pago_em && (
                         <div style={{ fontSize: 10.5, color: '#22c55e', marginTop: 2 }}>
@@ -319,7 +319,7 @@ export default function AdminCobrancasPage() {
                             onClick={() => setConfirmAction({ id: c.id, tipo: 'cancelado' })}
                             disabled={actionLoading === c.id}
                             title="Cancelar cobrança"
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#8e8e93', background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 6, padding: '4px 9px', cursor: 'pointer' }}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-3)', background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 6, padding: '4px 9px', cursor: 'pointer' }}
                           >
                             <Ban size={11} /> Cancelar
                           </button>
@@ -329,7 +329,7 @@ export default function AdminCobrancasPage() {
                           onClick={() => handleReenviar(c.id)}
                           disabled={actionLoading === c.id}
                           title="Reenviar email"
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#007AFF', background: 'rgba(0,122,255,0.06)', border: '1px solid rgba(0,122,255,0.2)', borderRadius: 6, padding: '4px 9px', cursor: 'pointer' }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--accent)', background: 'rgba(0,122,255,0.06)', border: '1px solid var(--accent-soft-border)', borderRadius: 6, padding: '4px 9px', cursor: 'pointer' }}
                         >
                           {actionLoading === c.id
                             ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} />
@@ -351,7 +351,7 @@ export default function AdminCobrancasPage() {
                         </label>
                         {c.comprovante_url && (
                           <a href={c.comprovante_url} target="_blank" rel="noopener noreferrer"
-                            style={{ fontSize: 11, color: '#007AFF', textDecoration: 'none' }}>
+                            style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none' }}>
                             Ver
                           </a>
                         )}
@@ -365,7 +365,7 @@ export default function AdminCobrancasPage() {
                         </button>
                       </div>
                       {c.pix_chave && (
-                        <div style={{ marginTop: 4, fontSize: 10.5, color: '#8e8e93' }}>
+                        <div style={{ marginTop: 4, fontSize: 10.5, color: 'var(--text-3)' }}>
                           PIX: <span style={{ fontFamily: 'monospace', color: '#3a3a3c' }}>{c.pix_chave}</span>
                         </div>
                       )}
@@ -384,24 +384,24 @@ export default function AdminCobrancasPage() {
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16,
         }} onClick={e => { if (e.target === e.currentTarget) { setShowModal(false); resetModal() } }}>
-          <div style={{ background: '#fff', borderRadius: 18, padding: 28, maxWidth: 480, width: '100%', boxShadow: '0 24px 80px rgba(0,0,0,0.25)', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 18, padding: 28, maxWidth: 480, width: '100%', boxShadow: '0 24px 80px rgba(0,0,0,0.25)', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>Nova cobrança</div>
-              <button onClick={() => { setShowModal(false); resetModal() }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}><X size={18} /></button>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Nova cobrança</div>
+              <button onClick={() => { setShowModal(false); resetModal() }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}><X size={18} /></button>
             </div>
 
             {/* Seleção de usuário */}
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 7, fontWeight: 600 }}>
+              <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 7, fontWeight: 600 }}>
                 Usuário <span style={{ color: '#ef4444' }}>*</span>
               </label>
               {selectedUser ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(0,122,255,0.06)', border: '1px solid rgba(0,122,255,0.2)', borderRadius: 9, padding: '10px 14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(0,122,255,0.06)', border: '1px solid var(--accent-soft-border)', borderRadius: 9, padding: '10px 14px' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: '#1a1a1a' }}>{selectedUser.nome}</div>
-                    <div style={{ fontSize: 11, color: '#8e8e93' }}>{selectedUser.email}</div>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{selectedUser.nome}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{selectedUser.email}</div>
                   </div>
-                  <button onClick={() => { setSelectedUser(null); setUserSearch('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93' }}><X size={14} /></button>
+                  <button onClick={() => { setSelectedUser(null); setUserSearch('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)' }}><X size={14} /></button>
                 </div>
               ) : (
                 <div style={{ position: 'relative' }}>
@@ -411,14 +411,14 @@ export default function AdminCobrancasPage() {
                     style={inp}
                   />
                   {userOptions.length > 0 && (
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 10, marginTop: 4 }}>
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-card)', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 10, marginTop: 4 }}>
                       {userOptions.map(u => (
                         <button key={u.id} onClick={() => { setSelectedUser(u); setUserSearch(''); setUserOptions([]) }}
-                          style={{ width: '100%', display: 'block', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', borderBottom: '1px solid rgba(0,0,0,0.06)' }}
+                          style={{ width: '100%', display: 'block', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', borderBottom: '1px solid var(--border-subtle)' }}
                           onMouseEnter={e => (e.currentTarget.style.background = '#f2f2f7')}
                           onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: '#1a1a1a' }}>{u.nome}</div>
-                          <div style={{ fontSize: 11, color: '#8e8e93' }}>{u.email}</div>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{u.nome}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{u.email}</div>
                         </button>
                       ))}
                     </div>
@@ -429,25 +429,25 @@ export default function AdminCobrancasPage() {
 
             {/* Valor */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 7, fontWeight: 600 }}>Valor (R$) <span style={{ color: '#ef4444' }}>*</span></label>
+              <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 7, fontWeight: 600 }}>Valor (R$) <span style={{ color: '#ef4444' }}>*</span></label>
               <input value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00" type="text" inputMode="decimal" style={inp} />
             </div>
 
             {/* Descrição */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 7, fontWeight: 600 }}>Descrição</label>
+              <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 7, fontWeight: 600 }}>Descrição</label>
               <input value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Ex: Mensalidade ARC — Maio/2026" style={inp} />
             </div>
 
             {/* Vencimento */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 7, fontWeight: 600 }}>Vencimento <span style={{ color: '#ef4444' }}>*</span></label>
+              <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 7, fontWeight: 600 }}>Vencimento <span style={{ color: '#ef4444' }}>*</span></label>
               <input value={vencimento} onChange={e => setVencimento(e.target.value)} type="date" style={inp} />
             </div>
 
             {/* Chave PIX */}
             <div style={{ marginBottom: 22 }}>
-              <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 7, fontWeight: 600 }}>Chave PIX <span style={{ color: '#8e8e93', fontWeight: 400 }}>(opcional)</span></label>
+              <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 7, fontWeight: 600 }}>Chave PIX <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>(opcional)</span></label>
               <input value={pixChave} onChange={e => setPixChave(e.target.value)} placeholder="Email, CPF, telefone ou chave aleatória" style={inp} />
             </div>
 
@@ -458,7 +458,7 @@ export default function AdminCobrancasPage() {
             )}
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => { setShowModal(false); resetModal() }} style={{ flex: 1, padding: 12, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 10, fontSize: 13, fontWeight: 500, cursor: 'pointer', color: '#6b6b6b' }}>
+              <button onClick={() => { setShowModal(false); resetModal() }} style={{ flex: 1, padding: 12, background: 'var(--bg)', border: '1px solid var(--border-input)', borderRadius: 10, fontSize: 13, fontWeight: 500, cursor: 'pointer', color: 'var(--text-2)' }}>
                 Cancelar
               </button>
               <button onClick={handleCreate} disabled={submitting} style={{ flex: 1, padding: 12, background: submitting ? '#c7c7cc' : '#007AFF', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: submitting ? 'default' : 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
@@ -473,7 +473,7 @@ export default function AdminCobrancasPage() {
       {confirmAction && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
           onClick={e => { if (e.target === e.currentTarget) setConfirmAction(null) }}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 28, maxWidth: 380, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: 28, maxWidth: 380, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
               <div style={{ width: 38, height: 38, borderRadius: 10, background: confirmAction.tipo === 'pago' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {confirmAction.tipo === 'pago'
@@ -486,13 +486,13 @@ export default function AdminCobrancasPage() {
                  confirmAction.tipo === 'cancelado' ? 'Cancelar cobrança?' : 'Excluir cobrança?'}
               </div>
             </div>
-            <p style={{ fontSize: 13, color: '#6b6b6b', lineHeight: 1.6, marginBottom: 20 }}>
+            <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6, marginBottom: 20 }}>
               {confirmAction.tipo === 'pago' ? 'A cobrança será marcada como paga manualmente.' :
                confirmAction.tipo === 'cancelado' ? 'A cobrança será cancelada. O usuário não precisa mais pagar.' :
                'A cobrança será excluída permanentemente.'}
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setConfirmAction(null)} style={{ flex: 1, padding: 11, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 9, fontSize: 13, fontWeight: 500, cursor: 'pointer', color: '#6b6b6b' }}>Voltar</button>
+              <button onClick={() => setConfirmAction(null)} style={{ flex: 1, padding: 11, background: 'var(--bg)', border: '1px solid var(--border-input)', borderRadius: 9, fontSize: 13, fontWeight: 500, cursor: 'pointer', color: 'var(--text-2)' }}>Voltar</button>
               <button
                 onClick={() => confirmAction.tipo === 'excluir' ? handleDelete(confirmAction.id) : handleAction(confirmAction.id, confirmAction.tipo as 'pago' | 'cancelado')}
                 disabled={actionLoading === confirmAction.id}

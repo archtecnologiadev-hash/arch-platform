@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
@@ -14,7 +14,7 @@ interface TestUser {
 }
 
 const TIPO_COLOR: Record<string, { color: string; bg: string; label: string }> = {
-  arquiteto: { color: '#007AFF', bg: 'rgba(0,122,255,0.08)', label: 'Arquiteto' },
+  arquiteto: { color: 'var(--accent)', bg: 'rgba(0,122,255,0.08)', label: 'Arquiteto' },
   fornecedor: { color: '#4f9cf9', bg: 'rgba(79,156,249,0.08)', label: 'Fornecedor' },
   cliente:   { color: '#34d399', bg: 'rgba(52,211,153,0.1)',  label: 'Cliente' },
 }
@@ -28,7 +28,7 @@ function CopyBtn({ text }: { text: string }) {
   }
   return (
     <button onClick={handle} title="Copiar" style={{
-      background: 'none', border: '1px solid rgba(0,0,0,0.1)', borderRadius: 6,
+      background: 'none', border: '1px solid var(--border-input)', borderRadius: 6,
       cursor: 'pointer', padding: '3px 7px', display: 'flex', alignItems: 'center', gap: 4,
       color: copied ? '#059669' : '#6b6b6b', fontSize: 11, transition: 'all 0.15s',
     }}>
@@ -111,14 +111,14 @@ export default function DadosTestePage() {
   }
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f2f2f7' }}>
-      <Loader2 size={28} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
+      <Loader2 size={28} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 
   return (
-    <div style={{ padding: 32, background: '#f2f2f7', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1a1a1a' }}>
+    <div style={{ padding: 32, background: 'var(--bg)', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: 'var(--text)' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
       {toast && (
@@ -137,10 +137,10 @@ export default function DadosTestePage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <FlaskConical size={20} color="#007AFF" />
+            <FlaskConical size={20} color="var(--accent)" />
             <h1 style={{ fontSize: 22, fontWeight: 500, margin: 0 }}>Dados de Teste</h1>
           </div>
-          <p style={{ fontSize: 13, color: '#8e8e93', margin: 0 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0 }}>
             Usuários fictícios para desenvolvimento — todos com domínio @arc-test.local
           </p>
         </div>
@@ -170,9 +170,9 @@ export default function DadosTestePage() {
             if (!c) return null
             return (
               <div key={tipo} style={{
-                background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10,
+                background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10,
                 padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 10,
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                boxShadow: 'var(--shadow-card)',
               }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: m.color }} />
                 <span style={{ fontSize: 13, fontWeight: 500 }}>{m.label}s</span>
@@ -181,12 +181,12 @@ export default function DadosTestePage() {
             )
           })}
           <div style={{
-            background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10,
+            background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10,
             padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 10,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+            boxShadow: 'var(--shadow-card)',
           }}>
-            <span style={{ fontSize: 13, color: '#8e8e93' }}>Total</span>
-            <span style={{ fontSize: 20, fontWeight: 300, color: '#1a1a1a' }}>{users.length}</span>
+            <span style={{ fontSize: 13, color: 'var(--text-3)' }}>Total</span>
+            <span style={{ fontSize: 20, fontWeight: 300, color: 'var(--text)' }}>{users.length}</span>
           </div>
         </div>
       )}
@@ -194,7 +194,7 @@ export default function DadosTestePage() {
       {/* Result message */}
       {result && users.length === 0 && (
         <div style={{
-          background: '#fff', border: '1px solid rgba(52,211,153,0.3)', borderRadius: 12,
+          background: 'var(--bg-card)', border: '1px solid rgba(52,211,153,0.3)', borderRadius: 12,
           padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10,
         }}>
           <Check size={16} color="#059669" />
@@ -205,12 +205,12 @@ export default function DadosTestePage() {
       {/* No data */}
       {users.length === 0 && !result && (
         <div style={{
-          background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14,
-          padding: '48px 24px', textAlign: 'center', color: '#8e8e93',
+          background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14,
+          padding: '48px 24px', textAlign: 'center', color: 'var(--text-3)',
         }}>
           <FlaskConical size={36} style={{ marginBottom: 12, opacity: 0.4 }} />
           <p style={{ fontSize: 14, fontWeight: 500, margin: '0 0 4px' }}>Nenhum dado de teste encontrado</p>
-          <p style={{ fontSize: 12, margin: 0 }}>Execute o SQL em <code style={{ background: '#f2f2f7', padding: '2px 6px', borderRadius: 4 }}>supabase/seed-test-data.sql</code> para criar os dados.</p>
+          <p style={{ fontSize: 12, margin: 0 }}>Execute o SQL em <code style={{ background: 'var(--bg)', padding: '2px 6px', borderRadius: 4 }}>supabase/seed-test-data.sql</code> para criar os dados.</p>
         </div>
       )}
 
@@ -231,12 +231,12 @@ export default function DadosTestePage() {
               </div>
             </div>
 
-            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.08)', background: '#f9f9f9' }}>
+                  <tr style={{ borderBottom: '1px solid var(--border)', background: '#f9f9f9' }}>
                     {['Nome', 'Email', 'Senha', 'Acesso'].map(h => (
-                      <th key={h} style={{ padding: '9px 16px', textAlign: 'left', fontSize: 11, color: '#8e8e93', fontWeight: 600, letterSpacing: '0.05em' }}>{h}</th>
+                      <th key={h} style={{ padding: '9px 16px', textAlign: 'left', fontSize: 11, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.05em' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -248,13 +248,13 @@ export default function DadosTestePage() {
                       <td style={{ padding: '11px 16px', fontSize: 13, fontWeight: 500 }}>{u.nome}</td>
                       <td style={{ padding: '11px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                          <span style={{ fontSize: 12, color: '#6b6b6b', fontFamily: 'monospace' }}>{u.email}</span>
+                          <span style={{ fontSize: 12, color: 'var(--text-2)', fontFamily: 'monospace' }}>{u.email}</span>
                           <CopyBtn text={u.email} />
                         </div>
                       </td>
                       <td style={{ padding: '11px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                          <span style={{ fontSize: 12, fontFamily: 'monospace', background: '#f2f2f7', padding: '2px 8px', borderRadius: 5 }}>senha123</span>
+                          <span style={{ fontSize: 12, fontFamily: 'monospace', background: 'var(--bg)', padding: '2px 8px', borderRadius: 5 }}>senha123</span>
                           <CopyBtn text="senha123" />
                         </div>
                       </td>
@@ -264,8 +264,8 @@ export default function DadosTestePage() {
                           disabled={impersonating === u.email}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 5,
-                            background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)',
-                            color: '#007AFF', borderRadius: 7, padding: '5px 11px',
+                            background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)',
+                            color: 'var(--accent)', borderRadius: 7, padding: '5px 11px',
                             fontSize: 11.5, fontWeight: 600, cursor: 'pointer',
                             opacity: impersonating === u.email ? 0.5 : 1,
                           }}>
@@ -291,7 +291,7 @@ export default function DadosTestePage() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16,
         }} onClick={e => { if (e.target === e.currentTarget) setConfirmOpen(false) }}>
           <div style={{
-            background: '#fff', borderRadius: 18, padding: 28, maxWidth: 420, width: '100%',
+            background: 'var(--bg-card)', borderRadius: 18, padding: 28, maxWidth: 420, width: '100%',
             boxShadow: '0 24px 80px rgba(0,0,0,0.3)', animation: 'slideDown 0.2s ease',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
@@ -300,16 +300,16 @@ export default function DadosTestePage() {
               </div>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 600 }}>Remover dados de teste?</div>
-                <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 2 }}>Esta ação não pode ser desfeita</div>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>Esta ação não pode ser desfeita</div>
               </div>
             </div>
-            <p style={{ fontSize: 13, color: '#6b6b6b', lineHeight: 1.6, margin: '0 0 20px' }}>
+            <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6, margin: '0 0 20px' }}>
               Isso apagará <strong>{users.length} usuários de teste</strong> ({counts.arquiteto} arquitetos, {counts.fornecedor} fornecedores, {counts.cliente} clientes) e todos os dados vinculados (escritórios, projetos, produtos, etc).
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setConfirmOpen(false)} style={{
-                flex: 1, background: '#f2f2f7', border: 'none', borderRadius: 10,
-                padding: '12px', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#1a1a1a',
+                flex: 1, background: 'var(--bg)', border: 'none', borderRadius: 10,
+                padding: '12px', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: 'var(--text)',
               }}>Cancelar</button>
               <button onClick={handleDelete} style={{
                 flex: 1, background: '#ef4444', border: 'none', borderRadius: 10,

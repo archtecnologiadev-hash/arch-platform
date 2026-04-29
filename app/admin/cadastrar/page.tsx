@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { UserPlus, Copy, CheckCircle2, Loader2, Eye, EyeOff, Star } from 'lucide-react'
@@ -6,11 +6,11 @@ import { UserPlus, Copy, CheckCircle2, Loader2, Eye, EyeOff, Star } from 'lucide
 const TIPOS = ['arquiteto', 'fornecedor', 'cliente']
 
 const inp: React.CSSProperties = {
-  width: '100%', background: '#ffffff', border: '1px solid rgba(0,0,0,0.12)', color: '#1a1a1a',
+  width: '100%', background: 'var(--bg-card)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--text)',
   borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', boxSizing: 'border-box' as const,
 }
 const lbl: React.CSSProperties = {
-  fontSize: 11, color: '#6b6b6b', fontWeight: 500, display: 'block', marginBottom: 5, letterSpacing: '0.03em',
+  fontSize: 11, color: 'var(--text-2)', fontWeight: 500, display: 'block', marginBottom: 5, letterSpacing: '0.03em',
 }
 
 interface FormState {
@@ -70,13 +70,13 @@ export default function AdminCadastrar() {
   }
 
   return (
-    <div style={{ padding: 32, color: '#1a1a1a', background: '#f2f2f7', minHeight: '100vh', maxWidth: 680 }}>
+    <div style={{ padding: 32, color: 'var(--text)', background: 'var(--bg)', minHeight: '100vh', maxWidth: 680 }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 500, color: '#1a1a1a', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <UserPlus size={20} color="#007AFF" /> Cadastrar Usuário
+        <h1 style={{ fontSize: 22, fontWeight: 500, color: 'var(--text)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <UserPlus size={20} color="var(--accent)" /> Cadastrar Usuário
         </h1>
-        <p style={{ fontSize: 13, color: '#8e8e93' }}>Cadastro manual com senha provisória automática</p>
+        <p style={{ fontSize: 13, color: 'var(--text-3)' }}>Cadastro manual com senha provisória automática</p>
       </div>
 
       {/* Success card */}
@@ -95,17 +95,17 @@ export default function AdminCadastrar() {
               {result.isFundador ? 'Fundador cadastrado! Email de boas-vindas enviado.' : 'Usuário criado com sucesso'}
             </span>
           </div>
-          <div style={{ fontSize: 12, color: '#6b6b6b', marginBottom: 10 }}>
-            ID: <span style={{ fontFamily: 'monospace', color: '#8e8e93' }}>{result.user_id}</span>
+          <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 10 }}>
+            ID: <span style={{ fontFamily: 'monospace', color: 'var(--text-3)' }}>{result.user_id}</span>
           </div>
-          <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 10, color: '#8e8e93', fontWeight: 500, letterSpacing: '0.04em', marginBottom: 4 }}>SENHA PROVISÓRIA</div>
-              <div style={{ fontFamily: 'monospace', fontSize: 15, color: '#007AFF', letterSpacing: '0.05em' }}>
+              <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 500, letterSpacing: '0.04em', marginBottom: 4 }}>SENHA PROVISÓRIA</div>
+              <div style={{ fontFamily: 'monospace', fontSize: 15, color: 'var(--accent)', letterSpacing: '0.05em' }}>
                 {showSenha ? result.senha_provisoria : '•'.repeat(result.senha_provisoria.length)}
               </div>
             </div>
-            <button onClick={() => setShowSenha(s => !s)} style={{ background: 'none', border: 'none', color: '#8e8e93', cursor: 'pointer', padding: 4 }}>
+            <button onClick={() => setShowSenha(s => !s)} style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 4 }}>
               {showSenha ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
             <button onClick={copyPassword} style={{
@@ -127,8 +127,8 @@ export default function AdminCadastrar() {
       )}
 
       <form onSubmit={handleSubmit}>
-        <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-          <p style={{ fontSize: 12, fontWeight: 500, color: '#007AFF', letterSpacing: '0.04em', marginBottom: 18 }}>Informações do Usuário</p>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--accent)', letterSpacing: '0.04em', marginBottom: 18 }}>Informações do Usuário</p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -191,7 +191,7 @@ export default function AdminCadastrar() {
                     <Star size={13} color={form.isFundador ? '#b45309' : '#c7c7cc'} fill={form.isFundador ? '#fbbf24' : 'none'} />
                     Cadastrar como Fundador (acesso vitalício gratuito)
                   </div>
-                  <div style={{ fontSize: 11.5, color: '#8e8e93', marginTop: 2 }}>
+                  <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>
                     Sem necessidade de cartão. Status permanente até revogação manual.
                   </div>
                 </div>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { Plus, Trash2, Loader2, Package, X, CheckCircle2, Upload, ImageIcon } from 'lucide-react'
@@ -30,7 +30,7 @@ const TIPO_OPTS: Array<{ value: string; label: string }> = [
 ]
 
 const TIPO_META: Record<string, { color: string; bg: string; border: string }> = {
-  'produto':   { color: '#007AFF', bg: 'rgba(0,122,255,0.08)',   border: 'rgba(0,122,255,0.2)' },
+  'produto':   { color: 'var(--accent)', bg: 'rgba(0,122,255,0.08)',   border: 'rgba(0,122,255,0.2)' },
   'serviço':   { color: '#34d399', bg: 'rgba(52,211,153,0.1)',   border: 'rgba(52,211,153,0.22)' },
   'portfólio': { color: '#a78bfa', bg: 'rgba(167,139,250,0.1)',  border: 'rgba(167,139,250,0.22)' },
 }
@@ -167,15 +167,15 @@ export default function CatalogoPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f2f2f7' }}>
-        <Loader2 size={26} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg)' }}>
+        <Loader2 size={26} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
   }
 
   return (
-    <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1a1a1a', background: '#f2f2f7' }}>
+    <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: 'var(--text)', background: 'var(--bg)' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
         .cat-card { background:#fff; border:1px solid rgba(0,0,0,0.08); border-radius:14px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.08); transition:box-shadow 0.18s; }
@@ -190,8 +190,8 @@ export default function CatalogoPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a', margin: 0 }}>Catálogo</h1>
-          <p style={{ fontSize: 13, color: '#6b6b6b', margin: '5px 0 0' }}>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Catálogo</h1>
+          <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '5px 0 0' }}>
             Gerencie produtos, serviços e portfólio · {produtos.length} item{produtos.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -202,7 +202,7 @@ export default function CatalogoPage() {
             </button>
             {limiteAtingido && (
               <span style={{ fontSize: 11, color: '#f97316' }}>
-                Limite de {planInfo.maxProdutos} itens atingido · <a href="/fornecedor/planos" style={{ color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>Fazer upgrade</a>
+                Limite de {planInfo.maxProdutos} itens atingido · <a href="/fornecedor/planos" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>Fazer upgrade</a>
               </span>
             )}
           </div>
@@ -231,7 +231,7 @@ export default function CatalogoPage() {
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#8e8e93', fontSize: 14 }}>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>
           {produtos.length === 0
             ? 'Nenhum item no catálogo. Clique em "Adicionar Item" para começar.'
             : 'Nenhum item com esse tipo.'}
@@ -249,14 +249,14 @@ export default function CatalogoPage() {
                   : <div style={{ width: '100%', aspectRatio: '4/5', background: 'linear-gradient(135deg, #e8e8f0, #d4d4dc)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Package size={32} color="#c7c7cc" /></div>}
                 <div style={{ padding: '14px 16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', flex: 1, marginRight: 8 }}>{prod.nome}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', flex: 1, marginRight: 8 }}>{prod.nome}</div>
                     <div style={{ fontSize: 9.5, padding: '2px 8px', borderRadius: 20, background: m.bg, border: `1px solid ${m.border}`, color: m.color, fontWeight: 700, flexShrink: 0 }}>
                       {prod.tipo.charAt(0).toUpperCase() + prod.tipo.slice(1)}
                     </div>
                   </div>
-                  {prod.descricao && <p style={{ fontSize: 12.5, color: '#6b6b6b', lineHeight: 1.55, margin: '0 0 12px' }}>{prod.descricao}</p>}
+                  {prod.descricao && <p style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.55, margin: '0 0 12px' }}>{prod.descricao}</p>}
                   {prod.imagens.length > 1 && (
-                    <div style={{ fontSize: 11, color: '#8e8e93', marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 10 }}>
                       <ImageIcon size={10} style={{ display: 'inline', marginRight: 4 }} />{prod.imagens.length} imagens
                     </div>
                   )}
@@ -277,37 +277,37 @@ export default function CatalogoPage() {
         <div onClick={e => { if (e.target === e.currentTarget) setModalOpen(false) }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(5px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div className="cat-modal-box"
-            style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, width: '100%', maxWidth: 500, padding: 28, boxShadow: '0 8px 32px rgba(0,0,0,0.12)', maxHeight: '90vh', overflowY: 'auto' as const }}>
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 500, padding: 28, boxShadow: '0 8px 32px rgba(0,0,0,0.12)', maxHeight: '90vh', overflowY: 'auto' as const }}>
             {saved ? (
               <div style={{ textAlign: 'center' as const, padding: '24px 0' }}>
                 <CheckCircle2 size={50} color="#34d399" style={{ marginBottom: 14 }} />
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>Item adicionado!</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>Item adicionado!</div>
               </div>
             ) : (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>Adicionar ao Catálogo</div>
-                  <button onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}><X size={18} /></button>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Adicionar ao Catálogo</div>
+                  <button onClick={() => setModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}><X size={18} /></button>
                 </div>
                 <input ref={fileInputRef} type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
                 <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div>
-                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>Nome *</label>
+                    <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 6, fontWeight: 600 }}>Nome *</label>
                     <input className="cat-inp" required placeholder="Ex: Cozinha planejada, Elétrica residencial..." value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>Descrição</label>
+                    <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 6, fontWeight: 600 }}>Descrição</label>
                     <textarea className="cat-inp" rows={3} placeholder="Descreva o produto ou serviço..." value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))} style={{ resize: 'vertical' as const }} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>Tipo *</label>
+                    <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 6, fontWeight: 600 }}>Tipo *</label>
                     <select className="cat-inp" value={form.tipo} onChange={e => setForm(f => ({ ...f, tipo: e.target.value }))}>
                       {TIPO_OPTS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>Imagens</label>
-                    <div onClick={() => fileInputRef.current?.click()} style={{ padding: '14px 16px', background: '#f2f2f7', border: '2px dashed rgba(0,0,0,0.15)', borderRadius: 8, fontSize: 12.5, color: '#8e8e93', cursor: 'pointer', textAlign: 'center' as const, marginBottom: previews.length > 0 ? 10 : 0 }}>
+                    <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 6, fontWeight: 600 }}>Imagens</label>
+                    <div onClick={() => fileInputRef.current?.click()} style={{ padding: '14px 16px', background: 'var(--bg)', border: '2px dashed rgba(0,0,0,0.15)', borderRadius: 8, fontSize: 12.5, color: 'var(--text-3)', cursor: 'pointer', textAlign: 'center' as const, marginBottom: previews.length > 0 ? 10 : 0 }}>
                       <Upload size={16} style={{ display: 'inline', marginRight: 6 }} />
                       Clique para selecionar imagens
                     </div>
@@ -326,7 +326,7 @@ export default function CatalogoPage() {
                     )}
                   </div>
                   <button type="submit" disabled={saving}
-                    style={{ background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: saving ? 0.7 : 1 }}>
+                    style={{ background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: saving ? 0.7 : 1 }}>
                     {saving ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</> : <><Plus size={13} /> Adicionar ao Catálogo</>}
                   </button>
                 </form>

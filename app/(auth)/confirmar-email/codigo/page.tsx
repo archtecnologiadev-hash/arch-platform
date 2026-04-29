@@ -12,10 +12,10 @@ const OTP_MAX = 8
 const inputBase: React.CSSProperties = {
   width: '100%',
   padding: '12px 14px',
-  background: '#f2f2f7',
-  border: '1px solid rgba(0,0,0,0.1)',
+  background: 'var(--bg-input)',
+  border: '1px solid var(--border-input)',
   borderRadius: 10,
-  color: '#1a1a1a',
+  color: 'var(--text)',
   fontSize: 15,
   fontWeight: 300,
   outline: 'none',
@@ -95,8 +95,6 @@ function ConfirmarCodigoForm() {
 
     if (autoTimer.current) clearTimeout(autoTimer.current)
 
-    // Auto-submit: fire 400ms after last keystroke once code is at least OTP_MIN digits.
-    // The debounce prevents partial submission when the user pastes or types quickly.
     if (digits.length >= OTP_MIN) {
       autoTimer.current = setTimeout(() => handleVerify(), 400)
     }
@@ -142,11 +140,11 @@ function ConfirmarCodigoForm() {
   }
 
   const card: React.CSSProperties = {
-    background: '#ffffff',
-    border: '1px solid rgba(0,0,0,0.08)',
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border)',
     borderRadius: 16,
     padding: '36px 32px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+    boxShadow: 'var(--shadow-card)',
   }
 
   if (confirmed) {
@@ -159,10 +157,10 @@ function ConfirmarCodigoForm() {
         }}>
           <CheckCircle2 size={26} color="#34c759" />
         </div>
-        <h1 style={{ fontSize: 20, fontWeight: 400, color: '#1a1a1a', marginBottom: 8 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 400, color: 'var(--text)', marginBottom: 8 }}>
           Conta confirmada!
         </h1>
-        <p style={{ fontSize: 13, color: '#8e8e93' }}>
+        <p style={{ fontSize: 13, color: 'var(--text-3)' }}>
           Redirecionando para o login…
         </p>
       </div>
@@ -175,23 +173,23 @@ function ConfirmarCodigoForm() {
     <div style={card}>
       <div style={{
         width: 44, height: 44, borderRadius: 12, marginBottom: 22,
-        background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.15)',
+        background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <Mail size={20} color="#007AFF" strokeWidth={1.5} />
+        <Mail size={20} color="var(--accent)" strokeWidth={1.5} />
       </div>
 
-      <h1 style={{ fontSize: 22, fontWeight: 300, color: '#1a1a1a', marginBottom: 6 }}>
+      <h1 style={{ fontSize: 22, fontWeight: 300, color: 'var(--text)', marginBottom: 6 }}>
         Confirme sua conta
       </h1>
-      <p style={{ fontSize: 13, fontWeight: 300, color: '#8e8e93', marginBottom: 28, lineHeight: 1.6 }}>
+      <p style={{ fontSize: 13, fontWeight: 300, color: 'var(--text-3)', marginBottom: 28, lineHeight: 1.6 }}>
         Digite o código de 8 dígitos enviado para seu email.<br />
         Verifique sua caixa de entrada e pasta de spam.
       </p>
 
       <form onSubmit={handleVerify} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: '#6b6b6b', marginBottom: 6 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: 'var(--text-2)', marginBottom: 6 }}>
             Email
           </label>
           <input
@@ -201,13 +199,13 @@ function ConfirmarCodigoForm() {
             placeholder="seu@email.com"
             required
             style={inputBase}
-            onFocus={e => (e.target.style.borderColor = '#007AFF')}
-            onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+            onFocus={e => (e.target.style.borderColor = 'var(--accent)')}
+            onBlur={e => (e.target.style.borderColor = 'var(--border-input)')}
           />
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: '#6b6b6b', marginBottom: 6 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: 'var(--text-2)', marginBottom: 6 }}>
             Código de confirmação
           </label>
           <input
@@ -226,10 +224,10 @@ function ConfirmarCodigoForm() {
               letterSpacing: '0.3em',
               textAlign: 'center',
             }}
-            onFocus={e => (e.target.style.borderColor = '#007AFF')}
-            onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+            onFocus={e => (e.target.style.borderColor = 'var(--accent)')}
+            onBlur={e => (e.target.style.borderColor = 'var(--border-input)')}
           />
-          <p style={{ fontSize: 11, color: '#b0b0b8', marginTop: 5, textAlign: 'center' }}>
+          <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 5, textAlign: 'center' }}>
             {code.length}/8 dígitos
           </p>
         </div>
@@ -249,8 +247,8 @@ function ConfirmarCodigoForm() {
           disabled={loading || !isReady}
           style={{
             width: '100%', padding: '13px',
-            background: loading || !isReady ? '#a0c4ff' : '#007AFF',
-            color: '#ffffff', border: 'none', borderRadius: 10,
+            background: loading || !isReady ? 'var(--btn-disabled)' : 'var(--btn-bg)',
+            color: 'var(--btn-text)', border: 'none', borderRadius: 10,
             fontSize: 15, fontWeight: 400,
             cursor: loading || !isReady ? 'not-allowed' : 'pointer',
             transition: 'background 0.2s', marginTop: 4,
@@ -277,8 +275,8 @@ function ConfirmarCodigoForm() {
           style={{
             width: '100%', padding: '11px',
             background: 'transparent',
-            border: `1px solid ${cooldown > 0 ? 'rgba(0,0,0,0.08)' : 'rgba(0,122,255,0.2)'}`,
-            color: cooldown > 0 ? '#8e8e93' : '#007AFF',
+            border: `1px solid ${cooldown > 0 ? 'var(--border)' : 'var(--accent-soft-border)'}`,
+            color: cooldown > 0 ? 'var(--text-3)' : 'var(--accent)',
             borderRadius: 10, fontSize: 13, fontWeight: 500,
             cursor: cooldown > 0 || resending || !email ? 'not-allowed' : 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -289,10 +287,10 @@ function ConfirmarCodigoForm() {
         </button>
       </div>
 
-      <p style={{ marginTop: 20, textAlign: 'center', fontSize: 13, fontWeight: 300, color: '#8e8e93' }}>
+      <p style={{ marginTop: 20, textAlign: 'center', fontSize: 13, fontWeight: 300, color: 'var(--text-3)' }}>
         <Link href="/login" style={{
           display: 'inline-flex', alignItems: 'center', gap: 5,
-          color: '#8e8e93', textDecoration: 'none',
+          color: 'var(--text-3)', textDecoration: 'none',
         }}>
           <ArrowLeft size={13} /> Voltar ao login
         </Link>
@@ -305,11 +303,11 @@ export default function ConfirmarEmailCodigoPage() {
   return (
     <Suspense fallback={
       <div style={{
-        background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)',
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
         borderRadius: 16, padding: '36px 32px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+        boxShadow: 'var(--shadow-card)',
       }}>
-        <div style={{ fontSize: 13, color: '#8e8e93' }}>Carregando…</div>
+        <div style={{ fontSize: 13, color: 'var(--text-3)' }}>Carregando…</div>
       </div>
     }>
       <ConfirmarCodigoForm />

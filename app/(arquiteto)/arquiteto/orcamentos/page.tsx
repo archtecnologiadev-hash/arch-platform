@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { FileText, Loader2, Download, CheckCircle2, XCircle, Package } from 'lucide-react'
@@ -25,7 +25,7 @@ interface OrcItem {
 }
 
 const STATUS_META: Record<OrcStatus, { label: string; color: string; bg: string; border: string }> = {
-  pendente:    { label: 'Pendente',    color: '#007AFF', bg: 'rgba(0,122,255,0.08)',   border: 'rgba(0,122,255,0.2)' },
+  pendente:    { label: 'Pendente',    color: 'var(--accent)', bg: 'rgba(0,122,255,0.08)',   border: 'rgba(0,122,255,0.2)' },
   em_analise:  { label: 'Em análise',  color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.22)' },
   respondido:  { label: 'Respondido',  color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)' },
   aprovado:    { label: 'Aprovado',    color: '#34d399', bg: 'rgba(52,211,153,0.1)',   border: 'rgba(52,211,153,0.22)' },
@@ -114,15 +114,15 @@ export default function ArquitetoOrcamentosPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f2f2f7' }}>
-        <Loader2 size={26} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg)' }}>
+        <Loader2 size={26} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
   }
 
   return (
-    <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1a1a1a', background: '#f2f2f7' }}>
+    <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: 'var(--text)', background: 'var(--bg)' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
         .arc-orc-card { background:#fff; border:1px solid rgba(0,0,0,0.08); border-radius:14px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.08); transition:box-shadow 0.18s; }
@@ -132,8 +132,8 @@ export default function ArquitetoOrcamentosPage() {
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a', margin: 0 }}>Orçamentos Enviados</h1>
-        <p style={{ fontSize: 13, color: '#6b6b6b', margin: '5px 0 0' }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Orçamentos Enviados</h1>
+        <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '5px 0 0' }}>
           Acompanhe suas solicitações a fornecedores · {orcamentos.length} total
         </p>
       </div>
@@ -162,7 +162,7 @@ export default function ArquitetoOrcamentosPage() {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#8e8e93', fontSize: 14 }}>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>
           {orcamentos.length === 0
             ? <><FileText size={40} color="#c7c7cc" style={{ display: 'block', margin: '0 auto 14px' }} /><div>Nenhum orçamento enviado ainda.</div><div style={{ fontSize: 12, marginTop: 6 }}>Solicite orçamentos na aba Fornecedores de um projeto.</div></>
             : 'Nenhum orçamento com esse status.'}
@@ -184,17 +184,17 @@ export default function ArquitetoOrcamentosPage() {
                     {orc.fornecedor_logo
                       ? <img src={orc.fornecedor_logo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       : orc.fornecedor_nome
-                        ? <span style={{ fontSize: 18, fontWeight: 800, color: '#007AFF' }}>{fornInitial}</span>
-                        : <Package size={20} color="#007AFF" />}
+                        ? <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--accent)' }}>{fornInitial}</span>
+                        : <Package size={20} color="var(--accent)" />}
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                       <div>
-                        <div style={{ fontSize: 14.5, fontWeight: 700, color: '#1a1a1a' }}>
+                        <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text)' }}>
                           {orc.fornecedor_nome ?? 'Fornecedor'}
                         </div>
-                        <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 3 }}>
+                        <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>
                           {orc.projeto_nome ?? 'Projeto sem nome'} · {dateStr}
                         </div>
                       </div>
@@ -204,14 +204,14 @@ export default function ArquitetoOrcamentosPage() {
                     </div>
 
                     {orc.mensagem && (
-                      <p style={{ fontSize: 13, color: '#6b6b6b', marginTop: 8, lineHeight: 1.55, margin: '8px 0 0' }}>
+                      <p style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 8, lineHeight: 1.55, margin: '8px 0 0' }}>
                         {orc.mensagem.length > 100 ? orc.mensagem.slice(0, 100) + '…' : orc.mensagem}
                       </p>
                     )}
 
                     <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' as const }}>
                       <button onClick={() => setExpandedId(isExpanded ? null : orc.id)}
-                        style={{ fontSize: 11.5, padding: '5px 12px', borderRadius: 8, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', cursor: 'pointer', fontWeight: 600 }}>
+                        style={{ fontSize: 11.5, padding: '5px 12px', borderRadius: 8, background: 'var(--bg)', border: '1px solid var(--border-input)', color: 'var(--text-2)', cursor: 'pointer', fontWeight: 600 }}>
                         {isExpanded ? 'Menos' : 'Ver detalhes'}
                       </button>
 
@@ -232,29 +232,29 @@ export default function ArquitetoOrcamentosPage() {
                 </div>
 
                 {isExpanded && (
-                  <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', padding: '14px 20px', background: '#f9f9fb' }}>
+                  <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '14px 20px', background: '#f9f9fb' }}>
                     {orc.mensagem && (
                       <>
-                        <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>Sua mensagem</div>
-                        <p style={{ fontSize: 13, color: '#6b6b6b', lineHeight: 1.65, margin: '0 0 12px' }}>{orc.mensagem}</p>
+                        <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>Sua mensagem</div>
+                        <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.65, margin: '0 0 12px' }}>{orc.mensagem}</p>
                       </>
                     )}
                     {orc.arquivo_url && (
                       <a href={orc.arquivo_url} target="_blank" rel="noopener noreferrer"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#007AFF', background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.18)', borderRadius: 7, padding: '5px 11px', textDecoration: 'none', fontWeight: 600, marginBottom: 12 }}>
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--accent)', background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.18)', borderRadius: 7, padding: '5px 11px', textDecoration: 'none', fontWeight: 600, marginBottom: 12 }}>
                         <FileText size={12} /> {orc.arquivo_nome ?? 'Arquivo anexado'} <Download size={11} />
                       </a>
                     )}
                     {orc.resposta ? (
                       <>
-                        <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>Resposta do Fornecedor</div>
-                        {orc.titulo && <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginBottom: 4 }}>{orc.titulo}</div>}
+                        <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>Resposta do Fornecedor</div>
+                        {orc.titulo && <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{orc.titulo}</div>}
                         {orc.valor_orcado != null && (
                           <div style={{ fontSize: 16, fontWeight: 800, color: '#34d399', marginBottom: 8 }}>
                             {orc.valor_orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                           </div>
                         )}
-                        <p style={{ fontSize: 13, color: '#1a1a1a', lineHeight: 1.65, margin: '0 0 8px', background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(52,211,153,0.15)', borderRadius: 8, padding: '10px 13px' }}>{orc.resposta}</p>
+                        <p style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.65, margin: '0 0 8px', background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(52,211,153,0.15)', borderRadius: 8, padding: '10px 13px' }}>{orc.resposta}</p>
                         {orc.resposta_arquivo_url && (
                           <a href={orc.resposta_arquivo_url} target="_blank" rel="noopener noreferrer"
                             style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#34d399', background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 7, padding: '5px 11px', textDecoration: 'none', fontWeight: 600 }}>
@@ -263,7 +263,7 @@ export default function ArquitetoOrcamentosPage() {
                         )}
                       </>
                     ) : (
-                      <div style={{ fontSize: 12.5, color: '#8e8e93', fontStyle: 'italic' }}>Aguardando resposta do fornecedor...</div>
+                      <div style={{ fontSize: 12.5, color: 'var(--text-3)', fontStyle: 'italic' }}>Aguardando resposta do fornecedor...</div>
                     )}
                   </div>
                 )}

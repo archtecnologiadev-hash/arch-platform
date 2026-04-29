@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -21,12 +21,12 @@ function BannerInner({ text }: { text: string }) {
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <Sparkles size={15} color="#007AFF" />
-        <span style={{ fontSize: 13, fontWeight: 300, color: '#007AFF', lineHeight: 1.5 }}>{text}</span>
+        <Sparkles size={15} color="var(--accent)" />
+        <span style={{ fontSize: 13, fontWeight: 300, color: 'var(--accent)', lineHeight: 1.5 }}>{text}</span>
       </div>
       <button
         onClick={() => setShow(false)}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#007AFF', padding: 2, flexShrink: 0 }}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', padding: 2, flexShrink: 0 }}
       >
         <X size={14} />
       </button>

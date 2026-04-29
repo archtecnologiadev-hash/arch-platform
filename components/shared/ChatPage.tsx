@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -378,11 +378,11 @@ function ChatInner({ userType }: { userType: UserType }) {
         <Avatar nome={c.participante_nome} url={c.participante_avatar} size={40} color={isActive ? '#007AFF' : '#6b6b6b'} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 4 }}>
-            <span style={{ fontSize: 13.5, fontWeight: c.unread > 0 ? 600 : 400, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
+            <span style={{ fontSize: 13.5, fontWeight: c.unread > 0 ? 600 : 400, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
               {c.participante_nome}
             </span>
             {c.ultima_msg_at && (
-              <span style={{ fontSize: 11, color: '#8e8e93', flexShrink: 0 }}>{fmtTime(c.ultima_msg_at)}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-3)', flexShrink: 0 }}>{fmtTime(c.ultima_msg_at)}</span>
             )}
           </div>
           {c.projeto_nome && (
@@ -395,7 +395,7 @@ function ChatInner({ userType }: { userType: UserType }) {
               {c.ultima_msg || 'Nenhuma mensagem ainda'}
             </span>
             {c.unread > 0 && (
-              <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', background: '#007AFF', borderRadius: 10, padding: '1px 6px', lineHeight: '16px', flexShrink: 0 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', background: 'var(--btn-bg)', borderRadius: 10, padding: '1px 6px', lineHeight: '16px', flexShrink: 0 }}>
                 {c.unread}
               </span>
             )}
@@ -410,34 +410,34 @@ function ChatInner({ userType }: { userType: UserType }) {
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="chat-outer" style={{ display: 'flex', background: '#f2f2f7', overflow: 'hidden' }}>
+    <div className="chat-outer" style={{ display: 'flex', background: 'var(--bg)', overflow: 'hidden' }}>
 
       {/* Left: conversation list */}
       {showList && (
         <div style={{
           width: isMobile ? '100%' : 300,
           minWidth: isMobile ? undefined : 300,
-          background: '#fff',
+          background: 'var(--bg-card)',
           borderRight: isMobile ? 'none' : '1px solid rgba(0,0,0,0.08)',
           display: 'flex',
           flexDirection: 'column',
           height: '100%',
         }}>
-          <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', flexShrink: 0 }}>
-            <span style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1a' }}>Mensagens</span>
+          <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 16px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+            <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)' }}>Mensagens</span>
           </div>
           <div style={{ padding: '8px 10px', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f2f2f7', borderRadius: 10, padding: '6px 10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg)', borderRadius: 10, padding: '6px 10px' }}>
               <Search size={13} color="#8e8e93" />
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..."
-                style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 13, color: '#1a1a1a' }} />
+                style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 13, color: 'var(--text)' }} />
             </div>
           </div>
           <div style={{ flex: 1, overflowY: 'auto' }}>
             {loading ? (
-              <div style={{ padding: 24, textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>Carregando...</div>
+              <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>Carregando...</div>
             ) : conversas.length === 0 ? (
-              <div style={{ padding: 32, textAlign: 'center', color: '#8e8e93' }}>
+              <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-3)' }}>
                 <MessageCircle size={32} color="#c7c7cc" style={{ margin: '0 auto 8px' }} />
                 <div style={{ fontSize: 13 }}>Nenhuma conversa ainda</div>
               </div>
@@ -447,18 +447,18 @@ function ChatInner({ userType }: { userType: UserType }) {
                   <>
                     {filtClientes.length > 0 && (
                       <>
-                        <div style={{ padding: '10px 16px 4px', fontSize: 11, fontWeight: 600, color: '#8e8e93', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Clientes</div>
+                        <div style={{ padding: '10px 16px 4px', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Clientes</div>
                         {filtClientes.map(c => <ConvItem key={c.id} c={c} />)}
                       </>
                     )}
                     {filtFornecedores.length > 0 && (
                       <>
-                        <div style={{ padding: '10px 16px 4px', fontSize: 11, fontWeight: 600, color: '#8e8e93', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Fornecedores</div>
+                        <div style={{ padding: '10px 16px 4px', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Fornecedores</div>
                         {filtFornecedores.map(c => <ConvItem key={c.id} c={c} />)}
                       </>
                     )}
                     {filtered.length === 0 && search && (
-                      <div style={{ padding: 16, textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>Nenhum resultado</div>
+                      <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>Nenhum resultado</div>
                     )}
                   </>
                 ) : (
@@ -481,8 +481,8 @@ function ChatInner({ userType }: { userType: UserType }) {
                 display: 'flex',
                 alignItems: 'center',
                 padding: '0 16px',
-                borderBottom: '1px solid rgba(0,0,0,0.08)',
-                background: '#fff',
+                borderBottom: '1px solid var(--border)',
+                background: 'var(--bg-card)',
                 flexShrink: 0,
                 gap: isMobile ? 0 : 10,
               }}>
@@ -496,12 +496,12 @@ function ChatInner({ userType }: { userType: UserType }) {
                         justifyContent: 'center', padding: 0, flexShrink: 0,
                       }}
                     >
-                      <ChevronLeft size={24} color="#007AFF" />
+                      <ChevronLeft size={24} color="var(--accent)" />
                     </button>
                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, overflow: 'hidden' }}>
                       <Avatar nome={selectedConversa.participante_nome} url={selectedConversa.participante_avatar} size={32} />
                       <div style={{ overflow: 'hidden', textAlign: 'center' }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {selectedConversa.participante_nome}
                         </div>
                         {selectedConversa.projeto_nome && (
@@ -517,23 +517,23 @@ function ChatInner({ userType }: { userType: UserType }) {
                   <>
                     <Avatar nome={selectedConversa.participante_nome} url={selectedConversa.participante_avatar} size={34} />
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
                         {selectedConversa.participante_nome}
                         {selectedConversa.projeto_nome && (
                           <span style={{ fontWeight: 400, color: '#8b5cf6' }}>{' — Projeto: '}{selectedConversa.projeto_nome}</span>
                         )}
                       </div>
-                      <div style={{ fontSize: 11, color: '#8e8e93' }}>{selectedConversa.participante_email}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{selectedConversa.participante_email}</div>
                     </div>
                   </>
                 )}
               </div>
 
               {/* Messages */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 8px', display: 'flex', flexDirection: 'column', gap: 0, background: '#f2f2f7' }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 8px', display: 'flex', flexDirection: 'column', gap: 0, background: 'var(--bg)' }}>
                 {mensagens.length === 0 ? (
                   <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ textAlign: 'center', color: '#8e8e93' }}>
+                    <div style={{ textAlign: 'center', color: 'var(--text-3)' }}>
                       <MessageCircle size={32} color="#c7c7cc" style={{ margin: '0 auto 8px' }} />
                       <div style={{ fontSize: 13 }}>Inicie a conversa</div>
                     </div>
@@ -561,7 +561,7 @@ function ChatInner({ userType }: { userType: UserType }) {
                         {showDate && (
                           <div style={{ textAlign: 'center', margin: '12px 0 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
                             <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
-                            <span style={{ fontSize: 11, color: '#8e8e93', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, whiteSpace: 'nowrap' }}>
                               {formatDateSep(msg.created_at)}
                             </span>
                             <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
@@ -603,7 +603,7 @@ function ChatInner({ userType }: { userType: UserType }) {
               </div>
 
               {/* Input area */}
-              <div className="chat-input-safe" style={{ padding: '10px 12px', borderTop: '1px solid rgba(0,0,0,0.08)', background: '#fff', display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+              <div className="chat-input-safe" style={{ padding: '10px 12px', borderTop: '1px solid var(--border)', background: 'var(--bg-card)', display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
                 <input ref={fileRef} type="file" onChange={handleFileSelect}
                   accept=".pdf,.dwg,.jpg,.jpeg,.png,.zip,.rar,.docx,.xlsx"
                   style={{ display: 'none' }} />
@@ -611,7 +611,7 @@ function ChatInner({ userType }: { userType: UserType }) {
                   onClick={() => fileRef.current?.click()}
                   disabled={uploadingFile}
                   title="Enviar arquivo"
-                  style={{ width: 36, height: 36, borderRadius: '50%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.15s' }}
+                  style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--bg)', border: '1px solid var(--border-input)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.15s' }}
                 >
                   {uploadingFile
                     ? <Loader2 size={15} color="#8e8e93" style={{ animation: 'spin 1s linear infinite' }} />
@@ -621,7 +621,7 @@ function ChatInner({ userType }: { userType: UserType }) {
                 <textarea
                   ref={inputRef} value={texto} onChange={e => setTexto(e.target.value)}
                   onKeyDown={handleKey} placeholder="Mensagem..." rows={1}
-                  style={{ flex: 1, border: '1px solid rgba(0,0,0,0.12)', borderRadius: 20, padding: '8px 14px', fontSize: 14, outline: 'none', resize: 'none', background: '#f2f2f7', color: '#1a1a1a', maxHeight: 120, overflowY: 'auto', lineHeight: 1.4, fontFamily: 'inherit' }}
+                  style={{ flex: 1, border: '1px solid rgba(0,0,0,0.12)', borderRadius: 20, padding: '8px 14px', fontSize: 14, outline: 'none', resize: 'none', background: 'var(--bg)', color: 'var(--text)', maxHeight: 120, overflowY: 'auto', lineHeight: 1.4, fontFamily: 'inherit' }}
                 />
                 <button
                   onClick={sendMessage} disabled={!texto.trim() || sending}
@@ -631,8 +631,8 @@ function ChatInner({ userType }: { userType: UserType }) {
               </div>
             </>
           ) : !isMobile ? (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f2f2f7' }}>
-              <div style={{ textAlign: 'center', color: '#8e8e93' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
+              <div style={{ textAlign: 'center', color: 'var(--text-3)' }}>
                 <MessageCircle size={48} color="#c7c7cc" style={{ margin: '0 auto 12px' }} />
                 <div style={{ fontSize: 15, fontWeight: 500, color: '#3a3a3c' }}>Selecione uma conversa</div>
                 <div style={{ marginTop: 4, fontSize: 13 }}>Escolha uma conversa para começar</div>
@@ -660,8 +660,8 @@ function ChatInner({ userType }: { userType: UserType }) {
 export function ChatPage({ userType }: { userType: UserType }) {
   return (
     <Suspense fallback={
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#f2f2f7' }}>
-        <span style={{ color: '#8e8e93', fontSize: 14 }}>Carregando mensagens...</span>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
+        <span style={{ color: 'var(--text-3)', fontSize: 14 }}>Carregando mensagens...</span>
       </div>
     }>
       <ChatInner userType={userType} />

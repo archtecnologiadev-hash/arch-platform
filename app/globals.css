@@ -15,6 +15,143 @@
   }
 }
 
+/* ── Theme variables ─────────────────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --bg: #f2f2f7;
+  --bg-card: #ffffff;
+  --bg-input: #f2f2f7;
+  --bg-hover: rgba(0,0,0,0.03);
+
+  /* Text */
+  --text: #1a1a1a;
+  --text-2: #6b6b6b;
+  --text-3: #8e8e93;
+
+  /* Borders */
+  --border: rgba(0,0,0,0.08);
+  --border-subtle: rgba(0,0,0,0.06);
+  --border-input: rgba(0,0,0,0.1);
+
+  /* Accent (replaces #007AFF — now black/white) */
+  --accent: #000000;
+  --accent-text: #ffffff;
+  --accent-soft: rgba(0,0,0,0.05);
+  --accent-soft-border: rgba(0,0,0,0.1);
+
+  /* Buttons */
+  --btn-bg: #000000;
+  --btn-text: #ffffff;
+  --btn-disabled: #b0b0b5;
+  --btn-disabled-text: #ffffff;
+
+  /* Navigation */
+  --nav-active-bg: rgba(0,0,0,0.06);
+  --nav-active: #000000;
+  --nav-inactive: #6b6b6b;
+
+  /* Misc */
+  --logout-btn: #c7c7cc;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-sidebar: 4px 0 20px rgba(0,0,0,0.12);
+
+  /* shadcn compat */
+  --background: 240 5% 96%;
+  --foreground: 0 0% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 0 0% 0%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent-shadcn: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border-shadcn: 214.3 31.8% 91.4%;
+  --input-shadcn: 214.3 31.8% 91.4%;
+  --ring: 0 0% 0%;
+  --radius: 0.5rem;
+}
+
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg: #0d0d0d;
+  --bg-card: #161616;
+  --bg-input: #1c1c1e;
+  --bg-hover: rgba(255,255,255,0.04);
+
+  /* Text */
+  --text: #f5f5f5;
+  --text-2: #aeaeb2;
+  --text-3: #636366;
+
+  /* Borders */
+  --border: rgba(255,255,255,0.08);
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-input: rgba(255,255,255,0.12);
+
+  /* Accent */
+  --accent: #ffffff;
+  --accent-text: #000000;
+  --accent-soft: rgba(255,255,255,0.07);
+  --accent-soft-border: rgba(255,255,255,0.12);
+
+  /* Buttons */
+  --btn-bg: #ffffff;
+  --btn-text: #000000;
+  --btn-disabled: #3a3a3c;
+  --btn-disabled-text: #636366;
+
+  /* Navigation */
+  --nav-active-bg: rgba(255,255,255,0.08);
+  --nav-active: #ffffff;
+  --nav-inactive: #8e8e93;
+
+  /* Misc */
+  --logout-btn: #48484a;
+  --shadow-card: 0 1px 8px rgba(0,0,0,0.4);
+  --shadow-sidebar: 4px 0 24px rgba(0,0,0,0.5);
+
+  /* shadcn compat */
+  --background: 0 0% 5%;
+  --foreground: 0 0% 96%;
+  --card: 0 0% 9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 0 0% 9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent-shadcn: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border-shadcn: 217.2 32.6% 17.5%;
+  --input-shadcn: 217.2 32.6% 17.5%;
+  --ring: 0 0% 100%;
+}
+
+/* ── Smooth theme transition ─────────────────────────────────────────────── */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 200ms;
+  transition-timing-function: ease;
+}
+
+/* Don't animate transform, opacity, or layout properties */
+.no-theme-transition,
+.no-theme-transition * {
+  transition: none !important;
+}
+
 /* Prevent horizontal overflow globally */
 html, body {
   overflow-x: hidden;
@@ -44,57 +181,35 @@ html, body {
 }
 
 @layer base {
-  :root {
-    --background: 240 5% 96%;
-    --foreground: 0 0% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 211.4 100% 50%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-  }
-}
-
-@layer base {
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+    background: var(--bg);
+    color: var(--text);
   }
+}
+
+/* ── Dark-mode auto-fixes ────────────────────────────────────────────────── */
+
+/* Any element using var(--btn-bg) as background gets correct text color */
+*[style*="var(--btn-bg)"] {
+  color: var(--btn-text) !important;
+}
+
+/* Inputs whose inline background is var(--bg) use the elevated input bg */
+[data-theme="dark"] input[style*="var(--bg)"],
+[data-theme="dark"] textarea[style*="var(--bg)"] {
+  background: var(--bg-input) !important;
+  color: var(--text) !important;
+}
+
+/* Native inputs without inline style */
+[data-theme="dark"] input:not([style]),
+[data-theme="dark"] textarea:not([style]),
+[data-theme="dark"] select:not([style]) {
+  background: var(--bg-input);
+  color: var(--text);
+  border-color: var(--border-input);
 }

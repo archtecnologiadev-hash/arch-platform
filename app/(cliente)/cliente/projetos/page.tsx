@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -102,7 +102,7 @@ export default function ClienteProjetosPage() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <Loader2 size={26} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+        <Loader2 size={26} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
@@ -111,23 +111,23 @@ export default function ClienteProjetosPage() {
   return (
     <div style={{ padding: '28px 32px' }}>
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>Meus Projetos</h1>
-        <p style={{ fontSize: 13, color: '#8e8e93', margin: '5px 0 0' }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Meus Projetos</h1>
+        <p style={{ fontSize: 13, color: 'var(--text-3)', margin: '5px 0 0' }}>
           Acompanhe o andamento dos seus projetos
         </p>
       </div>
 
       {projetos.length === 0 ? (
         <div style={{
-          background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)',
+          background: 'var(--bg-card)', border: '1px solid var(--border)',
           borderRadius: 16, padding: '64px 32px', textAlign: 'center',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+          boxShadow: 'var(--shadow-card)',
         }}>
           <FolderOpen size={48} color="#c7c7cc" style={{ margin: '0 auto 16px' }} />
           <div style={{ fontSize: 17, fontWeight: 600, color: '#3a3a3c', marginBottom: 8 }}>
             Nenhum projeto ainda
           </div>
-          <div style={{ fontSize: 13, color: '#8e8e93', maxWidth: 380, margin: '0 auto' }}>
+          <div style={{ fontSize: 13, color: 'var(--text-3)', maxWidth: 380, margin: '0 auto' }}>
             Aguardando seu arquiteto vincular você a um projeto. Você receberá acesso assim que o projeto for configurado.
           </div>
         </div>
@@ -144,9 +144,9 @@ export default function ClienteProjetosPage() {
                 key={p.id}
                 onClick={() => router.push(`/cliente/projeto/${p.id}`)}
                 style={{
-                  background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)',
+                  background: 'var(--bg-card)', border: '1px solid var(--border)',
                   borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                  boxShadow: 'var(--shadow-card)',
                   transition: 'box-shadow 0.2s, border-color 0.2s',
                 }}
                 onMouseEnter={e => {
@@ -192,7 +192,7 @@ export default function ClienteProjetosPage() {
                 {/* Body */}
                 <div style={{ padding: '14px 16px' }}>
                   {!p.cover_url && (
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>{p.nome}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>{p.nome}</div>
                   )}
 
                   {p.escritorio_nome && (
@@ -204,10 +204,10 @@ export default function ClienteProjetosPage() {
                   {/* Progress bar labels */}
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 11, color: '#8e8e93' }}>Progresso</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-3)' }}>Progresso</span>
                       <span style={{ fontSize: 11, color: stageColor, fontWeight: 600 }}>{progress}%</span>
                     </div>
-                    <div style={{ height: 4, background: '#f2f2f7', borderRadius: 2, overflow: 'hidden' }}>
+                    <div style={{ height: 4, background: 'var(--bg)', borderRadius: 2, overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${progress}%`, background: stageColor, borderRadius: 2, transition: 'width 0.3s' }} />
                     </div>
                   </div>
@@ -215,9 +215,9 @@ export default function ClienteProjetosPage() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <Clock size={11} color="#8e8e93" />
-                      <span style={{ fontSize: 11, color: '#8e8e93' }}>{dateStr}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{dateStr}</span>
                     </div>
-                    <ArrowRight size={14} color="#007AFF" />
+                    <ArrowRight size={14} color="var(--accent)" />
                   </div>
 
                   {p.arquiteto_user_id && (
@@ -227,8 +227,8 @@ export default function ClienteProjetosPage() {
                       style={{
                         width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                         padding: '8px', background: 'rgba(0,122,255,0.07)',
-                        border: '1px solid rgba(0,122,255,0.2)', borderRadius: 8,
-                        color: '#007AFF', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                        border: '1px solid var(--accent-soft-border)', borderRadius: 8,
+                        color: 'var(--accent)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
                       }}
                     >
                       <MessageCircle size={13} />

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -29,7 +29,7 @@ const STATUS_LABEL: Record<string, { label: string; color: string; bg: string }>
   ativa:        { label: 'Ativo',        color: '#059669', bg: 'rgba(5,150,105,0.1)'   },
   fundador:     { label: 'Fundador',     color: '#7c3aed', bg: 'rgba(124,58,237,0.1)'  },
   inadimplente: { label: 'Inadimplente', color: '#ef4444', bg: 'rgba(239,68,68,0.1)'   },
-  cancelada:    { label: 'Cancelado',    color: '#6b6b6b', bg: 'rgba(0,0,0,0.06)'      },
+  cancelada:    { label: 'Cancelado',    color: 'var(--text-2)', bg: 'rgba(0,0,0,0.06)'      },
 }
 
 export default function ArquitetoPlanos() {
@@ -109,8 +109,8 @@ export default function ArquitetoPlanos() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f2f2f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Loader2 size={26} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Loader2 size={26} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
@@ -120,18 +120,18 @@ export default function ArquitetoPlanos() {
   const statusMeta = currentStatus ? STATUS_LABEL[currentStatus] : null
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f2f2f7', padding: '36px 32px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '36px 32px' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 36 }}>
-        <p style={{ fontSize: 11.5, color: '#007AFF', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 8 }}>
+        <p style={{ fontSize: 11.5, color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 8 }}>
           SEU PLANO
         </p>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#1a1a1a', marginBottom: 8 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>
           ARC Pro
         </h1>
-        <p style={{ fontSize: 14, color: '#6b6b6b', fontWeight: 300, marginBottom: 20 }}>
+        <p style={{ fontSize: 14, color: 'var(--text-2)', fontWeight: 300, marginBottom: 20 }}>
           Tudo que você precisa para gerenciar seu escritório.
         </p>
 
@@ -197,7 +197,7 @@ export default function ArquitetoPlanos() {
       {/* Plan card */}
       <div style={{ maxWidth: 480, margin: '0 auto' }}>
         <div style={{
-          background: '#fff',
+          background: 'var(--bg-card)',
           border: '2px solid #007AFF',
           borderRadius: 20,
           boxShadow: '0 8px 32px rgba(0,122,255,0.12)',
@@ -215,15 +215,15 @@ export default function ArquitetoPlanos() {
           )}
 
           {/* Price */}
-          <div style={{ padding: '32px 32px 26px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#007AFF', letterSpacing: '0.1em', marginBottom: 10 }}>
+          <div style={{ padding: '32px 32px 26px', borderBottom: '1px solid var(--border-subtle)' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', marginBottom: 10 }}>
               ARC PRO
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 4 }}>
-              <span style={{ fontSize: 52, fontWeight: 800, color: '#1a1a1a', letterSpacing: '-0.02em' }}>
+              <span style={{ fontSize: 52, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em' }}>
                 {fmtBRL(priceMonthly)}
               </span>
-              <span style={{ fontSize: 14, color: '#8e8e93' }}>/mês</span>
+              <span style={{ fontSize: 14, color: 'var(--text-3)' }}>/mês</span>
             </div>
             {ciclo === 'anual' && plano?.valor_anual && (
               <div style={{ fontSize: 12.5, color: '#059669', fontWeight: 500 }}>
@@ -231,7 +231,7 @@ export default function ArquitetoPlanos() {
               </div>
             )}
             {ciclo === 'mensal' && (
-              <div style={{ fontSize: 12, color: '#8e8e93' }}>
+              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
                 ou {fmtBRL(anualMensal)}/mês no plano anual · 2 meses grátis
               </div>
             )}
@@ -244,12 +244,12 @@ export default function ArquitetoPlanos() {
                 <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
                   <div style={{
                     width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-                    background: 'rgba(0,122,255,0.1)',
+                    background: 'var(--accent-soft)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <Check size={11} color="#007AFF" strokeWidth={3} />
+                    <Check size={11} color="var(--accent)" strokeWidth={3} />
                   </div>
-                  <span style={{ fontSize: 13.5, color: '#1a1a1a' }}>{f}</span>
+                  <span style={{ fontSize: 13.5, color: 'var(--text)' }}>{f}</span>
                 </div>
               ))}
             </div>
@@ -280,7 +280,7 @@ export default function ArquitetoPlanos() {
                   width: '100%', padding: '14px', borderRadius: 11,
                   fontSize: 14, fontWeight: 700,
                   cursor: selecting ? 'not-allowed' : 'pointer',
-                  background: '#007AFF', color: '#fff', border: 'none',
+                  background: 'var(--btn-bg)', color: '#fff', border: 'none',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   opacity: selecting ? 0.7 : 1, transition: 'opacity 0.15s',
                 }}>
@@ -292,7 +292,7 @@ export default function ArquitetoPlanos() {
           </div>
         </div>
 
-        <p style={{ textAlign: 'center', fontSize: 12, color: '#8e8e93', marginTop: 20 }}>
+        <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-3)', marginTop: 20 }}>
           Pagamentos via Asaas · Nossa equipe entrará em contato para configurar a cobrança.
         </p>
       </div>
@@ -310,7 +310,7 @@ export default function ArquitetoPlanos() {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 24 }}>
-        <Link href="/arquiteto/dashboard" style={{ fontSize: 13, color: '#8e8e93', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+        <Link href="/arquiteto/dashboard" style={{ fontSize: 13, color: 'var(--text-3)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
           <ArrowRight size={13} style={{ transform: 'rotate(180deg)' }} /> Voltar ao dashboard
         </Link>
       </div>

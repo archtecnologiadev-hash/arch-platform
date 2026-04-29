@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -114,7 +114,7 @@ function CustomCursor() {
       <div ref={dotRef} style={{
         position: 'fixed', top: 0, left: 0,
         width: 4, height: 4,
-        background: '#fff', borderRadius: '50%',
+        background: 'var(--bg-card)', borderRadius: '50%',
         pointerEvents: 'none', zIndex: 9999,
         willChange: 'transform', mixBlendMode: 'difference',
       }} />
@@ -216,7 +216,7 @@ function Nav() {
         {mobileOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            style={{ overflow: 'hidden', background: '#fff', borderTop: '1px solid rgba(0,0,0,0.06)' }}
+            style={{ overflow: 'hidden', background: 'var(--bg-card)', borderTop: '1px solid var(--border-subtle)' }}
           >
             <div style={{ padding: '20px 28px 32px' }}>
               {NAV_LINKS.map(l => (
@@ -360,7 +360,7 @@ function Hero() {
           style={{ display: 'flex', gap: 14, marginTop: 48, flexWrap: 'wrap', justifyContent: 'center' }}
         >
           <Link href="/cadastro" style={{
-            padding: '15px 34px', background: '#fff', color: '#0a0a0a',
+            padding: '15px 34px', background: 'var(--bg-card)', color: '#0a0a0a',
             borderRadius: 100, textDecoration: 'none', fontSize: 14, fontWeight: 500,
             display: 'inline-flex', alignItems: 'center', gap: 8,
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
@@ -423,7 +423,7 @@ function Label({ children }: { children: React.ReactNode }) {
   return (
     <p style={{
       fontSize: 11, letterSpacing: '0.14em', fontWeight: 500,
-      color: '#007AFF', textTransform: 'uppercase', marginBottom: 18,
+      color: 'var(--accent)', textTransform: 'uppercase', marginBottom: 18,
     }}>
       {children}
     </p>
@@ -563,7 +563,7 @@ const BENEFIT_ICONS = [IconPipeline, IconPortal, IconTeam]
 
 function Benefits() {
   return (
-    <section id="recursos" style={{ padding: '140px 40px', background: '#fff' }}>
+    <section id="recursos" style={{ padding: '140px 40px', background: 'var(--bg-card)' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <Reveal>
           <div style={{ maxWidth: 580, marginBottom: 72 }}>
@@ -591,7 +591,7 @@ function Benefits() {
                   whileHover={{ backgroundColor: '#fafafa' }}
                   transition={{ duration: 0.18 }}
                   style={{
-                    padding: '52px 44px', background: '#fff', height: '100%',
+                    padding: '52px 44px', background: 'var(--bg-card)', height: '100%',
                     borderRight: i < BENEFITS.length - 1 ? '1px solid rgba(0,0,0,0.07)' : 'none',
                     boxSizing: 'border-box',
                   }}
@@ -627,7 +627,7 @@ function Benefits() {
               <div key={f.label} style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '10px 18px', border: '1px solid rgba(0,0,0,0.07)',
-                borderRadius: 100, background: '#fff',
+                borderRadius: 100, background: 'var(--bg-card)',
               }}>
                 <Icon size={14} color="rgba(0,0,0,0.4)" />
                 <span style={{ fontSize: 13, fontWeight: 300, color: 'rgba(0,0,0,0.55)' }}>{f.label}</span>
@@ -752,7 +752,7 @@ function ForWhom() {
 
 function Pricing() {
   return (
-    <section id="precos" style={{ padding: '140px 40px', background: '#fff' }}>
+    <section id="precos" style={{ padding: '140px 40px', background: 'var(--bg-card)' }}>
       <div style={{ maxWidth: 560, margin: '0 auto' }}>
         <Reveal>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
@@ -767,9 +767,9 @@ function Pricing() {
         </Reveal>
 
         <Reveal delay={0.1}>
-          <div style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: 24, overflow: 'hidden' }}>
+          <div style={{ border: '1px solid var(--border)', borderRadius: 24, overflow: 'hidden' }}>
             {/* Header */}
-            <div style={{ padding: '44px 48px 36px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+            <div style={{ padding: '44px 48px 36px', borderBottom: '1px solid var(--border-subtle)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
                 <div>
                   <p style={{ fontSize: 12.5, fontWeight: 300, color: 'rgba(0,0,0,0.38)', marginBottom: 10, letterSpacing: '0.04em' }}>
@@ -851,7 +851,7 @@ function CTAFinal() {
           </p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/cadastro" style={{
-              padding: '16px 36px', background: '#fff', color: '#0a0a0a',
+              padding: '16px 36px', background: 'var(--bg-card)', color: '#0a0a0a',
               borderRadius: 100, textDecoration: 'none', fontSize: 14, fontWeight: 500,
               display: 'inline-flex', alignItems: 'center', gap: 8,
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -37,11 +37,11 @@ interface ProjPortfolio {
 }
 
 const LBL: React.CSSProperties = {
-  display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em',
+  display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em',
 }
 const INP: React.CSSProperties = {
-  width: '100%', padding: '10px 14px', background: '#f2f2f7',
-  border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', fontSize: 13.5,
+  width: '100%', padding: '10px 14px', background: 'var(--bg)',
+  border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5,
   outline: 'none', boxSizing: 'border-box', borderRadius: 10,
 }
 
@@ -81,7 +81,7 @@ function SortableGaleriaItem({
       ref={setNodeRef}
       style={{
         position: 'relative', aspectRatio: '4/5', borderRadius: 12, overflow: 'hidden',
-        border: '1px solid rgba(0,0,0,0.08)', background: '#f2f2f7',
+        border: '1px solid var(--border)', background: 'var(--bg)',
         opacity: isDragging ? 0.45 : 1,
         transform: CSS.Transform.toString(transform),
         transition,
@@ -582,8 +582,8 @@ export default function ArquitetoPerfilPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f2f2f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Loader2 size={28} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Loader2 size={28} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
@@ -593,7 +593,7 @@ export default function ArquitetoPerfilPage() {
   const publicUrl = nome.trim() ? `/escritorio/${slug}` : null
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f2f2f7', color: '#1a1a1a' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
       <style>{`
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
@@ -619,7 +619,7 @@ export default function ArquitetoPerfilPage() {
 
       {/* ── Top bar ─────────────────────────────────────────────────── */}
       <div className="sticky-page-header" style={{
-        background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.08)',
+        background: 'var(--bg-card)', borderBottom: '1px solid var(--border)',
         padding: '0 24px', height: 56,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         position: 'sticky', top: 0, zIndex: 40,
@@ -629,7 +629,7 @@ export default function ArquitetoPerfilPage() {
           {publicUrl && (
             <a href={publicUrl} target="_blank" rel="noopener noreferrer" style={{
               display: 'flex', alignItems: 'center', gap: 6, fontSize: 12,
-              color: '#007AFF', textDecoration: 'none', padding: '7px 13px',
+              color: 'var(--accent)', textDecoration: 'none', padding: '7px 13px',
               borderRadius: 8, border: '1px solid rgba(0,122,255,0.25)',
               background: 'rgba(0,122,255,0.06)',
             }}>
@@ -660,7 +660,7 @@ export default function ArquitetoPerfilPage() {
 
         {/* ── Cover + Avatar ─────────────────────────────────────────── */}
         <div style={{
-          background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16,
+          background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16,
           overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 18,
         }}>
           {/* Cover */}
@@ -694,7 +694,7 @@ export default function ArquitetoPerfilPage() {
               ? <img src={fotoCapa} alt="Capa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                   <ImagePlus size={24} color="#8e8e93" />
-                  <span style={{ fontSize: 12, color: '#8e8e93' }}>Clique para adicionar foto de capa</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Clique para adicionar foto de capa</span>
                 </div>}
             {/* hover hint */}
             <div style={{
@@ -760,27 +760,27 @@ export default function ArquitetoPerfilPage() {
               </div>
             </div>
             <div style={{ paddingBottom: 4 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>
-                {nome || <span style={{ color: '#c7c7cc' }}>Nome do escritório</span>}
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
+                {nome || <span style={{ color: 'var(--logout-btn)' }}>Nome do escritório</span>}
               </div>
               {(cidade || estado) &&
-                <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 2 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
                   {[cidade, estado].filter(Boolean).join(', ')}
                 </div>}
             </div>
           </div>
           <div style={{ padding: '6px 20px 14px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-            <span style={{ fontSize: 11, color: '#8e8e93' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-3)' }}>
               Capa: 1920×1080px (16:9) · Foto: 800×800px · Capa máx. 10 MB · Foto máx. 2 MB · JPG, PNG ou WEBP
             </span>
           </div>
         </div>
 
         {/* ── Galeria do Perfil Público ───────────────────────────────── */}
-        <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 18 }}>
-          <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-            <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 5 }}>GALERIA DO PERFIL PÚBLICO</p>
-            <p style={{ fontSize: 12, color: '#8e8e93', lineHeight: 1.5 }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 18 }}>
+          <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
+            <p style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 5 }}>GALERIA DO PERFIL PÚBLICO</p>
+            <p style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.5 }}>
               Adicione até 8 imagens em alta resolução. Recomendado: formato retrato 4:5 (1080×1350px) para melhor exibição. As imagens serão otimizadas automaticamente.
             </p>
           </div>
@@ -798,8 +798,8 @@ export default function ArquitetoPerfilPage() {
                 onDrop={e => { e.preventDefault(); e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)'; e.currentTarget.style.background = 'transparent'; if (e.dataTransfer.files.length > 0) processarArquivosGaleria(e.dataTransfer.files) }}
                 style={{ border: '1.5px dashed rgba(0,0,0,0.12)', borderRadius: 12, padding: '28px 20px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.15s', marginBottom: galeria.length + galeriaUploading.length > 0 ? 16 : 0 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><Upload size={22} color="#007AFF" /></div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', marginBottom: 4 }}>Arraste fotos aqui ou clique para selecionar</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><Upload size={22} color="var(--accent)" /></div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Arraste fotos aqui ou clique para selecionar</div>
                 <div style={{ fontSize: 11, color: '#aeaeb2' }}>
                   JPG, PNG ou WEBP · Máx. 10 MB por imagem · {8 - galeria.length - galeriaUploading.length} vaga{8 - galeria.length - galeriaUploading.length !== 1 ? 's' : ''} restante{8 - galeria.length - galeriaUploading.length !== 1 ? 's' : ''}
                 </div>
@@ -812,7 +812,7 @@ export default function ArquitetoPerfilPage() {
 
                 {/* Imagem principal — sempre primeiro, sem drag */}
                 {galeria.filter(g => g.eh_principal).map(img => (
-                  <div key={img.id} style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 12, overflow: 'hidden', border: '2px solid #007AFF', background: '#f2f2f7' }}>
+                  <div key={img.id} style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 12, overflow: 'hidden', border: '2px solid #007AFF', background: 'var(--bg)' }}>
                     <img src={img.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
                     <button onClick={() => img.id && setGaleriaPrincipal(img.id)} title="Remover como capa"
                       style={{ position: 'absolute', top: 6, left: 6, zIndex: 20, background: 'rgba(230,160,0,0.92)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -823,7 +823,7 @@ export default function ArquitetoPerfilPage() {
                       <X size={12} color="#fff" />
                     </button>
                     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 7px 6px', background: 'linear-gradient(to top, rgba(0,0,0,0.55), transparent)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', zIndex: 10 }}>
-                      <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', background: '#007AFF', borderRadius: 4, padding: '2px 6px', letterSpacing: '0.05em' }}>CAPA</span>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', background: 'var(--btn-bg)', borderRadius: 4, padding: '2px 6px', letterSpacing: '0.05em' }}>CAPA</span>
                       {img.tamanho_bytes ? <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', background: 'rgba(0,0,0,0.35)', borderRadius: 4, padding: '1px 5px' }}>{formatBytes(img.tamanho_bytes)}</span> : null}
                     </div>
                   </div>
@@ -849,12 +849,12 @@ export default function ArquitetoPerfilPage() {
 
                 {/* Em upload */}
                 {galeriaUploading.map(u => (
-                  <div key={u.tempId} style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)', background: '#f2f2f7' }}>
+                  <div key={u.tempId} style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', background: 'var(--bg)' }}>
                     <img src={u.previewUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />
                     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                       {u.status === 'error'
                         ? <><X size={20} color="#ef4444" /><span style={{ fontSize: 10, color: '#ef4444', fontWeight: 600 }}>Erro</span></>
-                        : <><Loader2 size={20} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} /><span style={{ fontSize: 10, color: '#007AFF', fontWeight: 600 }}>{u.status === 'compressing' ? 'Otimizando…' : 'Enviando…'}</span></>
+                        : <><Loader2 size={20} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} /><span style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 600 }}>{u.status === 'compressing' ? 'Otimizando…' : 'Enviando…'}</span></>
                       }
                     </div>
                   </div>
@@ -872,8 +872,8 @@ export default function ArquitetoPerfilPage() {
         </div>
 
         {/* ── Informações básicas ─────────────────────────────────────── */}
-        <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 14 }}>
-          <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', marginBottom: 20, fontWeight: 700 }}>INFORMAÇÕES BÁSICAS</p>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 14 }}>
+          <p style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.07em', marginBottom: 20, fontWeight: 700 }}>INFORMAÇÕES BÁSICAS</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <Field label="Nome do escritório" value={nome} onChange={setNome} placeholder="Ex: Estúdio Brasilis" required />
             <Field label="Nome do arquiteto responsável" value={nomeResp} onChange={setNomeResp} placeholder="Ex: Ricardo Almeida" />
@@ -923,8 +923,8 @@ export default function ArquitetoPerfilPage() {
         </div>
 
         {/* ── Especialidades ─────────────────────────────────────────── */}
-        <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 14 }}>
-          <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', marginBottom: 18, fontWeight: 700 }}>ESPECIALIDADES</p>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: 14 }}>
+          <p style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.07em', marginBottom: 18, fontWeight: 700 }}>ESPECIALIDADES</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {ESPECIALIDADES.map(e => (
               <button key={e} type="button" className="chip-btn" onClick={() => toggleEspec(e)} style={{
@@ -940,11 +940,11 @@ export default function ArquitetoPerfilPage() {
         </div>
 
         {/* ── Portfólio ──────────────────────────────────────────────── */}
-        <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', fontWeight: 700 }}>PORTFÓLIO</p>
+            <p style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.07em', fontWeight: 700 }}>PORTFÓLIO</p>
             <button type="button" onClick={() => { setNovoProj({ nome: '', descricao: '', categoria: '', imagens: [] }); setShowModal(true) }} style={{
-              display: 'flex', alignItems: 'center', gap: 6, background: '#007AFF',
+              display: 'flex', alignItems: 'center', gap: 6, background: 'var(--btn-bg)',
               color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px',
               fontSize: 12, fontWeight: 600, cursor: 'pointer',
             }}>
@@ -953,12 +953,12 @@ export default function ArquitetoPerfilPage() {
           </div>
 
           {projetos.length === 0
-            ? <div style={{ textAlign: 'center', padding: '32px 0', color: '#8e8e93', fontSize: 13 }}>
+            ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-3)', fontSize: 13 }}>
                 Nenhum projeto ainda. Adicione seu primeiro projeto!
               </div>
             : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
                 {projetos.map((p, i) => (
-                  <div key={p.id ?? i} style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)', background: '#f2f2f7' }}>
+                  <div key={p.id ?? i} style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)', background: 'var(--bg)' }}>
                     <div style={{ aspectRatio: '4/3', overflow: 'hidden', background: '#e5e5ea' }}>
                       {p.imagens[0]
                         ? <img src={p.imagens[0].url} alt={p.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -967,8 +967,8 @@ export default function ArquitetoPerfilPage() {
                           </div>}
                     </div>
                     <div style={{ padding: '8px 10px' }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nome}</div>
-                      {p.categoria && <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{p.categoria}</div>}
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nome}</div>
+                      {p.categoria && <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{p.categoria}</div>}
                     </div>
                   </div>
                 ))}
@@ -977,16 +977,16 @@ export default function ArquitetoPerfilPage() {
 
         {/* ── Meu Plano ──────────────────────────────────────────────── */}
         {!planInfo.loading && planInfo.status && (
-          <div style={{ background: '#fff', border: `1px solid ${planInfo.status === 'fundador' ? 'rgba(251,191,36,0.3)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginTop: 14 }}>
+          <div style={{ background: 'var(--bg-card)', border: `1px solid ${planInfo.status === 'fundador' ? 'rgba(251,191,36,0.3)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginTop: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                 <div style={{ width: 34, height: 34, borderRadius: 9, background: planInfo.status === 'fundador' ? 'rgba(251,191,36,0.12)' : 'rgba(0,122,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
-                  {planInfo.status === 'fundador' ? '★' : <CreditCard size={16} color="#007AFF" />}
+                  {planInfo.status === 'fundador' ? '★' : <CreditCard size={16} color="var(--accent)" />}
                 </div>
                 <p style={{ fontSize: 11, color: planInfo.status === 'fundador' ? '#92400e' : '#007AFF', letterSpacing: '0.07em', fontWeight: 700 }}>MEU PLANO</p>
               </div>
               {planInfo.status !== 'fundador' && (
-                <Link href="/arquiteto/planos" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>
+                <Link href="/arquiteto/planos" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
                   Gerenciar plano <ArrowRight size={12} />
                 </Link>
               )}
@@ -1000,12 +1000,12 @@ export default function ArquitetoPerfilPage() {
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14 }}>
-                <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Plano atual</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>{planInfo.planNome ?? '—'}</div>
+                <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '14px 16px' }}>
+                  <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 4 }}>Plano atual</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{planInfo.planNome ?? '—'}</div>
                 </div>
-                <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Status</div>
+                <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '14px 16px' }}>
+                  <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 4 }}>Status</div>
                   <div style={{
                     display: 'inline-flex', alignItems: 'center', gap: 5,
                     fontSize: 12.5, fontWeight: 700,
@@ -1018,17 +1018,17 @@ export default function ArquitetoPerfilPage() {
                   </div>
                 </div>
                 {planInfo.proximaCobranca && (
-                  <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
-                    <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Próxima cobrança</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>
+                  <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '14px 16px' }}>
+                    <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 4 }}>Próxima cobrança</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
                       {planInfo.proximaCobranca.toLocaleDateString('pt-BR')}
                     </div>
                   </div>
                 )}
                 {planInfo.valorMensal && (
-                  <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
-                    <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Valor</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>
+                  <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '14px 16px' }}>
+                    <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 4 }}>Valor</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
                       {planInfo.valorMensal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })}/mês
                     </div>
                   </div>
@@ -1047,10 +1047,10 @@ export default function ArquitetoPerfilPage() {
                   ? `${(storage.usedGb * 1024).toFixed(0)} MB`
                   : `${storage.usedGb.toFixed(2)} GB`
               return (
-                <div style={{ marginTop: 14, padding: '14px 16px', background: '#f2f2f7', borderRadius: 10 }}>
+                <div style={{ marginTop: 14, padding: '14px 16px', background: 'var(--bg)', borderRadius: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                    <div style={{ fontSize: 10.5, color: '#8e8e93' }}>Armazenamento</div>
-                    <div style={{ fontSize: 11.5, fontWeight: 600, color: '#1a1a1a' }}>
+                    <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>Armazenamento</div>
+                    <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text)' }}>
                       {usedLabel} de {planInfo.maxArmazenamentoGb} GB
                     </div>
                   </div>
@@ -1065,8 +1065,8 @@ export default function ArquitetoPerfilPage() {
             })()}
             {/* Projetos counter */}
             {planInfo.maxProjetos !== null && (
-              <div style={{ marginTop: 10, padding: '10px 16px', background: '#f2f2f7', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: 10.5, color: '#8e8e93' }}>Projetos no portfólio</div>
+              <div style={{ marginTop: 10, padding: '10px 16px', background: 'var(--bg)', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>Projetos no portfólio</div>
                 <div style={{ fontSize: 12, fontWeight: 600, color: projetos.length >= planInfo.maxProjetos ? '#ef4444' : '#1a1a1a' }}>
                   {projetos.length} / {planInfo.maxProjetos}
                 </div>
@@ -1076,7 +1076,7 @@ export default function ArquitetoPerfilPage() {
               <Link href="/arquiteto/planos" style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                 marginTop: 16, padding: '11px', borderRadius: 10,
-                background: '#007AFF', color: '#fff', textDecoration: 'none',
+                background: 'var(--btn-bg)', color: '#fff', textDecoration: 'none',
                 fontSize: 13, fontWeight: 700,
               }}>
                 <Zap size={13} /> {planInfo.status === 'inadimplente' ? 'Regularizar assinatura' : 'Configurar pagamento'}
@@ -1085,16 +1085,16 @@ export default function ArquitetoPerfilPage() {
 
             {/* Card info */}
             {cardInfo && (
-              <div style={{ marginTop: 10, padding: '12px 16px', background: '#f2f2f7', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ marginTop: 10, padding: '12px 16px', background: 'var(--bg)', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <CreditCard size={14} color="#8e8e93" />
-                  <span style={{ fontSize: 12.5, color: '#1a1a1a', fontWeight: 500 }}>
+                  <span style={{ fontSize: 12.5, color: 'var(--text)', fontWeight: 500 }}>
                     {cardInfo.brand ? cardInfo.brand.charAt(0).toUpperCase() + cardInfo.brand.slice(1) : 'Cartão'} •••• {cardInfo.last4}
                   </span>
                 </div>
                 <button
                   onClick={() => setShowTrocarCartao(v => !v)}
-                  style={{ background: 'none', border: 'none', color: '#007AFF', cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: 0 }}
+                  style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: 0 }}
                 >
                   {showTrocarCartao ? 'Fechar' : 'Trocar'}
                 </button>
@@ -1103,8 +1103,8 @@ export default function ArquitetoPerfilPage() {
 
             {/* Trocar cartão form */}
             {showTrocarCartao && (
-              <form onSubmit={handleTrocarCartao} style={{ marginTop: 10, padding: '16px', background: '#fff', border: '1px solid rgba(0,122,255,0.15)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <p style={{ fontSize: 12.5, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>Novo cartão</p>
+              <form onSubmit={handleTrocarCartao} style={{ marginTop: 10, padding: '16px', background: 'var(--bg-card)', border: '1px solid var(--accent-soft-border)', borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <p style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Novo cartão</p>
                 <input style={INP} value={tcNumber} placeholder="Número do cartão"
                   onChange={e => setTcNumber(formatTcCardNumber(e.target.value))}
                   onFocus={e => (e.target.style.borderColor = '#007AFF')}
@@ -1149,19 +1149,19 @@ export default function ArquitetoPerfilPage() {
 
         {/* Histórico de cobranças Asaas */}
         {cobrancas.length > 0 && (
-          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginTop: 14 }}>
-            <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 16 }}>COBRANÇAS</p>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginTop: 14 }}>
+            <p style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 16 }}>COBRANÇAS</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {cobrancas.map(c => {
                 const statusColor = c.status === 'confirmed' ? '#059669' : c.status === 'overdue' ? '#ef4444' : '#8e8e93'
                 const statusLabel = c.status === 'confirmed' ? 'Pago' : c.status === 'overdue' ? 'Vencida' : 'Pendente'
                 return (
-                  <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f2f2f7', borderRadius: 9 }}>
+                  <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--bg)', borderRadius: 9 }}>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
                         {c.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 })}
                       </div>
-                      <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 1 }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>
                         {c.vencimento ? new Date(c.vencimento).toLocaleDateString('pt-BR') : '—'}
                       </div>
                     </div>
@@ -1187,13 +1187,13 @@ export default function ArquitetoPerfilPage() {
         }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}>
           <div style={{
-            background: '#fff', borderRadius: 18, width: '100%', maxWidth: 500,
+            background: 'var(--bg-card)', borderRadius: 18, width: '100%', maxWidth: 500,
             maxHeight: '90vh', overflow: 'auto', boxShadow: '0 24px 80px rgba(0,0,0,0.35)',
             animation: 'slideDown 0.2s ease',
           }}>
-            <div style={{ padding: '18px 22px', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '18px 22px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 15, fontWeight: 600 }}>Novo Projeto</span>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}>
                 <X size={18} />
               </button>
             </div>
@@ -1213,7 +1213,7 @@ export default function ArquitetoPerfilPage() {
                   style={{ ...INP, resize: 'none', lineHeight: 1.6 }} />
               </div>
               <div>
-                <label style={LBL}>Fotos <span style={{ color: '#c7c7cc' }}>(até 5)</span></label>
+                <label style={LBL}>Fotos <span style={{ color: 'var(--logout-btn)' }}>(até 5)</span></label>
                 <input ref={projImgRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
                   onChange={e => {
                     const f = e.target.files?.[0]
@@ -1240,7 +1240,7 @@ export default function ArquitetoPerfilPage() {
                   }} />
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {novoProj.imagens.map((img, i) => (
-                    <div key={i} style={{ position: 'relative', width: 72, height: 72, borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)' }}>
+                    <div key={i} style={{ position: 'relative', width: 72, height: 72, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)' }}>
                       <img src={img.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       <button type="button" onClick={() => setNovoProj(p => ({ ...p, imagens: p.imagens.filter((_, j) => j !== i) }))}
                         style={{ position: 'absolute', top: 3, right: 3, background: 'rgba(0,0,0,0.65)', border: 'none', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -1251,11 +1251,11 @@ export default function ArquitetoPerfilPage() {
                   {novoProj.imagens.length < 5 && (
                     <button type="button" onClick={() => projImgRef.current?.click()} style={{
                       width: 72, height: 72, borderRadius: 8, border: '1.5px dashed rgba(0,0,0,0.15)',
-                      background: '#f2f2f7', cursor: 'pointer',
+                      background: 'var(--bg)', cursor: 'pointer',
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
                     }}>
                       <Plus size={16} color="#8e8e93" />
-                      <span style={{ fontSize: 10, color: '#8e8e93' }}>Foto</span>
+                      <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Foto</span>
                     </button>
                   )}
                 </div>
@@ -1263,7 +1263,7 @@ export default function ArquitetoPerfilPage() {
               <button type="button" onClick={handleSaveProj}
                 disabled={savingProj || !novoProj.nome.trim()}
                 style={{
-                  background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10,
+                  background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 10,
                   padding: '13px', fontSize: 13, fontWeight: 600,
                   cursor: savingProj || !novoProj.nome.trim() ? 'not-allowed' : 'pointer',
                   opacity: !novoProj.nome.trim() ? 0.5 : 1,

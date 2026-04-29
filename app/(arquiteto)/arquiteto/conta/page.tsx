@@ -1,13 +1,13 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Loader2, Camera, Check } from 'lucide-react'
 
 const inp: React.CSSProperties = {
-  width: '100%', padding: '11px 14px', background: '#f2f2f7',
-  border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, fontSize: 14,
-  color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+  width: '100%', padding: '11px 14px', background: 'var(--bg)',
+  border: '1px solid var(--border)', borderRadius: 10, fontSize: 14,
+  color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
 }
 
 export default function MinhaContaPage() {
@@ -83,7 +83,7 @@ export default function MinhaContaPage() {
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-      <Loader2 size={24} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <Loader2 size={24} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
@@ -93,10 +93,10 @@ export default function MinhaContaPage() {
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', marginBottom: 4 }}>Minha Conta</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Minha Conta</h1>
         {escritorioNome && (
-          <div style={{ fontSize: 12, color: '#8e8e93' }}>
-            Membro de <span style={{ color: '#007AFF', fontWeight: 600 }}>{escritorioNome}</span>
+          <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
+            Membro de <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{escritorioNome}</span>
           </div>
         )}
       </div>
@@ -106,9 +106,9 @@ export default function MinhaContaPage() {
         <div style={{ position: 'relative', width: 72, height: 72 }}>
           <div style={{
             width: 72, height: 72, borderRadius: '50%', overflow: 'hidden',
-            background: 'rgba(0,122,255,0.1)', border: '2px solid rgba(0,122,255,0.2)',
+            background: 'var(--accent-soft)', border: '2px solid rgba(0,122,255,0.2)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 24, fontWeight: 600, color: '#007AFF',
+            fontSize: 24, fontWeight: 600, color: 'var(--accent)',
           }}>
             {avatarUrl
               ? <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -120,7 +120,7 @@ export default function MinhaContaPage() {
             style={{
               position: 'absolute', bottom: 0, right: 0,
               width: 26, height: 26, borderRadius: '50%',
-              background: '#007AFF', border: '2px solid #fff',
+              background: 'var(--btn-bg)', border: '2px solid #fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: uploadingAvatar ? 'not-allowed' : 'pointer',
             }}>
@@ -131,15 +131,15 @@ export default function MinhaContaPage() {
           <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
         </div>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>{form.nome || 'Seu nome'}</div>
-          <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 2 }}>Clique no ícone para trocar a foto</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{form.nome || 'Seu nome'}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>Clique no ícone para trocar a foto</div>
         </div>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div>
-          <label style={{ display: 'block', fontSize: 11, color: '#6b6b6b', marginBottom: 6, fontWeight: 600 }}>
+          <label style={{ display: 'block', fontSize: 11, color: 'var(--text-2)', marginBottom: 6, fontWeight: 600 }}>
             Nome completo
           </label>
           <input
@@ -153,7 +153,7 @@ export default function MinhaContaPage() {
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 11, color: '#6b6b6b', marginBottom: 6, fontWeight: 600 }}>
+          <label style={{ display: 'block', fontSize: 11, color: 'var(--text-2)', marginBottom: 6, fontWeight: 600 }}>
             Telefone
           </label>
           <input

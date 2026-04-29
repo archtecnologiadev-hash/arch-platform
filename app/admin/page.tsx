@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -76,7 +76,7 @@ export default function AdminDashboard() {
       ])
 
       setMetrics([
-        { label: 'Arquitetos', value: nArq ?? 0, icon: <Building2 size={18} />, color: '#007AFF' },
+        { label: 'Arquitetos', value: nArq ?? 0, icon: <Building2 size={18} />, color: 'var(--accent)' },
         { label: 'Fornecedores', value: nForn ?? 0, icon: <Package size={18} />, color: '#4f9cf9' },
         { label: 'Clientes', value: nCli ?? 0, icon: <Users size={18} />, color: '#34d399' },
         { label: 'Leads Hoje', value: leadsHoje ?? 0, icon: <MessageSquare size={18} />, color: '#a78bfa' },
@@ -106,20 +106,20 @@ export default function AdminDashboard() {
   }
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f2f2f7' }}>
-      <Loader2 size={28} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
+      <Loader2 size={28} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 
   return (
-    <div style={{ padding: 32, color: '#1a1a1a', background: '#f2f2f7', minHeight: '100vh' }}>
+    <div style={{ padding: 32, color: 'var(--text)', background: 'var(--bg)', minHeight: '100vh' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 500, color: '#1a1a1a', marginBottom: 4 }}>Visão Geral</h1>
-        <p style={{ fontSize: 13, color: '#8e8e93' }}>
+        <h1 style={{ fontSize: 22, fontWeight: 500, color: 'var(--text)', marginBottom: 4 }}>Visão Geral</h1>
+        <p style={{ fontSize: 13, color: 'var(--text-3)' }}>
           {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
       </div>
@@ -127,13 +127,13 @@ export default function AdminDashboard() {
       {/* Finance cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14, marginBottom: 20 }}>
         {financeCards.map(m => (
-          <div key={m.label} style={{ background: '#ffffff', border: `1px solid ${m.color}25`, borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          <div key={m.label} style={{ background: 'var(--bg-card)', border: `1px solid ${m.color}25`, borderRadius: 12, padding: '18px 20px', boxShadow: 'var(--shadow-card)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{ fontSize: 11, color: '#8e8e93', fontWeight: 500, letterSpacing: '0.04em' }}>{m.label}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, letterSpacing: '0.04em' }}>{m.label}</span>
               <div style={{ color: m.color }}>{m.icon}</div>
             </div>
             <div style={{ fontSize: 22, fontWeight: 700, color: m.color, lineHeight: 1, marginBottom: 6 }}>{m.value}</div>
-            <div style={{ fontSize: 10.5, color: '#8e8e93' }}>{m.sub}</div>
+            <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{m.sub}</div>
           </div>
         ))}
       </div>
@@ -142,12 +142,12 @@ export default function AdminDashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14, marginBottom: 28 }}>
         {metrics.map(m => (
           <div key={m.label} style={{
-            background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12,
+            background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12,
             padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12,
             boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 11, color: '#8e8e93', fontWeight: 500, letterSpacing: '0.04em' }}>
+              <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, letterSpacing: '0.04em' }}>
                 {m.label}
               </span>
               <div style={{ color: m.color, opacity: 0.8 }}>{m.icon}</div>
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
             <div style={{ fontSize: 28, fontWeight: 300, color: m.color, lineHeight: 1 }}>
               {m.value}
             </div>
-            {m.sub && <div style={{ fontSize: 10.5, color: '#8e8e93' }}>{m.sub}</div>}
+            {m.sub && <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{m.sub}</div>}
           </div>
         ))}
       </div>
@@ -163,7 +163,7 @@ export default function AdminDashboard() {
       {/* Test data banner */}
       {(testCount > 0 || testResult) && (
         <div style={{
-          background: '#fff', border: '1px solid rgba(245,158,11,0.35)', borderRadius: 12,
+          background: 'var(--bg-card)', border: '1px solid rgba(245,158,11,0.35)', borderRadius: 12,
           padding: '14px 18px', marginBottom: 20,
           display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
         }}>
@@ -172,7 +172,7 @@ export default function AdminDashboard() {
             ? <span style={{ fontSize: 13, color: '#059669', fontWeight: 500, flex: 1 }}><Check size={13} style={{ marginRight: 5, display: 'inline' }} />{testResult}</span>
             : <span style={{ fontSize: 13, color: '#92400e', flex: 1 }}>
                 <strong>{testCount} usuários de teste</strong> (@arc-test.local) estão na plataforma.{' '}
-                <Link href="/admin/dados-teste" style={{ color: '#007AFF', textDecoration: 'none' }}>Ver credenciais →</Link>
+                <Link href="/admin/dados-teste" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Ver credenciais →</Link>
               </span>
           }
           {testCount > 0 && (
@@ -198,13 +198,13 @@ export default function AdminDashboard() {
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16,
         }} onClick={e => { if (e.target === e.currentTarget) setConfirmTest(false) }}>
-          <div style={{ background: '#fff', borderRadius: 18, padding: 28, maxWidth: 400, width: '100%', boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 18, padding: 28, maxWidth: 400, width: '100%', boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}>
             <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10 }}>Remover {testCount} usuários de teste?</div>
-            <p style={{ fontSize: 13, color: '#6b6b6b', lineHeight: 1.6, margin: '0 0 20px' }}>
+            <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6, margin: '0 0 20px' }}>
               Todos os dados vinculados (escritórios, projetos, produtos) também serão removidos. Esta ação não pode ser desfeita.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setConfirmTest(false)} style={{ flex: 1, background: '#f2f2f7', border: 'none', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+              <button onClick={() => setConfirmTest(false)} style={{ flex: 1, background: 'var(--bg)', border: 'none', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
               <button onClick={handleRemoveTestData} style={{ flex: 1, background: '#ef4444', border: 'none', borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#fff' }}>Confirmar</button>
             </div>
           </div>
@@ -212,21 +212,21 @@ export default function AdminDashboard() {
       )}
 
       {/* Recent users table */}
-      <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 13, fontWeight: 500, color: '#1a1a1a' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>
             Usuários Recentes
           </span>
-          <Link href="/admin/usuarios" style={{ fontSize: 12, color: '#007AFF', textDecoration: 'none' }}>
+          <Link href="/admin/usuarios" style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none' }}>
             Ver todos →
           </Link>
         </div>
 
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+            <tr style={{ borderBottom: '1px solid var(--border)' }}>
               {['Nome', 'Email', 'Tipo', 'Plano', 'Status', 'Cadastro'].map(h => (
-                <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: '#8e8e93', fontWeight: 500, letterSpacing: '0.04em' }}>
+                <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: 'var(--text-3)', fontWeight: 500, letterSpacing: '0.04em' }}>
                   {h}
                 </th>
               ))}
@@ -235,7 +235,7 @@ export default function AdminDashboard() {
           <tbody>
             {recentUsers.length === 0 && (
               <tr>
-                <td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>
+                <td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>
                   Nenhum usuário encontrado
                 </td>
               </tr>
@@ -247,16 +247,16 @@ export default function AdminDashboard() {
               }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.03)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 500, color: '#1a1a1a' }}>{u.nome}</td>
-                <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b6b6b' }}>{u.email}</td>
+                <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{u.nome}</td>
+                <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-2)' }}>{u.email}</td>
                 <td style={{ padding: '12px 16px' }}>
                   <Badge text={u.tipo} color={TIPO_COLOR[u.tipo] ?? '#666'} />
                 </td>
-                <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b6b6b' }}>{u.plano ?? 'free'}</td>
+                <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-2)' }}>{u.plano ?? 'free'}</td>
                 <td style={{ padding: '12px 16px' }}>
                   <Badge text={u.status_conta ?? 'ativo'} color={STATUS_COLOR[u.status_conta ?? 'ativo']} />
                 </td>
-                <td style={{ padding: '12px 16px', fontSize: 11, color: '#8e8e93' }}>
+                <td style={{ padding: '12px 16px', fontSize: 11, color: 'var(--text-3)' }}>
                   {new Date(u.created_at).toLocaleDateString('pt-BR')}
                 </td>
               </tr>

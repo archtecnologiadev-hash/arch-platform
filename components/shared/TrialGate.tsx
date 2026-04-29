@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -72,13 +72,13 @@ function TrialExpiredWall({ planoUrl }: { planoUrl: string }) {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#f2f2f7',
+      minHeight: '100vh', background: 'var(--bg)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32,
     }}>
       <div style={{
-        background: '#fff', borderRadius: 20, padding: '44px 52px',
+        background: 'var(--bg-card)', borderRadius: 20, padding: '44px 52px',
         maxWidth: 480, width: '100%', textAlign: 'center',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.08)',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.08)', border: '1px solid var(--border)',
       }}>
         <div style={{
           width: 60, height: 60, borderRadius: '50%',
@@ -87,15 +87,15 @@ function TrialExpiredWall({ planoUrl }: { planoUrl: string }) {
         }}>
           <AlertTriangle size={26} color="#ef4444" />
         </div>
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1a1a1a', marginBottom: 10 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)', marginBottom: 10 }}>
           Seu período de teste encerrou
         </h2>
-        <p style={{ fontSize: 14, color: '#6b6b6b', lineHeight: 1.65, marginBottom: 30 }}>
+        <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.65, marginBottom: 30 }}>
           O seu trial de 14 dias expirou. Escolha um plano para continuar usando a plataforma ARC sem interrupções.
         </p>
         <Link href={planoUrl} style={{
           display: 'inline-flex', alignItems: 'center', gap: 8,
-          background: '#007AFF', color: '#fff', textDecoration: 'none',
+          background: 'var(--btn-bg)', color: '#fff', textDecoration: 'none',
           padding: '14px 32px', borderRadius: 12, fontSize: 14, fontWeight: 700,
         }}>
           <Zap size={15} /> Ver planos e assinar
@@ -103,7 +103,7 @@ function TrialExpiredWall({ planoUrl }: { planoUrl: string }) {
         <div style={{ marginTop: 18 }}>
           <button onClick={handleLogout} style={{
             background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: 12.5, color: '#8e8e93',
+            fontSize: 12.5, color: 'var(--text-3)',
           }}>
             Sair da conta
           </button>

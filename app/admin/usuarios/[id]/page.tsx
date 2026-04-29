@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -15,10 +15,10 @@ interface UserData {
 interface LogEntry { id: number; acao: string; detalhes: Record<string, unknown>; created_at: string }
 
 const inp: React.CSSProperties = {
-  width: '100%', background: '#ffffff', border: '1px solid rgba(0,0,0,0.12)', color: '#1a1a1a',
+  width: '100%', background: 'var(--bg-card)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--text)',
   borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', boxSizing: 'border-box' as const,
 }
-const lbl: React.CSSProperties = { fontSize: 11, color: '#6b6b6b', fontWeight: 500, display: 'block', marginBottom: 5, letterSpacing: '0.03em' }
+const lbl: React.CSSProperties = { fontSize: 11, color: 'var(--text-2)', fontWeight: 500, display: 'block', marginBottom: 5, letterSpacing: '0.03em' }
 const sel: React.CSSProperties = { ...inp, cursor: 'pointer' }
 
 export default function EditarUsuario() {
@@ -96,23 +96,23 @@ export default function EditarUsuario() {
   }
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f2f2f7' }}>
-      <Loader2 size={26} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
+      <Loader2 size={26} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 
   if (!form) return (
-    <div style={{ padding: 32, color: '#8e8e93', background: '#f2f2f7', minHeight: '100vh' }}>Usuário não encontrado.</div>
+    <div style={{ padding: 32, color: 'var(--text-3)', background: 'var(--bg)', minHeight: '100vh' }}>Usuário não encontrado.</div>
   )
 
   return (
-    <div style={{ padding: 32, color: '#1a1a1a', background: '#f2f2f7', minHeight: '100vh', maxWidth: 900 }}>
+    <div style={{ padding: 32, color: 'var(--text)', background: 'var(--bg)', minHeight: '100vh', maxWidth: 900 }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
         <Link href="/admin/usuarios" style={{
-          display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#007AFF',
+          display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--accent)',
           textDecoration: 'none', padding: '6px 12px', border: '1px solid rgba(0,122,255,0.25)', borderRadius: 8,
           background: 'rgba(0,122,255,0.06)',
         }}
@@ -121,9 +121,9 @@ export default function EditarUsuario() {
           <ArrowLeft size={13} /> Voltar
         </Link>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 500, color: '#1a1a1a' }}>{form.nome}</h1>
-          <p style={{ fontSize: 12, color: '#8e8e93', marginTop: 2 }}>
-            ID: <span style={{ fontFamily: 'monospace', color: '#6b6b6b' }}>{userId}</span>
+          <h1 style={{ fontSize: 20, fontWeight: 500, color: 'var(--text)' }}>{form.nome}</h1>
+          <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
+            ID: <span style={{ fontFamily: 'monospace', color: 'var(--text-2)' }}>{userId}</span>
             {' · '}Cadastrado em {new Date(form.created_at).toLocaleDateString('pt-BR')}
           </p>
         </div>
@@ -132,8 +132,8 @@ export default function EditarUsuario() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20, alignItems: 'start' }}>
 
         {/* Form */}
-        <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-          <p style={{ fontSize: 12, fontWeight: 500, color: '#007AFF', letterSpacing: '0.04em', marginBottom: 18 }}>Dados do Usuário</p>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--accent)', letterSpacing: '0.04em', marginBottom: 18 }}>Dados do Usuário</p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -219,8 +219,8 @@ export default function EditarUsuario() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* Actions */}
-          <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <p style={{ fontSize: 11, fontWeight: 500, color: '#8e8e93', letterSpacing: '0.04em', marginBottom: 14 }}>AÇÕES</p>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <p style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-3)', letterSpacing: '0.04em', marginBottom: 14 }}>AÇÕES</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button onClick={handleSuspend} disabled={saving || form.status_conta === 'suspenso'} style={{
                 width: '100%', padding: '10px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
@@ -245,14 +245,14 @@ export default function EditarUsuario() {
                     <AlertTriangle size={13} color="#ef4444" style={{ flexShrink: 0, marginTop: 1 }} />
                     <div>
                       <div style={{ fontSize: 12, fontWeight: 600, color: '#ef4444', marginBottom: 3 }}>Excluir permanentemente?</div>
-                      <div style={{ fontSize: 11, color: '#8e8e93', lineHeight: 1.5 }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.5 }}>
                         Todos os dados vinculados — projetos, orçamentos, conversas e arquivos — serão apagados. Essa ação é irreversível.
                       </div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button onClick={() => setConfirmDelete(false)} disabled={deleting} style={{
-                      flex: 1, padding: '8px', borderRadius: 7, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', cursor: deleting ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 500,
+                      flex: 1, padding: '8px', borderRadius: 7, background: 'var(--bg)', border: '1px solid var(--border-input)', color: 'var(--text-2)', cursor: deleting ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 500,
                     }}>Cancelar</button>
                     <button onClick={handleDelete} disabled={deleting} style={{
                       flex: 1, padding: '8px', borderRadius: 7, background: '#ef4444', border: 'none', color: '#fff', cursor: deleting ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 600,
@@ -268,16 +268,16 @@ export default function EditarUsuario() {
           </div>
 
           {/* Log */}
-          <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <p style={{ fontSize: 11, fontWeight: 500, color: '#8e8e93', letterSpacing: '0.04em', marginBottom: 14 }}>HISTÓRICO ADMIN</p>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <p style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-3)', letterSpacing: '0.04em', marginBottom: 14 }}>HISTÓRICO ADMIN</p>
             {logs.length === 0 ? (
-              <p style={{ fontSize: 12, color: '#8e8e93', textAlign: 'center', padding: '12px 0' }}>Sem registros</p>
+              <p style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'center', padding: '12px 0' }}>Sem registros</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {logs.map(log => (
-                  <div key={log.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: 8 }}>
-                    <div style={{ fontSize: 12, color: '#007AFF', fontWeight: 500 }}>{log.acao.replace('_', ' ')}</div>
-                    <div style={{ fontSize: 10.5, color: '#8e8e93', marginTop: 2 }}>
+                  <div key={log.id} style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: 8 }}>
+                    <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 500 }}>{log.acao.replace('_', ' ')}</div>
+                    <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 2 }}>
                       {new Date(log.created_at).toLocaleString('pt-BR')}
                     </div>
                   </div>

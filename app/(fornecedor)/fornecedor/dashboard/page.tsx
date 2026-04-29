@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { TrendingUp, ExternalLink, CheckCircle2, Loader2, Clock, Paperclip, Package, Percent } from 'lucide-react'
@@ -20,7 +20,7 @@ interface OrcCard {
 }
 
 const STATUS_META: Record<OrcStatus, { label: string; color: string; bg: string; border: string }> = {
-  pendente:    { label: 'Aguardando',   color: '#007AFF', bg: 'rgba(0,122,255,0.08)',   border: 'rgba(0,122,255,0.2)' },
+  pendente:    { label: 'Aguardando',   color: 'var(--accent)', bg: 'rgba(0,122,255,0.08)',   border: 'rgba(0,122,255,0.2)' },
   em_analise:  { label: 'Em análise',   color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.22)' },
   respondido:  { label: 'Enviado',      color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)' },
   aprovado:    { label: 'Aprovado',     color: '#34d399', bg: 'rgba(52,211,153,0.1)',   border: 'rgba(52,211,153,0.22)' },
@@ -58,13 +58,13 @@ function OrcCardItem({ orc }: { orc: OrcCard }) {
   return (
     <Link href={`/fornecedor/orcamentos/${orc.id}`} style={{ textDecoration: 'none' }}>
       <div className="dash-card" style={{
-        background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12,
+        background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12,
         padding: '14px 16px', cursor: 'pointer', transition: 'all 0.15s',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+        boxShadow: 'var(--shadow-card)',
       }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#007AFF', flexShrink: 0 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: 'var(--accent)', flexShrink: 0 }}>
             {initials}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -73,11 +73,11 @@ function OrcCardItem({ orc }: { orc: OrcCard }) {
                 {orc.escritorio_nome}
               </div>
             )}
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {orc.titulo ?? orc.projeto_nome ?? 'Sem título'}
             </div>
             {orc.projeto_nome && (
-              <div style={{ fontSize: 11.5, color: '#6b6b6b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 11.5, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {orc.projeto_nome}
               </div>
             )}
@@ -93,7 +93,7 @@ function OrcCardItem({ orc }: { orc: OrcCard }) {
             <div style={{ fontSize: 14, fontWeight: 800, color: '#34d399' }}>{fmtBRL(orc.valor_orcado)}</div>
           ) : (
             orc.mensagem ? (
-              <div style={{ fontSize: 11, color: '#8e8e93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                 {orc.mensagem.slice(0, 60)}{orc.mensagem.length > 60 ? '…' : ''}
               </div>
             ) : <div />
@@ -101,7 +101,7 @@ function OrcCardItem({ orc }: { orc: OrcCard }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 8 }}>
             {orc.arquivo_url && <Paperclip size={10} color="#8b5cf6" />}
             <Clock size={10} color="#c7c7cc" />
-            <span style={{ fontSize: 10.5, color: '#8e8e93' }}>{dateStr}</span>
+            <span style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{dateStr}</span>
           </div>
         </div>
       </div>
@@ -206,15 +206,15 @@ export default function FornecedorDashboardPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f2f2f7' }}>
-        <Loader2 size={26} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg)' }}>
+        <Loader2 size={26} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
   }
 
   return (
-    <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1a1a1a', background: '#f2f2f7' }}>
+    <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: 'var(--text)', background: 'var(--bg)' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
         .fd-stat { background:#fff; border:1px solid rgba(0,0,0,0.08); border-radius:14px; padding:18px 20px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
@@ -225,17 +225,17 @@ export default function FornecedorDashboardPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 26 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a', margin: 0 }}>Dashboard</h1>
-          {userName && <p style={{ fontSize: 13, color: '#6b6b6b', margin: '5px 0 0' }}>Bem-vindo, {userName}</p>}
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Dashboard</h1>
+          {userName && <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '5px 0 0' }}>Bem-vindo, {userName}</p>}
         </div>
         {perfilSlug ? (
           <Link href={`/fornecedor/${perfilSlug}`} target="_blank"
-            style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, padding: '8px 16px', borderRadius: 10, background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, padding: '8px 16px', borderRadius: 10, background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)', color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
             <ExternalLink size={13} /> Ver Perfil Público
           </Link>
         ) : (
           <Link href="/fornecedor/perfil"
-            style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, padding: '8px 16px', borderRadius: 10, background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, padding: '8px 16px', borderRadius: 10, background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)', color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
             Completar Perfil
           </Link>
         )}
@@ -249,7 +249,7 @@ export default function FornecedorDashboardPage() {
             sublabel: 'mês atual',
             value: totalOrcado > 0 ? fmtBRL(totalOrcado) : '—',
             icon: TrendingUp,
-            color: '#007AFF',
+            color: 'var(--accent)',
           },
           {
             label: 'Total Fechado',
@@ -278,9 +278,9 @@ export default function FornecedorDashboardPage() {
             <div key={card.label} className="fd-stat">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <div style={{ fontSize: 10.5, color: '#8e8e93', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>{card.label}</div>
-                  <div style={{ fontSize: card.value.length > 8 ? 17 : 24, fontWeight: 800, color: '#1a1a1a', marginTop: 6, lineHeight: 1.1 }}>{card.value}</div>
-                  <div style={{ fontSize: 10, color: '#8e8e93', marginTop: 3 }}>{card.sublabel}</div>
+                  <div style={{ fontSize: 10.5, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>{card.label}</div>
+                  <div style={{ fontSize: card.value.length > 8 ? 17 : 24, fontWeight: 800, color: 'var(--text)', marginTop: 6, lineHeight: 1.1 }}>{card.value}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3 }}>{card.sublabel}</div>
                 </div>
                 <div style={{ width: 36, height: 36, borderRadius: 9, background: `${card.color}14`, border: `1px solid ${card.color}28`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon size={16} color={card.color} />
@@ -311,20 +311,20 @@ export default function FornecedorDashboardPage() {
             )
           })}
         </div>
-        <Link href="/fornecedor/orcamentos" style={{ fontSize: 12, color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>
+        <Link href="/fornecedor/orcamentos" style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
           Ver lista completa →
         </Link>
       </div>
 
       {/* Card grid */}
       {filtered.length === 0 ? (
-        <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '52px 24px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '52px 24px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
           <Package size={36} color="#c7c7cc" style={{ marginBottom: 14 }} />
-          <div style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 4 }}>
+          <div style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 4 }}>
             {orcamentos.length === 0 ? 'Nenhum orçamento recebido ainda.' : 'Nenhum orçamento nessa categoria.'}
           </div>
           {orcamentos.length === 0 && (
-            <div style={{ fontSize: 12, color: '#8e8e93' }}>Quando arquitetos solicitarem orçamentos, aparecerão aqui.</div>
+            <div style={{ fontSize: 12, color: 'var(--text-3)' }}>Quando arquitetos solicitarem orçamentos, aparecerão aqui.</div>
           )}
         </div>
       ) : (

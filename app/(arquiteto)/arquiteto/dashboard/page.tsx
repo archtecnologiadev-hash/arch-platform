@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
@@ -67,15 +67,15 @@ const STAGE_COLORS = ['#8b5cf6', '#007AFF', '#34d399', '#4f9cf9', '#f59e0b', '#f
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const card = {
-  background: '#ffffff',
-  border: '1px solid rgba(0,0,0,0.08)',
+  background: 'var(--bg-card)',
+  border: '1px solid var(--border)',
   borderRadius: 14,
   overflow: 'hidden' as const,
 }
 
 const sectionHeader = {
   padding: '18px 22px',
-  borderBottom: '1px solid rgba(0,0,0,0.08)',
+  borderBottom: '1px solid var(--border)',
   display: 'flex' as const,
   justifyContent: 'space-between' as const,
   alignItems: 'center' as const,
@@ -83,9 +83,9 @@ const sectionHeader = {
 
 const blueButton = {
   fontSize: 12,
-  color: '#007AFF',
-  background: 'rgba(0,122,255,0.08)',
-  border: '1px solid rgba(0,122,255,0.2)',
+  color: 'var(--accent)',
+  background: 'var(--accent-soft)',
+  border: '1px solid var(--accent-soft-border)',
   padding: '5px 12px',
   borderRadius: 6,
   cursor: 'pointer' as const,
@@ -309,27 +309,27 @@ export default function ArquitetoDashboardPage() {
 
   const statsData = [
     { title: 'Projetos Ativos',    value: loadingProjects ? '—' : String(projAtivos.length),  delta: '', icon: FolderOpen,  color: '#4f9cf9' },
-    { title: 'Total m² em Dev.',   value: loadingProjects ? '—' : totalMetragem > 0 ? `${totalMetragem.toLocaleString('pt-BR')} m²` : '—', delta: '', icon: TrendingUp, color: '#007AFF' },
+    { title: 'Total m² em Dev.',   value: loadingProjects ? '—' : totalMetragem > 0 ? `${totalMetragem.toLocaleString('pt-BR')} m²` : '—', delta: '', icon: TrendingUp, color: 'var(--accent)' },
     { title: 'Clientes Ativos',    value: loadingProjects ? '—' : String(clientesAtivos),      delta: '', icon: Clock,       color: '#a78bfa' },
     { title: 'Projetos Concluídos', value: loadingProjects ? '—' : String(projConcluidos),     delta: '', icon: FileText,    color: '#34d399' },
     { title: 'Valor Orçado (Ativos)', value: loadingProjects ? '—' : fmtBRL(totalOrcamento),  delta: '', icon: DollarSign,  color: '#34d399' },
   ]
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f2f2f7', color: '#1a1a1a' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
 
       {/* ═══════════════════════════ HEADER ═══════════════════════════ */}
       <div className="sticky-page-header" style={{
-        padding: '0 32px', height: 70, borderBottom: '1px solid rgba(0,0,0,0.08)',
+        padding: '0 32px', height: 70, borderBottom: '1px solid var(--border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: '#ffffff', position: 'sticky', top: 0, zIndex: 30,
+        background: 'var(--bg-card)', position: 'sticky', top: 0, zIndex: 30,
         boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
       }}>
         <div>
-          <div style={{ fontSize: 11.5, color: '#007AFF', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 11.5, color: 'var(--accent)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             Bom dia
           </div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a', lineHeight: 1.2 }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
             {userName}
           </div>
         </div>
@@ -339,8 +339,8 @@ export default function ArquitetoDashboardPage() {
             <Link href="/admin" style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '7px 13px', borderRadius: 8, textDecoration: 'none',
-              background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)',
-              color: '#007AFF', fontSize: 12.5, fontWeight: 600, letterSpacing: '0.04em',
+              background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)',
+              color: 'var(--accent)', fontSize: 12.5, fontWeight: 600, letterSpacing: '0.04em',
             }}
               onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.14)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.08)')}>
@@ -352,7 +352,7 @@ export default function ArquitetoDashboardPage() {
           <div ref={notifRef} style={{ position: 'relative' }}>
             <button onClick={() => { setNotifOpen(!notifOpen); setDropdownOpen(false) }} style={{
               width: 38, height: 38, borderRadius: 8, background: 'transparent',
-              border: '1px solid rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: '1px solid var(--border-input)', display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer',
             }}>
               <Bell size={17} color="#8e8e93" />
@@ -360,13 +360,13 @@ export default function ArquitetoDashboardPage() {
             {notifOpen && (
               <div style={{
                 position: 'absolute', top: 46, right: 0, width: 260,
-                background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12,
+                background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12,
                 boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 100, overflow: 'hidden',
               }}>
-                <div style={{ padding: '13px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>Notificações</span>
+                <div style={{ padding: '13px 16px', borderBottom: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Notificações</span>
                 </div>
-                <div style={{ padding: '24px 16px', textAlign: 'center', color: '#8e8e93', fontSize: 12 }}>
+                <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-3)', fontSize: 12 }}>
                   Nenhuma notificação
                 </div>
               </div>
@@ -377,13 +377,13 @@ export default function ArquitetoDashboardPage() {
             <button onClick={() => { setDropdownOpen(!dropdownOpen); setNotifOpen(false) }} style={{
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '4px 10px 4px 4px', background: 'transparent',
-              border: '1px solid rgba(0,0,0,0.1)', borderRadius: 10, cursor: 'pointer',
+              border: '1px solid var(--border-input)', borderRadius: 10, cursor: 'pointer',
             }}>
               <div style={{
                 width: 32, height: 32, borderRadius: '50%',
-                background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.25)',
+                background: 'var(--accent-soft)', border: '1px solid rgba(0,122,255,0.25)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontWeight: 700, color: '#007AFF',
+                fontSize: 11, fontWeight: 700, color: 'var(--accent)',
               }}>
                 {userInitials}
               </div>
@@ -395,12 +395,12 @@ export default function ArquitetoDashboardPage() {
             {dropdownOpen && (
               <div style={{
                 position: 'absolute', top: 48, right: 0, width: 210,
-                background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10,
+                background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10,
                 boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 100, overflow: 'hidden',
               }}>
-                <div style={{ padding: '13px 15px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{userName}</div>
-                  <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{userEmail}</div>
+                <div style={{ padding: '13px 15px', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{userName}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{userEmail}</div>
                 </div>
                 {[
                   { label: 'Meu Perfil', icon: User, href: '/arquiteto/perfil' },
@@ -410,7 +410,7 @@ export default function ArquitetoDashboardPage() {
                     display: 'flex', alignItems: 'center', gap: 9,
                     width: '100%', padding: '10px 15px',
                     background: 'transparent', textDecoration: 'none',
-                    fontSize: 13, color: '#6b6b6b',
+                    fontSize: 13, color: 'var(--text-2)',
                   }}
                     onMouseEnter={e => { e.currentTarget.style.background = '#f2f2f7'; e.currentTarget.style.color = '#1a1a1a' }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6b6b6b' }}>
@@ -447,15 +447,15 @@ export default function ArquitetoDashboardPage() {
             cursor: 'pointer',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#007AFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--btn-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>!</span>
               </div>
               <div>
-                <span style={{ fontSize: 13.5, fontWeight: 600, color: '#007AFF' }}>Complete a configuração do seu escritório </span>
+                <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--accent)' }}>Complete a configuração do seu escritório </span>
                 <span style={{ fontSize: 13, color: '#555', fontWeight: 300 }}>— {onboardingPassos.length} de 4 passos completos</span>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#007AFF', fontWeight: 600, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: 'var(--accent)', fontWeight: 600, flexShrink: 0 }}>
               Continuar <ArrowRight size={14} />
             </div>
           </div>
@@ -471,14 +471,14 @@ export default function ArquitetoDashboardPage() {
             const Icon = stat.icon
             return (
               <div key={stat.title} style={{
-                background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)',
+                background: 'var(--bg-card)', border: '1px solid var(--border)',
                 borderRadius: 12, padding: '20px 20px', transition: 'box-shadow 0.2s',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
               }}
                 onMouseEnter={e => ((e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)')}
                 onMouseLeave={e => ((e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)')}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-                  <span style={{ fontSize: 12, color: '#6b6b6b', fontWeight: 400 }}>{stat.title}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 400 }}>{stat.title}</span>
                   <div style={{
                     width: 32, height: 32, borderRadius: 8,
                     background: `${stat.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -486,10 +486,10 @@ export default function ArquitetoDashboardPage() {
                     <Icon size={15} color={stat.color} />
                   </div>
                 </div>
-                <div style={{ fontSize: 30, fontWeight: 700, color: '#1a1a1a', lineHeight: 1, marginBottom: 6 }}>
+                <div style={{ fontSize: 30, fontWeight: 700, color: 'var(--text)', lineHeight: 1, marginBottom: 6 }}>
                   {stat.value}
                 </div>
-                {stat.delta && <div style={{ fontSize: 11, color: '#8e8e93' }}>{stat.delta}</div>}
+                {stat.delta && <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{stat.delta}</div>}
               </div>
             )
           })}
@@ -521,11 +521,11 @@ export default function ArquitetoDashboardPage() {
 
               <div style={sectionHeader}>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>
                     {nivelRank < 3 ? 'Meus Projetos' : 'Pipeline de Projetos'}
                   </div>
                   {nivelRank >= 3 && (
-                    <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 3 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>
                       Atendimento · Reunião · Briefing · 3D · Alt. 3D · Detalhamento · Orçamento · Execução
                     </div>
                   )}
@@ -534,7 +534,7 @@ export default function ArquitetoDashboardPage() {
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button style={blueButton}>Ver todos</button>
                     <button onClick={() => setNovoOpen(true)} style={{
-                      ...blueButton, background: 'rgba(0,122,255,0.1)',
+                      ...blueButton, background: 'var(--accent-soft)',
                       display: 'flex', alignItems: 'center', gap: 5,
                     }}>
                       <Plus size={12} /> Novo Projeto
@@ -545,16 +545,16 @@ export default function ArquitetoDashboardPage() {
 
               <div style={{ padding: 20 }}>
                 {loadingProjects ? (
-                  <div style={{ textAlign: 'center', padding: '40px 0', color: '#8e8e93', fontSize: 13 }}>
+                  <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-3)', fontSize: 13 }}>
                     Carregando projetos...
                   </div>
                 ) : realProjects.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '48px 0' }}>
                     <FolderOpen size={40} color="#8e8e93" style={{ marginBottom: 14 }} />
-                    <div style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 6 }}>
+                    <div style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 6 }}>
                       {nivelRank < 3 ? 'Nenhum projeto atribuído' : 'Nenhum projeto ainda'}
                     </div>
-                    <div style={{ fontSize: 12, color: '#8e8e93', marginBottom: 18 }}>
+                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 18 }}>
                       {nivelRank < 3
                         ? 'Você aparecerá aqui quando for adicionado a um projeto'
                         : 'Crie seu primeiro projeto para começar'}
@@ -563,7 +563,7 @@ export default function ArquitetoDashboardPage() {
                       <button onClick={() => setNovoOpen(true)} style={{
                         display: 'inline-flex', alignItems: 'center', gap: 7,
                         padding: '10px 18px', borderRadius: 10, cursor: 'pointer',
-                        background: '#007AFF', color: '#ffffff', border: 'none',
+                        background: 'var(--btn-bg)', color: '#ffffff', border: 'none',
                         fontSize: 13, fontWeight: 400,
                       }}>
                         <Plus size={14} /> Criar primeiro projeto
@@ -617,7 +617,7 @@ export default function ArquitetoDashboardPage() {
                             {/* Card body */}
                             <div style={{ padding: '11px 14px' }}>
                               {!project.cover_url && (
-                                <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
                                   {project.name}
                                 </div>
                               )}
@@ -628,8 +628,8 @@ export default function ArquitetoDashboardPage() {
                                 </span>
                               </div>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: 10, color: '#8e8e93' }}>{dateStr} · {project.type}</span>
-                                <ArrowRight size={12} color="#007AFF" />
+                                <span style={{ fontSize: 10, color: 'var(--text-3)' }}>{dateStr} · {project.type}</span>
+                                <ArrowRight size={12} color="var(--accent)" />
                               </div>
                             </div>
                           </div>
@@ -645,16 +645,16 @@ export default function ArquitetoDashboardPage() {
             {nivelRank >= 3 && <div style={card}>
               <div style={sectionHeader}>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Leads Recentes</div>
-                  <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 3 }}>Últimos contatos recebidos pelo perfil público</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Leads Recentes</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>Últimos contatos recebidos pelo perfil público</div>
                 </div>
-                <span style={{ fontSize: 11, color: '#8e8e93' }}>{leads.length} contato{leads.length !== 1 ? 's' : ''}</span>
+                <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{leads.length} contato{leads.length !== 1 ? 's' : ''}</span>
               </div>
               {leads.length === 0 ? (
                 <div style={{ padding: '48px 22px', textAlign: 'center' }}>
                   <Phone size={32} color="#8e8e93" style={{ marginBottom: 12 }} />
-                  <div style={{ fontSize: 13, color: '#6b6b6b', marginBottom: 4 }}>Nenhum lead ainda</div>
-                  <div style={{ fontSize: 11, color: '#8e8e93' }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 4 }}>Nenhum lead ainda</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
                     Quando alguém preencher o formulário do seu perfil público, aparecerá aqui
                   </div>
                 </div>
@@ -662,9 +662,9 @@ export default function ArquitetoDashboardPage() {
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
-                      <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                      <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                         {['Nome', 'Email', 'Telefone', 'Mensagem', 'Data'].map(h => (
-                          <th key={h} style={{ padding: '10px 22px', textAlign: 'left', fontSize: 10, color: '#8e8e93', fontWeight: 600, letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
+                          <th key={h} style={{ padding: '10px 22px', textAlign: 'left', fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
                             {h.toUpperCase()}
                           </th>
                         ))}
@@ -675,21 +675,21 @@ export default function ArquitetoDashboardPage() {
                         <tr key={lead.id} style={{ borderBottom: i < leads.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}
                           onMouseEnter={e => ((e.currentTarget as HTMLTableRowElement).style.background = '#f9f9fb')}
                           onMouseLeave={e => ((e.currentTarget as HTMLTableRowElement).style.background = 'transparent')}>
-                          <td style={{ padding: '13px 22px', fontSize: 13, fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap' }}>
+                          <td style={{ padding: '13px 22px', fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
                             {lead.nome}
                           </td>
-                          <td style={{ padding: '13px 22px', fontSize: 12, color: '#6b6b6b' }}>
-                            <a href={`mailto:${lead.email}`} style={{ color: '#007AFF', textDecoration: 'none' }}>{lead.email}</a>
+                          <td style={{ padding: '13px 22px', fontSize: 12, color: 'var(--text-2)' }}>
+                            <a href={`mailto:${lead.email}`} style={{ color: 'var(--accent)', textDecoration: 'none' }}>{lead.email}</a>
                           </td>
-                          <td style={{ padding: '13px 22px', fontSize: 12, color: '#6b6b6b', whiteSpace: 'nowrap' }}>
+                          <td style={{ padding: '13px 22px', fontSize: 12, color: 'var(--text-2)', whiteSpace: 'nowrap' }}>
                             {lead.telefone ?? '—'}
                           </td>
-                          <td style={{ padding: '13px 22px', fontSize: 12, color: '#6b6b6b', maxWidth: 240 }}>
+                          <td style={{ padding: '13px 22px', fontSize: 12, color: 'var(--text-2)', maxWidth: 240 }}>
                             <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                               {lead.mensagem ?? '—'}
                             </span>
                           </td>
-                          <td style={{ padding: '13px 22px', fontSize: 11, color: '#8e8e93', whiteSpace: 'nowrap' }}>
+                          <td style={{ padding: '13px 22px', fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
                             {new Date(lead.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' })}
                           </td>
                         </tr>
@@ -704,25 +704,25 @@ export default function ArquitetoDashboardPage() {
           {/* ─── Right column — Agenda — hidden for operacional ─── */}
           {nivelRank >= 3 && <div>
             <div style={{ ...card, position: 'sticky', top: 90, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-              <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Agenda do Dia</div>
-                <div style={{ fontSize: 11.5, color: '#8e8e93', marginTop: 3, textTransform: 'capitalize' }}>
+              <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Agenda do Dia</div>
+                <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 3, textTransform: 'capitalize' }}>
                   {todayLabel}
                 </div>
               </div>
               <div style={{ padding: '32px 20px', textAlign: 'center' }}>
                 <CalendarDays size={32} color="#8e8e93" style={{ marginBottom: 12 }} />
-                <div style={{ fontSize: 13, color: '#6b6b6b', marginBottom: 4 }}>Nenhum compromisso hoje</div>
-                <div style={{ fontSize: 11, color: '#8e8e93' }}>
+                <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 4 }}>Nenhum compromisso hoje</div>
+                <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
                   Acesse o calendário para adicionar eventos
                 </div>
               </div>
-              <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+              <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border-subtle)' }}>
                 <Link href="/arquiteto/calendario" style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: '100%', padding: '9px',
                   background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.18)',
-                  borderRadius: 8, color: '#007AFF', fontSize: 12, fontWeight: 400,
+                  borderRadius: 8, color: 'var(--accent)', fontSize: 12, fontWeight: 400,
                   letterSpacing: '0.03em', textDecoration: 'none',
                 }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.12)')}
@@ -743,29 +743,29 @@ export default function ArquitetoDashboardPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
         }} onClick={() => setNovoOpen(false)}>
           <div style={{
-            background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16,
+            background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16,
             padding: 32, width: '100%', maxWidth: 560, position: 'relative',
             boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
           }} onClick={e => e.stopPropagation()}>
             <button onClick={() => setNovoOpen(false)} style={{
               position: 'absolute', top: 16, right: 16,
-              background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4,
+              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4,
             }}>
               <X size={18} />
             </button>
 
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>Novo Projeto</h2>
-            <p style={{ fontSize: 12, color: '#8e8e93', marginBottom: 24 }}>Adicione um novo projeto ao seu pipeline</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Novo Projeto</h2>
+            <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 24 }}>Adicione um novo projeto ao seu pipeline</p>
 
             <form onSubmit={handleCriarProjeto} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
                   Nome do projeto
                 </label>
                 <input value={novoForm.nome} onChange={e => setNovoForm(p => ({ ...p, nome: e.target.value }))}
                   placeholder="Ex: Residência Costa" required style={{
-                    width: '100%', padding: '10px 14px', background: '#f2f2f7',
-                    border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', fontSize: 13.5,
+                    width: '100%', padding: '10px 14px', background: 'var(--bg)',
+                    border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5,
                     outline: 'none', boxSizing: 'border-box', borderRadius: 10,
                   }}
                   onFocus={e => (e.target.style.borderColor = '#007AFF')}
@@ -773,7 +773,7 @@ export default function ArquitetoDashboardPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
                   Tipo
                 </label>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -792,13 +792,13 @@ export default function ArquitetoDashboardPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
                   Descrição (opcional)
                 </label>
                 <textarea value={novoForm.descricao} onChange={e => setNovoForm(p => ({ ...p, descricao: e.target.value }))}
                   placeholder="Breve descrição do projeto..." rows={3} style={{
-                    width: '100%', padding: '10px 14px', background: '#f2f2f7',
-                    border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', fontSize: 13.5,
+                    width: '100%', padding: '10px 14px', background: 'var(--bg)',
+                    border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5,
                     outline: 'none', boxSizing: 'border-box', borderRadius: 10, resize: 'none',
                   }}
                   onFocus={e => (e.target.style.borderColor = '#007AFF')}
@@ -807,20 +807,20 @@ export default function ArquitetoDashboardPage() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
+                  <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
                     Metragem (m²) — opcional
                   </label>
                   <input type="number" min="0" value={novoForm.metragem} onChange={e => setNovoForm(p => ({ ...p, metragem: e.target.value }))}
-                    placeholder="Ex: 120" style={{ width: '100%', padding: '10px 14px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10 }}
+                    placeholder="Ex: 120" style={{ width: '100%', padding: '10px 14px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10 }}
                     onFocus={e => (e.target.style.borderColor = '#007AFF')}
                     onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
+                  <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
                     Tipo de contrato — opcional
                   </label>
                   <select value={novoForm.tipo_contrato} onChange={e => setNovoForm(p => ({ ...p, tipo_contrato: e.target.value }))}
-                    style={{ width: '100%', padding: '10px 14px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', color: novoForm.tipo_contrato ? '#1a1a1a' : '#8e8e93', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10, fontFamily: 'inherit' }}>
+                    style={{ width: '100%', padding: '10px 14px', background: 'var(--bg)', border: '1px solid var(--border)', color: novoForm.tipo_contrato ? '#1a1a1a' : '#8e8e93', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10, fontFamily: 'inherit' }}>
                     <option value="">Selecionar...</option>
                     <option value="execucao">Execução</option>
                     <option value="somente_projeto">Somente Projeto</option>
@@ -830,24 +830,24 @@ export default function ArquitetoDashboardPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
                   Endereço da obra — opcional
                 </label>
                 <input value={novoForm.endereco} onChange={e => setNovoForm(p => ({ ...p, endereco: e.target.value }))}
-                  placeholder="Rua, número, bairro..." style={{ width: '100%', padding: '10px 14px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10 }}
+                  placeholder="Rua, número, bairro..." style={{ width: '100%', padding: '10px 14px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10 }}
                   onFocus={e => (e.target.style.borderColor = '#007AFF')}
                   onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
                   Email do cliente — opcional
                 </label>
                 <input type="email" value={novoForm.email_cliente} onChange={e => setNovoForm(p => ({ ...p, email_cliente: e.target.value }))}
-                  placeholder="cliente@email.com" style={{ width: '100%', padding: '10px 14px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10 }}
+                  placeholder="cliente@email.com" style={{ width: '100%', padding: '10px 14px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10 }}
                   onFocus={e => (e.target.style.borderColor = '#007AFF')}
                   onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
-                <div style={{ fontSize: 10.5, color: '#8e8e93', marginTop: 4 }}>Quando o cliente criar conta com este email, será vinculado automaticamente.</div>
+                <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 4 }}>Quando o cliente criar conta com este email, será vinculado automaticamente.</div>
               </div>
 
               {!escritorioId && !loadingProjects && (

@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 
 export const metadata = { title: 'Termos de Uso — ARC' }
 
@@ -6,13 +6,13 @@ const UPDATED = '25 de abril de 2026'
 
 export default function TermosDeUsoPage() {
   return (
-    <div style={{ background: '#f2f2f7', minHeight: '100vh', padding: '48px 16px' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', padding: '48px 16px' }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
 
-        <p style={{ fontSize: 12, fontWeight: 300, color: '#8e8e93', marginBottom: 8 }}>
+        <p style={{ fontSize: 12, fontWeight: 300, color: 'var(--text-3)', marginBottom: 8 }}>
           Última atualização: {UPDATED}
         </p>
-        <h1 style={{ fontSize: 30, fontWeight: 300, color: '#1a1a1a', marginBottom: 40, letterSpacing: '-0.3px' }}>
+        <h1 style={{ fontSize: 30, fontWeight: 300, color: 'var(--text)', marginBottom: 40, letterSpacing: '-0.3px' }}>
           Termos de Uso
         </h1>
 
@@ -43,7 +43,7 @@ export default function TermosDeUsoPage() {
         <Section title="5. Cancelamento">
           <P>O usuário pode cancelar sua assinatura a qualquer momento nas configurações de conta. O acesso permanece ativo até o fim do período já pago.</P>
           <P>A ARC reserva-se o direito de suspender ou encerrar contas que violem estes Termos, mediante aviso prévio por email, exceto em casos de fraude comprovada, onde a suspensão pode ser imediata.</P>
-          <P>Para exclusão definitiva de dados, consulte nossa <Link href="/privacidade" style={{ color: '#007AFF', textDecoration: 'none' }}>Política de Privacidade</Link>.</P>
+          <P>Para exclusão definitiva de dados, consulte nossa <Link href="/privacidade" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Política de Privacidade</Link>.</P>
         </Section>
 
         <Section title="6. Propriedade Intelectual">
@@ -58,7 +58,7 @@ export default function TermosDeUsoPage() {
         </Section>
 
         <Section title="8. Privacidade e Dados">
-          <P>O tratamento de dados pessoais é regido pela nossa <Link href="/privacidade" style={{ color: '#007AFF', textDecoration: 'none' }}>Política de Privacidade</Link>, em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD).</P>
+          <P>O tratamento de dados pessoais é regido pela nossa <Link href="/privacidade" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Política de Privacidade</Link>, em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD).</P>
         </Section>
 
         <Section title="9. Alterações nos Termos">
@@ -69,8 +69,8 @@ export default function TermosDeUsoPage() {
           <P>Estes Termos são regidos pelas leis da República Federativa do Brasil. Fica eleita a Comarca de <strong>Blumenau, Estado de Santa Catarina</strong>, como foro exclusivo para dirimir quaisquer controvérsias decorrentes deste instrumento, com renúncia a qualquer outro, por mais privilegiado que seja.</P>
         </Section>
 
-        <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid rgba(0,0,0,0.08)', fontSize: 12, fontWeight: 300, color: '#8e8e93' }}>
-          Dúvidas? Entre em contato: <a href="mailto:contato@usearc.com.br" style={{ color: '#007AFF', textDecoration: 'none' }}>contato@usearc.com.br</a>
+        <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--border)', fontSize: 12, fontWeight: 300, color: 'var(--text-3)' }}>
+          Dúvidas? Entre em contato: <a href="mailto:contato@usearc.com.br" style={{ color: 'var(--accent)', textDecoration: 'none' }}>contato@usearc.com.br</a>
         </div>
       </div>
     </div>
@@ -80,7 +80,7 @@ export default function TermosDeUsoPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 36 }}>
-      <h2 style={{ fontSize: 16, fontWeight: 400, color: '#1a1a1a', marginBottom: 12 }}>{title}</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 400, color: 'var(--text)', marginBottom: 12 }}>{title}</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{children}</div>
     </div>
   )

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -293,8 +293,8 @@ export default function OrcamentoDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f2f2f7' }}>
-        <Loader2 size={26} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg)' }}>
+        <Loader2 size={26} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
@@ -302,11 +302,11 @@ export default function OrcamentoDetailPage() {
 
   if (!orc) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f2f2f7', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg)', flexDirection: 'column', gap: 12 }}>
         <AlertCircle size={32} color="#c7c7cc" />
-        <div style={{ fontSize: 14, color: '#6b6b6b' }}>Orçamento não encontrado.</div>
+        <div style={{ fontSize: 14, color: 'var(--text-2)' }}>Orçamento não encontrado.</div>
         <button onClick={() => router.push('/fornecedor/orcamentos')}
-          style={{ fontSize: 12.5, color: '#007AFF', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+          style={{ fontSize: 12.5, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
           Voltar para orçamentos
         </button>
       </div>
@@ -321,7 +321,7 @@ export default function OrcamentoDetailPage() {
   const canReply = orc.status === 'em_analise'
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f2f2f7', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1a1a1a' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'system-ui, -apple-system, sans-serif', color: 'var(--text)' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
         .od-inp { width:100%; background:#f2f2f7; border:1px solid rgba(0,0,0,0.1); border-radius:10px; padding:10px 14px; color:#1a1a1a; font-size:13px; outline:none; transition:border-color 0.15s; box-sizing:border-box; font-family:inherit; resize:vertical; }
@@ -335,19 +335,19 @@ export default function OrcamentoDetailPage() {
       `}</style>
 
       {/* Top bar */}
-      <div className="sticky-page-header" style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.08)', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', gap: 16, position: 'sticky', top: 0, zIndex: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+      <div className="sticky-page-header" style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', gap: 16, position: 'sticky', top: 0, zIndex: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
         <button onClick={() => router.push('/fornecedor/orcamentos')}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#007AFF', fontSize: 13.5, fontWeight: 600, padding: 0 }}>
+          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', fontSize: 13.5, fontWeight: 600, padding: 0 }}>
           <ArrowLeft size={15} /> Orçamentos
         </button>
         <div style={{ width: 1, height: 16, background: 'rgba(0,0,0,0.1)' }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           {orc.escritorio_nome && (
-            <div style={{ fontSize: 11, color: '#8e8e93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {orc.escritorio_nome}
             </div>
           )}
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {orc.projeto_nome ?? 'Projeto sem nome'}
           </div>
         </div>
@@ -359,7 +359,7 @@ export default function OrcamentoDetailPage() {
       <div style={{ padding: '28px 32px', maxWidth: 900, margin: '0 auto' }}>
 
         {/* Header card */}
-        <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '22px 24px', marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '22px 24px', marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               {/* Escritório */}
@@ -385,7 +385,7 @@ export default function OrcamentoDetailPage() {
                       placeholder="Nome do orçamento..."
                     />
                     <button onClick={saveTitulo} disabled={savingTitulo}
-                      style={{ background: '#007AFF', border: 'none', borderRadius: 7, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                      style={{ background: 'var(--btn-bg)', border: 'none', borderRadius: 7, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
                       {savingTitulo ? <Loader2 size={12} color="#fff" style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={13} color="#fff" />}
                     </button>
                     <button onClick={() => setEditingTitulo(false)}
@@ -396,9 +396,9 @@ export default function OrcamentoDetailPage() {
                 ) : (
                   <>
                     {orc.titulo ? (
-                      <span style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a' }}>{orc.titulo}</span>
+                      <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>{orc.titulo}</span>
                     ) : (
-                      <span style={{ fontSize: 14, color: '#c7c7cc', fontStyle: 'italic' }}>Adicionar título do orçamento...</span>
+                      <span style={{ fontSize: 14, color: 'var(--logout-btn)', fontStyle: 'italic' }}>Adicionar título do orçamento...</span>
                     )}
                     <button
                       className="od-edit-btn"
@@ -411,15 +411,15 @@ export default function OrcamentoDetailPage() {
               </div>
 
               {/* Project name */}
-              <div style={{ fontSize: 13, color: '#6b6b6b', marginBottom: 8 }}>
-                Projeto: <strong style={{ color: '#1a1a1a' }}>{orc.projeto_nome ?? 'Sem nome'}</strong>
+              <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 8 }}>
+                Projeto: <strong style={{ color: 'var(--text)' }}>{orc.projeto_nome ?? 'Sem nome'}</strong>
               </div>
 
               {/* Valor orçado — inline editable */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 {editingValor ? (
                   <>
-                    <span style={{ fontSize: 13, color: '#6b6b6b', flexShrink: 0 }}>R$</span>
+                    <span style={{ fontSize: 13, color: 'var(--text-2)', flexShrink: 0 }}>R$</span>
                     <input
                       ref={valorInputRef}
                       autoFocus
@@ -448,7 +448,7 @@ export default function OrcamentoDetailPage() {
                         {orc.valor_orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                       </span>
                     ) : (
-                      <span style={{ fontSize: 13, color: '#c7c7cc', fontStyle: 'italic' }}>Adicionar valor orçado...</span>
+                      <span style={{ fontSize: 13, color: 'var(--logout-btn)', fontStyle: 'italic' }}>Adicionar valor orçado...</span>
                     )}
                     <button
                       className="od-edit-btn"
@@ -461,15 +461,15 @@ export default function OrcamentoDetailPage() {
               </div>
 
               {/* Architect info */}
-              <div style={{ fontSize: 12.5, color: '#6b6b6b', display: 'flex', gap: 12, flexWrap: 'wrap' as const }}>
+              <div style={{ fontSize: 12.5, color: 'var(--text-2)', display: 'flex', gap: 12, flexWrap: 'wrap' as const }}>
                 {orc.arquiteto_nome && (
-                  <span>Arquiteto: <strong style={{ color: '#1a1a1a' }}>{orc.arquiteto_nome}</strong></span>
+                  <span>Arquiteto: <strong style={{ color: 'var(--text)' }}>{orc.arquiteto_nome}</strong></span>
                 )}
                 {orc.arquiteto_email && (
-                  <span style={{ color: '#8e8e93' }}>{orc.arquiteto_email}</span>
+                  <span style={{ color: 'var(--text-3)' }}>{orc.arquiteto_email}</span>
                 )}
               </div>
-              <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
                 <Clock size={11} />
                 Recebido em {fmt(orc.created_at)}
               </div>
@@ -486,7 +486,7 @@ export default function OrcamentoDetailPage() {
                     style={{
                       display: 'flex', alignItems: 'center', gap: 6,
                       padding: '10px 16px', borderRadius: 10,
-                      background: '#f2f2f7', color: '#6b6b6b',
+                      background: 'var(--bg)', color: 'var(--text-2)',
                       border: '1px solid rgba(0,0,0,0.12)',
                       cursor: moving ? 'not-allowed' : 'pointer',
                       fontSize: 13, fontWeight: 600,
@@ -506,7 +506,7 @@ export default function OrcamentoDetailPage() {
                     style={{
                       display: 'flex', alignItems: 'center', gap: 6,
                       padding: '10px 18px', borderRadius: 10,
-                      background: '#007AFF', color: '#fff',
+                      background: 'var(--btn-bg)', color: '#fff',
                       border: 'none',
                       cursor: moving ? 'not-allowed' : 'pointer',
                       fontSize: 13, fontWeight: 700,
@@ -525,8 +525,8 @@ export default function OrcamentoDetailPage() {
 
         {/* Timeline */}
         {!isRecusado && (
-          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '22px 28px', marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflowX: 'auto' }}>
-            <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 20 }}>Progresso</div>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '22px 28px', marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflowX: 'auto' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 20 }}>Progresso</div>
             <div style={{ display: 'flex', alignItems: 'flex-start', minWidth: 580 }}>
               {PIPELINE.map((step, i) => {
                 const done = i < currentStep
@@ -573,14 +573,14 @@ export default function OrcamentoDetailPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
             {/* Message + files */}
-            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '20px 22px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-              <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 12 }}>Descrição do Pedido</div>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '20px 22px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 12 }}>Descrição do Pedido</div>
               {orc.mensagem
-                ? <p style={{ fontSize: 14, color: '#1a1a1a', lineHeight: 1.7, margin: 0 }}>{orc.mensagem}</p>
-                : <p style={{ fontSize: 13, color: '#8e8e93', fontStyle: 'italic', margin: 0 }}>Sem descrição.</p>}
+                ? <p style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.7, margin: 0 }}>{orc.mensagem}</p>
+                : <p style={{ fontSize: 13, color: 'var(--text-3)', fontStyle: 'italic', margin: 0 }}>Sem descrição.</p>}
               {orc.arquivo_url && (
                 <a href={orc.arquivo_url} target="_blank" rel="noopener noreferrer"
-                  style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: '#007AFF', background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.18)', borderRadius: 8, padding: '8px 14px', textDecoration: 'none', fontWeight: 600 }}>
+                  style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--accent)', background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.18)', borderRadius: 8, padding: '8px 14px', textDecoration: 'none', fontWeight: 600 }}>
                   <FileText size={13} /> {orc.arquivo_nome ?? 'Arquivo anexado'} <Download size={11} />
                 </a>
               )}
@@ -588,18 +588,18 @@ export default function OrcamentoDetailPage() {
 
             {/* Reply area */}
             {orc.resposta ? (
-              <div style={{ background: '#fff', border: '1px solid rgba(52,211,153,0.25)', borderRadius: 14, padding: '20px 22px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(52,211,153,0.25)', borderRadius: 14, padding: '20px 22px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
                 <div style={{ fontSize: 11, color: '#34d399', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 12 }}>Sua Proposta Enviada</div>
                 {replySent && <div style={{ fontSize: 12, color: '#34d399', marginBottom: 10 }}>✓ Proposta atualizada.</div>}
                 {orc.titulo && (
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>{orc.titulo}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>{orc.titulo}</div>
                 )}
                 {orc.valor_orcado != null && (
                   <div style={{ fontSize: 18, fontWeight: 800, color: '#34d399', marginBottom: 10 }}>
                     {orc.valor_orcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </div>
                 )}
-                <p style={{ fontSize: 14, color: '#1a1a1a', lineHeight: 1.7, margin: '0 0 14px' }}>{orc.resposta}</p>
+                <p style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.7, margin: '0 0 14px' }}>{orc.resposta}</p>
                 {orc.resposta_arquivo_url && (
                   <a href={orc.resposta_arquivo_url} target="_blank" rel="noopener noreferrer"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: '#34d399', background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 8, padding: '8px 14px', textDecoration: 'none', fontWeight: 600 }}>
@@ -608,8 +608,8 @@ export default function OrcamentoDetailPage() {
                 )}
               </div>
             ) : canReply ? (
-              <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '20px 22px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 14 }}>Enviar Proposta</div>
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '20px 22px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 14 }}>Enviar Proposta</div>
                 {replySent ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 0' }}>
                     <CheckCircle2 size={22} color="#34d399" />
@@ -618,7 +618,7 @@ export default function OrcamentoDetailPage() {
                 ) : (
                   <form onSubmit={handleReply} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     <div>
-                      <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Título do orçamento</label>
+                      <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Título do orçamento</label>
                       <input className="od-inp" type="text"
                         placeholder="Ex: Marcenaria sala de jantar"
                         value={replyTitulo}
@@ -626,7 +626,7 @@ export default function OrcamentoDetailPage() {
                         style={{ borderRadius: 8, padding: '9px 12px' }} />
                     </div>
                     <div>
-                      <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Valor orçado (R$)</label>
+                      <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Valor orçado (R$)</label>
                       <input className="od-inp" type="text" inputMode="decimal"
                         placeholder="Ex: 8500,00"
                         value={replyValor}
@@ -641,21 +641,21 @@ export default function OrcamentoDetailPage() {
                       onChange={e => setReplyFile(e.target.files?.[0] ?? null)} />
                     {replyFile ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'rgba(0,122,255,0.06)', border: '1px solid rgba(0,122,255,0.18)', borderRadius: 8 }}>
-                        <FileText size={13} color="#007AFF" />
+                        <FileText size={13} color="var(--accent)" />
                         <span style={{ flex: 1, fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{replyFile.name}</span>
                         <button type="button" onClick={() => { setReplyFile(null); if (replyFileRef.current) replyFileRef.current.value = '' }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 0 }}>
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 0 }}>
                           <X size={13} />
                         </button>
                       </div>
                     ) : (
                       <button type="button" onClick={() => replyFileRef.current?.click()}
-                        style={{ padding: '9px', borderRadius: 8, border: '1.5px dashed rgba(0,0,0,0.15)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#8e8e93', fontSize: 12.5 }}>
+                        style={{ padding: '9px', borderRadius: 8, border: '1.5px dashed rgba(0,0,0,0.15)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--text-3)', fontSize: 12.5 }}>
                         <Upload size={13} /> Anexar PDF ou arquivo
                       </button>
                     )}
                     <button type="submit" disabled={replySending}
-                      style={{ background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 700, cursor: replySending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: replySending ? 0.7 : 1 }}>
+                      style={{ background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 700, cursor: replySending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: replySending ? 0.7 : 1 }}>
                       {replySending ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Enviando...</> : <><Send size={13} /> Enviar Proposta</>}
                     </button>
                   </form>
@@ -668,8 +668,8 @@ export default function OrcamentoDetailPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
             {/* History */}
-            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-              <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 16 }}>Histórico de movimentos</div>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 16 }}>Histórico de movimentos</div>
 
               {/* Initial event */}
               <div style={{ display: 'flex', gap: 12, paddingBottom: historico.length > 0 ? 16 : 0, position: 'relative' }}>
@@ -678,8 +678,8 @@ export default function OrcamentoDetailPage() {
                 )}
                 <div style={{ width: 15, height: 15, borderRadius: '50%', background: '#e5e5ea', border: '2px solid #d1d1d6', flexShrink: 0, marginTop: 2 }} />
                 <div>
-                  <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1a1a1a' }}>Solicitação recebida</div>
-                  <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{fmt(orc.created_at)}</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)' }}>Solicitação recebida</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{fmt(orc.created_at)}</div>
                 </div>
               </div>
 
@@ -699,50 +699,50 @@ export default function OrcamentoDetailPage() {
                       flexShrink: 0, marginTop: 2,
                     }} />
                     <div>
-                      <div style={{ fontSize: 12, color: '#6b6b6b' }}>
-                        <span style={{ color: '#8e8e93' }}>{fromLabel}</span>
-                        <span style={{ margin: '0 5px', color: '#c7c7cc' }}>→</span>
+                      <div style={{ fontSize: 12, color: 'var(--text-2)' }}>
+                        <span style={{ color: 'var(--text-3)' }}>{fromLabel}</span>
+                        <span style={{ margin: '0 5px', color: 'var(--logout-btn)' }}>→</span>
                         <span style={{ fontWeight: 700, color: isLast ? activeColor : '#1a1a1a' }}>{toLabel}</span>
                       </div>
-                      <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{fmt(h.created_at)}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{fmt(h.created_at)}</div>
                     </div>
                   </div>
                 )
               })}
 
               {historico.length === 0 && (
-                <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 4, fontStyle: 'italic' }}>Nenhum movimento ainda.</div>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4, fontStyle: 'italic' }}>Nenhum movimento ainda.</div>
               )}
             </div>
 
             {/* Details */}
-            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-              <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 12 }}>Detalhes</div>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 12 }}>Detalhes</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {orc.escritorio_nome && (
                   <div>
-                    <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 2 }}>Escritório</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{orc.escritorio_nome}</div>
+                    <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 2 }}>Escritório</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{orc.escritorio_nome}</div>
                   </div>
                 )}
                 <div>
-                  <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 2 }}>Projeto</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{orc.projeto_nome ?? '—'}</div>
+                  <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 2 }}>Projeto</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{orc.projeto_nome ?? '—'}</div>
                 </div>
                 {orc.arquiteto_nome && (
                   <div>
-                    <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 2 }}>Arquiteto</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{orc.arquiteto_nome}</div>
+                    <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 2 }}>Arquiteto</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{orc.arquiteto_nome}</div>
                   </div>
                 )}
                 {orc.arquiteto_email && (
                   <div>
-                    <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 2 }}>Email</div>
-                    <div style={{ fontSize: 12.5, color: '#007AFF' }}>{orc.arquiteto_email}</div>
+                    <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 2 }}>Email</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--accent)' }}>{orc.arquiteto_email}</div>
                   </div>
                 )}
                 <div>
-                  <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 2 }}>Arquivo anexado</div>
+                  <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 2 }}>Arquivo anexado</div>
                   <div style={{ fontSize: 13, color: orc.arquivo_url ? '#1a1a1a' : '#8e8e93' }}>
                     {orc.arquivo_url ? (orc.arquivo_nome ?? 'Sim') : 'Não'}
                   </div>

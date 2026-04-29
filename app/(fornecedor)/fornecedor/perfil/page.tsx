@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -35,13 +35,13 @@ interface FormState {
 }
 
 const INP: React.CSSProperties = {
-  width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)',
-  borderRadius: 10, padding: '10px 14px', color: '#1a1a1a', fontSize: 13.5,
+  width: '100%', background: 'var(--bg)', border: '1px solid var(--border-input)',
+  borderRadius: 10, padding: '10px 14px', color: 'var(--text)', fontSize: 13.5,
   outline: 'none', transition: 'border-color 0.15s', boxSizing: 'border-box',
   fontFamily: 'inherit',
 }
 const LBL: React.CSSProperties = {
-  fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 7, fontWeight: 600,
+  fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 7, fontWeight: 600,
 }
 
 export default function FornecedorPerfilPage() {
@@ -212,15 +212,15 @@ export default function FornecedorPerfilPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#f2f2f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Loader2 size={28} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Loader2 size={28} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     )
   }
 
   return (
-    <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1a1a1a', background: '#f2f2f7' }}>
+    <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: 'var(--text)', background: 'var(--bg)' }}>
       <style>{`
         .pf-inp:focus { border-color: #007AFF !important; }
         .pf-inp::placeholder { color: #8e8e93; }
@@ -257,8 +257,8 @@ export default function FornecedorPerfilPage() {
 
       {/* Header */}
       <div style={{ marginBottom: 30 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a', margin: 0 }}>Meu Perfil</h1>
-        <p style={{ fontSize: 13, color: '#6b6b6b', margin: '5px 0 0' }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Meu Perfil</h1>
+        <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '5px 0 0' }}>
           Edite as informações que aparecerão no seu perfil público
         </p>
       </div>
@@ -269,7 +269,7 @@ export default function FornecedorPerfilPage() {
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* Cover + Logo */}
-          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
             {/* Cover area */}
             <div
               onClick={() => coverInputRef.current?.click()}
@@ -279,7 +279,7 @@ export default function FornecedorPerfilPage() {
                 ? <img src={form.cover_url} alt="Capa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                     <ImagePlus size={22} color="#8e8e93" />
-                    <span style={{ fontSize: 12, color: '#8e8e93' }}>Clique para adicionar foto de capa</span>
+                    <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Clique para adicionar foto de capa</span>
                   </div>}
               <div style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', borderRadius: 8, padding: '5px 11px', display: 'flex', alignItems: 'center', gap: 5 }}>
                 <Camera size={11} color="#fff" />
@@ -306,20 +306,20 @@ export default function FornecedorPerfilPage() {
                 </div>
               </div>
               <div style={{ paddingBottom: 4 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>{form.name || <span style={{ color: '#c7c7cc' }}>Nome da empresa</span>}</div>
-                {form.city && <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 2 }}>{form.city}</div>}
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{form.name || <span style={{ color: 'var(--logout-btn)' }}>Nome da empresa</span>}</div>
+                {form.city && <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{form.city}</div>}
               </div>
             </div>
             <div style={{ padding: '6px 20px 14px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-              <span style={{ fontSize: 11, color: '#8e8e93' }}>
+              <span style={{ fontSize: 11, color: 'var(--text-3)' }}>
                 Capa: 1920×1080px (16:9) · Logo: 800×800px · Máx. 5 MB · JPG, PNG ou WEBP
               </span>
             </div>
           </div>
 
           {/* Informações */}
-          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: '#8e8e93', textTransform: 'uppercase' }}>Informações da empresa</div>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--text-3)', textTransform: 'uppercase' }}>Informações da empresa</div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
@@ -354,8 +354,8 @@ export default function FornecedorPerfilPage() {
           </div>
 
           {/* Contato */}
-          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: '#8e8e93', textTransform: 'uppercase' }}>Contato e redes sociais</div>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', gap: 18, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--text-3)', textTransform: 'uppercase' }}>Contato e redes sociais</div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
@@ -403,10 +403,10 @@ export default function FornecedorPerfilPage() {
 
         {/* ── Preview card ── */}
         <div style={{ position: 'sticky', top: 24 }}>
-          <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
             Pré-visualização
           </div>
-          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
             {/* Cover */}
             <div style={{ position: 'relative', height: 130 }}>
               {form.cover_url
@@ -431,38 +431,38 @@ export default function FornecedorPerfilPage() {
                   {form.segment}
                 </div>
                 {form.city && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#8e8e93', fontSize: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, color: 'var(--text-3)', fontSize: 10 }}>
                     <MapPin size={9} /> {form.city}
                   </div>
                 )}
               </div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#1a1a1a', marginBottom: 8 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>
                 {form.name || 'Nome da empresa'}
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 10 }}>
                 {[1,2,3,4,5].map(s => <Star key={s} size={11} fill="#f97316" color="#f97316" />)}
-                <span style={{ fontSize: 11, color: '#8e8e93', marginLeft: 2 }}>sem avaliações</span>
+                <span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 2 }}>sem avaliações</span>
               </div>
 
-              <p style={{ fontSize: 12, color: '#6b6b6b', lineHeight: 1.6, margin: '0 0 12px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              <p style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6, margin: '0 0 12px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                 {form.bio || 'Sua bio aparecerá aqui...'}
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 14 }}>
                 {form.instagram && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6b6b6b' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-2)' }}>
                     <Globe size={11} color="#8e8e93" /> {form.instagram}
                   </div>
                 )}
                 {form.whatsapp && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6b6b6b' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-2)' }}>
                     <Phone size={11} color="#8e8e93" /> {form.whatsapp}
                   </div>
                 )}
               </div>
 
-              <div style={{ background: '#007AFF', color: '#fff', borderRadius: 10, padding: '9px', fontSize: 12, fontWeight: 700, textAlign: 'center' }}>
+              <div style={{ background: 'var(--btn-bg)', color: '#fff', borderRadius: 10, padding: '9px', fontSize: 12, fontWeight: 700, textAlign: 'center' }}>
                 Solicitar Orçamento
               </div>
             </div>
@@ -472,25 +472,25 @@ export default function FornecedorPerfilPage() {
 
       {/* ── Meu Plano ── */}
       {!planInfo.loading && planInfo.status && (
-        <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginTop: 14 }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginTop: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-              <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(0,122,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CreditCard size={16} color="#007AFF" />
+              <div style={{ width: 34, height: 34, borderRadius: 9, background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CreditCard size={16} color="var(--accent)" />
               </div>
-              <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', fontWeight: 700 }}>MEU PLANO</p>
+              <p style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.07em', fontWeight: 700 }}>MEU PLANO</p>
             </div>
-            <Link href="/fornecedor/planos" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: '#007AFF', textDecoration: 'none', fontWeight: 600 }}>
+            <Link href="/fornecedor/planos" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
               Gerenciar plano <ArrowRight size={12} />
             </Link>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14 }}>
-            <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
-              <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Plano atual</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>{planInfo.planNome ?? '—'}</div>
+            <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 4 }}>Plano atual</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{planInfo.planNome ?? '—'}</div>
             </div>
-            <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
-              <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Status</div>
+            <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 4 }}>Status</div>
               <div style={{
                 display: 'inline-flex', alignItems: 'center', gap: 5,
                 fontSize: 12.5, fontWeight: 700,
@@ -504,17 +504,17 @@ export default function FornecedorPerfilPage() {
               </div>
             </div>
             {planInfo.proximaCobranca && (
-              <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
-                <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Próxima cobrança</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>
+              <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '14px 16px' }}>
+                <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 4 }}>Próxima cobrança</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
                   {planInfo.proximaCobranca.toLocaleDateString('pt-BR')}
                 </div>
               </div>
             )}
             {planInfo.valorMensal && (
-              <div style={{ background: '#f2f2f7', borderRadius: 10, padding: '14px 16px' }}>
-                <div style={{ fontSize: 10.5, color: '#8e8e93', marginBottom: 4 }}>Valor</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>
+              <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '14px 16px' }}>
+                <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginBottom: 4 }}>Valor</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
                   {planInfo.valorMensal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })}/mês
                 </div>
               </div>
@@ -532,10 +532,10 @@ export default function FornecedorPerfilPage() {
                 ? `${(storage.usedGb * 1024).toFixed(0)} MB`
                 : `${storage.usedGb.toFixed(2)} GB`
             return (
-              <div style={{ marginTop: 14, padding: '14px 16px', background: '#f2f2f7', borderRadius: 10 }}>
+              <div style={{ marginTop: 14, padding: '14px 16px', background: 'var(--bg)', borderRadius: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                  <div style={{ fontSize: 10.5, color: '#8e8e93' }}>Armazenamento</div>
-                  <div style={{ fontSize: 11.5, fontWeight: 600, color: '#1a1a1a' }}>
+                  <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>Armazenamento</div>
+                  <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text)' }}>
                     {usedLabel} de {planInfo.maxArmazenamentoGb} GB
                   </div>
                 </div>
@@ -552,7 +552,7 @@ export default function FornecedorPerfilPage() {
             <Link href="/fornecedor/planos" style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
               marginTop: 16, padding: '11px', borderRadius: 10,
-              background: '#007AFF', color: '#fff', textDecoration: 'none',
+              background: 'var(--btn-bg)', color: '#fff', textDecoration: 'none',
               fontSize: 13, fontWeight: 700,
             }}>
               <Zap size={13} /> Fazer upgrade do plano

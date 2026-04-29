@@ -9,10 +9,10 @@ import { KeyRound, Lock, Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-rea
 const inputBase: React.CSSProperties = {
   width: '100%',
   padding: '12px 14px',
-  background: '#f2f2f7',
-  border: '1px solid rgba(0,0,0,0.1)',
+  background: 'var(--bg-input)',
+  border: '1px solid var(--border-input)',
   borderRadius: 10,
-  color: '#1a1a1a',
+  color: 'var(--text)',
   fontSize: 15,
   fontWeight: 300,
   outline: 'none',
@@ -84,11 +84,11 @@ function CodigoForm() {
   }
 
   const card: React.CSSProperties = {
-    background: '#ffffff',
-    border: '1px solid rgba(0,0,0,0.08)',
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border)',
     borderRadius: 16,
     padding: '36px 32px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+    boxShadow: 'var(--shadow-card)',
   }
 
   if (step === 'code') {
@@ -96,23 +96,23 @@ function CodigoForm() {
       <div style={card}>
         <div style={{
           width: 44, height: 44, borderRadius: 12, marginBottom: 22,
-          background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.15)',
+          background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <KeyRound size={20} color="#007AFF" strokeWidth={1.5} />
+          <KeyRound size={20} color="var(--accent)" strokeWidth={1.5} />
         </div>
 
-        <h1 style={{ fontSize: 22, fontWeight: 300, color: '#1a1a1a', marginBottom: 6 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 300, color: 'var(--text)', marginBottom: 6 }}>
           Digite o código
         </h1>
-        <p style={{ fontSize: 13, fontWeight: 300, color: '#8e8e93', marginBottom: 28, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 13, fontWeight: 300, color: 'var(--text-3)', marginBottom: 28, lineHeight: 1.6 }}>
           Enviamos um código de 8 dígitos para seu email.<br />
           Verifique sua caixa de entrada e spam.
         </p>
 
         <form onSubmit={handleVerifyCode} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: '#6b6b6b', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: 'var(--text-2)', marginBottom: 6 }}>
               Email
             </label>
             <input
@@ -122,13 +122,13 @@ function CodigoForm() {
               placeholder="seu@email.com"
               required
               style={inputBase}
-              onFocus={e => (e.target.style.borderColor = '#007AFF')}
-              onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+              onFocus={e => (e.target.style.borderColor = 'var(--accent)')}
+              onBlur={e => (e.target.style.borderColor = 'var(--border-input)')}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: '#6b6b6b', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: 'var(--text-2)', marginBottom: 6 }}>
               Código de 8 dígitos
             </label>
             <input
@@ -146,8 +146,8 @@ function CodigoForm() {
                 letterSpacing: '0.3em',
                 textAlign: 'center',
               }}
-              onFocus={e => (e.target.style.borderColor = '#007AFF')}
-              onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+              onFocus={e => (e.target.style.borderColor = 'var(--accent)')}
+              onBlur={e => (e.target.style.borderColor = 'var(--border-input)')}
             />
           </div>
 
@@ -163,8 +163,8 @@ function CodigoForm() {
 
           <button type="submit" disabled={loading || code.length !== 8} style={{
             width: '100%', padding: '13px',
-            background: loading || code.length !== 8 ? '#a0c4ff' : '#007AFF',
-            color: '#ffffff', border: 'none', borderRadius: 10,
+            background: loading || code.length !== 8 ? 'var(--btn-disabled)' : 'var(--btn-bg)',
+            color: 'var(--btn-text)', border: 'none', borderRadius: 10,
             fontSize: 15, fontWeight: 400,
             cursor: loading || code.length !== 8 ? 'not-allowed' : 'pointer',
             transition: 'background 0.2s', marginTop: 4,
@@ -173,16 +173,16 @@ function CodigoForm() {
           </button>
         </form>
 
-        <p style={{ marginTop: 24, textAlign: 'center', fontSize: 13, fontWeight: 300, color: '#8e8e93' }}>
+        <p style={{ marginTop: 24, textAlign: 'center', fontSize: 13, fontWeight: 300, color: 'var(--text-3)' }}>
           Não recebeu?{' '}
-          <Link href="/recuperar-senha" style={{ color: '#007AFF', textDecoration: 'none' }}>
+          <Link href="/recuperar-senha" style={{ color: 'var(--text)', textDecoration: 'none', fontWeight: 500 }}>
             Enviar novo código
           </Link>
         </p>
-        <p style={{ marginTop: 12, textAlign: 'center', fontSize: 13, fontWeight: 300, color: '#8e8e93' }}>
+        <p style={{ marginTop: 12, textAlign: 'center', fontSize: 13, fontWeight: 300, color: 'var(--text-3)' }}>
           <Link href="/login" style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
-            color: '#8e8e93', textDecoration: 'none',
+            color: 'var(--text-3)', textDecoration: 'none',
           }}>
             <ArrowLeft size={13} /> Voltar ao login
           </Link>
@@ -202,18 +202,18 @@ function CodigoForm() {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 300, color: '#1a1a1a', margin: 0 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 300, color: 'var(--text)', margin: 0 }}>
           Nova senha
         </h1>
         <CheckCircle2 size={16} color="#34c759" />
       </div>
-      <p style={{ fontSize: 13, fontWeight: 300, color: '#8e8e93', marginBottom: 28 }}>
+      <p style={{ fontSize: 13, fontWeight: 300, color: 'var(--text-3)', marginBottom: 28 }}>
         Código verificado. Escolha uma nova senha segura.
       </p>
 
       <form onSubmit={handleUpdatePassword} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: '#6b6b6b', marginBottom: 6 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: 'var(--text-2)', marginBottom: 6 }}>
             Nova senha
           </label>
           <div style={{ position: 'relative' }}>
@@ -224,12 +224,12 @@ function CodigoForm() {
               placeholder="Mínimo 8 caracteres"
               required
               style={{ ...inputBase, paddingRight: 42 }}
-              onFocus={e => (e.target.style.borderColor = '#007AFF')}
-              onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+              onFocus={e => (e.target.style.borderColor = 'var(--accent)')}
+              onBlur={e => (e.target.style.borderColor = 'var(--border-input)')}
             />
             <button type="button" onClick={() => setShowPass(s => !s)} style={{
               position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 0,
+              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 0,
             }}>
               {showPass ? <EyeOff size={15} strokeWidth={1.5} /> : <Eye size={15} strokeWidth={1.5} />}
             </button>
@@ -237,7 +237,7 @@ function CodigoForm() {
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: '#6b6b6b', marginBottom: 6 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 400, color: 'var(--text-2)', marginBottom: 6 }}>
             Confirmar senha
           </label>
           <div style={{ position: 'relative' }}>
@@ -248,12 +248,12 @@ function CodigoForm() {
               placeholder="Repita a nova senha"
               required
               style={{ ...inputBase, paddingRight: 42 }}
-              onFocus={e => (e.target.style.borderColor = '#007AFF')}
-              onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.1)')}
+              onFocus={e => (e.target.style.borderColor = 'var(--accent)')}
+              onBlur={e => (e.target.style.borderColor = 'var(--border-input)')}
             />
             <button type="button" onClick={() => setShowConfirm(s => !s)} style={{
               position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 0,
+              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 0,
             }}>
               {showConfirm ? <EyeOff size={15} strokeWidth={1.5} /> : <Eye size={15} strokeWidth={1.5} />}
             </button>
@@ -277,8 +277,8 @@ function CodigoForm() {
 
         <button type="submit" disabled={loading} style={{
           width: '100%', padding: '13px',
-          background: loading ? '#a0c4ff' : '#007AFF',
-          color: '#ffffff', border: 'none', borderRadius: 10,
+          background: loading ? 'var(--btn-disabled)' : 'var(--btn-bg)',
+          color: 'var(--btn-text)', border: 'none', borderRadius: 10,
           fontSize: 15, fontWeight: 400,
           cursor: loading ? 'not-allowed' : 'pointer',
           transition: 'background 0.2s', marginTop: 4,
@@ -294,12 +294,12 @@ export default function RecuperarSenhaCodigoPage() {
   return (
     <Suspense fallback={
       <div style={{
-        background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)',
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
         borderRadius: 16, padding: '36px 32px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+        boxShadow: 'var(--shadow-card)',
         textAlign: 'center',
       }}>
-        <div style={{ fontSize: 13, fontWeight: 300, color: '#8e8e93' }}>Carregando…</div>
+        <div style={{ fontSize: 13, fontWeight: 300, color: 'var(--text-3)' }}>Carregando…</div>
       </div>
     }>
       <CodigoForm />

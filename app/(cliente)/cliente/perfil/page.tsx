@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { UserCircle, Camera, Save, CheckCircle2, Loader2 } from 'lucide-react'
@@ -72,7 +72,7 @@ export default function ClientePerfilPage() {
     return (
       <div style={{ padding: '28px 32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
-          <Loader2 size={26} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+          <Loader2 size={26} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         </div>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
@@ -84,24 +84,24 @@ export default function ClientePerfilPage() {
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>Meu Perfil</h1>
-        <p style={{ fontSize: 13, color: '#8e8e93', margin: '5px 0 0' }}>Edite suas informações pessoais</p>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Meu Perfil</h1>
+        <p style={{ fontSize: 13, color: 'var(--text-3)', margin: '5px 0 0' }}>Edite suas informações pessoais</p>
       </div>
 
-      <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, padding: 28, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, boxShadow: 'var(--shadow-card)' }}>
         {/* Avatar */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28 }}>
           <div style={{ position: 'relative', marginBottom: 12 }}>
             <div style={{
               width: 96, height: 96, borderRadius: '50%', overflow: 'hidden',
-              background: 'rgba(0,122,255,0.1)', border: '3px solid rgba(0,122,255,0.2)',
+              background: 'var(--accent-soft)', border: '3px solid rgba(0,122,255,0.2)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               {avatarUrl
                 ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : uploading
-                  ? <Loader2 size={28} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
-                  : <span style={{ fontSize: 32, fontWeight: 700, color: '#007AFF' }}>{initials}</span>
+                  ? <Loader2 size={28} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
+                  : <span style={{ fontSize: 32, fontWeight: 700, color: 'var(--accent)' }}>{initials}</span>
               }
             </div>
             <button
@@ -110,7 +110,7 @@ export default function ClientePerfilPage() {
               style={{
                 position: 'absolute', bottom: 0, right: 0,
                 width: 30, height: 30, borderRadius: '50%',
-                background: '#007AFF', border: '2px solid #fff',
+                background: 'var(--btn-bg)', border: '2px solid #fff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
               }}
@@ -119,7 +119,7 @@ export default function ClientePerfilPage() {
             </button>
           </div>
           <input ref={fileRef} type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: 'none' }} />
-          <p style={{ fontSize: 11.5, color: '#8e8e93', margin: 0 }}>
+          <p style={{ fontSize: 11.5, color: 'var(--text-3)', margin: 0 }}>
             {uploading ? 'Enviando...' : 'Clique no ícone para trocar a foto'}
           </p>
         </div>
@@ -127,7 +127,7 @@ export default function ClientePerfilPage() {
         {/* Fields */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#6b6b6b', display: 'block', marginBottom: 6 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 6 }}>
               Nome completo
             </label>
             <input
@@ -136,8 +136,8 @@ export default function ClientePerfilPage() {
               placeholder="Seu nome"
               style={{
                 width: '100%', padding: '10px 12px',
-                background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)',
-                borderRadius: 10, fontSize: 14, color: '#1a1a1a', outline: 'none',
+                background: 'var(--bg)', border: '1px solid var(--border)',
+                borderRadius: 10, fontSize: 14, color: 'var(--text)', outline: 'none',
                 boxSizing: 'border-box', fontFamily: 'inherit',
               }}
               onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')}
@@ -146,7 +146,7 @@ export default function ClientePerfilPage() {
           </div>
 
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#6b6b6b', display: 'block', marginBottom: 6 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 6 }}>
               Telefone / WhatsApp
             </label>
             <input
@@ -155,8 +155,8 @@ export default function ClientePerfilPage() {
               placeholder="(11) 99999-9999"
               style={{
                 width: '100%', padding: '10px 12px',
-                background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)',
-                borderRadius: 10, fontSize: 14, color: '#1a1a1a', outline: 'none',
+                background: 'var(--bg)', border: '1px solid var(--border)',
+                borderRadius: 10, fontSize: 14, color: 'var(--text)', outline: 'none',
                 boxSizing: 'border-box', fontFamily: 'inherit',
               }}
               onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')}
@@ -165,7 +165,7 @@ export default function ClientePerfilPage() {
           </div>
 
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#6b6b6b', display: 'block', marginBottom: 6 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 6 }}>
               E-mail
             </label>
             <input
@@ -173,12 +173,12 @@ export default function ClientePerfilPage() {
               disabled
               style={{
                 width: '100%', padding: '10px 12px',
-                background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.05)',
-                borderRadius: 10, fontSize: 14, color: '#8e8e93', outline: 'none',
+                background: 'var(--bg)', border: '1px solid rgba(0,0,0,0.05)',
+                borderRadius: 10, fontSize: 14, color: 'var(--text-3)', outline: 'none',
                 boxSizing: 'border-box', fontFamily: 'inherit', cursor: 'not-allowed',
               }}
             />
-            <p style={{ fontSize: 11, color: '#8e8e93', margin: '4px 0 0' }}>
+            <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '4px 0 0' }}>
               O e-mail não pode ser alterado
             </p>
           </div>
@@ -206,7 +206,7 @@ export default function ClientePerfilPage() {
         </div>
       </div>
 
-      <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8, color: '#8e8e93' }}>
+      <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-3)' }}>
         <UserCircle size={14} />
         <span style={{ fontSize: 12 }}>Suas informações são visíveis para o seu arquiteto</span>
       </div>

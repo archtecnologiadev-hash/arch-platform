@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -170,7 +170,7 @@ export default function ProjetosPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f2f2f7', padding: '28px 32px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '28px 32px' }}>
       <style>{`
         @keyframes spin{to{transform:rotate(360deg)}}
         .proj-card{border-radius:12px;overflow:hidden;border:1px solid rgba(0,0,0,0.08);background:#fff;cursor:pointer;transition:border-color 0.25s,box-shadow 0.25s;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
@@ -183,11 +183,11 @@ export default function ProjetosPage() {
 
       <div style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
-          <p style={{ fontSize: 11, color: '#007AFF', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 4 }}>PIPELINE</p>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a' }}>
+          <p style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 4 }}>PIPELINE</p>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>
             Projetos{' '}
             {projetos.length > 0 && (
-              <span style={{ fontSize: 14, fontWeight: 400, color: '#8e8e93' }}>({projetos.length})</span>
+              <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-3)' }}>({projetos.length})</span>
             )}
           </h1>
         </div>
@@ -197,7 +197,7 @@ export default function ProjetosPage() {
               onClick={() => { setModalOpen(true); setFormError(null) }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
-                background: '#007AFF', color: '#fff', border: 'none',
+                background: 'var(--btn-bg)', color: '#fff', border: 'none',
                 borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
               }}
             >
@@ -219,44 +219,44 @@ export default function ProjetosPage() {
 
       {!escritorio ? (
         <div style={{
-          background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14,
+          background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14,
           padding: '60px 20px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
         }}>
           <FolderOpen size={40} color="#8e8e93" style={{ marginBottom: 14 }} />
-          <p style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 6 }}>
+          <p style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 6 }}>
             Configure seu perfil antes de criar projetos.
           </p>
-          <Link href="/arquiteto/perfil" style={{ fontSize: 13, color: '#007AFF', textDecoration: 'none' }}>
+          <Link href="/arquiteto/perfil" style={{ fontSize: 13, color: 'var(--accent)', textDecoration: 'none' }}>
             Ir para Meu Perfil →
           </Link>
         </div>
       ) : !perfilCompleto ? (
         <div style={{
-          background: '#fff', border: '1px solid rgba(249,115,22,0.2)', borderRadius: 14,
+          background: 'var(--bg-card)', border: '1px solid rgba(249,115,22,0.2)', borderRadius: 14,
           padding: '40px 20px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           marginBottom: 20,
         }}>
           <AlertCircle size={32} color="#f97316" style={{ marginBottom: 12 }} />
-          <p style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 6 }}>
+          <p style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 6 }}>
             Preencha o nome do escritório no perfil para criar projetos.
           </p>
-          <Link href="/arquiteto/perfil" style={{ fontSize: 13, color: '#007AFF', textDecoration: 'none' }}>
+          <Link href="/arquiteto/perfil" style={{ fontSize: 13, color: 'var(--accent)', textDecoration: 'none' }}>
             Completar perfil →
           </Link>
         </div>
       ) : projetos.length === 0 ? (
         <div style={{
-          background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14,
+          background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14,
           padding: '60px 20px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
         }}>
           <FolderOpen size={40} color="#8e8e93" style={{ marginBottom: 14 }} />
-          <p style={{ fontSize: 14, color: '#6b6b6b', marginBottom: 14 }}>Nenhum projeto ainda.</p>
+          <p style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 14 }}>Nenhum projeto ainda.</p>
           <button
             onClick={() => { setModalOpen(true); setFormError(null) }}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 7,
               padding: '10px 18px', borderRadius: 10, cursor: 'pointer',
-              background: '#007AFF', color: '#fff', border: 'none',
+              background: 'var(--btn-bg)', color: '#fff', border: 'none',
               fontSize: 13, fontWeight: 600,
             }}
           >
@@ -297,7 +297,7 @@ export default function ProjetosPage() {
                   <div style={{
                     position: 'absolute', top: 10, right: 10,
                     fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 20,
-                    background: 'rgba(255,255,255,0.92)', color: '#007AFF',
+                    background: 'rgba(255,255,255,0.92)', color: 'var(--accent)',
                     backdropFilter: 'blur(8px)', border: '1px solid rgba(0,122,255,0.3)',
                   }}>
                     {etapaLabel}
@@ -314,8 +314,8 @@ export default function ProjetosPage() {
                 </div>
                 <div style={{ padding: '11px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ fontSize: 11.5, fontWeight: 600, color: '#1a1a1a' }}>{tipoLabel}</div>
-                    <div style={{ fontSize: 10, color: '#8e8e93', marginTop: 1 }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text)' }}>{tipoLabel}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>
                       {new Date(proj.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </div>
                   </div>
@@ -325,19 +325,19 @@ export default function ProjetosPage() {
                         {(projetoMembrosMap[proj.id] ?? []).slice(0, 3).map((m, idx) => {
                           const ini = m.nome.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
                           return (
-                            <div key={idx} title={m.nome} style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,122,255,0.1)', border: '1.5px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, fontWeight: 700, color: '#007AFF', marginLeft: idx > 0 ? -6 : 0, flexShrink: 0 }}>
+                            <div key={idx} title={m.nome} style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--accent-soft)', border: '1.5px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, fontWeight: 700, color: 'var(--accent)', marginLeft: idx > 0 ? -6 : 0, flexShrink: 0 }}>
                               {ini}
                             </div>
                           )
                         })}
                         {(projetoMembrosMap[proj.id] ?? []).length > 3 && (
-                          <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#f2f2f7', border: '1.5px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, fontWeight: 700, color: '#8e8e93', marginLeft: -6, flexShrink: 0 }}>
+                          <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--bg)', border: '1.5px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, fontWeight: 700, color: 'var(--text-3)', marginLeft: -6, flexShrink: 0 }}>
                             +{(projetoMembrosMap[proj.id] ?? []).length - 3}
                           </div>
                         )}
                       </div>
                     )}
-                    <ArrowRight size={12} color="#007AFF" />
+                    <ArrowRight size={12} color="var(--accent)" />
                   </div>
                 </div>
               </div>
@@ -358,7 +358,7 @@ export default function ProjetosPage() {
         >
           <div
             style={{
-              background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16,
+              background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16,
               padding: 32, width: '100%', maxWidth: 480, position: 'relative',
               boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
             }}
@@ -366,17 +366,17 @@ export default function ProjetosPage() {
           >
             <button onClick={() => setModalOpen(false)} style={{
               position: 'absolute', top: 16, right: 16,
-              background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4,
+              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4,
             }}>
               <X size={18} />
             </button>
 
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>Novo Projeto</h2>
-            <p style={{ fontSize: 12, color: '#8e8e93', marginBottom: 24 }}>Adicione um novo projeto ao seu pipeline</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Novo Projeto</h2>
+            <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 24 }}>Adicione um novo projeto ao seu pipeline</p>
 
             <form onSubmit={handleCriarProjeto} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em' }}>
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em' }}>
                   Nome do projeto *
                 </label>
                 <input
@@ -385,8 +385,8 @@ export default function ProjetosPage() {
                   placeholder="Ex: Residência Costa"
                   required
                   style={{
-                    width: '100%', padding: '10px 14px', background: '#f2f2f7',
-                    border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', fontSize: 13.5,
+                    width: '100%', padding: '10px 14px', background: 'var(--bg)',
+                    border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5,
                     outline: 'none', boxSizing: 'border-box', borderRadius: 10,
                   }}
                   onFocus={e => (e.target.style.borderColor = '#007AFF')}
@@ -395,7 +395,7 @@ export default function ProjetosPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em' }}>
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em' }}>
                   Tipo
                 </label>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -414,7 +414,7 @@ export default function ProjetosPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: '#8e8e93', marginBottom: 6, letterSpacing: '0.04em' }}>
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em' }}>
                   Descrição (opcional)
                 </label>
                 <textarea
@@ -423,8 +423,8 @@ export default function ProjetosPage() {
                   placeholder="Breve descrição do projeto..."
                   rows={3}
                   style={{
-                    width: '100%', padding: '10px 14px', background: '#f2f2f7',
-                    border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', fontSize: 13.5,
+                    width: '100%', padding: '10px 14px', background: 'var(--bg)',
+                    border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5,
                     outline: 'none', boxSizing: 'border-box', borderRadius: 10, resize: 'none',
                   }}
                   onFocus={e => (e.target.style.borderColor = '#007AFF')}

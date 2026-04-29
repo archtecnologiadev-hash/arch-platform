@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { Lock } from 'lucide-react'
@@ -37,23 +37,23 @@ export default function PremiumFeature({ feature, children, upgradeHref = '/arqu
       }}>
         <div style={{
           width: 44, height: 44, borderRadius: '50%',
-          background: 'rgba(0,122,255,0.1)',
+          background: 'var(--accent-soft)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <Lock size={20} color="#007AFF" />
+          <Lock size={20} color="var(--accent)" />
         </div>
         <div style={{ textAlign: 'center', padding: '0 28px' }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginBottom: 5 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 5 }}>
             {label ?? 'Funcionalidade Premium'}
           </div>
-          <div style={{ fontSize: 12, color: '#8e8e93', lineHeight: 1.5, marginBottom: 14 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.5, marginBottom: 14 }}>
             Disponível no plano Profissional ou superior.
           </div>
           <Link
             href={upgradeHref}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: '#007AFF', color: '#fff', textDecoration: 'none',
+              background: 'var(--btn-bg)', color: '#fff', textDecoration: 'none',
               borderRadius: 9, padding: '9px 20px', fontSize: 12.5, fontWeight: 700,
             }}
           >

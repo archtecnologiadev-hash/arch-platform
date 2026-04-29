@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, Inter_Tight } from 'next/font/google'
+import { ThemeProvider } from 'next-themes'
 import './globals.css'
 import CookieBanner from '@/components/CookieBanner'
 
@@ -35,10 +36,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${inter.className} ${interTight.variable}`}>
-        {children}
-        <CookieBanner />
+        <ThemeProvider attribute="data-theme" defaultTheme="light" enableSystem={false}>
+          {children}
+          <CookieBanner />
+        </ThemeProvider>
       </body>
     </html>
   )

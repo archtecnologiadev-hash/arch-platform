@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -28,7 +28,7 @@ interface Orcamento {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const STATUS_META: Record<OrcStatus, { label: string; color: string; bg: string; border: string }> = {
-  pendente:    { label: 'Pendente',    color: '#007AFF', bg: 'rgba(0,122,255,0.08)',   border: 'rgba(0,122,255,0.2)' },
+  pendente:    { label: 'Pendente',    color: 'var(--accent)', bg: 'rgba(0,122,255,0.08)',   border: 'rgba(0,122,255,0.2)' },
   em_analise:  { label: 'Em análise',  color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.22)' },
   respondido:  { label: 'Respondido',  color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)' },
   aprovado:    { label: 'Aprovado',    color: '#34d399', bg: 'rgba(52,211,153,0.1)',   border: 'rgba(52,211,153,0.22)' },
@@ -204,15 +204,15 @@ export default function FornecedorOrcamentosPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f2f2f7' }}>
-        <Loader2 size={26} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg)' }}>
+        <Loader2 size={26} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
   }
 
   return (
-    <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1a1a1a', background: '#f2f2f7' }}>
+    <div style={{ padding: '32px 36px', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', color: 'var(--text)', background: 'var(--bg)' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
         .orc-card { background:#fff; border:1px solid rgba(0,0,0,0.08); border-radius:14px; overflow:hidden; transition:box-shadow 0.18s; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
@@ -228,8 +228,8 @@ export default function FornecedorOrcamentosPage() {
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a', margin: 0 }}>Orçamentos</h1>
-        <p style={{ fontSize: 13, color: '#6b6b6b', margin: '5px 0 0' }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Orçamentos</h1>
+        <p style={{ fontSize: 13, color: 'var(--text-2)', margin: '5px 0 0' }}>
           Gerencie todas as solicitações recebidas · {orcamentos.length} total
         </p>
       </div>
@@ -258,7 +258,7 @@ export default function FornecedorOrcamentosPage() {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#8e8e93', fontSize: 14 }}>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 14 }}>
           {orcamentos.length === 0 ? 'Nenhuma solicitação recebida ainda.' : 'Nenhuma solicitação com esse status.'}
         </div>
       ) : (
@@ -277,7 +277,7 @@ export default function FornecedorOrcamentosPage() {
               <div key={orc.id} className="orc-card">
                 <div style={{ padding: '18px 20px', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
                   {/* Avatar */}
-                  <div style={{ width: 52, height: 52, borderRadius: 12, background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: '#007AFF', flexShrink: 0 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 12, background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: 'var(--accent)', flexShrink: 0 }}>
                     {initials}
                   </div>
 
@@ -285,10 +285,10 @@ export default function FornecedorOrcamentosPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                       <div>
                         <div onClick={() => router.push(`/fornecedor/orcamentos/${orc.id}`)}
-                          style={{ fontSize: 14.5, fontWeight: 700, color: '#1a1a1a', cursor: 'pointer' }}>
+                          style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text)', cursor: 'pointer' }}>
                           {orc.projeto_nome ?? 'Projeto sem nome'}
                         </div>
-                        <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 3 }}>
+                        <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>
                           {orc.arquiteto_nome ?? 'Arquiteto'} · {dateStr}
                         </div>
                       </div>
@@ -324,7 +324,7 @@ export default function FornecedorOrcamentosPage() {
                     )}
 
                     {orc.mensagem && (
-                      <p style={{ fontSize: 13, color: '#6b6b6b', marginTop: 8, lineHeight: 1.55, margin: '8px 0 0' }}>
+                      <p style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 8, lineHeight: 1.55, margin: '8px 0 0' }}>
                         {orc.mensagem.length > 120 ? orc.mensagem.slice(0, 120) + '…' : orc.mensagem}
                       </p>
                     )}
@@ -332,17 +332,17 @@ export default function FornecedorOrcamentosPage() {
                     {/* Action buttons */}
                     <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' as const }}>
                       <button onClick={() => router.push(`/fornecedor/orcamentos/${orc.id}`)}
-                        style={{ fontSize: 11.5, padding: '5px 12px', borderRadius: 8, background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', cursor: 'pointer', fontWeight: 600 }}>
+                        style={{ fontSize: 11.5, padding: '5px 12px', borderRadius: 8, background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)', color: 'var(--accent)', cursor: 'pointer', fontWeight: 600 }}>
                         Abrir →
                       </button>
                       <button onClick={() => setExpandedId(isExpanded ? null : orc.id)}
-                        style={{ fontSize: 11.5, padding: '5px 12px', borderRadius: 8, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', cursor: 'pointer', fontWeight: 600 }}>
+                        style={{ fontSize: 11.5, padding: '5px 12px', borderRadius: 8, background: 'var(--bg)', border: '1px solid var(--border-input)', color: 'var(--text-2)', cursor: 'pointer', fontWeight: 600 }}>
                         {isExpanded ? 'Menos' : 'Resumo'}
                       </button>
 
                       {canReply && (
                         <button onClick={() => { setReplyTarget(orc); setReplyText(''); setReplyFile(null); setReplySent(false) }}
-                          style={{ fontSize: 11.5, padding: '5px 12px', borderRadius: 8, background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', cursor: 'pointer', fontWeight: 600 }}>
+                          style={{ fontSize: 11.5, padding: '5px 12px', borderRadius: 8, background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)', color: 'var(--accent)', cursor: 'pointer', fontWeight: 600 }}>
                           Enviar proposta
                         </button>
                       )}
@@ -362,34 +362,34 @@ export default function FornecedorOrcamentosPage() {
 
                 {/* Expanded details */}
                 {isExpanded && (
-                  <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', padding: '14px 20px', background: '#f9f9fb' }}>
+                  <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '14px 20px', background: '#f9f9fb' }}>
                     {orc.mensagem && (
                       <>
-                        <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>Mensagem do arquiteto</div>
-                        <p style={{ fontSize: 13, color: '#6b6b6b', lineHeight: 1.65, margin: '0 0 12px' }}>{orc.mensagem}</p>
+                        <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>Mensagem do arquiteto</div>
+                        <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.65, margin: '0 0 12px' }}>{orc.mensagem}</p>
                       </>
                     )}
                     {orc.arquivo_url && (
                       <a href={orc.arquivo_url} target="_blank" rel="noopener noreferrer"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#007AFF', background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.18)', borderRadius: 7, padding: '5px 11px', textDecoration: 'none', fontWeight: 600, marginBottom: 12 }}>
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--accent)', background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.18)', borderRadius: 7, padding: '5px 11px', textDecoration: 'none', fontWeight: 600, marginBottom: 12 }}>
                         <FileText size={12} /> {orc.arquivo_nome ?? 'Arquivo anexado'} <Download size={11} />
                       </a>
                     )}
                     {orc.resposta && (
                       <>
-                        <div style={{ fontSize: 11, color: '#8e8e93', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>Sua proposta</div>
-                        <p style={{ fontSize: 13, color: '#1a1a1a', lineHeight: 1.65, margin: '0 0 8px', background: 'rgba(0,122,255,0.05)', border: '1px solid rgba(0,122,255,0.12)', borderRadius: 8, padding: '10px 13px' }}>{orc.resposta}</p>
+                        <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.07em' }}>Sua proposta</div>
+                        <p style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.65, margin: '0 0 8px', background: 'rgba(0,122,255,0.05)', border: '1px solid rgba(0,122,255,0.12)', borderRadius: 8, padding: '10px 13px' }}>{orc.resposta}</p>
                         {orc.resposta_arquivo_url && (
                           <a href={orc.resposta_arquivo_url} target="_blank" rel="noopener noreferrer"
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#007AFF', background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.18)', borderRadius: 7, padding: '5px 11px', textDecoration: 'none', fontWeight: 600 }}>
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--accent)', background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.18)', borderRadius: 7, padding: '5px 11px', textDecoration: 'none', fontWeight: 600 }}>
                             <FileText size={12} /> Seu arquivo <Download size={11} />
                           </a>
                         )}
                       </>
                     )}
                     {orc.arquiteto_email && (
-                      <div style={{ marginTop: 10, fontSize: 11.5, color: '#8e8e93' }}>
-                        Email: <span style={{ color: '#1a1a1a' }}>{orc.arquiteto_email}</span>
+                      <div style={{ marginTop: 10, fontSize: 11.5, color: 'var(--text-3)' }}>
+                        Email: <span style={{ color: 'var(--text)' }}>{orc.arquiteto_email}</span>
                       </div>
                     )}
                   </div>
@@ -405,23 +405,23 @@ export default function FornecedorOrcamentosPage() {
         <div onClick={e => { if (e.target === e.currentTarget) setReplyTarget(null) }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(5px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div className="orc-modal-box"
-            style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, width: '100%', maxWidth: 480, padding: 28, boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 480, padding: 28, boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
             {replySent ? (
               <div style={{ textAlign: 'center' as const, padding: '22px 0' }}>
                 <CheckCircle2 size={52} color="#34d399" style={{ marginBottom: 16 }} />
-                <div style={{ fontSize: 19, fontWeight: 700, color: '#1a1a1a', marginBottom: 8 }}>Proposta enviada!</div>
-                <div style={{ fontSize: 13, color: '#6b6b6b' }}>{replyTarget.arquiteto_nome ?? 'O arquiteto'} será notificado.</div>
+                <div style={{ fontSize: 19, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Proposta enviada!</div>
+                <div style={{ fontSize: 13, color: 'var(--text-2)' }}>{replyTarget.arquiteto_nome ?? 'O arquiteto'} será notificado.</div>
               </div>
             ) : (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                   <div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>Enviar Proposta</div>
-                    <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 3 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Enviar Proposta</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>
                       {replyTarget.projeto_nome ?? 'Projeto'} · {replyTarget.arquiteto_nome ?? 'Arquiteto'}
                     </div>
                   </div>
-                  <button onClick={() => setReplyTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}>
+                  <button onClick={() => setReplyTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}>
                     <X size={18} />
                   </button>
                 </div>
@@ -430,23 +430,23 @@ export default function FornecedorOrcamentosPage() {
 
                 <form onSubmit={handleReply} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div>
-                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>Sua proposta *</label>
+                    <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 6, fontWeight: 600 }}>Sua proposta *</label>
                     <textarea className="orc-inp" required rows={5}
                       placeholder="Descreva sua proposta, prazo, condições e detalhes técnicos..."
                       value={replyText}
                       onChange={e => setReplyText(e.target.value)} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>Anexar arquivo (opcional)</label>
+                    <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 6, fontWeight: 600 }}>Anexar arquivo (opcional)</label>
                     <div onClick={() => replyFileRef.current?.click()}
-                      style={{ padding: '9px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 7, fontSize: 12, color: replyFile ? '#1a1a1a' : '#8e8e93', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      style={{ padding: '9px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 7, fontSize: 12, color: replyFile ? '#1a1a1a' : '#8e8e93', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
                       <Upload size={13} color="#8e8e93" />
                       {replyFile ? replyFile.name : 'Clique para selecionar um arquivo'}
                       {replyFile && <X size={13} color="#8e8e93" style={{ marginLeft: 'auto' }} onClick={ev => { ev.stopPropagation(); setReplyFile(null) }} />}
                     </div>
                   </div>
                   <button type="submit" disabled={replySending}
-                    style={{ background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 700, cursor: replySending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: replySending ? 0.7 : 1 }}>
+                    style={{ background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 700, cursor: replySending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: replySending ? 0.7 : 1 }}>
                     {replySending ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Enviando...</> : <><Send size={14} /> Enviar Proposta</>}
                   </button>
                 </form>

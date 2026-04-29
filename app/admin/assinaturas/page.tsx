@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
@@ -32,7 +32,7 @@ const STATUS_META: Record<string, { label: string; color: string; bg: string }> 
   ativa:        { label: 'Ativa',        color: '#059669', bg: 'rgba(5,150,105,0.1)' },
   fundador:     { label: 'Fundador',     color: '#92400e', bg: 'rgba(251,191,36,0.15)' },
   inadimplente: { label: 'Inadimplente', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
-  cancelada:    { label: 'Cancelada',    color: '#6b6b6b', bg: 'rgba(0,0,0,0.06)' },
+  cancelada:    { label: 'Cancelada',    color: 'var(--text-2)', bg: 'rgba(0,0,0,0.06)' },
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -153,13 +153,13 @@ export default function AdminAssinaturas() {
   const founderCount = rows.filter(r => r.status === 'fundador').length
 
   return (
-    <div style={{ padding: 32, color: '#1a1a1a', background: '#f2f2f7', minHeight: '100vh' }}>
+    <div style={{ padding: 32, color: 'var(--text)', background: 'var(--bg)', minHeight: '100vh' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 500, color: '#1a1a1a', marginBottom: 4 }}>Assinaturas</h1>
-          <p style={{ fontSize: 13, color: '#8e8e93' }}>
+          <h1 style={{ fontSize: 22, fontWeight: 500, color: 'var(--text)', marginBottom: 4 }}>Assinaturas</h1>
+          <p style={{ fontSize: 13, color: 'var(--text-3)' }}>
             {total} assinatura{total !== 1 ? 's' : ''}
             {founderCount > 0 && filter === 'todos' && (
               <span style={{ marginLeft: 10, color: '#92400e', fontWeight: 600 }}>★ {founderCount} fundador{founderCount !== 1 ? 'es' : ''}</span>
@@ -171,7 +171,7 @@ export default function AdminAssinaturas() {
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '8px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-            background: '#fff', border: '1px solid rgba(0,0,0,0.12)', color: '#1a1a1a',
+            background: 'var(--bg-card)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--text)',
           }}>
           <Download size={13} /> Exportar CSV
         </button>
@@ -193,7 +193,7 @@ export default function AdminAssinaturas() {
         <button onClick={load} style={{
           display: 'flex', alignItems: 'center', gap: 5,
           padding: '7px 14px', borderRadius: 20, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-          background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF',
+          background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)', color: 'var(--accent)',
         }}>
           <RefreshCw size={12} /> Atualizar
         </button>
@@ -206,18 +206,18 @@ export default function AdminAssinaturas() {
         </div>
       )}
 
-      <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
         {loading ? (
           <div style={{ padding: 48, display: 'flex', justifyContent: 'center' }}>
-            <Loader2 size={24} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+            <Loader2 size={24} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {['Usuário', 'Tipo', 'Plano', 'Status', 'Trial / Cobrança', 'Valor', 'Obs.', 'Ações'].map((h, i) => (
-                    <th key={i} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: '#8e8e93', fontWeight: 500, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+                    <th key={i} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: 'var(--text-3)', fontWeight: 500, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
                       {h}
                     </th>
                   ))}
@@ -225,7 +225,7 @@ export default function AdminAssinaturas() {
               </thead>
               <tbody>
                 {rows.length === 0 && (
-                  <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#8e8e93', fontSize: 13 }}>Nenhuma assinatura encontrada</td></tr>
+                  <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>Nenhuma assinatura encontrada</td></tr>
                 )}
                 {rows.map((row, i) => {
                   const isActioning = (k: string) => actioning === row.id + k
@@ -249,31 +249,31 @@ export default function AdminAssinaturas() {
                         onMouseEnter={e => (e.currentTarget.style.background = isFounder ? 'rgba(251,191,36,0.06)' : 'rgba(0,0,0,0.02)')}
                         onMouseLeave={e => (e.currentTarget.style.background = isFounder ? 'rgba(251,191,36,0.03)' : 'transparent')}>
                         <td style={{ padding: '12px 16px' }}>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: '#1a1a1a' }}>{row.users?.nome ?? '—'}</div>
-                          <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 1 }}>{row.users?.email ?? '—'}</div>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{row.users?.nome ?? '—'}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>{row.users?.email ?? '—'}</div>
                         </td>
-                        <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b6b6b', textTransform: 'capitalize' }}>
+                        <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-2)', textTransform: 'capitalize' }}>
                           {row.users?.tipo ?? '—'}
                         </td>
-                        <td style={{ padding: '12px 16px', fontSize: 12, color: '#1a1a1a' }}>
+                        <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text)' }}>
                           {row.planos?.nome ?? '—'}
-                          {row.ciclo && <div style={{ fontSize: 10, color: '#8e8e93', marginTop: 1, textTransform: 'capitalize' }}>{row.ciclo}</div>}
+                          {row.ciclo && <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1, textTransform: 'capitalize' }}>{row.ciclo}</div>}
                         </td>
                         <td style={{ padding: '12px 16px' }}>
                           <StatusBadge status={row.status} />
                         </td>
-                        <td style={{ padding: '12px 16px', fontSize: 11.5, color: '#6b6b6b', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '12px 16px', fontSize: 11.5, color: 'var(--text-2)', whiteSpace: 'nowrap' }}>
                           {dateInfo}
                         </td>
-                        <td style={{ padding: '12px 16px', fontSize: 12, color: '#1a1a1a' }}>
+                        <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text)' }}>
                           {isFounder
                             ? <span style={{ fontSize: 11, color: '#92400e', fontWeight: 600 }}>Gratuito</span>
                             : row.valor_cobrado ? `R$ ${Number(row.valor_cobrado).toFixed(2).replace('.', ',')}` : '—'}
                         </td>
                         <td style={{ padding: '12px 16px', maxWidth: 140 }}>
                           {row.observacao_admin
-                            ? <span style={{ fontSize: 11, color: '#6b6b6b', fontStyle: 'italic', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }} title={row.observacao_admin}>{row.observacao_admin}</span>
-                            : <span style={{ color: '#c7c7cc', fontSize: 11 }}>—</span>}
+                            ? <span style={{ fontSize: 11, color: 'var(--text-2)', fontStyle: 'italic', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }} title={row.observacao_admin}>{row.observacao_admin}</span>
+                            : <span style={{ color: 'var(--logout-btn)', fontSize: 11 }}>—</span>}
                         </td>
                         <td style={{ padding: '12px 16px' }}>
                           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
@@ -314,7 +314,7 @@ export default function AdminAssinaturas() {
                               <button
                                 onClick={() => { setExtendId(extendId === row.id ? null : row.id); setExtendDate('') }}
                                 disabled={!!actioning}
-                                style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: 'pointer', background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', opacity: actioning ? 0.6 : 1 }}>
+                                style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: 'pointer', background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)', color: 'var(--accent)', opacity: actioning ? 0.6 : 1 }}>
                                 <Calendar size={10} /> Estender
                               </button>
                             )}
@@ -346,25 +346,25 @@ export default function AdminAssinaturas() {
 
                       {/* Extend trial inline form */}
                       {extendId === row.id && (
-                        <tr key={row.id + '_extend'} style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', background: 'rgba(0,122,255,0.03)' }}>
+                        <tr key={row.id + '_extend'} style={{ borderBottom: '1px solid var(--border-subtle)', background: 'rgba(0,122,255,0.03)' }}>
                           <td colSpan={8} style={{ padding: '10px 16px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: 12, color: '#007AFF', fontWeight: 600 }}>Estender trial até:</span>
+                              <span style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}>Estender trial até:</span>
                               <input
                                 type="date"
                                 value={extendDate}
                                 onChange={e => setExtendDate(e.target.value)}
                                 min={new Date().toISOString().slice(0, 10)}
-                                style={{ padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(0,122,255,0.3)', fontSize: 12, color: '#1a1a1a', background: '#fff', outline: 'none' }}
+                                style={{ padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(0,122,255,0.3)', fontSize: 12, color: 'var(--text)', background: 'var(--bg-card)', outline: 'none' }}
                               />
                               <button
                                 onClick={() => handleEstenderTrial(row.id)}
                                 disabled={!extendDate || !!actioning}
-                                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: !extendDate ? 'not-allowed' : 'pointer', background: '#007AFF', color: '#fff', border: 'none', opacity: !extendDate ? 0.5 : 1 }}>
+                                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: !extendDate ? 'not-allowed' : 'pointer', background: 'var(--btn-bg)', color: '#fff', border: 'none', opacity: !extendDate ? 0.5 : 1 }}>
                                 {isActioning('estender_trial') ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <CheckCircle2 size={11} />}
                                 Confirmar
                               </button>
-                              <button onClick={() => { setExtendId(null); setExtendDate('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}>
+                              <button onClick={() => { setExtendId(null); setExtendDate('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}>
                                 <X size={14} />
                               </button>
                             </div>

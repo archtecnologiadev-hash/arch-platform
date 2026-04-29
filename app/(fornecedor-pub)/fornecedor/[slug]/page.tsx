@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -144,24 +144,24 @@ function ProdutoCard({ prod, segColor, currentUserId, onLike, onComment }: {
   }
 
   return (
-    <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
       <Carousel imagens={prod.imagens} nome={prod.nome} />
 
       {/* Card body */}
       <div style={{ padding: '14px 16px 0' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>{prod.nome}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{prod.nome}</div>
           <div style={{ fontSize: 9.5, padding: '2px 8px', borderRadius: 20, background: `${segColor}14`, border: `1px solid ${segColor}33`, color: segColor, fontWeight: 700, flexShrink: 0, marginLeft: 8 }}>
             {TIPO_LABEL[prod.tipo] ?? prod.tipo}
           </div>
         </div>
         {prod.descricao && (
-          <p style={{ fontSize: 12.5, color: '#6b6b6b', lineHeight: 1.55, margin: '0 0 10px' }}>{prod.descricao}</p>
+          <p style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.55, margin: '0 0 10px' }}>{prod.descricao}</p>
         )}
       </div>
 
       {/* Like & comment bar */}
-      <div style={{ padding: '10px 16px', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: 18 }}>
+      <div style={{ padding: '10px 16px', borderTop: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 18 }}>
         <button
           className="fp-action-btn"
           onClick={() => currentUserId && onLike(prod.id)}
@@ -182,20 +182,20 @@ function ProdutoCard({ prod, segColor, currentUserId, onLike, onComment }: {
 
       {/* Comments section */}
       {showComments && (
-        <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', padding: '12px 16px 14px' }}>
+        <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '12px 16px 14px' }}>
           {prod.comentarios.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12, maxHeight: 220, overflowY: 'auto' }}>
               {prod.comentarios.map(c => (
                 <div key={c.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#007AFF', flexShrink: 0 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', background: 'var(--accent-soft)', border: '1px solid rgba(0,122,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--accent)', flexShrink: 0 }}>
                     {c.user_avatar
                       ? <img src={c.user_avatar} alt={c.user_nome ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       : (c.user_nome ?? 'U').slice(0, 1).toUpperCase()}
                   </div>
-                  <div style={{ background: '#f2f2f7', borderRadius: '0 10px 10px 10px', padding: '7px 11px', flex: 1 }}>
+                  <div style={{ background: 'var(--bg)', borderRadius: '0 10px 10px 10px', padding: '7px 11px', flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 2 }}>
-                      <span style={{ fontSize: 11.5, fontWeight: 700, color: '#1a1a1a' }}>{c.user_nome ?? 'Usuário'}</span>
-                      <span style={{ fontSize: 10.5, color: '#8e8e93' }}>{fmtDate(c.created_at)}</span>
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text)' }}>{c.user_nome ?? 'Usuário'}</span>
+                      <span style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{fmtDate(c.created_at)}</span>
                     </div>
                     <div style={{ fontSize: 12.5, color: '#3a3a3a', lineHeight: 1.45 }}>{c.texto}</div>
                   </div>
@@ -210,7 +210,7 @@ function ProdutoCard({ prod, segColor, currentUserId, onLike, onComment }: {
                 onChange={e => setCommentText(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleComment() } }}
                 placeholder="Escrever comentário..."
-                style={{ flex: 1, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 20, padding: '8px 14px', fontSize: 12.5, outline: 'none', fontFamily: 'inherit', color: '#1a1a1a' }}
+                style={{ flex: 1, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 20, padding: '8px 14px', fontSize: 12.5, outline: 'none', fontFamily: 'inherit', color: 'var(--text)' }}
               />
               <button
                 onClick={handleComment}
@@ -221,7 +221,7 @@ function ProdutoCard({ prod, segColor, currentUserId, onLike, onComment }: {
               </button>
             </div>
           ) : (
-            <div style={{ fontSize: 12, color: '#8e8e93', textAlign: 'center' as const, padding: '4px 0' }}>
+            <div style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'center' as const, padding: '4px 0' }}>
               Faça login para comentar
             </div>
           )}
@@ -372,8 +372,8 @@ export default function FornecedorPublicPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f2f2f7' }}>
-        <Loader2 size={28} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg)' }}>
+        <Loader2 size={28} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
@@ -385,7 +385,7 @@ export default function FornecedorPublicPage() {
   const coverFallback = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f2f2f7', color: '#1a1a1a', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
         .fp-inp { width:100%; background:#f2f2f7; border:1px solid rgba(0,0,0,0.08); border-radius:10px; padding:10px 14px; color:#1a1a1a; font-size:13.5px; outline:none; transition:border-color 0.15s,background 0.15s; box-sizing:border-box; font-family:inherit; }
@@ -396,7 +396,7 @@ export default function FornecedorPublicPage() {
       `}</style>
 
       {/* Cover + profile card */}
-      <div style={{ background: '#fff', marginBottom: 20 }}>
+      <div style={{ background: 'var(--bg-card)', marginBottom: 20 }}>
         {/* Cover */}
         <div style={{ height: 280, overflow: 'hidden', position: 'relative' }}>
           {fornecedor.cover_url
@@ -410,7 +410,7 @@ export default function FornecedorPublicPage() {
           <div style={{ width: 120, height: 120, borderRadius: '50%', border: '4px solid #fff', overflow: 'hidden', background: '#e8e8f0', boxShadow: '0 2px 14px rgba(0,0,0,0.18)', position: 'relative', marginTop: -60, marginBottom: 16 }}>
             {fornecedor.image_url
               ? <img src={fornecedor.image_url} alt={fornecedor.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,rgba(0,122,255,0.15),rgba(0,122,255,0.35))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44, fontWeight: 800, color: '#007AFF' }}>
+              : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,rgba(0,122,255,0.15),rgba(0,122,255,0.35))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 44, fontWeight: 800, color: 'var(--accent)' }}>
                   {fornecedor.nome.slice(0, 1).toUpperCase()}
                 </div>}
           </div>
@@ -419,11 +419,11 @@ export default function FornecedorPublicPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' as const, gap: 14, marginBottom: 12 }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const, marginBottom: 8 }}>
-                <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em' }}>{fornecedor.nome}</h1>
+                <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.01em' }}>{fornecedor.nome}</h1>
                 {fornecedor.selo_certificado && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.25)', borderRadius: 20, padding: '4px 10px' }}>
-                    <ShieldCheck size={13} color="#007AFF" />
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#007AFF' }}>Parceiro Certificado ARC</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--accent-soft)', border: '1px solid rgba(0,122,255,0.25)', borderRadius: 20, padding: '4px 10px' }}>
+                    <ShieldCheck size={13} color="var(--accent)" />
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>Parceiro Certificado ARC</span>
                   </div>
                 )}
               </div>
@@ -434,41 +434,41 @@ export default function FornecedorPublicPage() {
                   </span>
                 )}
                 {fornecedor.cidade && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#6b6b6b' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: 'var(--text-2)' }}>
                     <MapPin size={13} color="#8e8e93" />{fornecedor.cidade}
                   </span>
                 )}
                 {fornecedor.founded && (
-                  <span style={{ fontSize: 12.5, color: '#8e8e93' }}>Desde {fornecedor.founded}</span>
+                  <span style={{ fontSize: 12.5, color: 'var(--text-3)' }}>Desde {fornecedor.founded}</span>
                 )}
               </div>
             </div>
             <button onClick={() => setQuoteOpen(true)}
-              style={{ background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 24px', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' as const }}>
+              style={{ background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 24px', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' as const }}>
               Solicitar Orçamento
             </button>
           </div>
 
           {/* Bio */}
           {fornecedor.bio && (
-            <p style={{ fontSize: 14, color: '#6b6b6b', lineHeight: 1.65, margin: '0 0 14px', maxWidth: 640 }}>{fornecedor.bio}</p>
+            <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.65, margin: '0 0 14px', maxWidth: 640 }}>{fornecedor.bio}</p>
           )}
 
           {/* Contact links */}
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' as const }}>
             {fornecedor.whatsapp && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#6b6b6b' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-2)' }}>
                 <Phone size={13} color="#8e8e93" />{fornecedor.whatsapp}
               </span>
             )}
             {fornecedor.instagram && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#6b6b6b' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-2)' }}>
                 <AtSign size={13} color="#8e8e93" />{fornecedor.instagram}
               </span>
             )}
             {fornecedor.website && (
               <a href={fornecedor.website} target="_blank" rel="noopener noreferrer"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#007AFF', textDecoration: 'none' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--accent)', textDecoration: 'none' }}>
                 <Globe size={13} />{fornecedor.website}
               </a>
             )}
@@ -480,7 +480,7 @@ export default function FornecedorPublicPage() {
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 32px 60px' }}>
         {produtos.length > 0 ? (
           <>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: '#8e8e93', textTransform: 'uppercase' as const, marginBottom: 18 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--text-3)', textTransform: 'uppercase' as const, marginBottom: 18 }}>
               Produtos &amp; Portfólio ({produtos.length})
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
@@ -497,17 +497,17 @@ export default function FornecedorPublicPage() {
             </div>
           </>
         ) : (
-          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '52px 24px', textAlign: 'center' as const, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '52px 24px', textAlign: 'center' as const, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
             <Package size={36} color="#c7c7cc" style={{ marginBottom: 14 }} />
-            <div style={{ fontSize: 14, color: '#6b6b6b' }}>Nenhum produto ou serviço cadastrado ainda.</div>
+            <div style={{ fontSize: 14, color: 'var(--text-2)' }}>Nenhum produto ou serviço cadastrado ainda.</div>
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', background: '#fff', padding: '22px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.3em', color: '#1a1a1a', fontFamily: 'Georgia, serif' }}>ARC</span>
-        <span style={{ fontSize: 12, color: '#8e8e93' }}>Plataforma de conexão entre arquitetos e fornecedores premium</span>
+      <div style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-card)', padding: '22px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '0.3em', color: 'var(--text)', fontFamily: 'Georgia, serif' }}>ARC</span>
+        <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Plataforma de conexão entre arquitetos e fornecedores premium</span>
       </div>
 
       {/* Quote Modal */}
@@ -515,46 +515,46 @@ export default function FornecedorPublicPage() {
         <div onClick={e => { if (e.target === e.currentTarget) setQuoteOpen(false) }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div className="fp-modal-box"
-            style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 16, width: '100%', maxWidth: 520, padding: 32, boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 520, padding: 32, boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
             {submitted ? (
               <div style={{ textAlign: 'center' as const, padding: '24px 0' }}>
                 <CheckCircle2 size={54} color="#34d399" style={{ marginBottom: 18 }} />
-                <div style={{ fontSize: 21, fontWeight: 700, color: '#1a1a1a', marginBottom: 8 }}>Solicitação enviada!</div>
-                <div style={{ fontSize: 13.5, color: '#6b6b6b' }}>A {fornecedor.nome} entrará em contato em breve.</div>
+                <div style={{ fontSize: 21, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Solicitação enviada!</div>
+                <div style={{ fontSize: 13.5, color: 'var(--text-2)' }}>A {fornecedor.nome} entrará em contato em breve.</div>
               </div>
             ) : (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
                   <div>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1a' }}>Solicitar Orçamento</div>
-                    <div style={{ fontSize: 12.5, color: '#6b6b6b', marginTop: 3 }}>{fornecedor.nome}</div>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)' }}>Solicitar Orçamento</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--text-2)', marginTop: 3 }}>{fornecedor.nome}</div>
                   </div>
-                  <button onClick={() => setQuoteOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}><X size={18} /></button>
+                  <button onClick={() => setQuoteOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}><X size={18} /></button>
                 </div>
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                     <div>
-                      <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>Nome completo *</label>
+                      <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 6, fontWeight: 600 }}>Nome completo *</label>
                       <input className="fp-inp" required placeholder="Seu nome" value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} />
                     </div>
                     <div>
-                      <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>Telefone *</label>
+                      <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 6, fontWeight: 600 }}>Telefone *</label>
                       <input className="fp-inp" required placeholder="(11) 99999-9999" value={form.telefone} onChange={e => setForm(f => ({ ...f, telefone: e.target.value }))} />
                     </div>
                   </div>
                   <div>
-                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>E-mail *</label>
+                    <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 6, fontWeight: 600 }}>E-mail *</label>
                     <input className="fp-inp" type="email" required placeholder="seu@email.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>Descrição do serviço *</label>
+                    <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 6, fontWeight: 600 }}>Descrição do serviço *</label>
                     <textarea className="fp-inp" required rows={3} placeholder="Descreva o que você precisa..." value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))} style={{ resize: 'vertical' as const }} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 11.5, color: '#6b6b6b', display: 'block', marginBottom: 6, fontWeight: 600 }}>Data prevista de início</label>
+                    <label style={{ fontSize: 11.5, color: 'var(--text-2)', display: 'block', marginBottom: 6, fontWeight: 600 }}>Data prevista de início</label>
                     <input className="fp-inp" type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} />
                   </div>
-                  <button type="submit" style={{ marginTop: 4, background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <button type="submit" style={{ marginTop: 4, background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                     <Send size={15} /> Enviar Solicitação
                   </button>
                 </form>

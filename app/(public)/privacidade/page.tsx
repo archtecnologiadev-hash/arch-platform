@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 
 export const metadata = { title: 'Política de Privacidade — ARC' }
 
@@ -6,13 +6,13 @@ const UPDATED = '25 de abril de 2026'
 
 export default function PrivacidadePage() {
   return (
-    <div style={{ background: '#f2f2f7', minHeight: '100vh', padding: '48px 16px' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', padding: '48px 16px' }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
 
-        <p style={{ fontSize: 12, fontWeight: 300, color: '#8e8e93', marginBottom: 8 }}>
+        <p style={{ fontSize: 12, fontWeight: 300, color: 'var(--text-3)', marginBottom: 8 }}>
           Última atualização: {UPDATED}
         </p>
-        <h1 style={{ fontSize: 30, fontWeight: 300, color: '#1a1a1a', marginBottom: 40, letterSpacing: '-0.3px' }}>
+        <h1 style={{ fontSize: 30, fontWeight: 300, color: 'var(--text)', marginBottom: 40, letterSpacing: '-0.3px' }}>
           Política de Privacidade
         </h1>
 
@@ -49,11 +49,11 @@ export default function PrivacidadePage() {
           <P>• <strong>Portabilidade:</strong> receber seus dados em formato estruturado para transferência a outro fornecedor.</P>
           <P>• <strong>Revogação de consentimento:</strong> retirar seu consentimento a qualquer momento, sem prejuízo aos tratamentos anteriores.</P>
           <P>• <strong>Oposição:</strong> opor-se ao tratamento realizado com base em legítimo interesse.</P>
-          <P>Para exercer esses direitos, entre em contato pelo email <a href="mailto:privacidade@usearc.com.br" style={{ color: '#007AFF', textDecoration: 'none' }}>privacidade@usearc.com.br</a>. Respondemos em até 15 dias úteis.</P>
+          <P>Para exercer esses direitos, entre em contato pelo email <a href="mailto:privacidade@usearc.com.br" style={{ color: 'var(--accent)', textDecoration: 'none' }}>privacidade@usearc.com.br</a>. Respondemos em até 15 dias úteis.</P>
         </Section>
 
         <Section title="6. Como solicitar exclusão de conta">
-          <P>Você pode solicitar a exclusão definitiva da sua conta e todos os dados associados por email para <a href="mailto:privacidade@usearc.com.br" style={{ color: '#007AFF', textDecoration: 'none' }}>privacidade@usearc.com.br</a> com o assunto &ldquo;Exclusão de conta&rdquo;.</P>
+          <P>Você pode solicitar a exclusão definitiva da sua conta e todos os dados associados por email para <a href="mailto:privacidade@usearc.com.br" style={{ color: 'var(--accent)', textDecoration: 'none' }}>privacidade@usearc.com.br</a> com o assunto &ldquo;Exclusão de conta&rdquo;.</P>
           <P>Processamos a solicitação em até 30 dias. Dados necessários ao cumprimento de obrigações legais (como registros fiscais) podem ser retidos pelo prazo exigido por lei antes da exclusão definitiva.</P>
           <P>Atenção: a exclusão é irreversível. Projetos, mensagens e portfólios associados à conta serão removidos.</P>
         </Section>
@@ -76,7 +76,7 @@ export default function PrivacidadePage() {
 
         <Section title="10. Encarregado de dados (DPO)">
           <P>Nosso Encarregado de Proteção de Dados pode ser contactado por:</P>
-          <P>Email: <a href="mailto:contato@usearc.com.br" style={{ color: '#007AFF', textDecoration: 'none' }}>contato@usearc.com.br</a></P>
+          <P>Email: <a href="mailto:contato@usearc.com.br" style={{ color: 'var(--accent)', textDecoration: 'none' }}>contato@usearc.com.br</a></P>
           <P>Assunto: &ldquo;DPO — Proteção de Dados&rdquo;</P>
         </Section>
 
@@ -84,8 +84,8 @@ export default function PrivacidadePage() {
           <P>Esta Política pode ser atualizada periodicamente. Notificaremos mudanças significativas por email. A versão vigente está sempre disponível em <em>usearc.com.br/privacidade</em>.</P>
         </Section>
 
-        <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid rgba(0,0,0,0.08)', fontSize: 12, fontWeight: 300, color: '#8e8e93' }}>
-          Leia também: <Link href="/termos-de-uso" style={{ color: '#007AFF', textDecoration: 'none' }}>Termos de Uso</Link>
+        <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--border)', fontSize: 12, fontWeight: 300, color: 'var(--text-3)' }}>
+          Leia também: <Link href="/termos-de-uso" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Termos de Uso</Link>
         </div>
       </div>
     </div>
@@ -95,7 +95,7 @@ export default function PrivacidadePage() {
 function Section({ title, children, id }: { title: string; children: React.ReactNode; id?: string }) {
   return (
     <div id={id} style={{ marginBottom: 36 }}>
-      <h2 style={{ fontSize: 16, fontWeight: 400, color: '#1a1a1a', marginBottom: 12 }}>{title}</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 400, color: 'var(--text)', marginBottom: 12 }}>{title}</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{children}</div>
     </div>
   )

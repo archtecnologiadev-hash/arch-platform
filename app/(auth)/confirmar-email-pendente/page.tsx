@@ -26,43 +26,43 @@ export default function ConfirmarEmailPendentePage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#f2f2f7',
+      background: 'var(--bg)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '24px 16px',
     }}>
-      <span style={{ marginBottom: 32, fontSize: 20, fontWeight: 300, letterSpacing: '0.35em', color: '#007AFF' }}>
+      <span style={{ marginBottom: 32, fontSize: 20, fontWeight: 300, letterSpacing: '0.35em', color: 'var(--text)' }}>
         ARC
       </span>
 
       <div style={{
         width: '100%', maxWidth: 440,
-        background: '#ffffff',
-        border: '1px solid rgba(0,0,0,0.08)',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
         borderRadius: 16,
         padding: '40px 32px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+        boxShadow: 'var(--shadow-card)',
         textAlign: 'center',
       }}>
         <div style={{
           width: 56, height: 56, borderRadius: '50%',
-          background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.15)',
+          background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px',
         }}>
-          <Mail size={24} color="#007AFF" />
+          <Mail size={24} color="var(--accent)" />
         </div>
 
-        <h1 style={{ fontSize: 20, fontWeight: 400, color: '#1a1a1a', marginBottom: 8 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 400, color: 'var(--text)', marginBottom: 8 }}>
           Confirme seu email
         </h1>
-        <p style={{ fontSize: 13, color: '#6b6b6b', lineHeight: 1.6, marginBottom: email ? 6 : 24 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6, marginBottom: email ? 6 : 24 }}>
           Seu email ainda não foi confirmado. Use o código que enviamos para ativar sua conta.
         </p>
 
         {email && (
-          <p style={{ fontSize: 14, fontWeight: 500, color: '#1a1a1a', marginBottom: 24 }}>
+          <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)', marginBottom: 24 }}>
             {email}
           </p>
         )}
@@ -71,8 +71,8 @@ export default function ConfirmarEmailPendentePage() {
           onClick={() => router.push(`/confirmar-email/codigo${email ? `?email=${encodeURIComponent(email)}` : ''}`)}
           style={{
             width: '100%', padding: '13px', marginBottom: 12,
-            background: '#007AFF', border: 'none',
-            color: '#ffffff', borderRadius: 10, fontSize: 14, fontWeight: 500,
+            background: 'var(--btn-bg)', border: 'none',
+            color: 'var(--btn-text)', borderRadius: 10, fontSize: 14, fontWeight: 500,
             cursor: 'pointer',
           }}
         >
@@ -83,8 +83,8 @@ export default function ConfirmarEmailPendentePage() {
           onClick={handleLogout}
           style={{
             width: '100%', padding: '12px',
-            background: 'transparent', border: '1px solid rgba(0,0,0,0.1)',
-            color: '#8e8e93', borderRadius: 10, fontSize: 13,
+            background: 'transparent', border: '1px solid var(--border)',
+            color: 'var(--text-3)', borderRadius: 10, fontSize: 13,
             cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
           }}

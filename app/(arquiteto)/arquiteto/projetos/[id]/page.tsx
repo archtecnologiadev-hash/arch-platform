@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -116,9 +116,9 @@ const SEG_COLOR: Record<string, string> = {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const panel = { background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, overflow: 'hidden' as const, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
-const panelHeader = { padding: '13px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)', fontSize: 11, color: '#8e8e93', fontWeight: 600 as const, letterSpacing: '0.07em', textTransform: 'uppercase' as const }
-const iconBox = (color = '#6b6b6b') => ({ width: 28, height: 28, borderRadius: 7, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', display: 'flex' as const, alignItems: 'center' as const, justifyContent: 'center' as const, flexShrink: 0 as const, color })
+const panel = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' as const, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
+const panelHeader = { padding: '13px 16px', borderBottom: '1px solid var(--border)', fontSize: 11, color: 'var(--text-3)', fontWeight: 600 as const, letterSpacing: '0.07em', textTransform: 'uppercase' as const }
+const iconBox = (color = '#6b6b6b') => ({ width: 28, height: 28, borderRadius: 7, background: 'var(--bg)', border: '1px solid var(--border)', display: 'flex' as const, alignItems: 'center' as const, justifyContent: 'center' as const, flexShrink: 0 as const, color })
 
 type TabId = 'arquivos' | 'anotacoes' | 'fornecedores' | 'calendario' | 'orcamento'
 const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
@@ -639,8 +639,8 @@ export default function ProjetoDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f2f2f7' }}>
-        <Loader2 size={28} color="#007AFF" style={{ animation: 'spin 1s linear infinite' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg)' }}>
+        <Loader2 size={28} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
@@ -648,10 +648,10 @@ export default function ProjetoDetailPage() {
 
   if (!projeto) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: 12, background: '#f2f2f7' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: 12, background: 'var(--bg)' }}>
         <AlertCircle size={36} color="#8e8e93" />
-        <p style={{ fontSize: 14, color: '#6b6b6b' }}>Projeto não encontrado.</p>
-        <Link href="/arquiteto/projetos" style={{ fontSize: 13, color: '#007AFF', textDecoration: 'none' }}>← Voltar</Link>
+        <p style={{ fontSize: 14, color: 'var(--text-2)' }}>Projeto não encontrado.</p>
+        <Link href="/arquiteto/projetos" style={{ fontSize: 13, color: 'var(--accent)', textDecoration: 'none' }}>← Voltar</Link>
       </div>
     )
   }
@@ -659,7 +659,7 @@ export default function ProjetoDetailPage() {
   const clientInitials = cliente ? cliente.nome.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() : '—'
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f2f2f7', color: '#1a1a1a' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
         @keyframes pulse-ring { 0%{box-shadow:0 0 0 0 rgba(0,122,255,0.4)} 70%{box-shadow:0 0 0 8px rgba(0,122,255,0)} 100%{box-shadow:0 0 0 0 rgba(0,122,255,0)} }
@@ -679,17 +679,17 @@ export default function ProjetoDetailPage() {
       `}</style>
 
       {/* ═══════════════════ CLEAN HEADER ═══════════════════ */}
-      <div style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.08)', padding: '20px 28px 22px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-        <Link href="/arquiteto/projetos" className="proj-back-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#8e8e93', textDecoration: 'none', marginBottom: 14, transition: 'color 0.15s' }}>
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '20px 28px 22px', boxShadow: 'var(--shadow-card)' }}>
+        <Link href="/arquiteto/projetos" className="proj-back-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-3)', textDecoration: 'none', marginBottom: 14, transition: 'color 0.15s' }}>
           <ArrowLeft size={12} /> Projetos
         </Link>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16 }}>
           <div style={{ minWidth: 0 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#1a1a1a', letterSpacing: '-0.02em', margin: '0 0 7px', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em', margin: '0 0 7px', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName}
             </h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#6b6b6b', flexWrap: 'wrap' }}>
-              <span style={{ color: '#007AFF', fontWeight: 600 }}>{STAGES[stageIndex]}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--text-2)', flexWrap: 'wrap' }}>
+              <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{STAGES[stageIndex]}</span>
               {displayType !== '—' && (
                 <><span style={{ color: 'rgba(0,0,0,0.18)' }}>·</span><span>{displayType}</span></>
               )}
@@ -700,11 +700,11 @@ export default function ProjetoDetailPage() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             {nivelRank >= 3 && (
-              <button onClick={() => { setEditForm({ nome: projeto.nome, tipo: projeto.tipo ?? 'residencial', descricao: projeto.descricao ?? '', metragem: projeto.metragem != null ? String(projeto.metragem) : '', endereco: projeto.endereco ?? '', email_cliente: projeto.email_cliente ?? '', tipo_contrato: projeto.tipo_contrato ?? '' }); setEditOpen(true) }} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '7px 13px', borderRadius: 8, background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', cursor: 'pointer' }}>
+              <button onClick={() => { setEditForm({ nome: projeto.nome, tipo: projeto.tipo ?? 'residencial', descricao: projeto.descricao ?? '', metragem: projeto.metragem != null ? String(projeto.metragem) : '', endereco: projeto.endereco ?? '', email_cliente: projeto.email_cliente ?? '', tipo_contrato: projeto.tipo_contrato ?? '' }); setEditOpen(true) }} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '7px 13px', borderRadius: 8, background: 'rgba(0,0,0,0.04)', border: '1px solid var(--border-input)', color: 'var(--text-2)', cursor: 'pointer' }}>
                 <Pencil size={12} /> Editar
               </button>
             )}
-            <div style={{ fontSize: 11, fontWeight: 700, padding: '7px 16px', borderRadius: 22, background: 'rgba(0,122,255,0.08)', border: '1.5px solid rgba(0,122,255,0.25)', color: '#007AFF', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, padding: '7px 16px', borderRadius: 22, background: 'var(--accent-soft)', border: '1.5px solid rgba(0,122,255,0.25)', color: 'var(--accent)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
               {STAGES[stageIndex]}
             </div>
           </div>
@@ -712,7 +712,7 @@ export default function ProjetoDetailPage() {
       </div>
 
       {/* ═══════════════════ TIMELINE ═══════════════════ */}
-      <div className="sticky-page-header" style={{ background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.08)', padding: '0 28px', position: 'sticky', top: 0, zIndex: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+      <div className="sticky-page-header" style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '0 28px', position: 'sticky', top: 0, zIndex: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', padding: '16px 0', overflowX: 'auto' }}>
           {STAGES.map((stage, i) => {
             const done = i < stageIndex
@@ -725,9 +725,9 @@ export default function ProjetoDetailPage() {
               <div key={stage} style={{ display: 'flex', alignItems: 'center', flex: i < STAGES.length - 1 ? '1 1 0' : '0 0 auto', minWidth: 0 }}>
                 <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, flexShrink: 0 }}>
                   <div className={current ? 'stage-pulse' : ''} style={{ position: 'relative', width: 26, height: 26, borderRadius: '50%', background: done ? '#007AFF' : current ? 'rgba(0,122,255,0.12)' : '#f2f2f7', border: `2px solid ${done ? '#007AFF' : current ? '#007AFF' : 'rgba(0,0,0,0.12)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
-                    {done ? <Check size={12} color="#fff" strokeWidth={3} /> : current ? <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#007AFF' }} /> : <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(0,0,0,0.2)' }} />}
+                    {done ? <Check size={12} color="#fff" strokeWidth={3} /> : current ? <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--btn-bg)' }} /> : <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(0,0,0,0.2)' }} />}
                     {stageInitials && (
-                      <div title={`Responsável: ${stageAssignee?.users?.nome}`} style={{ position: 'absolute', bottom: -3, right: -5, width: 14, height: 14, borderRadius: '50%', background: '#007AFF', border: '1.5px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 5.5, fontWeight: 800, color: '#fff', zIndex: 1 }}>
+                      <div title={`Responsável: ${stageAssignee?.users?.nome}`} style={{ position: 'absolute', bottom: -3, right: -5, width: 14, height: 14, borderRadius: '50%', background: 'var(--btn-bg)', border: '1.5px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 5.5, fontWeight: 800, color: '#fff', zIndex: 1 }}>
                         {stageInitials}
                       </div>
                     )}
@@ -738,9 +738,9 @@ export default function ProjetoDetailPage() {
                     {stage}
                   </div>
                   {stageAssignOpen === i && (
-                    <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 6, background: '#fff', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', zIndex: 100, minWidth: 150, padding: '4px 0' }}
+                    <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 6, background: 'var(--bg-card)', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.14)', zIndex: 100, minWidth: 150, padding: '4px 0' }}
                       onClick={e => e.stopPropagation()}>
-                      <div style={{ fontSize: 9.5, color: '#8e8e93', padding: '4px 10px 6px', fontWeight: 600, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>Responsável · {stage}</div>
+                      <div style={{ fontSize: 9.5, color: 'var(--text-3)', padding: '4px 10px 6px', fontWeight: 600, borderBottom: '1px solid var(--border-subtle)' }}>Responsável · {stage}</div>
                       {stageAssignee && (
                         <button onClick={() => handleAssignStage(i, '')} style={{ width: '100%', padding: '5px 10px', background: 'none', border: 'none', fontSize: 11, color: '#ef4444', cursor: 'pointer', textAlign: 'left' as const }}>
                           ✕ Remover
@@ -768,7 +768,7 @@ export default function ProjetoDetailPage() {
         <div style={{ flex: 1, minWidth: 0 }}>
 
           {/* Tab bar */}
-          <div style={{ display: 'flex', borderBottom: '1px solid rgba(0,0,0,0.08)', marginBottom: 22, background: '#fff', borderRadius: '12px 12px 0 0', padding: '0 4px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: 22, background: 'var(--bg-card)', borderRadius: '12px 12px 0 0', padding: '0 4px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
             {TABS.map(tab => {
               const Icon = tab.icon
               const active = activeTab === tab.id
@@ -792,11 +792,11 @@ export default function ProjetoDetailPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={panel}>
                 <div style={{ padding: 16 }}>
-                  <textarea value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Escreva uma anotação sobre este projeto..." rows={4} style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, padding: '11px 13px', color: '#1a1a1a', fontSize: 13, resize: 'vertical' as const, outline: 'none', fontFamily: 'inherit', lineHeight: 1.65, boxSizing: 'border-box' as const, transition: 'border-color 0.15s' }}
+                  <textarea value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Escreva uma anotação sobre este projeto..." rows={4} style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '11px 13px', color: 'var(--text)', fontSize: 13, resize: 'vertical' as const, outline: 'none', fontFamily: 'inherit', lineHeight: 1.65, boxSizing: 'border-box' as const, transition: 'border-color 0.15s' }}
                     onFocus={e => (e.currentTarget.style.borderColor = 'rgba(0,122,255,0.4)')}
                     onBlur={e => (e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)')} />
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
-                    <button onClick={addNote} disabled={savingNote || !noteText.trim()} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, padding: '7px 15px', borderRadius: 7, background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.25)', color: '#007AFF', cursor: savingNote ? 'not-allowed' : 'pointer', fontWeight: 600, opacity: !noteText.trim() ? 0.5 : 1 }}>
+                    <button onClick={addNote} disabled={savingNote || !noteText.trim()} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, padding: '7px 15px', borderRadius: 7, background: 'var(--accent-soft)', border: '1px solid rgba(0,122,255,0.25)', color: 'var(--accent)', cursor: savingNote ? 'not-allowed' : 'pointer', fontWeight: 600, opacity: !noteText.trim() ? 0.5 : 1 }}>
                       {savingNote ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <Plus size={12} />}
                       Salvar anotação
                     </button>
@@ -805,21 +805,21 @@ export default function ProjetoDetailPage() {
               </div>
 
               {anotacoes.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#8e8e93', fontSize: 13 }}>Nenhuma anotação ainda</div>
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-3)', fontSize: 13 }}>Nenhuma anotação ainda</div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {anotacoes.map(note => {
                     const initials = (note.autor_nome ?? 'U').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
                     return (
-                      <div key={note.id} className="proj-note-card" style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, padding: '14px 16px', transition: 'border-color 0.18s', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                        <div style={{ fontSize: 13.5, color: '#1a1a1a', lineHeight: 1.65 }}>{note.texto}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 11, paddingTop: 11, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                          <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7.5, fontWeight: 700, color: '#007AFF' }}>{initials}</div>
-                          <span style={{ fontSize: 11, color: '#6b6b6b' }}>{note.autor_nome ?? 'Arquiteto'}</span>
+                      <div key={note.id} className="proj-note-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px', transition: 'border-color 0.18s', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                        <div style={{ fontSize: 13.5, color: 'var(--text)', lineHeight: 1.65 }}>{note.texto}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 11, paddingTop: 11, borderTop: '1px solid var(--border-subtle)' }}>
+                          <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--accent-soft)', border: '1px solid rgba(0,122,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7.5, fontWeight: 700, color: 'var(--accent)' }}>{initials}</div>
+                          <span style={{ fontSize: 11, color: 'var(--text-2)' }}>{note.autor_nome ?? 'Arquiteto'}</span>
                           <span style={{ color: 'rgba(0,0,0,0.15)' }}>·</span>
-                          <span style={{ fontSize: 11, color: '#8e8e93' }}>{new Date(note.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                          <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{new Date(note.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                           <span style={{ color: 'rgba(0,0,0,0.15)' }}>·</span>
-                          <span style={{ fontSize: 11, color: '#8e8e93' }}>{new Date(note.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{new Date(note.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                       </div>
                     )
@@ -834,7 +834,7 @@ export default function ProjetoDetailPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#8e8e93', letterSpacing: '0.12em', textTransform: 'uppercase' as const }}>Diretório ARC</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.12em', textTransform: 'uppercase' as const }}>Diretório ARC</div>
                   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' as const }}>
                     {DIR_SEGMENTS.map(seg => {
                       const isActive = dirFilter === seg
@@ -854,13 +854,13 @@ export default function ProjetoDetailPage() {
                   return (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
                       {filtered.length === 0 && (
-                        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px 0', color: '#8e8e93', fontSize: 13 }}>
+                        <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px 0', color: 'var(--text-3)', fontSize: 13 }}>
                           Nenhum fornecedor encontrado para &quot;{dirFilter}&quot;
                         </div>
                       )}
                       {filtered.map(sup => (
                         <div key={sup.id} className="dir-card">
-                          <div style={{ position: 'relative', overflow: 'hidden', background: '#f2f2f7' }}>
+                          <div style={{ position: 'relative', overflow: 'hidden', background: 'var(--bg)' }}>
                             {sup.cover
                               ? <img src={sup.cover} alt={sup.name} className="dir-card-img" />
                               : <div style={{ height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #e8e8f0, #d4d4dc)' }}>
@@ -876,18 +876,18 @@ export default function ProjetoDetailPage() {
                             <div style={{ position: 'absolute', top: 8, right: 8, background: `${sup.color}22`, border: `1px solid ${sup.color}44`, color: sup.color, fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 20, backdropFilter: 'blur(4px)' }}>{sup.segment}</div>
                           </div>
                           <div style={{ padding: '12px 14px' }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a', marginBottom: 4 }}>{sup.name}</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{sup.name}</div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
                               {sup.rating > 0
-                                ? <><div style={{ display: 'flex', gap: 1 }}>{[1,2,3,4,5].map(s => <Star key={s} size={9} fill={s <= Math.round(sup.rating) ? '#007AFF' : 'none'} color="#007AFF" />)}</div>
-                                    <span style={{ fontSize: 11, color: '#007AFF', fontWeight: 700 }}>{sup.rating}</span>
-                                    <span style={{ fontSize: 10, color: '#8e8e93' }}>({sup.reviewCount})</span>
+                                ? <><div style={{ display: 'flex', gap: 1 }}>{[1,2,3,4,5].map(s => <Star key={s} size={9} fill={s <= Math.round(sup.rating) ? '#007AFF' : 'none'} color="var(--accent)" />)}</div>
+                                    <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700 }}>{sup.rating}</span>
+                                    <span style={{ fontSize: 10, color: 'var(--text-3)' }}>({sup.reviewCount})</span>
                                     <span style={{ fontSize: 10, color: 'rgba(0,0,0,0.15)' }}>·</span></>
                                 : null}
                               <MapPin size={9} color="#6b6b6b" />
-                              <span style={{ fontSize: 10, color: '#6b6b6b' }}>{sup.city}</span>
+                              <span style={{ fontSize: 10, color: 'var(--text-2)' }}>{sup.city}</span>
                             </div>
-                            {sup.description && <p style={{ fontSize: 11.5, color: '#6b6b6b', lineHeight: 1.55, margin: '0 0 10px' }}>{sup.description}</p>}
+                            {sup.description && <p style={{ fontSize: 11.5, color: 'var(--text-2)', lineHeight: 1.55, margin: '0 0 10px' }}>{sup.description}</p>}
                             <div style={{ display: 'flex', gap: 6 }}>
                               {sup.dbId && (
                                 <button
@@ -899,16 +899,16 @@ export default function ProjetoDetailPage() {
                                 </button>
                               )}
                               {sup.slug && (
-                                <Link href={`/fornecedor/${sup.slug}`} target="_blank" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, padding: '6px', borderRadius: 6, background: 'transparent', border: '1px solid rgba(0,0,0,0.08)', color: '#6b6b6b', textDecoration: 'none', fontWeight: 600 }}>
+                                <Link href={`/fornecedor/${sup.slug}`} target="_blank" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, padding: '6px', borderRadius: 6, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-2)', textDecoration: 'none', fontWeight: 600 }}>
                                   <ExternalLink size={10} /> Ver Perfil
                                 </Link>
                               )}
                               {sup.dbId && (
-                                <button onClick={() => handleMensagemFornecedor(sup.dbId!)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, fontSize: 11, padding: '6px 8px', borderRadius: 6, background: 'transparent', border: '1px solid rgba(0,0,0,0.08)', color: '#6b6b6b', cursor: 'pointer', fontWeight: 600 }}>
+                                <button onClick={() => handleMensagemFornecedor(sup.dbId!)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, fontSize: 11, padding: '6px 8px', borderRadius: 6, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-2)', cursor: 'pointer', fontWeight: 600 }}>
                                   <MessageCircle size={10} /> Mensagem
                                 </button>
                               )}
-                              <button onClick={() => { setDirQuoteTarget(sup); setDirQuoteForm({ descricao: '', data: '' }); setDirQuoteFile(null); setDirQuoteSent(false) }} style={{ flex: 1, fontSize: 11, padding: '6px', borderRadius: 6, background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.22)', color: '#007AFF', cursor: 'pointer', fontWeight: 600 }}>
+                              <button onClick={() => { setDirQuoteTarget(sup); setDirQuoteForm({ descricao: '', data: '' }); setDirQuoteFile(null); setDirQuoteSent(false) }} style={{ flex: 1, fontSize: 11, padding: '6px', borderRadius: 6, background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.22)', color: 'var(--accent)', cursor: 'pointer', fontWeight: 600 }}>
                                 Solicitar Orçamento
                               </button>
                             </div>
@@ -923,41 +923,41 @@ export default function ProjetoDetailPage() {
               {/* Quote modal */}
               {dirQuoteTarget !== null && (
                 <div onClick={e => { if (e.target === e.currentTarget) setDirQuoteTarget(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(5px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-                  <div className="dir-modal-box" style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, width: '100%', maxWidth: 460, padding: 26, boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
+                  <div className="dir-modal-box" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, width: '100%', maxWidth: 460, padding: 26, boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
                     {dirQuoteSent ? (
                       <div style={{ textAlign: 'center' as const, padding: '20px 0' }}>
                         <CheckCircle2 size={48} color="#34d399" style={{ marginBottom: 14 }} />
-                        <div style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>Solicitação enviada!</div>
-                        <div style={{ fontSize: 12.5, color: '#6b6b6b' }}>{dirQuoteTarget.name} será notificado.</div>
+                        <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Solicitação enviada!</div>
+                        <div style={{ fontSize: 12.5, color: 'var(--text-2)' }}>{dirQuoteTarget.name} será notificado.</div>
                       </div>
                     ) : (
                       <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
                           <div>
-                            <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Solicitar Orçamento</div>
-                            <div style={{ fontSize: 12, color: '#6b6b6b', marginTop: 2 }}>{dirQuoteTarget.name}</div>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Solicitar Orçamento</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>{dirQuoteTarget.name}</div>
                           </div>
-                          <button onClick={() => setDirQuoteTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}><X size={16} /></button>
+                          <button onClick={() => setDirQuoteTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}><X size={16} /></button>
                         </div>
                         <input ref={dirQuoteFileRef} type="file" style={{ display: 'none' }} onChange={e => setDirQuoteFile(e.target.files?.[0] ?? null)} />
                         <form onSubmit={handleSendQuote} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                           <div>
-                            <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Descrição do serviço *</label>
+                            <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Descrição do serviço *</label>
                             <textarea className="dir-inp" required rows={3} placeholder="Descreva o que você precisa..." value={dirQuoteForm.descricao} onChange={e => setDirQuoteForm(f => ({ ...f, descricao: e.target.value }))} style={{ resize: 'vertical' as const }} />
                           </div>
                           <div>
-                            <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Data prevista de início</label>
+                            <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Data prevista de início</label>
                             <input className="dir-inp" type="date" value={dirQuoteForm.data} onChange={e => setDirQuoteForm(f => ({ ...f, data: e.target.value }))} />
                           </div>
                           <div>
-                            <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Anexar arquivo (opcional)</label>
-                            <div onClick={() => dirQuoteFileRef.current?.click()} style={{ padding: '9px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 7, fontSize: 12, color: dirQuoteFile ? '#1a1a1a' : '#8e8e93', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Anexar arquivo (opcional)</label>
+                            <div onClick={() => dirQuoteFileRef.current?.click()} style={{ padding: '9px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 7, fontSize: 12, color: dirQuoteFile ? '#1a1a1a' : '#8e8e93', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
                               <Upload size={13} color="#8e8e93" />
                               {dirQuoteFile ? dirQuoteFile.name : 'Clique para selecionar um arquivo'}
                               {dirQuoteFile && <X size={13} color="#8e8e93" onClick={e => { e.stopPropagation(); setDirQuoteFile(null) }} />}
                             </div>
                           </div>
-                          <button type="submit" disabled={dirQuoteSending} style={{ background: '#007AFF', color: '#fff', border: 'none', borderRadius: 8, padding: '11px', fontSize: 13, fontWeight: 700, cursor: dirQuoteSending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: dirQuoteSending ? 0.7 : 1 }}>
+                          <button type="submit" disabled={dirQuoteSending} style={{ background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 8, padding: '11px', fontSize: 13, fontWeight: 700, cursor: dirQuoteSending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: dirQuoteSending ? 0.7 : 1 }}>
                             {dirQuoteSending ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Enviando...</> : <><Send size={13} /> Enviar Solicitação</>}
                           </button>
                         </form>
@@ -1093,37 +1093,37 @@ export default function ProjetoDetailPage() {
                 {/* Modal Novo / Editar Item */}
                 {orcModal && (
                   <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setOrcModal(false)}>
-                    <div style={{ background: '#fff', borderRadius: 16, padding: '24px', width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
+                    <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: '24px', width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>{orcEditItem ? 'Editar Item' : 'Novo Item'}</div>
-                        <button onClick={() => setOrcModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', display: 'flex', alignItems: 'center' }}><X size={18} /></button>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>{orcEditItem ? 'Editar Item' : 'Novo Item'}</div>
+                        <button onClick={() => setOrcModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center' }}><X size={18} /></button>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                         <div>
-                          <label style={{ fontSize: 11.5, fontWeight: 600, color: '#6b6b6b', display: 'block', marginBottom: 6 }}>Categoria</label>
-                          <select value={orcForm.categoria} onChange={e => setOrcForm(f => ({ ...f, categoria: e.target.value }))} style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}>
+                          <label style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 6 }}>Categoria</label>
+                          <select value={orcForm.categoria} onChange={e => setOrcForm(f => ({ ...f, categoria: e.target.value }))} style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}>
                             {ORC_CATS.map(c => <option key={c} value={c}>{c}</option>)}
                           </select>
                         </div>
                         <div>
-                          <label style={{ fontSize: 11.5, fontWeight: 600, color: '#6b6b6b', display: 'block', marginBottom: 6 }}>Descrição</label>
-                          <input value={orcForm.descricao} onChange={e => setOrcForm(f => ({ ...f, descricao: e.target.value }))} placeholder="Ex: Armário de cozinha em MDF" style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                          <label style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 6 }}>Descrição</label>
+                          <input value={orcForm.descricao} onChange={e => setOrcForm(f => ({ ...f, descricao: e.target.value }))} placeholder="Ex: Armário de cozinha em MDF" style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 12 }}>
                           <div>
-                            <label style={{ fontSize: 11.5, fontWeight: 600, color: '#6b6b6b', display: 'block', marginBottom: 6 }}>Valor unitário (R$)</label>
-                            <input type="number" min="0" step="0.01" value={orcForm.valor} onChange={e => setOrcForm(f => ({ ...f, valor: e.target.value }))} placeholder="0,00" style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                            <label style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 6 }}>Valor unitário (R$)</label>
+                            <input type="number" min="0" step="0.01" value={orcForm.valor} onChange={e => setOrcForm(f => ({ ...f, valor: e.target.value }))} placeholder="0,00" style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
                           </div>
                           <div>
-                            <label style={{ fontSize: 11.5, fontWeight: 600, color: '#6b6b6b', display: 'block', marginBottom: 6 }}>Quantidade</label>
-                            <input type="number" min="1" step="1" value={orcForm.quantidade} onChange={e => setOrcForm(f => ({ ...f, quantidade: e.target.value }))} placeholder="1" style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                            <label style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 6 }}>Quantidade</label>
+                            <input type="number" min="1" step="1" value={orcForm.quantidade} onChange={e => setOrcForm(f => ({ ...f, quantidade: e.target.value }))} placeholder="1" style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
                           </div>
                         </div>
                         <div>
-                          <label style={{ fontSize: 11.5, fontWeight: 600, color: '#6b6b6b', display: 'block', marginBottom: 6 }}>Observação (opcional)</label>
-                          <textarea value={orcForm.observacao} onChange={e => setOrcForm(f => ({ ...f, observacao: e.target.value }))} placeholder="Detalhes adicionais..." rows={2} style={{ width: '100%', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', resize: 'none' }} />
+                          <label style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 6 }}>Observação (opcional)</label>
+                          <textarea value={orcForm.observacao} onChange={e => setOrcForm(f => ({ ...f, observacao: e.target.value }))} placeholder="Detalhes adicionais..." rows={2} style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', resize: 'none' }} />
                         </div>
-                        <button onClick={saveOrcItem} disabled={orcSaving || !orcForm.descricao.trim() || !orcForm.valor} style={{ width: '100%', padding: '12px', borderRadius: 10, background: '#007AFF', border: 'none', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: orcSaving || !orcForm.descricao.trim() || !orcForm.valor ? 0.5 : 1 }}>
+                        <button onClick={saveOrcItem} disabled={orcSaving || !orcForm.descricao.trim() || !orcForm.valor} style={{ width: '100%', padding: '12px', borderRadius: 10, background: 'var(--btn-bg)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: orcSaving || !orcForm.descricao.trim() || !orcForm.valor ? 0.5 : 1 }}>
                           {orcSaving && <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />}
                           {orcEditItem ? 'Salvar Alterações' : 'Adicionar Item'}
                         </button>
@@ -1133,21 +1133,21 @@ export default function ProjetoDetailPage() {
                 )}
 
                 {/* Header — Total + Ações */}
-                <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '20px 22px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '20px 22px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                    <div style={{ fontSize: 10.5, fontWeight: 700, color: '#8e8e93', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Orçamento do Projeto</div>
+                    <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Orçamento do Projeto</div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={exportPDF} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 8, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+                      <button onClick={exportPDF} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 8, background: 'var(--bg)', border: '1px solid var(--border-input)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                         <Download size={13} /> Exportar PDF
                       </button>
-                      <button onClick={openNew} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, background: '#007AFF', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
+                      <button onClick={openNew} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, background: 'var(--btn-bg)', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>
                         <Plus size={13} /> Novo Item
                       </button>
                     </div>
                   </div>
-                  <div style={{ fontSize: 34, fontWeight: 800, color: '#1a1a1a', letterSpacing: '-0.03em', lineHeight: 1 }}>{fmtBRL(grandTotal)}</div>
+                  <div style={{ fontSize: 34, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.03em', lineHeight: 1 }}>{fmtBRL(grandTotal)}</div>
                   {orcItems.length > 0 && (
-                    <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 6 }}>
+                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6 }}>
                       {orcItems.length} {orcItems.length === 1 ? 'item' : 'itens'} · {pieData.length} {pieData.length === 1 ? 'categoria' : 'categorias'}
                     </div>
                   )}
@@ -1155,8 +1155,8 @@ export default function ProjetoDetailPage() {
 
                 {/* Gráfico de Pizza */}
                 {pieData.length > 0 && (
-                  <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                    <div style={{ fontSize: 10.5, fontWeight: 700, color: '#8e8e93', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 16 }}>Distribuição por Categoria</div>
+                  <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                    <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 16 }}>Distribuição por Categoria</div>
                     <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
                       <div style={{ width: 180, height: 170, flexShrink: 0 }}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -1172,9 +1172,9 @@ export default function ProjetoDetailPage() {
                         {pieData.map(d => (
                           <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <div style={{ width: 10, height: 10, borderRadius: 3, background: d.color, flexShrink: 0 }} />
-                            <div style={{ fontSize: 12.5, color: '#1a1a1a', flex: 1 }}>{d.name}</div>
-                            <div style={{ fontSize: 11.5, color: '#8e8e93', minWidth: 34, textAlign: 'right' }}>{grandTotal > 0 ? Math.round(d.value / grandTotal * 100) : 0}%</div>
-                            <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1a1a1a', minWidth: 110, textAlign: 'right' }}>{fmtBRL(d.value)}</div>
+                            <div style={{ fontSize: 12.5, color: 'var(--text)', flex: 1 }}>{d.name}</div>
+                            <div style={{ fontSize: 11.5, color: 'var(--text-3)', minWidth: 34, textAlign: 'right' }}>{grandTotal > 0 ? Math.round(d.value / grandTotal * 100) : 0}%</div>
+                            <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)', minWidth: 110, textAlign: 'right' }}>{fmtBRL(d.value)}</div>
                           </div>
                         ))}
                       </div>
@@ -1191,34 +1191,34 @@ export default function ProjetoDetailPage() {
                   const color = ORC_CAT_COLOR[cat]
                   const isExpanded = orcExpandedCats.has(cat)
                   return (
-                    <div key={cat} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderLeft: `3px solid ${color}`, borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                    <div key={cat} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderLeft: `3px solid ${color}`, borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                       <button onClick={() => setOrcExpandedCats(prev => { const s = new Set(prev); if (s.has(cat)) s.delete(cat); else s.add(cat); return s })} style={{ width: '100%', padding: '13px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', borderBottom: isExpanded ? '1px solid rgba(0,0,0,0.06)' : 'none', cursor: 'pointer' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <span style={{ fontSize: 13, fontWeight: 700, color }}>{cat}</span>
                           <span style={{ fontSize: 11, background: `${color}15`, color, border: `1px solid ${color}30`, padding: '2px 8px', borderRadius: 20 }}>{pct}%</span>
-                          <span style={{ fontSize: 11, color: '#8e8e93' }}>{items.length} {items.length === 1 ? 'item' : 'itens'}</span>
+                          <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{items.length} {items.length === 1 ? 'item' : 'itens'}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>{fmtBRL(catTotal)}</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{fmtBRL(catTotal)}</span>
                           <ChevronDown size={14} color="#8e8e93" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
                         </div>
                       </button>
                       {isExpanded && items.map((it, i) => (
                         <div key={it.id} style={{ padding: '11px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: i < items.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, color: '#1a1a1a', fontWeight: 500 }}>{it.descricao}</div>
-                            {it.observacao && <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{it.observacao}</div>}
+                            <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{it.descricao}</div>
+                            {it.observacao && <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{it.observacao}</div>}
                           </div>
-                          <div style={{ fontSize: 11.5, color: '#8e8e93', flexShrink: 0 }}>
+                          <div style={{ fontSize: 11.5, color: 'var(--text-3)', flexShrink: 0 }}>
                             {(it.quantidade || 1) > 1 ? `${it.quantidade}× ` : ''}{fmtBRL(Number(it.valor))}
                           </div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', flexShrink: 0, minWidth: 100, textAlign: 'right' }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', flexShrink: 0, minWidth: 100, textAlign: 'right' }}>
                             {fmtBRL(Number(it.valor) * (it.quantidade || 1))}
                           </div>
-                          <button onClick={() => openEdit(it)} title="Editar" style={{ width: 26, height: 26, borderRadius: 6, background: '#f2f2f7', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <button onClick={() => openEdit(it)} title="Editar" style={{ width: 26, height: 26, borderRadius: 6, background: 'var(--bg)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <Pencil size={11} color="#6b6b6b" />
                           </button>
-                          <button onClick={() => deleteOrcItem(it.id)} title="Remover" style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c7c7cc', flexShrink: 0 }}
+                          <button onClick={() => deleteOrcItem(it.id)} title="Remover" style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--logout-btn)', flexShrink: 0 }}
                             onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
                             onMouseLeave={e => (e.currentTarget.style.color = '#c7c7cc')}>
                             <X size={12} />
@@ -1230,11 +1230,11 @@ export default function ProjetoDetailPage() {
                 })}
 
                 {orcItems.length === 0 && (
-                  <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '60px 24px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                  <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '60px 24px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                     <DollarSign size={36} color="#c7c7cc" style={{ margin: '0 auto 12px' }} />
                     <div style={{ fontSize: 14, fontWeight: 600, color: '#3a3a3c', marginBottom: 4 }}>Nenhum item no orçamento</div>
-                    <div style={{ fontSize: 12, color: '#8e8e93', marginBottom: 20 }}>Adicione itens clicando em &quot;Novo Item&quot;</div>
-                    <button onClick={openNew} style={{ padding: '9px 22px', borderRadius: 9, background: '#007AFF', border: 'none', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 20 }}>Adicione itens clicando em &quot;Novo Item&quot;</div>
+                    <button onClick={openNew} style={{ padding: '9px 22px', borderRadius: 9, background: 'var(--btn-bg)', border: 'none', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                       <Plus size={13} /> Adicionar primeiro item
                     </button>
                   </div>
@@ -1254,24 +1254,24 @@ export default function ProjetoDetailPage() {
               {cliente ? (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                    <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'rgba(0,122,255,0.1)', border: '2px solid rgba(0,122,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#007AFF', flexShrink: 0 }}>
+                    <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'var(--accent-soft)', border: '2px solid rgba(0,122,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: 'var(--accent)', flexShrink: 0 }}>
                       {clientInitials}
                     </div>
                     <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 700, color: '#1a1a1a' }}>{cliente.nome}</div>
-                      <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2 }}>{displayType}</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)' }}>{cliente.nome}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{displayType}</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                       <div style={iconBox()}><Mail size={11} color="#6b6b6b" /></div>
-                      <span style={{ fontSize: 12, color: '#6b6b6b', wordBreak: 'break-all' as const }}>{cliente.email}</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-2)', wordBreak: 'break-all' as const }}>{cliente.email}</span>
                     </div>
                   </div>
                   {nivelRank > 0 && (
                     <button
                       onClick={() => projeto?.cliente_id && handleIniciarConversa(projeto.cliente_id, 'cliente')}
-                      style={{ marginTop: 14, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '9px', background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.22)', borderRadius: 8, color: '#007AFF', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', transition: 'background 0.15s' }}
+                      style={{ marginTop: 14, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '9px', background: 'rgba(0,122,255,0.09)', border: '1px solid rgba(0,122,255,0.22)', borderRadius: 8, color: 'var(--accent)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', transition: 'background 0.15s' }}
                       onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.18)')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.09)')}>
                       <MessageCircle size={13} /> Iniciar conversa
@@ -1280,9 +1280,9 @@ export default function ProjetoDetailPage() {
                 </>
               ) : (
                 <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                  <div style={{ fontSize: 12, color: '#8e8e93', marginBottom: 12 }}>Cliente não vinculado</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 12 }}>Cliente não vinculado</div>
                   {nivelRank >= 3 && (
-                    <button onClick={() => { setLinkOpen(true); setLinkTab('buscar'); setLinkQuery(''); setLinkResults([]); setLinkInviteSent(false) }} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.22)', borderRadius: 8, color: '#007AFF', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+                    <button onClick={() => { setLinkOpen(true); setLinkTab('buscar'); setLinkQuery(''); setLinkResults([]); setLinkInviteSent(false) }} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', background: 'var(--accent-soft)', border: '1px solid rgba(0,122,255,0.22)', borderRadius: 8, color: 'var(--accent)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
                       <UserPlus size={13} /> Vincular cliente
                     </button>
                   )}
@@ -1292,7 +1292,7 @@ export default function ProjetoDetailPage() {
           </div>
 
           {/* Quick stats */}
-          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 11, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 11, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
             {[
               { label: 'Progresso',    value: `${progress}%` },
               { label: 'Etapa atual',  value: STAGES[stageIndex] },
@@ -1300,8 +1300,8 @@ export default function ProjetoDetailPage() {
               { label: 'Anotações',    value: String(anotacoes.length) },
             ].map(stat => (
               <div key={stat.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 11.5, color: '#8e8e93' }}>{stat.label}</span>
-                <span style={{ fontSize: 12.5, fontWeight: 600, color: '#007AFF' }}>{stat.value}</span>
+                <span style={{ fontSize: 11.5, color: 'var(--text-3)' }}>{stat.label}</span>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--accent)' }}>{stat.value}</span>
               </div>
             ))}
           </div>
@@ -1317,7 +1317,7 @@ export default function ProjetoDetailPage() {
               <div style={{ textAlign: 'center', padding: '10px', fontSize: 12, color: '#34d399', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 9, background: 'rgba(52,211,153,0.06)' }}>
                 <CheckCircle2 size={14} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} /> Projeto concluído
               </div>
-              <button onClick={handleRegressStage} disabled={regressingStage} style={{ width: '100%', padding: '9px', borderRadius: 9, background: 'transparent', border: '1px solid rgba(0,0,0,0.1)', color: '#8e8e93', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <button onClick={handleRegressStage} disabled={regressingStage} style={{ width: '100%', padding: '9px', borderRadius: 9, background: 'transparent', border: '1px solid var(--border-input)', color: 'var(--text-3)', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                 {regressingStage ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <ChevronLeft size={13} />} Retroceder etapa
               </button>
             </div>
@@ -1327,7 +1327,7 @@ export default function ProjetoDetailPage() {
                 {stageAdvanced ? <><CheckCircle2 size={14} /> ETAPA AVANÇADA</> : advancingStage ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> SALVANDO...</> : <>→ Avançar para {STAGES[stageIndex + 1]}</>}
               </button>
               {stageIndex > 0 && (
-                <button onClick={handleRegressStage} disabled={regressingStage} style={{ width: '100%', padding: '9px', borderRadius: 9, background: 'transparent', border: '1px solid rgba(0,0,0,0.1)', color: '#8e8e93', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <button onClick={handleRegressStage} disabled={regressingStage} style={{ width: '100%', padding: '9px', borderRadius: 9, background: 'transparent', border: '1px solid var(--border-input)', color: 'var(--text-3)', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                   {regressingStage ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <ChevronLeft size={13} />} Retroceder etapa
                 </button>
               )}
@@ -1343,9 +1343,9 @@ export default function ProjetoDetailPage() {
                 const dayNum = date.getDate()
                 const hasEvents = dayEvents.length > 0
                 return (
-                  <div key={dStr} style={{ display: 'flex', gap: 10, padding: '8px 14px', borderBottom: '1px solid rgba(0,0,0,0.06)', opacity: !hasEvents && !isToday ? 0.35 : 1 }}>
+                  <div key={dStr} style={{ display: 'flex', gap: 10, padding: '8px 14px', borderBottom: '1px solid var(--border-subtle)', opacity: !hasEvents && !isToday ? 0.35 : 1 }}>
                     <div style={{ flexShrink: 0, width: 28, textAlign: 'center' }}>
-                      <div style={{ fontSize: 9, color: '#8e8e93', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>{weekLabel.replace('.', '')}</div>
+                      <div style={{ fontSize: 9, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>{weekLabel.replace('.', '')}</div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: isToday ? '#007AFF' : '#8e8e93', lineHeight: 1.1, marginTop: 1 }}>{dayNum}</div>
                     </div>
                     <div style={{ flex: 1, minWidth: 0, paddingTop: 1 }}>
@@ -1357,7 +1357,7 @@ export default function ProjetoDetailPage() {
                             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                             <div style={{ width: 5, height: 5, borderRadius: '50%', background: color, flexShrink: 0, boxShadow: `0 0 4px ${color}66` }} />
                             <div style={{ fontSize: 11, color, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{ev.title}</div>
-                            {ev.startTime && <div style={{ fontSize: 9.5, color: '#8e8e93', flexShrink: 0 }}>{ev.startTime}</div>}
+                            {ev.startTime && <div style={{ fontSize: 9.5, color: 'var(--text-3)', flexShrink: 0 }}>{ev.startTime}</div>}
                           </div>
                         )
                       })}
@@ -1374,8 +1374,8 @@ export default function ProjetoDetailPage() {
               <div style={{ padding: '4px 0' }}>
                 {historico.slice(0, 8).map((h, i) => (
                   <div key={h.id} style={{ padding: '9px 14px', borderBottom: i < Math.min(historico.length, 8) - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: '#1a1a1a' }}>{h.acao}</div>
-                    {h.detalhe && <div style={{ fontSize: 11, color: '#6b6b6b', marginTop: 1 }}>{h.detalhe}</div>}
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{h.acao}</div>
+                    {h.detalhe && <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 1 }}>{h.detalhe}</div>}
                     <div style={{ fontSize: 10, color: '#aeaeb2', marginTop: 3 }}>{new Date(h.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
                   </div>
                 ))}
@@ -1389,22 +1389,22 @@ export default function ProjetoDetailPage() {
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><UserPlus size={11} /> Equipe do Projeto</span>
               {nivelRank >= 2 && (
                 <button onClick={() => setAddMembroOpen(v => !v)}
-                  style={{ background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.2)', color: '#007AFF', borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
+                  style={{ background: 'rgba(0,122,255,0.07)', border: '1px solid var(--accent-soft-border)', color: 'var(--accent)', borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
                   <Plus size={9} /> Add
                 </button>
               )}
             </div>
             {addMembroOpen && membrosEscritorio.length > 0 && (
-              <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(0,0,0,0.06)', background: '#fafafa', display: 'flex', flexDirection: 'column', gap: 7 }}>
+              <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-subtle)', background: '#fafafa', display: 'flex', flexDirection: 'column', gap: 7 }}>
                 <select value={addMembroId} onChange={e => setAddMembroId(e.target.value)}
-                  style={{ width: '100%', padding: '6px 8px', fontSize: 12, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 7, background: '#fff', color: '#1a1a1a', outline: 'none' }}>
+                  style={{ width: '100%', padding: '6px 8px', fontSize: 12, border: '1px solid var(--border-input)', borderRadius: 7, background: 'var(--bg-card)', color: 'var(--text)', outline: 'none' }}>
                   <option value="">Selecionar membro...</option>
                   {membrosEscritorio.filter(m => !projetoMembros.find(pm => pm.user_id === m.id)).map(m => (
                     <option key={m.id} value={m.id}>{m.nome}{m.cargo ? ` (${m.cargo})` : ''}</option>
                   ))}
                 </select>
                 <input value={addMembroPapel} onChange={e => setAddMembroPapel(e.target.value)} placeholder="Papel neste projeto (opcional)"
-                  style={{ width: '100%', padding: '6px 8px', fontSize: 12, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 7, background: '#fff', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }} />
+                  style={{ width: '100%', padding: '6px 8px', fontSize: 12, border: '1px solid var(--border-input)', borderRadius: 7, background: 'var(--bg-card)', color: 'var(--text)', outline: 'none', boxSizing: 'border-box' }} />
                 <button onClick={handleAddMembro} disabled={!addMembroId || addMembroSaving}
                   style={{ padding: '7px', background: !addMembroId ? 'rgba(0,122,255,0.3)' : '#007AFF', color: '#fff', border: 'none', borderRadius: 7, fontSize: 11.5, fontWeight: 700, cursor: addMembroId ? 'pointer' : 'not-allowed' }}>
                   {addMembroSaving ? 'Adicionando...' : 'Adicionar'}
@@ -1419,15 +1419,15 @@ export default function ProjetoDetailPage() {
                 const initials = nome.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase()
                 return (
                   <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 14px', borderBottom: i < projetoMembros.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
-                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#007AFF', flexShrink: 0 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: 'var(--accent)', flexShrink: 0 }}>
                       {initials}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 11.5, fontWeight: 600, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nome}</div>
-                      {m.papel && <div style={{ fontSize: 10, color: '#8e8e93' }}>{m.papel}</div>}
+                      <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nome}</div>
+                      {m.papel && <div style={{ fontSize: 10, color: 'var(--text-3)' }}>{m.papel}</div>}
                     </div>
                     <button onClick={() => handleRemoveMembro(m.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c7c7cc', padding: 2, display: 'flex', flexShrink: 0 }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--logout-btn)', padding: 2, display: 'flex', flexShrink: 0 }}
                       onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
                       onMouseLeave={e => (e.currentTarget.style.color = '#c7c7cc')}>
                       <X size={11} />
@@ -1447,21 +1447,21 @@ export default function ProjetoDetailPage() {
       {/* ══ MODAL: Editar Projeto ══ */}
       {editOpen && (
         <div onClick={e => { if (e.target === e.currentTarget) setEditOpen(false) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div className="dir-modal-box" style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 560, padding: 28, boxShadow: '0 8px 32px rgba(0,0,0,0.14)', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="dir-modal-box" style={{ background: 'var(--bg-card)', borderRadius: 16, width: '100%', maxWidth: 560, padding: 28, boxShadow: '0 8px 32px rgba(0,0,0,0.14)', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>Editar Projeto</div>
-                <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 2 }}>Altere os dados do projeto</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Editar Projeto</div>
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>Altere os dados do projeto</div>
               </div>
-              <button onClick={() => setEditOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}><X size={18} /></button>
+              <button onClick={() => setEditOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}><X size={18} /></button>
             </div>
             <form onSubmit={handleEditSave} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Nome do projeto *</label>
-                <input value={editForm.nome} onChange={e => setEditForm(f => ({ ...f, nome: e.target.value }))} required style={{ width: '100%', padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Nome do projeto *</label>
+                <input value={editForm.nome} onChange={e => setEditForm(f => ({ ...f, nome: e.target.value }))} required style={{ width: '100%', padding: '10px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, fontSize: 13, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
               </div>
               <div>
-                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Tipo</label>
+                <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Tipo</label>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {['residencial', 'comercial', 'institucional'].map(t => (
                     <button key={t} type="button" onClick={() => setEditForm(f => ({ ...f, tipo: t }))} style={{ flex: 1, padding: '8px', fontSize: 12, fontWeight: 600, borderRadius: 8, cursor: 'pointer', background: editForm.tipo === t ? 'rgba(0,122,255,0.1)' : '#f2f2f7', border: `1px solid ${editForm.tipo === t ? '#007AFF' : 'rgba(0,0,0,0.08)'}`, color: editForm.tipo === t ? '#007AFF' : '#6b6b6b', textTransform: 'capitalize' }}>
@@ -1471,17 +1471,17 @@ export default function ProjetoDetailPage() {
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Descrição</label>
-                <textarea value={editForm.descricao} onChange={e => setEditForm(f => ({ ...f, descricao: e.target.value }))} rows={3} placeholder="Descrição do projeto..." style={{ width: '100%', padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Descrição</label>
+                <textarea value={editForm.descricao} onChange={e => setEditForm(f => ({ ...f, descricao: e.target.value }))} rows={3} placeholder="Descrição do projeto..." style={{ width: '100%', padding: '10px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, fontSize: 13, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Metragem (m²)</label>
-                  <input type="number" min="0" step="0.01" value={editForm.metragem} onChange={e => setEditForm(f => ({ ...f, metragem: e.target.value }))} placeholder="Ex: 120" style={{ width: '100%', padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                  <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Metragem (m²)</label>
+                  <input type="number" min="0" step="0.01" value={editForm.metragem} onChange={e => setEditForm(f => ({ ...f, metragem: e.target.value }))} placeholder="Ex: 120" style={{ width: '100%', padding: '10px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, fontSize: 13, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Tipo de contrato</label>
-                  <select value={editForm.tipo_contrato} onChange={e => setEditForm(f => ({ ...f, tipo_contrato: e.target.value }))} style={{ width: '100%', padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: editForm.tipo_contrato ? '#1a1a1a' : '#8e8e93', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}>
+                  <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Tipo de contrato</label>
+                  <select value={editForm.tipo_contrato} onChange={e => setEditForm(f => ({ ...f, tipo_contrato: e.target.value }))} style={{ width: '100%', padding: '10px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, fontSize: 13, color: editForm.tipo_contrato ? '#1a1a1a' : '#8e8e93', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}>
                     <option value="">Selecionar...</option>
                     <option value="execucao">Execução</option>
                     <option value="somente_projeto">Somente Projeto</option>
@@ -1490,12 +1490,12 @@ export default function ProjetoDetailPage() {
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Endereço da obra</label>
-                <input value={editForm.endereco} onChange={e => setEditForm(f => ({ ...f, endereco: e.target.value }))} placeholder="Rua, número, bairro..." style={{ width: '100%', padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Endereço da obra</label>
+                <input value={editForm.endereco} onChange={e => setEditForm(f => ({ ...f, endereco: e.target.value }))} placeholder="Rua, número, bairro..." style={{ width: '100%', padding: '10px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, fontSize: 13, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
               </div>
               <div>
-                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Email do cliente</label>
-                <input type="email" value={editForm.email_cliente} onChange={e => setEditForm(f => ({ ...f, email_cliente: e.target.value }))} placeholder="cliente@email.com" style={{ width: '100%', padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Email do cliente</label>
+                <input type="email" value={editForm.email_cliente} onChange={e => setEditForm(f => ({ ...f, email_cliente: e.target.value }))} placeholder="cliente@email.com" style={{ width: '100%', padding: '10px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, fontSize: 13, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
               </div>
               <button type="submit" disabled={editSaving || !editForm.nome.trim()} style={{ width: '100%', padding: '12px', background: editSaving ? 'rgba(0,122,255,0.5)' : '#007AFF', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: editSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 4 }}>
                 {editSaving ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</> : <><Check size={14} /> Salvar alterações</>}
@@ -1508,21 +1508,21 @@ export default function ProjetoDetailPage() {
       {/* ══ MODAL: Vincular Cliente ══ */}
       {linkOpen && (
         <div onClick={e => { if (e.target === e.currentTarget) setLinkOpen(false) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div className="dir-modal-box" style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 460, padding: 28, boxShadow: '0 8px 32px rgba(0,0,0,0.14)' }}>
+          <div className="dir-modal-box" style={{ background: 'var(--bg-card)', borderRadius: 16, width: '100%', maxWidth: 460, padding: 28, boxShadow: '0 8px 32px rgba(0,0,0,0.14)' }}>
             {linkInviteSent ? (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
                 <CheckCircle2 size={48} color="#34d399" style={{ marginBottom: 14 }} />
-                <div style={{ fontSize: 17, fontWeight: 700, color: '#1a1a1a', marginBottom: 6 }}>Convite registrado!</div>
-                <div style={{ fontSize: 12.5, color: '#6b6b6b' }}>Quando {linkInviteEmail} criar conta, será vinculado automaticamente.</div>
+                <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Convite registrado!</div>
+                <div style={{ fontSize: 12.5, color: 'var(--text-2)' }}>Quando {linkInviteEmail} criar conta, será vinculado automaticamente.</div>
               </div>
             ) : (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>Vincular Cliente</div>
-                  <button onClick={() => setLinkOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}><X size={18} /></button>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Vincular Cliente</div>
+                  <button onClick={() => setLinkOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}><X size={18} /></button>
                 </div>
                 {/* Tabs */}
-                <div style={{ display: 'flex', borderBottom: '1px solid rgba(0,0,0,0.08)', marginBottom: 20 }}>
+                <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: 20 }}>
                   {(['buscar', 'convidar'] as const).map(t => (
                     <button key={t} onClick={() => setLinkTab(t)} style={{ padding: '9px 16px', background: 'transparent', border: 'none', borderBottom: `2px solid ${linkTab === t ? '#007AFF' : 'transparent'}`, color: linkTab === t ? '#007AFF' : '#8e8e93', fontSize: 13, fontWeight: linkTab === t ? 600 : 400, cursor: 'pointer', marginBottom: -1, textTransform: 'capitalize' }}>
                       {t === 'buscar' ? 'Buscar cadastrado' : 'Convidar por email'}
@@ -1532,23 +1532,23 @@ export default function ProjetoDetailPage() {
                 {linkTab === 'buscar' ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <input value={linkQuery} onChange={e => setLinkQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLinkSearch()} placeholder="Buscar por nome ou email..." style={{ flex: 1, padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: '#1a1a1a', outline: 'none', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
-                      <button onClick={handleLinkSearch} disabled={linkSearching} style={{ padding: '10px 14px', background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.25)', borderRadius: 9, color: '#007AFF', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600 }}>
+                      <input value={linkQuery} onChange={e => setLinkQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLinkSearch()} placeholder="Buscar por nome ou email..." style={{ flex: 1, padding: '10px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, fontSize: 13, color: 'var(--text)', outline: 'none', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                      <button onClick={handleLinkSearch} disabled={linkSearching} style={{ padding: '10px 14px', background: 'var(--accent-soft)', border: '1px solid rgba(0,122,255,0.25)', borderRadius: 9, color: 'var(--accent)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600 }}>
                         {linkSearching ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Search size={14} />}
                       </button>
                     </div>
                     {linkResults.length > 0 && (
-                      <div style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, overflow: 'hidden' }}>
+                      <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
                         {linkResults.map((u, i) => (
                           <div key={u.id} style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: i < linkResults.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
-                            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,122,255,0.1)', border: '1px solid rgba(0,122,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#007AFF', flexShrink: 0 }}>
+                            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'var(--accent)', flexShrink: 0 }}>
                               {u.nome.slice(0, 1).toUpperCase()}
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{u.nome}</div>
-                              <div style={{ fontSize: 11, color: '#8e8e93' }}>{u.email}</div>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{u.nome}</div>
+                              <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{u.email}</div>
                             </div>
-                            <button onClick={() => handleLinkClient(u.id, u.nome, u.email)} disabled={linkingId === u.id} style={{ padding: '7px 14px', background: '#007AFF', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, opacity: linkingId === u.id ? 0.6 : 1 }}>
+                            <button onClick={() => handleLinkClient(u.id, u.nome, u.email)} disabled={linkingId === u.id} style={{ padding: '7px 14px', background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, opacity: linkingId === u.id ? 0.6 : 1 }}>
                               {linkingId === u.id ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={12} />} Vincular
                             </button>
                           </div>
@@ -1556,14 +1556,14 @@ export default function ProjetoDetailPage() {
                       </div>
                     )}
                     {linkResults.length === 0 && linkQuery && !linkSearching && (
-                      <div style={{ textAlign: 'center', padding: '24px', color: '#8e8e93', fontSize: 13, background: '#f9f9fb', borderRadius: 10 }}>Nenhum usuário encontrado. Tente convidar por email.</div>
+                      <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-3)', fontSize: 13, background: '#f9f9fb', borderRadius: 10 }}>Nenhum usuário encontrado. Tente convidar por email.</div>
                     )}
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <p style={{ fontSize: 12.5, color: '#6b6b6b', margin: 0 }}>Informe o email do cliente. Quando ele criar conta com esse email, será vinculado automaticamente.</p>
-                    <input type="email" value={linkInviteEmail} onChange={e => setLinkInviteEmail(e.target.value)} placeholder="cliente@email.com" style={{ width: '100%', padding: '10px 12px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 9, fontSize: 13, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
-                    <button onClick={handleInviteClient} disabled={linkInviting || !linkInviteEmail.trim()} style={{ width: '100%', padding: '12px', background: '#007AFF', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: linkInviting || !linkInviteEmail.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: !linkInviteEmail.trim() ? 0.5 : 1 }}>
+                    <p style={{ fontSize: 12.5, color: 'var(--text-2)', margin: 0 }}>Informe o email do cliente. Quando ele criar conta com esse email, será vinculado automaticamente.</p>
+                    <input type="email" value={linkInviteEmail} onChange={e => setLinkInviteEmail(e.target.value)} placeholder="cliente@email.com" style={{ width: '100%', padding: '10px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, fontSize: 13, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} onFocus={e => (e.target.style.borderColor = 'rgba(0,122,255,0.4)')} onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                    <button onClick={handleInviteClient} disabled={linkInviting || !linkInviteEmail.trim()} style={{ width: '100%', padding: '12px', background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: linkInviting || !linkInviteEmail.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: !linkInviteEmail.trim() ? 0.5 : 1 }}>
                       {linkInviting ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</> : <><Send size={14} /> Salvar email do cliente</>}
                     </button>
                   </div>
@@ -1577,14 +1577,14 @@ export default function ProjetoDetailPage() {
       {/* ══ MODAL: Editar evento da semana ══ */}
       {sidebarEditTarget && (
         <div onClick={e => { if (e.target === e.currentTarget) setSidebarEditTarget(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div className="dir-modal-box" style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 480, padding: 24, boxShadow: '0 8px 32px rgba(0,0,0,0.14)', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="dir-modal-box" style={{ background: 'var(--bg-card)', borderRadius: 16, width: '100%', maxWidth: 480, padding: 24, boxShadow: '0 8px 32px rgba(0,0,0,0.14)', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Editar Evento</div>
-              <button onClick={() => setSidebarEditTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 4 }}><X size={18} /></button>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Editar Evento</div>
+              <button onClick={() => setSidebarEditTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}><X size={18} /></button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Tipo</label>
+                <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Tipo</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {(Object.keys(EVENT_META) as EventType[]).map(t => {
                     const meta = EVENT_META[t]
@@ -1599,45 +1599,45 @@ export default function ProjetoDetailPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Serviço</label>
-                  <input value={sidebarEditForm.title} onChange={e => setSidebarEditForm(f => ({ ...f, title: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12.5, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                  <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Serviço</label>
+                  <input value={sidebarEditForm.title} onChange={e => setSidebarEditForm(f => ({ ...f, title: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12.5, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Fornecedor</label>
-                  <input value={sidebarEditForm.provider} onChange={e => setSidebarEditForm(f => ({ ...f, provider: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12.5, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Data início</label>
-                  <input type="date" value={sidebarEditForm.startDate} onChange={e => setSidebarEditForm(f => ({ ...f, startDate: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12.5, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'light' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Data fim</label>
-                  <input type="date" value={sidebarEditForm.endDate} onChange={e => setSidebarEditForm(f => ({ ...f, endDate: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12.5, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'light' }} />
+                  <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Fornecedor</label>
+                  <input value={sidebarEditForm.provider} onChange={e => setSidebarEditForm(f => ({ ...f, provider: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12.5, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Horário início</label>
-                  <input type="time" value={sidebarEditForm.startTime} onChange={e => setSidebarEditForm(f => ({ ...f, startTime: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12.5, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'light' }} />
+                  <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Data início</label>
+                  <input type="date" value={sidebarEditForm.startDate} onChange={e => setSidebarEditForm(f => ({ ...f, startDate: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12.5, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'light' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Horário fim</label>
-                  <input type="time" value={sidebarEditForm.endTime} onChange={e => setSidebarEditForm(f => ({ ...f, endTime: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12.5, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'light' }} />
+                  <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Data fim</label>
+                  <input type="date" value={sidebarEditForm.endDate} onChange={e => setSidebarEditForm(f => ({ ...f, endDate: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12.5, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'light' }} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Horário início</label>
+                  <input type="time" value={sidebarEditForm.startTime} onChange={e => setSidebarEditForm(f => ({ ...f, startTime: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12.5, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'light' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Horário fim</label>
+                  <input type="time" value={sidebarEditForm.endTime} onChange={e => setSidebarEditForm(f => ({ ...f, endTime: e.target.value }))} style={{ width: '100%', padding: '9px 11px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12.5, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'light' }} />
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: 11, color: '#6b6b6b', display: 'block', marginBottom: 5, fontWeight: 600 }}>Observação</label>
-                <textarea value={sidebarEditForm.note} onChange={e => setSidebarEditForm(f => ({ ...f, note: e.target.value }))} rows={2} style={{ width: '100%', padding: '9px 11px', background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12.5, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'vertical' }} />
+                <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 5, fontWeight: 600 }}>Observação</label>
+                <textarea value={sidebarEditForm.note} onChange={e => setSidebarEditForm(f => ({ ...f, note: e.target.value }))} rows={2} style={{ width: '100%', padding: '9px 11px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12.5, color: 'var(--text)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'vertical' }} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 }}>
                 <button onClick={handleSidebarEditDelete} disabled={sidebarEditDeleting} style={{ padding: '9px 16px', borderRadius: 9, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                   {sidebarEditDeleting ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <X size={12} />} Excluir
                 </button>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => setSidebarEditTarget(null)} style={{ padding: '9px 16px', borderRadius: 9, background: '#f2f2f7', border: '1px solid rgba(0,0,0,0.1)', color: '#6b6b6b', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
-                  <button onClick={handleSidebarEditSave} disabled={sidebarEditSaving || !sidebarEditForm.title.trim()} style={{ padding: '9px 18px', borderRadius: 9, background: '#007AFF', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: sidebarEditSaving || !sidebarEditForm.title.trim() ? 0.6 : 1 }}>
+                  <button onClick={() => setSidebarEditTarget(null)} style={{ padding: '9px 16px', borderRadius: 9, background: 'var(--bg)', border: '1px solid var(--border-input)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+                  <button onClick={handleSidebarEditSave} disabled={sidebarEditSaving || !sidebarEditForm.title.trim()} style={{ padding: '9px 18px', borderRadius: 9, background: 'var(--btn-bg)', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: sidebarEditSaving || !sidebarEditForm.title.trim() ? 0.6 : 1 }}>
                     {sidebarEditSaving ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : null} Salvar
                   </button>
                 </div>

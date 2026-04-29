@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import TrialGate from '@/components/shared/TrialGate'
+import ThemeToggle from '@/components/ThemeToggle'
 
 // Rank: higher = more privileged
 const NIVEL_RANK: Record<string, number> = {
@@ -17,7 +18,7 @@ const NIVEL_RANK: Record<string, number> = {
 }
 const NIVEL_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   owner:       { label: 'Owner',       bg: 'rgba(139,92,246,0.12)',  color: '#7c3aed' },
-  gestor:      { label: 'Gestor',      bg: 'rgba(0,122,255,0.10)',   color: '#007AFF' },
+  gestor:      { label: 'Gestor',      bg: 'rgba(0,0,0,0.08)',       color: 'var(--text-2)' },
   operacional: { label: 'Operacional', bg: 'rgba(52,211,153,0.12)',  color: '#059669' },
 }
 function rank(n: string) { return NIVEL_RANK[n] ?? 2 }
@@ -131,27 +132,30 @@ function ArquitetoSidebar({
       )}
       <aside style={{
         width: 248, minWidth: 248, height: '100vh',
-        background: '#ffffff', borderRight: '1px solid rgba(0,0,0,0.08)',
+        background: 'var(--bg-card)', borderRight: '1px solid var(--border)',
         display: 'flex', flexDirection: 'column', position: 'fixed', left: 0, top: 0, zIndex: 40,
         transform: hidden ? 'translateX(-100%)' : 'translateX(0)',
         transition: mounted ? 'transform 0.3s ease' : 'none',
-        boxShadow: isMobile && isOpen ? '4px 0 20px rgba(0,0,0,0.12)' : 'none',
+        boxShadow: isMobile && isOpen ? 'var(--shadow-sidebar)' : 'none',
       }}>
         <div style={{
           height: 64, display: 'flex', alignItems: 'center', paddingLeft: 24,
-          borderBottom: '1px solid rgba(0,0,0,0.06)',
-          justifyContent: 'space-between', paddingRight: isMobile ? 12 : 24,
+          borderBottom: '1px solid var(--border-subtle)',
+          justifyContent: 'space-between', paddingRight: isMobile ? 8 : 12,
         }}>
-          <span style={{ fontSize: 18, fontWeight: 300, letterSpacing: '0.35em', color: '#007AFF' }}>ARC</span>
-          {isMobile && (
-            <button
-              onClick={onClose}
-              aria-label="Fechar menu"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8e8e93', padding: 6, display: 'flex', alignItems: 'center' }}
-            >
-              <X size={20} />
-            </button>
-          )}
+          <span style={{ fontSize: 18, fontWeight: 300, letterSpacing: '0.35em', color: 'var(--text)' }}>ARC</span>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <ThemeToggle size={15} />
+            {isMobile && (
+              <button
+                onClick={onClose}
+                aria-label="Fechar menu"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 6, display: 'flex', alignItems: 'center' }}
+              >
+                <X size={20} />
+              </button>
+            )}
+          </div>
         </div>
 
         <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
@@ -169,15 +173,15 @@ function ArquitetoSidebar({
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderRadius: 10,
                   fontSize: 13.5, fontWeight: isActive ? 500 : 400, textDecoration: 'none',
-                  transition: 'all 0.15s ease',
-                  background: isActive ? 'rgba(0,122,255,0.08)' : 'transparent',
-                  color: isActive ? '#007AFF' : '#6b6b6b',
+                  transition: 'background 0.15s, color 0.15s',
+                  background: isActive ? 'var(--nav-active-bg)' : 'transparent',
+                  color: isActive ? 'var(--nav-active)' : 'var(--nav-inactive)',
                 }}
               >
                 <Icon size={16} strokeWidth={isActive ? 2 : 1.5} />
                 <span style={{ flex: 1 }}>{item.label}</span>
                 {showBadge && (
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', background: '#007AFF', borderRadius: 10, padding: '1px 6px', lineHeight: '16px' }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent-text)', background: 'var(--accent)', borderRadius: 10, padding: '1px 6px', lineHeight: '16px' }}>
                     {unreadMsgs}
                   </span>
                 )}
@@ -186,14 +190,14 @@ function ArquitetoSidebar({
           })}
         </nav>
 
-        <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', background: 'rgba(0,122,255,0.1)', border: '1.5px solid rgba(0,122,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, color: '#007AFF', flexShrink: 0 }}>
+        <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', background: 'var(--accent-soft)', border: '1.5px solid var(--accent-soft-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, color: 'var(--accent)', flexShrink: 0 }}>
             {avatarUrl
               ? <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : userInitials}
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 400, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 13, fontWeight: 400, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {userName}
             </div>
             {isFounder && userRank >= 2 ? (
@@ -207,18 +211,18 @@ function ArquitetoSidebar({
                 <span style={{ background: badge.bg, border: `1px solid ${badge.color}33`, borderRadius: 4, padding: '1px 5px', fontWeight: 700, color: badge.color, letterSpacing: '0.04em' }}>
                   {badge.label}
                 </span>
-                <span style={{ color: '#8e8e93', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>· {escritorioNome}</span>
+                <span style={{ color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>· {escritorioNome}</span>
               </div>
             ) : (
-              <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 1 }}>{cargoLabel}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>{cargoLabel}</div>
             )}
           </div>
           <button
             onClick={handleLogout}
             title="Sair"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c7c7cc', padding: 4, display: 'flex', alignItems: 'center', transition: 'color 0.15s', flexShrink: 0 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--logout-btn)', padding: 4, display: 'flex', alignItems: 'center', transition: 'color 0.15s', flexShrink: 0 }}
             onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#ff3b30')}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = '#c7c7cc')}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = 'var(--logout-btn)')}
           >
             <LogOut size={15} strokeWidth={1.5} />
           </button>
@@ -241,12 +245,10 @@ export default function ArquitetoLayout({ children }: { children: React.ReactNod
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  // Close sidebar when resizing to desktop
   useEffect(() => {
     if (!isMobile) setSidebarOpen(false)
   }, [isMobile])
 
-  // Prevent body scroll when sidebar is open on mobile
   useEffect(() => {
     if (isMobile && sidebarOpen) {
       document.body.style.overflow = 'hidden'
@@ -257,23 +259,23 @@ export default function ArquitetoLayout({ children }: { children: React.ReactNod
   }, [isMobile, sidebarOpen])
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f2f2f7' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
       {isMobile && (
         <header style={{
           position: 'fixed', top: 0, left: 0, right: 0, height: 56,
-          background: '#ffffff', borderBottom: '1px solid rgba(0,0,0,0.08)',
+          background: 'var(--bg-card)', borderBottom: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '0 16px', zIndex: 38,
         }}>
           <button
             onClick={() => setSidebarOpen(true)}
             aria-label="Abrir menu"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a', padding: 6, display: 'flex', alignItems: 'center' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', padding: 6, display: 'flex', alignItems: 'center' }}
           >
             <Menu size={24} />
           </button>
-          <span style={{ fontSize: 16, fontWeight: 300, letterSpacing: '0.35em', color: '#007AFF' }}>ARC</span>
-          <div style={{ width: 36 }} />
+          <span style={{ fontSize: 16, fontWeight: 300, letterSpacing: '0.35em', color: 'var(--text)' }}>ARC</span>
+          <ThemeToggle size={15} />
         </header>
       )}
 
@@ -288,7 +290,7 @@ export default function ArquitetoLayout({ children }: { children: React.ReactNod
         flex: 1,
         marginLeft: isMobile ? 0 : 248,
         minHeight: '100vh',
-        background: '#f2f2f7',
+        background: 'var(--bg)',
         overflowX: 'hidden',
         paddingTop: isMobile ? 56 : 0,
       }}>
