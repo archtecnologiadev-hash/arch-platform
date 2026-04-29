@@ -116,6 +116,11 @@ export default function ArquitetoDashboardPage() {
   const [onboardingCompleto, setOnboardingCompleto] = useState<boolean | null>(null)
   const [onboardingPassos, setOnboardingPassos] = useState<string[]>([])
 
+  // Alerts
+  interface AlertaItem { tipo: 'parado' | 'vencida' | 'entrega'; texto: string; projetoId?: string }
+  const [alertas, setAlertas] = useState<AlertaItem[]>([])
+  const [tempoMedioEtapa, setTempoMedioEtapa] = useState<Record<string, number>>({})
+
   const [novoOpen, setNovoOpen] = useState(false)
   const [novoForm, setNovoForm] = useState({ nome: '', tipo: 'residencial', descricao: '', metragem: '', endereco: '', email_cliente: '', tipo_contrato: '' })
   const [novoSaving, setNovoSaving] = useState(false)
@@ -268,6 +273,55 @@ export default function ArquitetoDashboardPage() {
           setReceitaMes(pago.reduce((s: number, t: { valor: number }) => s + Number(t.valor), 0))
           const pend = txData.filter((t: { status: string }) => t.status === 'pendente')
           setPendentesReceber(pend.reduce((s: number, t: { valor: number }) => s + Number(t.valor), 0))
+        }
+
+        // Alertas: projetos parados, tarefas vencidas
+        if (escritorio) {
+          const supabase2 = createClient()
+          const [tempoRes, subRes] = await Promise.all([
+            supabase2.from('projeto_etapa_tempo').select('projeto_id, etapa, iniciado_em').is('finalizado_em', null),
+            supabase2.from('projeto_subtarefas').select('projeto_id, titulo, data_limite').eq('concluida', false).not('data_limite', 'is', null),
+          ])
+          const alertList: AlertaItem[] = []
+          const limite15 = Date.now() - 15 * 86400000
+
+          if (tempoRes.data) {
+            // Average per etapa from closed records
+            const { data: fechados } = await supabase2
+              .from('projeto_etapa_tempo').select('etapa, dias_na_etapa').not('dias_na_etapa', 'is', null)
+            if (fechados) {
+              const sums: Record<string, { total: number; count: number }> = {}
+              for (const r of fechados as Array<{ etapa: string; dias_na_etapa: number }>) {
+                if (!sums[r.etapa]) sums[r.etapa] = { total: 0, count: 0 }
+                sums[r.etapa].total += r.dias_na_etapa
+                sums[r.etapa].count++
+              }
+              const avgs: Record<string, number> = {}
+              for (const [etapa, d] of Object.entries(sums)) avgs[etapa] = Math.round(d.total / d.count)
+              setTempoMedioEtapa(avgs)
+            }
+            for (const t of tempoRes.data as Array<{ projeto_id: string; etapa: string; iniciado_em: string }>) {
+              if (new Date(t.iniciado_em).getTime() < limite15) {
+                const proj = projs?.find((p: { id: string; nome: string }) => p.id === t.projeto_id)
+                if (proj && proj.etapa_atual !== 'Execução') {
+                  const dias = Math.floor((Date.now() - new Date(t.iniciado_em).getTime()) / 86400000)
+                  alertList.push({ tipo: 'parado', texto: `"${proj.nome}" está há ${dias} dias em ${t.etapa}`, projetoId: t.projeto_id })
+                }
+              }
+            }
+          }
+          if (subRes.data) {
+            const hoje = new Date().toISOString().slice(0, 10)
+            const em7dias = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+            for (const s of subRes.data as Array<{ projeto_id: string; titulo: string; data_limite: string }>) {
+              if (s.data_limite < hoje) {
+                alertList.push({ tipo: 'vencida', texto: `Tarefa vencida: "${s.titulo}"`, projetoId: s.projeto_id })
+              } else if (s.data_limite <= em7dias) {
+                alertList.push({ tipo: 'entrega', texto: `Entrega próxima: "${s.titulo}" em ${new Date(s.data_limite).toLocaleDateString('pt-BR')}`, projetoId: s.projeto_id })
+              }
+            }
+          }
+          setAlertas(alertList.slice(0, 8))
         }
       }
       setLoadingProjects(false)
@@ -484,6 +538,29 @@ export default function ArquitetoDashboardPage() {
 
       {/* ═══════════════════════════ CONTENT ═══════════════════════════ */}
       <div style={{ padding: '28px 32px' }}>
+
+        {/* ─── Alerts ─── */}
+        {nivelRank >= 3 && alertas.length > 0 && (
+          <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 12, padding: '14px 18px', marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Bell size={12} color="#f59e0b" />
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Alertas do Pipeline</span>
+              <span style={{ fontSize: 10, background: '#f59e0b', color: '#fff', borderRadius: 10, padding: '1px 6px', fontWeight: 700 }}>{alertas.length}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {alertas.map((a, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: a.tipo === 'vencida' ? '#ef4444' : a.tipo === 'parado' ? '#f59e0b' : 'var(--text-2)', cursor: a.projetoId ? 'pointer' : 'default' }}
+                  onClick={() => a.projetoId && router.push(`/arquiteto/projetos/${a.projetoId}`)}>
+                  <span style={{ fontSize: 10 }}>{a.tipo === 'vencida' ? '🔴' : a.tipo === 'parado' ? '🟡' : '🔵'}</span>
+                  <span style={{ flex: 1 }}>{a.texto}</span>
+                  {a.projetoId && <ArrowRight size={11} color="var(--text-3)" />}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ─── Stats Cards — hidden for operacional ─── */}
         {nivelRank >= 3 && <div className="stats-grid">
@@ -721,8 +798,40 @@ export default function ArquitetoDashboardPage() {
             </div>}
           </div>
 
-          {/* ─── Right column — Agenda — hidden for operacional ─── */}
-          {nivelRank >= 3 && <div>
+          {/* ─── Right column — Agenda + Performance ─── */}
+          {nivelRank >= 3 && <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Performance card */}
+            {Object.keys(tempoMedioEtapa).length > 0 && (
+              <div style={{ ...card, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Performance por Etapa</div>
+                  <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 2 }}>Tempo médio (dias)</div>
+                </div>
+                <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {Object.entries(tempoMedioEtapa).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([etapa, avg]) => {
+                    const maxVal = Math.max(...Object.values(tempoMedioEtapa))
+                    const pct = Math.round((avg / maxVal) * 100)
+                    const color = avg <= 7 ? '#10b981' : avg <= 14 ? '#f59e0b' : '#ef4444'
+                    return (
+                      <div key={etapa}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 3 }}>
+                          <span style={{ color: 'var(--text-2)' }}>{etapa}</span>
+                          <span style={{ fontWeight: 600, color }}>{avg}d</span>
+                        </div>
+                        <div style={{ height: 4, background: 'var(--bg)', borderRadius: 2, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2, transition: 'width 0.4s' }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div style={{ padding: '8px 14px', borderTop: '1px solid var(--border-subtle)' }}>
+                  <Link href="/arquiteto/projetos?view=kanban" style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none' }}>
+                    Ver Kanban →
+                  </Link>
+                </div>
+              </div>
+            )}
             <div style={{ ...card, position: 'sticky', top: 90, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
               <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--border)' }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Agenda do Dia</div>

@@ -115,6 +115,19 @@ const SEG_COLOR: Record<string, string> = {
 }
 
 
+// ─── Subtarefas templates ─────────────────────────────────────────────────────
+
+const SUBTAREFAS_TEMPLATE: Record<string, string[]> = {
+  'Atendimento':    ['Primeiro contato realizado', 'Necessidades levantadas', 'Proposta enviada'],
+  'Reunião':        ['Reunião agendada', 'Reunião realizada', 'Ata enviada'],
+  'Briefing':       ['Levantamento topográfico', 'Programa de necessidades', 'Aprovação do briefing'],
+  '3D':             ['Modelagem inicial', 'Renderizações', 'Apresentação ao cliente'],
+  'Alteração 3D':   ['Feedback recebido', 'Alterações aplicadas', 'Reaprovação'],
+  'Detalhamento':   ['Plantas executivas', 'Memorial descritivo', 'Detalhamentos'],
+  'Orçamento':      ['Cotação fornecedores', 'Compilação valores', 'Apresentação ao cliente'],
+  'Execução':       ['Início da obra', 'Acompanhamento', 'Entrega final'],
+}
+
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const panel = { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' as const, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
@@ -316,6 +329,15 @@ export default function ProjetoDetailPage() {
   const [dbSuppliers, setDbSuppliers] = useState<DirSupplier[]>([])
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
 
+  // Subtarefas
+  interface SubtarefaItem { id: string; titulo: string; concluida: boolean; data_limite: string | null; ordem: number }
+  const [expandedStage, setExpandedStage] = useState<number | null>(null)
+  const [subtarefas, setSubtarefas] = useState<Record<number, SubtarefaItem[]>>({})
+  const [loadingSubtarefas, setLoadingSubtarefas] = useState<Record<number, boolean>>({})
+  const [newTaskTitle, setNewTaskTitle] = useState('')
+  const [addingTask, setAddingTask] = useState(false)
+  const [etapaTempoId, setEtapaTempoId] = useState<string | null>(null)
+
   useEffect(() => {
     if (!projectId) return
     async function loadData() {
@@ -470,6 +492,73 @@ export default function ProjetoDetailPage() {
     setStageAssignOpen(null)
   }
 
+  async function loadSubtarefasForStage(stageIdx: number) {
+    if (subtarefas[stageIdx] !== undefined) return
+    setLoadingSubtarefas(prev => ({ ...prev, [stageIdx]: true }))
+    const supabase = createClient()
+    const stageName = STAGES[stageIdx]
+    const { data } = await supabase
+      .from('projeto_subtarefas')
+      .select('id, titulo, concluida, data_limite, ordem')
+      .eq('projeto_id', projectId)
+      .eq('etapa', stageName)
+      .order('ordem', { ascending: true })
+    setSubtarefas(prev => ({ ...prev, [stageIdx]: (data ?? []) as SubtarefaItem[] }))
+    setLoadingSubtarefas(prev => ({ ...prev, [stageIdx]: false }))
+  }
+
+  async function handleToggleSubtarefa(stageIdx: number, taskId: string, concluida: boolean) {
+    const supabase = createClient()
+    await supabase.from('projeto_subtarefas').update({
+      concluida: !concluida,
+      concluida_em: !concluida ? new Date().toISOString() : null,
+    }).eq('id', taskId)
+    setSubtarefas(prev => ({
+      ...prev,
+      [stageIdx]: (prev[stageIdx] ?? []).map(t => t.id === taskId ? { ...t, concluida: !concluida } : t),
+    }))
+  }
+
+  async function handleAddSubtarefa(stageIdx: number) {
+    const titulo = newTaskTitle.trim()
+    if (!titulo || addingTask) return
+    setAddingTask(true)
+    const supabase = createClient()
+    const stageName = STAGES[stageIdx]
+    const existing = subtarefas[stageIdx] ?? []
+    const { data } = await supabase
+      .from('projeto_subtarefas')
+      .insert({ projeto_id: projectId, etapa: stageName, titulo, ordem: existing.length, criado_por: currentUser?.id ?? null })
+      .select('id, titulo, concluida, data_limite, ordem')
+      .single()
+    if (data) {
+      setSubtarefas(prev => ({ ...prev, [stageIdx]: [...(prev[stageIdx] ?? []), data as SubtarefaItem] }))
+    }
+    setNewTaskTitle('')
+    setAddingTask(false)
+  }
+
+  async function handleAddTemplate(stageIdx: number) {
+    const stageName = STAGES[stageIdx]
+    const templates = SUBTAREFAS_TEMPLATE[stageName] ?? []
+    if (templates.length === 0) return
+    const supabase = createClient()
+    const existing = subtarefas[stageIdx] ?? []
+    const inserts = templates.map((titulo, i) => ({
+      projeto_id: projectId, etapa: stageName, titulo, ordem: existing.length + i, criado_por: currentUser?.id ?? null,
+    }))
+    const { data } = await supabase.from('projeto_subtarefas').insert(inserts).select('id, titulo, concluida, data_limite, ordem')
+    if (data) {
+      setSubtarefas(prev => ({ ...prev, [stageIdx]: [...(prev[stageIdx] ?? []), ...(data as SubtarefaItem[])] }))
+    }
+  }
+
+  function handleStageClick(i: number) {
+    const isOpening = expandedStage !== i
+    setExpandedStage(isOpening ? i : null)
+    if (isOpening) loadSubtarefasForStage(i)
+  }
+
   async function handleEventEdit(ev: CalendarioEvent) {
     const supabase = createClient()
     await supabase.from('eventos').update({
@@ -586,6 +675,14 @@ export default function ProjetoDetailPage() {
     setAdvancingStage(true)
     const next = stageIndex + 1
     const supabase = createClient()
+    const now = new Date().toISOString()
+    // Track tempo
+    if (etapaTempoId) {
+      const dias = Math.floor((Date.now() - new Date(now).getTime()) / 86400000)
+      await supabase.from('projeto_etapa_tempo').update({ finalizado_em: now, dias_na_etapa: Math.max(dias, 0) }).eq('id', etapaTempoId)
+    }
+    const { data: nt } = await supabase.from('projeto_etapa_tempo').insert({ projeto_id: projeto.id, etapa: STAGES[next], iniciado_em: now }).select('id').single()
+    if (nt) setEtapaTempoId(nt.id)
     await supabase.from('projetos').update({ etapa_atual: STAGES[next] }).eq('id', projeto.id)
     setStageIndex(next)
     setProjeto(prev => prev ? { ...prev, etapa_atual: STAGES[next] } : prev)
@@ -845,8 +942,11 @@ export default function ProjetoDetailPage() {
                     )}
                   </div>
                   <div
-                    onClick={() => projetoMembros.length > 0 && setStageAssignOpen(v => v === i ? null : i)}
-                    style={{ fontSize: 9.5, fontWeight: current ? 700 : 400, color: done ? '#007AFF' : current ? '#1a1a1a' : '#8e8e93', whiteSpace: 'nowrap', letterSpacing: '0.02em', cursor: projetoMembros.length > 0 ? 'pointer' : 'default' }}>
+                    onClick={() => {
+                      if (projetoMembros.length > 0) setStageAssignOpen(v => v === i ? null : i)
+                      handleStageClick(i)
+                    }}
+                    style={{ fontSize: 9.5, fontWeight: current ? 700 : 400, color: expandedStage === i ? '#007AFF' : done ? '#007AFF' : current ? '#1a1a1a' : '#8e8e93', whiteSpace: 'nowrap', letterSpacing: '0.02em', cursor: 'pointer', textDecoration: expandedStage === i ? 'underline' : 'none' }}>
                     {stage}
                   </div>
                   {stageAssignOpen === i && (
@@ -872,6 +972,91 @@ export default function ProjetoDetailPage() {
           })}
         </div>
       </div>
+
+      {/* ═══════════════════ SUBTAREFAS PANEL ═══════════════════ */}
+      {expandedStage !== null && (() => {
+        const sIdx = expandedStage
+        const stageName = STAGES[sIdx]
+        const tasks = subtarefas[sIdx] ?? []
+        const isLoading = loadingSubtarefas[sIdx]
+        const allDone = tasks.length > 0 && tasks.every(t => t.concluida)
+        return (
+          <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-card)', padding: '12px 28px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>Tarefas · {stageName}</span>
+                {allDone && (
+                  <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(16,185,129,0.12)', color: '#10b981', padding: '2px 8px', borderRadius: 20 }}>
+                    ✓ Pronto para avançar
+                  </span>
+                )}
+                <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
+                  {tasks.filter(t => t.concluida).length}/{tasks.length}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {tasks.length === 0 && !isLoading && (
+                  <button
+                    onClick={() => handleAddTemplate(sIdx)}
+                    style={{ fontSize: 11, color: 'var(--accent)', background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
+                  >
+                    + Templates sugeridos
+                  </button>
+                )}
+                <button onClick={() => setExpandedStage(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', padding: 2 }}>
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+
+            {isLoading ? (
+              <div style={{ fontSize: 11, color: 'var(--text-3)', padding: '8px 0' }}>Carregando...</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {tasks.map(task => (
+                  <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button
+                      onClick={() => handleToggleSubtarefa(sIdx, task.id, task.concluida)}
+                      style={{
+                        width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                        border: `2px solid ${task.concluida ? '#10b981' : 'var(--border)'}`,
+                        background: task.concluida ? '#10b981' : 'transparent',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      {task.concluida && <Check size={9} color="#fff" strokeWidth={3} />}
+                    </button>
+                    <span style={{ fontSize: 12, color: task.concluida ? 'var(--text-3)' : 'var(--text)', textDecoration: task.concluida ? 'line-through' : 'none', flex: 1 }}>
+                      {task.titulo}
+                    </span>
+                    {task.data_limite && (
+                      <span style={{ fontSize: 10, color: new Date(task.data_limite) < new Date() && !task.concluida ? '#ef4444' : 'var(--text-3)', flexShrink: 0 }}>
+                        {new Date(task.data_limite).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                      </span>
+                    )}
+                  </div>
+                ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: tasks.length > 0 ? 4 : 0 }}>
+                  <input
+                    value={newTaskTitle}
+                    onChange={e => setNewTaskTitle(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleAddSubtarefa(sIdx) }}
+                    placeholder="Nova tarefa..."
+                    style={{ flex: 1, padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 6, fontSize: 11.5, background: 'var(--bg)', color: 'var(--text)', outline: 'none' }}
+                  />
+                  <button
+                    onClick={() => handleAddSubtarefa(sIdx)}
+                    disabled={!newTaskTitle.trim() || addingTask}
+                    style={{ padding: '5px 10px', background: newTaskTitle.trim() ? 'var(--accent)' : 'var(--border)', color: newTaskTitle.trim() ? '#fff' : 'var(--text-3)', border: 'none', borderRadius: 6, fontSize: 11, cursor: newTaskTitle.trim() ? 'pointer' : 'default' }}
+                  >
+                    + Adicionar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* ═══════════════════ BODY ═══════════════════ */}
       <div style={{ display: 'flex', gap: 20, padding: '24px 28px', alignItems: 'flex-start' }}>
