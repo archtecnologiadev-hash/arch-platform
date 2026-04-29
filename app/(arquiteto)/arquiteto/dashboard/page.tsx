@@ -1,48 +1,61 @@
-﻿'use client'
+'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  Bell,
-  ChevronDown,
-  FolderOpen,
-  TrendingUp,
-  Clock,
-  FileText,
-  Phone,
-  CalendarDays,
-  LogOut,
-  Settings,
-  User,
-  ArrowRight,
-  Plus,
-  X,
-  ShieldCheck,
-  DollarSign,
+  Bell, ChevronDown, FolderOpen, TrendingUp, Clock,
+  LogOut, Settings, User, ArrowRight, Plus, X, ShieldCheck,
+  DollarSign, CheckSquare, Users, Download, Lightbulb,
+  type LucideIcon,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
-import CoverUploadButton from '@/components/shared/CoverUploadButton'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-interface Project {
+interface Projeto {
   id: string
-  name: string
-  cliente_nome: string | null
-  stageIndex: number
-  type: string
-  created_at: string
+  nome: string
+  etapa_atual: string | null
+  status: string
+  tipo: string | null
   metragem: number | null
-  cover_url: string | null
+  cliente_id: string | null
+  created_at: string
+}
+
+interface Transacao {
+  tipo: string
+  valor: number
+  status: string
+  data_pagamento: string | null
+  data_vencimento: string | null
+  descricao: string
+}
+
+interface EtapaTempo {
+  projeto_id: string
+  etapa: string
+  iniciado_em: string
+  dias_na_etapa: number | null
+}
+
+interface Subtarefa {
+  projeto_id: string
+  titulo: string
+  data_limite: string | null
+}
+
+interface Membro {
+  id: string
+  nome: string
+  nivel_permissao: string | null
+  cargo: string | null
 }
 
 interface Lead {
   id: string
   nome: string
-  email: string
-  telefone: string | null
-  mensagem: string | null
   created_at: string
 }
 
@@ -51,289 +64,279 @@ interface Lead {
 const PIPELINE_STAGES = [
   'Atendimento', 'Reunião', 'Briefing', '3D', 'Alt. 3D', 'Detalhamento', 'Orçamento', 'Execução',
 ]
-
-
-const ETAPA_TO_STAGE: Record<string, number> = {
-  atendimento: 0, reuniao: 1, briefing: 2,
-  '3d': 3, alt_3d: 4, detalhamento: 5, orcamento: 6, execucao: 7,
-}
-
-const TIPO_LABEL: Record<string, string> = {
-  residencial: 'Residencial', comercial: 'Comercial', institucional: 'Institucional',
-}
-
 const STAGE_COLORS = ['#8b5cf6', '#007AFF', '#34d399', '#4f9cf9', '#f59e0b', '#f97316', '#ef4444', '#10b981']
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const card = {
-  background: 'var(--bg-card)',
-  border: '1px solid var(--border)',
-  borderRadius: 14,
-  overflow: 'hidden' as const,
+function normalizeEtapa(etapa: string | null | undefined): string {
+  if (!etapa) return 'Atendimento'
+  const norm: Record<string, string> = {
+    'Alteração 3D': 'Alt. 3D', alteracao3d: 'Alt. 3D', alt_3d: 'Alt. 3D',
+    reuniao: 'Reunião', Reuniao: 'Reunião',
+    orcamento: 'Orçamento', Orcamento: 'Orçamento',
+    execucao: 'Execução', Execucao: 'Execução',
+    briefing: 'Briefing', '3d': '3D',
+    atendimento: 'Atendimento', detalhamento: 'Detalhamento',
+  }
+  return norm[etapa] ?? etapa
 }
 
-const sectionHeader = {
-  padding: '18px 22px',
-  borderBottom: '1px solid var(--border)',
-  display: 'flex' as const,
-  justifyContent: 'space-between' as const,
-  alignItems: 'center' as const,
+function fmtBRL(v: number) {
+  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`
+  if (v >= 1_000) return `R$ ${(v / 1_000).toFixed(0)}k`
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
 }
 
-const blueButton = {
-  fontSize: 12,
-  color: 'var(--accent)',
-  background: 'var(--accent-soft)',
-  border: '1px solid var(--accent-soft-border)',
-  padding: '5px 12px',
-  borderRadius: 6,
-  cursor: 'pointer' as const,
-  fontWeight: 400 as const,
+function monthKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+function last12Months() {
+  return Array.from({ length: 12 }, (_, i) => {
+    const d = new Date()
+    d.setDate(1)
+    d.setMonth(d.getMonth() - (11 - i))
+    return monthKey(d)
+  })
+}
+
+// ─── Sparkline ────────────────────────────────────────────────────────────────
+
+function Sparkline({ values, color }: { values: number[]; color: string }) {
+  if (values.length < 2) return null
+  const max = Math.max(...values, 1)
+  const W = 60, H = 26
+  const pts = values.map((v, i) => `${(i / (values.length - 1)) * W},${H - (v / max) * H}`).join(' ')
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', flexShrink: 0 }}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" opacity={0.7} />
+    </svg>
+  )
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function ExecCard({ label, value, delta, sparkline, color, icon: Icon, subLabel }: {
+  label: string; value: string; delta: number | null; sparkline: number[]
+  color: string; icon: LucideIcon; subLabel: string
+}) {
+  return (
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,.06)', transition: 'box-shadow .2s' }}
+      onMouseEnter={e => ((e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,.10)')}
+      onMouseLeave={e => ((e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 3px rgba(0,0,0,.06)')}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+        <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500 }}>{label}</span>
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Icon size={13} color={color} />
+        </div>
+      </div>
+      <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--text)', lineHeight: 1, marginBottom: 8 }}>{value}</div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
+        <div>
+          {delta !== null ? (
+            <span style={{ fontSize: 10.5, fontWeight: 700, color: delta >= 0 ? '#10b981' : '#ef4444' }}>
+              {delta >= 0 ? '↑' : '↓'} {Math.abs(delta)}% vs mês ant.
+            </span>
+          ) : (
+            <span style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{subLabel}</span>
+          )}
+          {delta !== null && <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>{subLabel}</div>}
+        </div>
+        {sparkline.length >= 2 && <Sparkline values={sparkline} color={color} />}
+      </div>
+    </div>
+  )
+}
+
+function AlertCard({ title, count, color, icon: Icon, href, items }: {
+  title: string; count: number; color: string
+  icon: LucideIcon
+  href: string; items: Array<{ text: string; href: string }>
+}) {
+  const router = useRouter()
+  if (count === 0) return null
+  return (
+    <div style={{ background: 'var(--bg-card)', border: `1px solid ${color}35`, borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '13px 18px', borderBottom: `1px solid ${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 26, height: 26, borderRadius: 7, background: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon size={12} color={color} />
+          </div>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{title}</span>
+          <span style={{ fontSize: 10, background: color, color: '#fff', borderRadius: 10, padding: '1px 7px', fontWeight: 700 }}>{count}</span>
+        </div>
+        <Link href={href} style={{ fontSize: 11, color, textDecoration: 'none', fontWeight: 600 }}>Ver →</Link>
+      </div>
+      <div style={{ padding: '8px 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {items.map((item, i) => (
+          <div key={i} onClick={() => router.push(item.href)}
+            style={{ fontSize: 12, color: 'var(--text-2)', padding: '6px 8px', borderRadius: 6, cursor: 'pointer', lineHeight: 1.4 }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+            {item.text}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ArquitetoDashboardPage() {
   const router = useRouter()
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [notifOpen, setNotifOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
 
   const [userName, setUserName] = useState('Arquiteto')
   const [userEmail, setUserEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
-  const [nivelRank, setNivelRank] = useState(5) // default owner
-
-  const [realProjects, setRealProjects] = useState<Project[]>([])
-  const [leads, setLeads] = useState<Lead[]>([])
+  const [nivelRank, setNivelRank] = useState(5)
   const [escritorioId, setEscritorioId] = useState<string | null>(null)
-  const [loadingProjects, setLoadingProjects] = useState(true)
-  const [totalOrcamento, setTotalOrcamento] = useState<number>(0)
-  const [receitaMes, setReceitaMes] = useState<number>(0)
-  const [pendentesReceber, setPendentesReceber] = useState<number>(0)
   const [onboardingCompleto, setOnboardingCompleto] = useState<boolean | null>(null)
   const [onboardingPassos, setOnboardingPassos] = useState<string[]>([])
 
-  // Alerts
-  interface AlertaItem { tipo: 'parado' | 'vencida' | 'entrega'; texto: string; projetoId?: string }
-  const [alertas, setAlertas] = useState<AlertaItem[]>([])
-  const [tempoMedioEtapa, setTempoMedioEtapa] = useState<Record<string, number>>({})
+  const [projetos, setProjetos] = useState<Projeto[]>([])
+  const [transacoes, setTransacoes] = useState<Transacao[]>([])
+  const [etapasAbertas, setEtapasAbertas] = useState<EtapaTempo[]>([])
+  const [etapasFechadas, setEtapasFechadas] = useState<EtapaTempo[]>([])
+  const [subtarefas, setSubtarefas] = useState<Subtarefa[]>([])
+  const [membros, setMembros] = useState<Membro[]>([])
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [clienteMap, setClienteMap] = useState<Record<string, string>>({})
+  const [membroProjetosMap, setMembroProjetosMap] = useState<Record<string, number>>({})
+  const [loading, setLoading] = useState(true)
 
   const [novoOpen, setNovoOpen] = useState(false)
-  const [novoForm, setNovoForm] = useState({ nome: '', tipo: 'residencial', descricao: '', metragem: '', endereco: '', email_cliente: '', tipo_contrato: '' })
+  const [novoForm, setNovoForm] = useState({ nome: '', tipo: 'residencial', descricao: '' })
   const [novoSaving, setNovoSaving] = useState(false)
 
   const userInitials = userName.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'A'
-
   const todayLabel = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   useEffect(() => {
-    async function loadProjects() {
+    async function load() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setLoadingProjects(false); return }
+      if (!user) { setLoading(false); return }
 
-      const nome = user.user_metadata?.nome ?? user.email ?? 'Arquiteto'
-      setUserName(nome)
+      setUserName(user.user_metadata?.nome ?? user.email ?? 'Arquiteto')
       setUserEmail(user.email ?? '')
 
-      const { data: userData } = await supabase.from('users').select('role, nivel_permissao, onboarding_completo, onboarding_passos_completos').eq('id', user.id).maybeSingle()
-      if (userData?.role === 'admin' || user.user_metadata?.role === 'admin') setIsAdmin(true)
-      setOnboardingCompleto(userData?.onboarding_completo ?? false)
-      setOnboardingPassos((userData?.onboarding_passos_completos ?? []) as string[])
+      const { data: ud } = await supabase
+        .from('users').select('role, nivel_permissao, onboarding_completo, onboarding_passos_completos, escritorio_vinculado_id')
+        .eq('id', user.id).maybeSingle()
 
-      const NIVEL_RANK: Record<string, number> = { estagiario: 0, junior: 1, pleno: 2, senior: 3, admin: 4, owner: 5 }
-      const nivel = userData?.nivel_permissao ?? 'owner'
-      const r = NIVEL_RANK[nivel] ?? 5
-      setNivelRank(r)
+      if (ud?.role === 'admin' || user.user_metadata?.role === 'admin') setIsAdmin(true)
+      setOnboardingCompleto(ud?.onboarding_completo ?? false)
+      setOnboardingPassos((ud?.onboarding_passos_completos ?? []) as string[])
 
-      // junior/estagiario (rank < 2): only assigned projects
-      // pleno (rank === 2): assigned + own projects (no leads, simplified metrics)
-      // senior+ (rank >= 3): all studio projects
-      if (r < 2) {
-        const { data: memberRows } = await supabase
-          .from('projeto_membros').select('projeto_id').eq('user_id', user.id)
-        const projIds = (memberRows ?? []).map((row: { projeto_id: string }) => row.projeto_id)
-        if (projIds.length > 0) {
-          const { data: projs } = await supabase
-            .from('projetos').select('*').in('id', projIds).order('created_at', { ascending: false })
-          if (projs) {
-            const clientIds = Array.from(new Set(projs.filter((p) => p.cliente_id).map((p) => p.cliente_id as string)))
-            const { data: clientsData } = clientIds.length > 0
-              ? await supabase.from('users').select('id, nome').in('id', clientIds)
-              : { data: [] }
-            const clientMap: Record<string, string> = {}
-            for (const c of (clientsData ?? [])) clientMap[(c as { id: string; nome: string }).id] = (c as { id: string; nome: string }).nome
-            setRealProjects(projs.map((p) => ({
-              id: p.id, name: p.nome,
-              cliente_nome: p.cliente_id ? (clientMap[p.cliente_id] ?? null) : null,
-              stageIndex: ETAPA_TO_STAGE[p.etapa_atual] ?? 0,
-              type: TIPO_LABEL[p.tipo] ?? 'Residencial',
-              created_at: p.created_at, metragem: p.metragem ?? null, cover_url: p.cover_url ?? null,
-            })))
-          }
-        }
-        setLoadingProjects(false)
-        return
-      }
+      const RANK: Record<string, number> = { estagiario: 0, junior: 1, operacional: 1, pleno: 2, senior: 3, gestor: 4, admin: 4, owner: 5 }
+      const nivel = ud?.nivel_permissao ?? 'owner'
+      const rank = RANK[nivel] ?? 5
+      setNivelRank(rank)
 
-      if (r === 2) {
-        // pleno: load member rows + owned projects via escritorio
-        const { data: memberRows } = await supabase
-          .from('projeto_membros').select('projeto_id').eq('user_id', user.id)
-        const assignedIds = new Set((memberRows ?? []).map((row: { projeto_id: string }) => row.projeto_id))
-
-        const { data: escData } = await supabase
-          .from('escritorios').select('id').eq('user_id', user.id).maybeSingle()
-        let projs: Record<string, unknown>[] = []
-        if (escData) {
-          const { data: allProjs } = await supabase
-            .from('projetos').select('*').eq('escritorio_id', escData.id).order('created_at', { ascending: false })
-          projs = (allProjs ?? []).filter(p => assignedIds.has(p.id as string))
-        }
-        if (projs.length > 0) {
-          const clientIds = Array.from(new Set(projs.filter((p) => p.cliente_id).map((p) => p.cliente_id as string)))
-          const { data: clientsData } = clientIds.length > 0
-            ? await supabase.from('users').select('id, nome').in('id', clientIds)
-            : { data: [] }
-          const clientMap: Record<string, string> = {}
-          for (const c of (clientsData ?? [])) clientMap[(c as { id: string; nome: string }).id] = (c as { id: string; nome: string }).nome
-          setRealProjects(projs.map((p) => ({
-            id: p.id as string, name: p.nome as string,
-            cliente_nome: p.cliente_id ? (clientMap[p.cliente_id as string] ?? null) : null,
-            stageIndex: ETAPA_TO_STAGE[p.etapa_atual as string] ?? 0,
-            type: TIPO_LABEL[p.tipo as string] ?? 'Residencial',
-            created_at: p.created_at as string, metragem: (p.metragem as number) ?? null, cover_url: (p.cover_url as string) ?? null,
-          })))
-        }
-        setLoadingProjects(false)
-        return
-      }
-
-      const { data: escritorio } = await supabase
-        .from('escritorios').select('id').eq('user_id', user.id).maybeSingle()
-
-      if (escritorio) {
-        setEscritorioId(escritorio.id)
-        const { data: projs } = await supabase
-          .from('projetos').select('*').eq('escritorio_id', escritorio.id)
-          .order('created_at', { ascending: false })
-
-        if (projs && projs.length > 0) {
-          const clientIds = Array.from(new Set(projs.filter((p) => p.cliente_id).map((p) => p.cliente_id as string)))
-          const { data: clientsData } = clientIds.length > 0
-            ? await supabase.from('users').select('id, nome').in('id', clientIds)
-            : { data: [] }
-          const clientMap: Record<string, string> = {}
-          for (const c of (clientsData ?? [])) clientMap[(c as { id: string; nome: string }).id] = (c as { id: string; nome: string }).nome
-
-          const mappedProjs = projs.map((p) => ({
-            id: p.id,
-            name: p.nome,
-            cliente_nome: p.cliente_id ? (clientMap[p.cliente_id] ?? null) : null,
-            stageIndex: ETAPA_TO_STAGE[p.etapa_atual] ?? 0,
-            type: TIPO_LABEL[p.tipo] ?? 'Residencial',
-            created_at: p.created_at,
-            metragem: p.metragem ?? null,
-            cover_url: p.cover_url ?? null,
-          }))
-          setRealProjects(mappedProjs)
-
-          // Budget total for active projects
-          const activeProjIds = mappedProjs.filter(p => p.stageIndex < Object.keys(ETAPA_TO_STAGE).length - 1).map(p => p.id)
-          if (activeProjIds.length > 0) {
-            const { data: budgetData } = await supabase
-              .from('orcamento_itens').select('valor,quantidade').in('projeto_id', activeProjIds)
-            if (budgetData) {
-              setTotalOrcamento(budgetData.reduce((s: number, it: { valor: number; quantidade: number | null }) => s + Number(it.valor) * (it.quantidade || 1), 0))
-            }
-          }
-        }
-
-        const { data: leadsData } = await supabase
-          .from('leads').select('*')
-          .eq('escritorio_id', escritorio.id)
-          .order('created_at', { ascending: false })
-          .limit(10)
-        if (leadsData) setLeads(leadsData as Lead[])
-
-        // Financial summary
-        const mesAtual = new Date().toISOString().slice(0, 7)
-        const { data: txData } = await supabase
-          .from('transacoes_financeiras')
-          .select('tipo, valor, status, data_pagamento')
-          .eq('escritorio_id', escritorio.id)
-          .eq('tipo', 'entrada')
-        if (txData) {
-          const pago = txData.filter((t: { tipo: string; valor: number; status: string; data_pagamento: string | null }) =>
-            t.status === 'pago' && t.data_pagamento?.slice(0, 7) === mesAtual
-          )
-          setReceitaMes(pago.reduce((s: number, t: { valor: number }) => s + Number(t.valor), 0))
-          const pend = txData.filter((t: { status: string }) => t.status === 'pendente')
-          setPendentesReceber(pend.reduce((s: number, t: { valor: number }) => s + Number(t.valor), 0))
-        }
-
-        // Alertas: projetos parados, tarefas vencidas
-        if (escritorio) {
-          const supabase2 = createClient()
-          const [tempoRes, subRes] = await Promise.all([
-            supabase2.from('projeto_etapa_tempo').select('projeto_id, etapa, iniciado_em').is('finalizado_em', null),
-            supabase2.from('projeto_subtarefas').select('projeto_id, titulo, data_limite').eq('concluida', false).not('data_limite', 'is', null),
+      // Operacional: only assigned projects
+      if (rank < 3) {
+        const { data: memberRows } = await supabase.from('projeto_membros').select('projeto_id').eq('user_id', user.id)
+        const ids = (memberRows ?? []).map((r: { projeto_id: string }) => r.projeto_id)
+        if (ids.length > 0) {
+          const [projRes, clientsData, subRes] = await Promise.all([
+            supabase.from('projetos').select('id,nome,etapa_atual,status,tipo,metragem,cliente_id,created_at').in('id', ids).order('created_at', { ascending: false }),
+            (async () => {
+              const { data: ps } = await supabase.from('projetos').select('cliente_id').in('id', ids)
+              const cids = Array.from(new Set((ps ?? []).filter((p: { cliente_id: string | null }) => p.cliente_id).map((p: { cliente_id: string }) => p.cliente_id)))
+              if (cids.length === 0) return []
+              const { data } = await supabase.from('users').select('id, nome').in('id', cids)
+              return data ?? []
+            })(),
+            supabase.from('projeto_subtarefas').select('projeto_id,titulo,data_limite').in('projeto_id', ids).eq('concluida', false),
           ])
-          const alertList: AlertaItem[] = []
-          const limite15 = Date.now() - 15 * 86400000
-
-          if (tempoRes.data) {
-            // Average per etapa from closed records
-            const { data: fechados } = await supabase2
-              .from('projeto_etapa_tempo').select('etapa, dias_na_etapa').not('dias_na_etapa', 'is', null)
-            if (fechados) {
-              const sums: Record<string, { total: number; count: number }> = {}
-              for (const r of fechados as Array<{ etapa: string; dias_na_etapa: number }>) {
-                if (!sums[r.etapa]) sums[r.etapa] = { total: 0, count: 0 }
-                sums[r.etapa].total += r.dias_na_etapa
-                sums[r.etapa].count++
-              }
-              const avgs: Record<string, number> = {}
-              for (const [etapa, d] of Object.entries(sums)) avgs[etapa] = Math.round(d.total / d.count)
-              setTempoMedioEtapa(avgs)
-            }
-            for (const t of tempoRes.data as Array<{ projeto_id: string; etapa: string; iniciado_em: string }>) {
-              if (new Date(t.iniciado_em).getTime() < limite15) {
-                const proj = projs?.find((p: { id: string; nome: string }) => p.id === t.projeto_id)
-                if (proj && proj.etapa_atual !== 'Execução') {
-                  const dias = Math.floor((Date.now() - new Date(t.iniciado_em).getTime()) / 86400000)
-                  alertList.push({ tipo: 'parado', texto: `"${proj.nome}" está há ${dias} dias em ${t.etapa}`, projetoId: t.projeto_id })
-                }
-              }
-            }
-          }
-          if (subRes.data) {
-            const hoje = new Date().toISOString().slice(0, 10)
-            const em7dias = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
-            for (const s of subRes.data as Array<{ projeto_id: string; titulo: string; data_limite: string }>) {
-              if (s.data_limite < hoje) {
-                alertList.push({ tipo: 'vencida', texto: `Tarefa vencida: "${s.titulo}"`, projetoId: s.projeto_id })
-              } else if (s.data_limite <= em7dias) {
-                alertList.push({ tipo: 'entrega', texto: `Entrega próxima: "${s.titulo}" em ${new Date(s.data_limite).toLocaleDateString('pt-BR')}`, projetoId: s.projeto_id })
-              }
-            }
-          }
-          setAlertas(alertList.slice(0, 8))
+          setProjetos((projRes.data ?? []) as Projeto[])
+          const cm: Record<string, string> = {}
+          for (const c of (clientsData as Array<{ id: string; nome: string }>)) cm[c.id] = c.nome
+          setClienteMap(cm)
+          setSubtarefas((subRes.data ?? []) as Subtarefa[])
         }
+        setLoading(false)
+        return
       }
-      setLoadingProjects(false)
+
+      // Owner / senior
+      let escId: string | null = null
+      const { data: escOwn } = await supabase.from('escritorios').select('id').eq('user_id', user.id).maybeSingle()
+      escId = escOwn?.id ?? ud?.escritorio_vinculado_id ?? null
+      if (!escId) { setLoading(false); return }
+      setEscritorioId(escId)
+
+      // Step 1: fetch projects
+      const { data: projData } = await supabase
+        .from('projetos').select('id,nome,etapa_atual,status,tipo,metragem,cliente_id,created_at')
+        .eq('escritorio_id', escId).order('created_at', { ascending: false })
+      const projs = (projData ?? []) as Projeto[]
+      setProjetos(projs)
+      const projIds = projs.map(p => p.id)
+
+      // Step 2: parallel fetches
+      const yearAgo = new Date(); yearAgo.setFullYear(yearAgo.getFullYear() - 1); yearAgo.setDate(1)
+      const clientIds = Array.from(new Set(projs.filter(p => p.cliente_id).map(p => p.cliente_id as string)))
+
+      const [txRes, abertoRes, fechadoRes, subRes, membrosRes, leadsRes, cltRes, mpRes] = await Promise.all([
+        supabase.from('transacoes_financeiras')
+          .select('tipo,valor,status,data_pagamento,data_vencimento,descricao')
+          .eq('escritorio_id', escId).gte('created_at', yearAgo.toISOString()),
+        projIds.length > 0
+          ? supabase.from('projeto_etapa_tempo').select('projeto_id,etapa,iniciado_em,dias_na_etapa').in('projeto_id', projIds).is('finalizado_em', null)
+          : Promise.resolve({ data: [] }),
+        projIds.length > 0
+          ? supabase.from('projeto_etapa_tempo').select('projeto_id,etapa,iniciado_em,dias_na_etapa').in('projeto_id', projIds).not('finalizado_em', 'is', null).not('dias_na_etapa', 'is', null)
+          : Promise.resolve({ data: [] }),
+        projIds.length > 0
+          ? supabase.from('projeto_subtarefas').select('projeto_id,titulo,data_limite').in('projeto_id', projIds).eq('concluida', false)
+          : Promise.resolve({ data: [] }),
+        supabase.from('users').select('id,nome,nivel_permissao,cargo').eq('escritorio_vinculado_id', escId),
+        supabase.from('leads').select('id,nome,created_at').eq('escritorio_id', escId).order('created_at', { ascending: false }).limit(15),
+        clientIds.length > 0
+          ? supabase.from('users').select('id,nome').in('id', clientIds)
+          : Promise.resolve({ data: [] }),
+        projIds.length > 0
+          ? supabase.from('projeto_membros').select('projeto_id,user_id').in('projeto_id', projIds)
+          : Promise.resolve({ data: [] }),
+      ])
+
+      setTransacoes((txRes.data ?? []) as Transacao[])
+      setEtapasAbertas((abertoRes.data ?? []) as EtapaTempo[])
+      setEtapasFechadas((fechadoRes.data ?? []) as EtapaTempo[])
+      setSubtarefas((subRes.data ?? []) as Subtarefa[])
+      setMembros((membrosRes.data ?? []) as Membro[])
+      setLeads((leadsRes.data ?? []) as Lead[])
+
+      const cm: Record<string, string> = {}
+      for (const c of (cltRes.data ?? []) as Array<{ id: string; nome: string }>) cm[c.id] = c.nome
+      setClienteMap(cm)
+
+      const mm: Record<string, number> = {}
+      for (const mp of (mpRes.data ?? []) as Array<{ user_id: string }>) mm[mp.user_id] = (mm[mp.user_id] ?? 0) + 1
+      setMembroProjetosMap(mm)
+
+      setLoading(false)
     }
-    loadProjects()
+    load()
+  }, [])
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setDropdownOpen(false)
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false)
+    }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
   }, [])
 
   async function handleLogout() {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
+    router.push('/login'); router.refresh()
   }
 
   async function handleCriarProjeto(e: React.FormEvent) {
@@ -343,166 +346,268 @@ export default function ArquitetoDashboardPage() {
     const supabase = createClient()
     const { data, error } = await supabase
       .from('projetos')
-      .insert({ escritorio_id: escritorioId, nome: novoForm.nome, tipo: novoForm.tipo, descricao: novoForm.descricao, metragem: novoForm.metragem ? parseFloat(novoForm.metragem) : null, endereco: novoForm.endereco || null, email_cliente: novoForm.email_cliente || null, tipo_contrato: novoForm.tipo_contrato || null })
-      .select('*').single()
-
+      .insert({ escritorio_id: escritorioId, nome: novoForm.nome, tipo: novoForm.tipo, descricao: novoForm.descricao })
+      .select('id,nome,etapa_atual,status,tipo,metragem,cliente_id,created_at').single()
     if (!error && data) {
-      const novo: Project = {
-        id: data.id, name: data.nome, cliente_nome: null,
-        stageIndex: 0, type: TIPO_LABEL[data.tipo] ?? 'Residencial',
-        created_at: data.created_at, metragem: null, cover_url: null,
-      }
-      setRealProjects(prev => [novo, ...prev])
+      setProjetos(prev => [data as Projeto, ...prev])
+      await supabase.from('projeto_etapa_tempo').insert({ projeto_id: data.id, etapa: 'Atendimento', iniciado_em: new Date().toISOString() })
     }
-    setNovoSaving(false)
-    setNovoOpen(false)
-    setNovoForm({ nome: '', tipo: 'residencial', descricao: '', metragem: '', endereco: '', email_cliente: '', tipo_contrato: '' })
+    setNovoSaving(false); setNovoOpen(false)
+    setNovoForm({ nome: '', tipo: 'residencial', descricao: '' })
   }
 
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setDropdownOpen(false)
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
+  // ── Computed ──────────────────────────────────────────────────────────────
 
-  function handleCoverUpdate(id: string, url: string) {
-    setRealProjects(prev => prev.map(p => p.id === id ? { ...p, cover_url: url } : p))
+  const now = new Date()
+  const mesMes = monthKey(now)
+  const prevD = new Date(now); prevD.setMonth(prevD.getMonth() - 1)
+  const mesAnt = monthKey(prevD)
+  const hoje = now.toISOString().slice(0, 10)
+  const months12 = last12Months()
+
+  const revenueByMonth: Record<string, number> = {}
+  for (const tx of transacoes) {
+    if (tx.tipo === 'entrada' && tx.status === 'pago' && tx.data_pagamento) {
+      const mk = tx.data_pagamento.slice(0, 7)
+      revenueByMonth[mk] = (revenueByMonth[mk] ?? 0) + Number(tx.valor)
+    }
+  }
+  const receitaMes = revenueByMonth[mesMes] ?? 0
+  const receitaAnt = revenueByMonth[mesAnt] ?? 0
+  const receitaDelta = receitaAnt > 0 ? Math.round(((receitaMes - receitaAnt) / receitaAnt) * 100) : null
+  const sparkReceita = months12.slice(6).map(m => revenueByMonth[m] ?? 0)
+  const pendente = transacoes.filter(t => t.tipo === 'entrada' && t.status === 'pendente').reduce((s, t) => s + Number(t.valor), 0)
+
+  const projAtivos = projetos.filter(p => p.status !== 'concluido')
+  const projNovosMes = projetos.filter(p => p.created_at.slice(0, 7) === mesMes).length
+  const projNovosAnt = projetos.filter(p => p.created_at.slice(0, 7) === mesAnt).length
+  const projetosDelta = projNovosAnt > 0 ? Math.round(((projNovosMes - projNovosAnt) / projNovosAnt) * 100) : null
+
+  const totalM2 = projAtivos.reduce((s, p) => s + (p.metragem ?? 0), 0)
+
+  const clientesAtivos = new Set(projAtivos.filter(p => p.cliente_id).map(p => p.cliente_id as string)).size
+  const clientesMes = new Set(projetos.filter(p => p.created_at.slice(0, 7) === mesMes && p.cliente_id).map(p => p.cliente_id as string)).size
+  const clientesAnt = new Set(projetos.filter(p => p.created_at.slice(0, 7) === mesAnt && p.cliente_id).map(p => p.cliente_id as string)).size
+  const clientesDelta = clientesAnt > 0 ? Math.round(((clientesMes - clientesAnt) / clientesAnt) * 100) : null
+
+  const limite15 = Date.now() - 15 * 86400000
+  const projParados = etapasAbertas.filter(et => {
+    const proj = projetos.find(p => p.id === et.projeto_id)
+    return proj && new Date(et.iniciado_em).getTime() < limite15 && normalizeEtapa(proj.etapa_atual) !== 'Execução'
+  })
+  const pagAtrasados = transacoes.filter(tx =>
+    tx.tipo === 'entrada' && (tx.status === 'atrasado' || (tx.status === 'pendente' && tx.data_vencimento && tx.data_vencimento < hoje))
+  )
+  const tarefasVencidas = subtarefas.filter(s => s.data_limite && s.data_limite < hoje)
+
+  // Pipeline counts
+  const stageCount: Record<string, number> = {}
+  for (const s of PIPELINE_STAGES) stageCount[s] = 0
+  for (const p of projAtivos) {
+    const s = normalizeEtapa(p.etapa_atual)
+    const key = PIPELINE_STAGES.find(x => x === s) ?? PIPELINE_STAGES[0]
+    stageCount[key]++
+  }
+  const maxStage = Math.max(...Object.values(stageCount), 1)
+
+  // Performance averages
+  const stageSums: Record<string, { total: number; count: number }> = {}
+  for (const et of etapasFechadas) {
+    if (et.dias_na_etapa !== null) {
+      const s = normalizeEtapa(et.etapa)
+      if (!stageSums[s]) stageSums[s] = { total: 0, count: 0 }
+      stageSums[s].total += et.dias_na_etapa
+      stageSums[s].count++
+    }
+  }
+  const stageAvg: Record<string, number> = {}
+  for (const [s, d] of Object.entries(stageSums)) stageAvg[s] = Math.round(d.total / d.count)
+  const maxAvg = Math.max(...Object.values(stageAvg), 1)
+
+  // Revenue chart
+  const maxMonthRev = Math.max(...months12.map(m => revenueByMonth[m] ?? 0), 1)
+
+  // Insights
+  const insights: Array<{ text: string; href: string; color: string }> = []
+  const projPronto = projAtivos.find(p => {
+    const subs = subtarefas.filter(s => s.projeto_id === p.id)
+    return subs.length > 0 && subs.every(() => false) // placeholder: all tasks done check needs concluida field
+  })
+  void projPronto // suppress unused
+
+  const etapaLenta = Object.entries(stageAvg).filter(([, v]) => v > 14).sort((a, b) => b[1] - a[1])[0]
+  if (etapaLenta) insights.push({ text: `Etapa "${etapaLenta[0]}" demora em média ${etapaLenta[1]} dias (acima do ideal)`, href: '/arquiteto/projetos', color: '#f59e0b' })
+
+  if (pagAtrasados.length > 0) {
+    const total = pagAtrasados.reduce((s, t) => s + Number(t.valor), 0)
+    insights.push({ text: `${pagAtrasados.length} pagamento${pagAtrasados.length !== 1 ? 's' : ''} em atraso — ${fmtBRL(total)} a receber`, href: '/arquiteto/financeiro', color: '#ef4444' })
   }
 
-  const projAtivos = realProjects.filter(p => p.stageIndex < PIPELINE_STAGES.length - 1)
-  const totalMetragem = projAtivos.reduce((s, p) => s + (p.metragem ?? 0), 0)
-  const clientesAtivos = new Set(realProjects.filter(p => p.cliente_nome).map(p => p.cliente_nome)).size
-  const projConcluidos = realProjects.filter(p => p.stageIndex === PIPELINE_STAGES.length - 1).length
+  if (projParados.length > 0) {
+    const et = projParados[0]
+    const proj = projetos.find(p => p.id === et.projeto_id)
+    const dias = Math.floor((Date.now() - new Date(et.iniciado_em).getTime()) / 86400000)
+    if (proj) insights.push({ text: `"${proj.nome}" está há ${dias} dias em ${normalizeEtapa(proj.etapa_atual)} sem avançar`, href: `/arquiteto/projetos/${proj.id}`, color: '#f59e0b' })
+  }
 
-  const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+  if (tarefasVencidas.length > 0) {
+    insights.push({ text: `${tarefasVencidas.length} tarefa${tarefasVencidas.length !== 1 ? 's' : ''} com prazo vencido aguardando conclusão`, href: '/arquiteto/projetos', color: '#8b5cf6' })
+  }
 
-  const statsData = [
-    { title: 'Projetos Ativos',    value: loadingProjects ? '—' : String(projAtivos.length),  delta: '', icon: FolderOpen,  color: '#4f9cf9' },
-    { title: 'Total m² em Dev.',   value: loadingProjects ? '—' : totalMetragem > 0 ? `${totalMetragem.toLocaleString('pt-BR')} m²` : '—', delta: '', icon: TrendingUp, color: 'var(--accent)' },
-    { title: 'Clientes Ativos',    value: loadingProjects ? '—' : String(clientesAtivos),      delta: '', icon: Clock,       color: '#a78bfa' },
-    { title: 'Projetos Concluídos', value: loadingProjects ? '—' : String(projConcluidos),     delta: '', icon: FileText,    color: '#34d399' },
-    { title: 'Valor Orçado (Ativos)', value: loadingProjects ? '—' : fmtBRL(totalOrcamento),  delta: '', icon: DollarSign,  color: '#34d399' },
-    { title: 'Receita do Mês',     value: loadingProjects ? '—' : fmtBRL(receitaMes),          delta: '', icon: DollarSign,  color: '#10b981' },
-    { title: 'Pend. Receber',      value: loadingProjects ? '—' : fmtBRL(pendentesReceber),    delta: '', icon: DollarSign,  color: '#f59e0b' },
-  ]
+  const leadsRecentes = leads.filter(l => Date.now() - new Date(l.created_at).getTime() < 7 * 86400000)
+  if (leadsRecentes.length > 0) {
+    insights.push({ text: `${leadsRecentes.length} novo${leadsRecentes.length !== 1 ? 's' : ''} lead${leadsRecentes.length !== 1 ? 's' : ''} nos últimos 7 dias`, href: '/arquiteto/dashboard', color: '#4f9cf9' })
+  }
+
+  if (projAtivos.length === 0 && projetos.length === 0) {
+    insights.push({ text: 'Crie seu primeiro projeto para começar a usar o pipeline', href: '/arquiteto/projetos', color: '#10b981' })
+  }
+
+  function openExportReport() {
+    const mesLabel = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+    const rows = projetos.slice(0, 50).map(p => {
+      const et = etapasAbertas.find(e => e.projeto_id === p.id)
+      const dias = et ? Math.floor((Date.now() - new Date(et.iniciado_em).getTime()) / 86400000) : '—'
+      const cliente = p.cliente_id ? (clienteMap[p.cliente_id] ?? '—') : '—'
+      return `<tr><td>${p.nome}</td><td>${cliente}</td><td>${normalizeEtapa(p.etapa_atual)}</td><td>${dias}d</td><td>${p.metragem ? p.metragem + ' m²' : '—'}</td></tr>`
+    }).join('')
+    const html = `<!DOCTYPE html><html><head><title>Relatório ${mesLabel}</title><style>
+      body{font-family:sans-serif;font-size:12px;padding:24px;color:#222}h1{font-size:18px;margin-bottom:4px}
+      p{color:#666;margin-bottom:16px;font-size:11px}.cards{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+      .card{padding:12px 18px;border:1px solid #e5e5e5;border-radius:8px;min-width:120px}
+      .cv{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em}.cn{font-size:22px;font-weight:700;margin-top:4px}
+      table{width:100%;border-collapse:collapse}th{text-align:left;border-bottom:2px solid #007AFF;padding:6px 8px;font-size:10px;color:#007AFF;text-transform:uppercase;letter-spacing:.06em}
+      td{padding:6px 8px;border-bottom:1px solid #eee;font-size:11px}@media print{button{display:none}}
+    </style></head><body>
+    <h1>Relatório — ${mesLabel}</h1>
+    <p>Gerado em ${now.toLocaleDateString('pt-BR')}</p>
+    <div class="cards">
+      <div class="card"><div class="cv">Receita do mês</div><div class="cn">${fmtBRL(receitaMes)}</div></div>
+      <div class="card"><div class="cv">Projetos ativos</div><div class="cn">${projAtivos.length}</div></div>
+      <div class="card"><div class="cv">m² em dev.</div><div class="cn">${totalM2 > 0 ? totalM2.toLocaleString('pt-BR') + ' m²' : '—'}</div></div>
+      <div class="card"><div class="cv">Clientes ativos</div><div class="cn">${clientesAtivos}</div></div>
+    </div>
+    <table><thead><tr><th>Projeto</th><th>Cliente</th><th>Etapa</th><th>Dias na Etapa</th><th>Metragem</th></tr></thead>
+    <tbody>${rows}</tbody></table></body></html>`
+    const w = window.open('', '_blank'); if (!w) return
+    w.document.write(html); w.document.close(); w.onload = () => w.print()
+  }
+
+  // ── Render ───────────────────────────────────────────────────────────────
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+      <style>{`
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .dg4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+        .dg3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+        .dg2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        .d2r{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+        .d2r-wide{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+        @media(max-width:1100px){.dg4{grid-template-columns:repeat(2,1fr)}.d2r,.d2r-wide{grid-template-columns:1fr}}
+        @media(max-width:800px){.dg3{grid-template-columns:1fr 1fr}.dg2{grid-template-columns:1fr}}
+        @media(max-width:540px){.dg4,.dg3{grid-template-columns:1fr}}
+      `}</style>
 
-      {/* ═══════════════════════════ HEADER ═══════════════════════════ */}
-      <div className="sticky-page-header" style={{
+      {/* ═══ HEADER ═══ */}
+      <div style={{
         padding: '0 32px', height: 70, borderBottom: '1px solid var(--border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         background: 'var(--bg-card)', position: 'sticky', top: 0, zIndex: 30,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+        boxShadow: '0 1px 3px rgba(0,0,0,.08)',
       }}>
         <div>
-          <div style={{ fontSize: 11.5, color: 'var(--accent)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            Bom dia
+          <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}>
+            {todayLabel}
           </div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
-            {userName}
-          </div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', lineHeight: 1.25, marginTop: 1 }}>{userName}</div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {nivelRank >= 3 && escritorioId && (
+            <>
+              <button onClick={() => setNovoOpen(true)} style={{
+                display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px',
+                background: 'var(--btn-bg)', color: '#fff', border: 'none', borderRadius: 8,
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}>
+                <Plus size={12} /> Novo Projeto
+              </button>
+              <Link href="/arquiteto/financeiro" style={{
+                display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px',
+                background: 'var(--bg-card)', color: 'var(--text-2)',
+                border: '1px solid var(--border)', borderRadius: 8,
+                fontSize: 12, fontWeight: 500, textDecoration: 'none',
+              }}>
+                <DollarSign size={12} /> Financeiro
+              </Link>
+              <button onClick={openExportReport} title="Exportar relatório" style={{
+                display: 'flex', alignItems: 'center', gap: 4, padding: '7px 10px',
+                background: 'var(--bg-card)', color: 'var(--text-2)',
+                border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', fontSize: 12,
+              }}>
+                <Download size={13} />
+              </button>
+            </>
+          )}
+
           {isAdmin && (
             <Link href="/admin" style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '7px 13px', borderRadius: 8, textDecoration: 'none',
+              display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px',
+              borderRadius: 8, textDecoration: 'none',
               background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)',
-              color: 'var(--accent)', fontSize: 12.5, fontWeight: 600, letterSpacing: '0.04em',
-            }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.14)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.08)')}>
-              <ShieldCheck size={14} />
-              Painel Admin
+              color: 'var(--accent)', fontSize: 12, fontWeight: 600,
+            }}>
+              <ShieldCheck size={13} /> Admin
             </Link>
           )}
 
           <div ref={notifRef} style={{ position: 'relative' }}>
-            <button onClick={() => { setNotifOpen(!notifOpen); setDropdownOpen(false) }} style={{
-              width: 38, height: 38, borderRadius: 8, background: 'transparent',
-              border: '1px solid var(--border-input)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer',
+            <button onClick={() => { setNotifOpen(v => !v); setDropdownOpen(false) }} style={{
+              width: 36, height: 36, borderRadius: 8, background: 'transparent',
+              border: '1px solid var(--border-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
             }}>
-              <Bell size={17} color="#8e8e93" />
+              <Bell size={15} color="#8e8e93" />
             </button>
             {notifOpen && (
-              <div style={{
-                position: 'absolute', top: 46, right: 0, width: 260,
-                background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 100, overflow: 'hidden',
-              }}>
-                <div style={{ padding: '13px 16px', borderBottom: '1px solid var(--border)' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Notificações</span>
-                </div>
-                <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-3)', fontSize: 12 }}>
-                  Nenhuma notificação
-                </div>
+              <div style={{ position: 'absolute', top: 44, right: 0, width: 240, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,.1)', zIndex: 100 }}>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Notificações</div>
+                <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-3)', fontSize: 12 }}>Nenhuma notificação</div>
               </div>
             )}
           </div>
 
           <div ref={dropdownRef} style={{ position: 'relative' }}>
-            <button onClick={() => { setDropdownOpen(!dropdownOpen); setNotifOpen(false) }} style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '4px 10px 4px 4px', background: 'transparent',
-              border: '1px solid var(--border-input)', borderRadius: 10, cursor: 'pointer',
+            <button onClick={() => { setDropdownOpen(v => !v); setNotifOpen(false) }} style={{
+              display: 'flex', alignItems: 'center', gap: 7, padding: '4px 10px 4px 4px',
+              background: 'transparent', border: '1px solid var(--border-input)', borderRadius: 10, cursor: 'pointer',
             }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: '50%',
-                background: 'var(--accent-soft)', border: '1px solid rgba(0,122,255,0.25)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontWeight: 700, color: 'var(--accent)',
-              }}>
+              <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
                 {userInitials}
               </div>
-              <div style={{ transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>
-                <ChevronDown size={13} color="#8e8e93" />
-              </div>
+              <ChevronDown size={12} color="#8e8e93" style={{ transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform .15s' }} />
             </button>
-
             {dropdownOpen && (
-              <div style={{
-                position: 'absolute', top: 48, right: 0, width: 210,
-                background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 100, overflow: 'hidden',
-              }}>
-                <div style={{ padding: '13px 15px', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ position: 'absolute', top: 46, right: 0, width: 200, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,.1)', zIndex: 100, overflow: 'hidden' }}>
+                <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)' }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{userName}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{userEmail}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>{userEmail}</div>
                 </div>
                 {[
                   { label: 'Meu Perfil', icon: User, href: '/arquiteto/perfil' },
                   { label: 'Configurações', icon: Settings, href: '/arquiteto/perfil' },
                 ].map(({ label, icon: Icon, href }) => (
-                  <Link key={label} href={href} style={{
-                    display: 'flex', alignItems: 'center', gap: 9,
-                    width: '100%', padding: '10px 15px',
-                    background: 'transparent', textDecoration: 'none',
-                    fontSize: 13, color: 'var(--text-2)',
-                  }}
-                    onMouseEnter={e => { e.currentTarget.style.background = '#f2f2f7'; e.currentTarget.style.color = '#1a1a1a' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6b6b6b' }}>
-                    <Icon size={14} />
-                    {label}
+                  <Link key={label} href={href} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', textDecoration: 'none', fontSize: 13, color: 'var(--text-2)' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'var(--bg)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'transparent' }}>
+                    <Icon size={13} />{label}
                   </Link>
                 ))}
-                <div style={{ height: 1, background: 'rgba(0,0,0,0.08)', margin: '3px 0' }} />
-                <button onClick={handleLogout} style={{
-                  display: 'flex', alignItems: 'center', gap: 9,
-                  width: '100%', padding: '10px 15px',
-                  background: 'transparent', border: 'none',
-                  textAlign: 'left', fontSize: 13, color: '#ef4444', cursor: 'pointer',
-                }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.06)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                  <LogOut size={14} />
-                  Sair
+                <div style={{ height: 1, background: 'var(--border)', margin: '3px 0' }} />
+                <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', textAlign: 'left', fontSize: 13, color: '#ef4444', cursor: 'pointer' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,.06)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}>
+                  <LogOut size={13} /> Sair
                 </button>
               </div>
             )}
@@ -510,486 +615,381 @@ export default function ArquitetoDashboardPage() {
         </div>
       </div>
 
-      {/* ═══════════════════════════ ONBOARDING BANNER ═══════════════════════════ */}
+      {/* ═══ ONBOARDING BANNER ═══ */}
       {onboardingCompleto === false && nivelRank >= 2 && (
         <Link href="/arquiteto/onboarding" style={{ textDecoration: 'none', display: 'block' }}>
-          <div style={{
-            background: 'linear-gradient(90deg, rgba(0,122,255,0.08) 0%, rgba(0,122,255,0.04) 100%)',
-            borderBottom: '1px solid rgba(0,122,255,0.15)',
-            padding: '12px 32px',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-            cursor: 'pointer',
-          }}>
+          <div style={{ background: 'linear-gradient(90deg,rgba(0,122,255,.08),rgba(0,122,255,.03))', borderBottom: '1px solid rgba(0,122,255,.15)', padding: '11px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--btn-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>!</span>
+              <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--btn-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ color: '#fff', fontSize: 10, fontWeight: 700 }}>!</span>
               </div>
-              <div>
-                <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--accent)' }}>Complete a configuração do seu escritório </span>
-                <span style={{ fontSize: 13, color: '#555', fontWeight: 300 }}>— {onboardingPassos.length} de 4 passos completos</span>
-              </div>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)' }}>Complete a configuração do escritório</span>
+              <span style={{ fontSize: 12, color: 'var(--text-3)' }}>— {onboardingPassos.length} de 4 passos</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: 'var(--accent)', fontWeight: 600, flexShrink: 0 }}>
-              Continuar <ArrowRight size={14} />
-            </div>
+            <span style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
+              Continuar <ArrowRight size={13} />
+            </span>
           </div>
         </Link>
       )}
 
-      {/* ═══════════════════════════ CONTENT ═══════════════════════════ */}
-      <div style={{ padding: '28px 32px' }}>
+      {/* ═══ CONTENT ═══ */}
+      {loading ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
+          <div style={{ width: 24, height: 24, border: '2px solid var(--accent)', borderTop: '2px solid transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        </div>
+      ) : (
+        <div style={{ padding: '24px 32px', maxWidth: 1400, margin: '0 auto' }}>
 
-        {/* ─── Alerts ─── */}
-        {nivelRank >= 3 && alertas.length > 0 && (
-          <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 12, padding: '14px 18px', marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Bell size={12} color="#f59e0b" />
+          {/* ══ ZONE 1 — EXECUTIVE SUMMARY ══ */}
+          {nivelRank >= 3 && (
+            <section style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 10 }}>Resumo Executivo</div>
+              <div className="dg4">
+                <ExecCard label="Receita do Mês" value={fmtBRL(receitaMes)} delta={receitaDelta}
+                  sparkline={sparkReceita} color="#10b981" icon={DollarSign}
+                  subLabel={`Pendente: ${fmtBRL(pendente)}`} />
+                <ExecCard label="Projetos Ativos" value={String(projAtivos.length)} delta={projetosDelta}
+                  sparkline={[]} color="#4f9cf9" icon={FolderOpen}
+                  subLabel={`${projNovosMes} novo${projNovosMes !== 1 ? 's' : ''} este mês`} />
+                <ExecCard label="m² em Desenvolvimento" value={totalM2 > 0 ? `${totalM2.toLocaleString('pt-BR')} m²` : '—'}
+                  delta={null} sparkline={[]} color="#8b5cf6" icon={TrendingUp}
+                  subLabel={`${projAtivos.length} projeto${projAtivos.length !== 1 ? 's' : ''} em andamento`} />
+                <ExecCard label="Clientes Ativos" value={String(clientesAtivos)} delta={clientesDelta}
+                  sparkline={[]} color="#f59e0b" icon={Users}
+                  subLabel={`${clientesMes} novo${clientesMes !== 1 ? 's' : ''} este mês`} />
               </div>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Alertas do Pipeline</span>
-              <span style={{ fontSize: 10, background: '#f59e0b', color: '#fff', borderRadius: 10, padding: '1px 6px', fontWeight: 700 }}>{alertas.length}</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              {alertas.map((a, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: a.tipo === 'vencida' ? '#ef4444' : a.tipo === 'parado' ? '#f59e0b' : 'var(--text-2)', cursor: a.projetoId ? 'pointer' : 'default' }}
-                  onClick={() => a.projetoId && router.push(`/arquiteto/projetos/${a.projetoId}`)}>
-                  <span style={{ fontSize: 10 }}>{a.tipo === 'vencida' ? '🔴' : a.tipo === 'parado' ? '🟡' : '🔵'}</span>
-                  <span style={{ flex: 1 }}>{a.texto}</span>
-                  {a.projetoId && <ArrowRight size={11} color="var(--text-3)" />}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+            </section>
+          )}
 
-        {/* ─── Stats Cards — hidden for operacional ─── */}
-        {nivelRank >= 3 && <div className="stats-grid">
-          {statsData.map((stat) => {
-            const Icon = stat.icon
-            return (
-              <div key={stat.title} style={{
-                background: 'var(--bg-card)', border: '1px solid var(--border)',
-                borderRadius: 12, padding: '20px 20px', transition: 'box-shadow 0.2s',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              }}
-                onMouseEnter={e => ((e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)')}
-                onMouseLeave={e => ((e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)')}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 400 }}>{stat.title}</span>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 8,
-                    background: `${stat.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Icon size={15} color={stat.color} />
-                  </div>
-                </div>
-                <div style={{ fontSize: 30, fontWeight: 700, color: 'var(--text)', lineHeight: 1, marginBottom: 6 }}>
-                  {stat.value}
-                </div>
-                {stat.delta && <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{stat.delta}</div>}
+          {/* ══ ZONE 2 — ACTION NEEDED ══ */}
+          {nivelRank >= 3 && (projParados.length > 0 || pagAtrasados.length > 0 || tarefasVencidas.length > 0) && (
+            <section style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 10 }}>Ações Necessárias</div>
+              <div className="dg3">
+                <AlertCard title="Projetos Parados" count={projParados.length} color="#f59e0b" icon={Clock}
+                  href="/arquiteto/projetos"
+                  items={projParados.slice(0, 3).map(et => {
+                    const proj = projetos.find(p => p.id === et.projeto_id)
+                    const dias = Math.floor((Date.now() - new Date(et.iniciado_em).getTime()) / 86400000)
+                    return { text: proj ? `"${proj.nome}" — ${dias} dias em ${normalizeEtapa(proj.etapa_atual)}` : '', href: `/arquiteto/projetos/${et.projeto_id}` }
+                  }).filter(x => x.text)} />
+                <AlertCard title="Pagamentos em Atraso" count={pagAtrasados.length} color="#ef4444" icon={DollarSign}
+                  href="/arquiteto/financeiro"
+                  items={pagAtrasados.slice(0, 3).map(tx => ({ text: `${tx.descricao} — ${fmtBRL(Number(tx.valor))}`, href: '/arquiteto/financeiro' }))} />
+                <AlertCard title="Tarefas Vencidas" count={tarefasVencidas.length} color="#8b5cf6" icon={CheckSquare}
+                  href="/arquiteto/projetos"
+                  items={tarefasVencidas.slice(0, 3).map(s => ({
+                    text: `"${s.titulo}" — venceu ${new Date(s.data_limite!).toLocaleDateString('pt-BR')}`,
+                    href: `/arquiteto/projetos/${s.projeto_id}`,
+                  }))} />
               </div>
-            )
-          })}
-        </div>}
+            </section>
+          )}
 
-        {/* ─── Two-column layout ─── */}
-        <div style={{ display: 'grid', gridTemplateColumns: nivelRank < 3 ? '1fr' : '1fr 296px', gap: 20 }}>
+          {/* ══ ZONE 3 — DEEP VIEW (owner) ══ */}
+          {nivelRank >= 3 ? (
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Left column */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
-
-            {/* ── Pipeline ── */}
-            <div style={card}>
-              <style>{`
-                .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
-                @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
-                @media (max-width: 800px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-                @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } }
-                .proj-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-                @media (max-width: 1100px) { .proj-grid { grid-template-columns: repeat(2, 1fr); } }
-                @media (max-width: 640px) { .proj-grid { grid-template-columns: 1fr; } }
-                .proj-card { border-radius: 12px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08); background: #ffffff; cursor: pointer; transition: border-color 0.25s, box-shadow 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-                .proj-card:hover { border-color: rgba(0,122,255,0.3); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-                .proj-card-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.45s ease; }
-                .proj-card:hover .proj-card-img { transform: scale(1.06); }
-                .cover-edit-btn { opacity: 0; pointer-events: none; transition: opacity 0.18s; }
-                .proj-card:hover .cover-edit-btn { opacity: 1; pointer-events: auto; }
-              `}</style>
-
-              <div style={sectionHeader}>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>
-                    {nivelRank < 3 ? 'Meus Projetos' : 'Pipeline de Projetos'}
-                  </div>
-                  {nivelRank >= 3 && (
-                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>
-                      Atendimento · Reunião · Briefing · 3D · Alt. 3D · Detalhamento · Orçamento · Execução
+              {/* Pipeline + Insights */}
+              <div className="d2r">
+                {/* Pipeline */}
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14 }}>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Pipeline de Projetos</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{projAtivos.length} projeto{projAtivos.length !== 1 ? 's' : ''} em andamento</div>
                     </div>
-                  )}
-                </div>
-                {nivelRank >= 3 && (
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button style={blueButton}>Ver todos</button>
-                    <button onClick={() => setNovoOpen(true)} style={{
-                      ...blueButton, background: 'var(--accent-soft)',
-                      display: 'flex', alignItems: 'center', gap: 5,
-                    }}>
-                      <Plus size={12} /> Novo Projeto
-                    </button>
+                    <Link href="/arquiteto/projetos" style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none' }}>Ver kanban →</Link>
                   </div>
-                )}
-              </div>
-
-              <div style={{ padding: 20 }}>
-                {loadingProjects ? (
-                  <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-3)', fontSize: 13 }}>
-                    Carregando projetos...
-                  </div>
-                ) : realProjects.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '48px 0' }}>
-                    <FolderOpen size={40} color="#8e8e93" style={{ marginBottom: 14 }} />
-                    <div style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 6 }}>
-                      {nivelRank < 3 ? 'Nenhum projeto atribuído' : 'Nenhum projeto ainda'}
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 18 }}>
-                      {nivelRank < 3
-                        ? 'Você aparecerá aqui quando for adicionado a um projeto'
-                        : 'Crie seu primeiro projeto para começar'}
-                    </div>
-                    {nivelRank >= 3 && (
-                      <button onClick={() => setNovoOpen(true)} style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 7,
-                        padding: '10px 18px', borderRadius: 10, cursor: 'pointer',
-                        background: 'var(--btn-bg)', color: '#ffffff', border: 'none',
-                        fontSize: 13, fontWeight: 400,
-                      }}>
-                        <Plus size={14} /> Criar primeiro projeto
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="proj-grid">
-                    {realProjects.map((project) => {
-                      const progress = Math.round(((project.stageIndex + 1) / PIPELINE_STAGES.length) * 100)
-                      const currentStage = PIPELINE_STAGES[project.stageIndex]
-                      const stageColor = STAGE_COLORS[project.stageIndex] ?? '#007AFF'
-                      const dateStr = new Date(project.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+                  <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 9 }}>
+                    {PIPELINE_STAGES.map((stage, idx) => {
+                      const count = stageCount[stage] ?? 0
+                      const pct = Math.round((count / maxStage) * 100)
+                      const color = STAGE_COLORS[idx]
                       return (
-                        <div key={project.id} className="proj-card" onClick={() => router.push(`/arquiteto/projetos/${project.id}`)}>
-                          <div>
-                            {/* Cover image */}
-                            <div style={{ position: 'relative', height: 140, overflow: 'hidden', background: 'linear-gradient(135deg, #e8e8f0 0%, #d4d4dc 100%)' }}>
-                              {project.cover_url && <img src={project.cover_url} alt={project.name} className="proj-card-img" />}
-                              {project.cover_url && (
-                                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)' }} />
-                              )}
-                              {!project.cover_url && (
-                                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                                  <FolderOpen size={22} color="#c7c7cc" />
-                                </div>
-                              )}
-                              <CoverUploadButton
-                                projectId={project.id}
-                                hasCover={!!project.cover_url}
-                                onUpdate={(url) => handleCoverUpdate(project.id, url)}
-                                btnClassName={project.cover_url ? 'cover-edit-btn' : undefined}
-                              />
-                              {/* Stage badge */}
-                              <div style={{ position: 'absolute', top: 8, right: 8, fontSize: 9.5, fontWeight: 700, color: stageColor, background: 'rgba(255,255,255,0.92)', border: `1px solid ${stageColor}40`, padding: '3px 9px', borderRadius: 20, backdropFilter: 'blur(6px)', letterSpacing: '0.04em' }}>
-                                {currentStage}
-                              </div>
-                              {/* Project name overlay on cover */}
-                              {project.cover_url && (
-                                <div style={{ position: 'absolute', bottom: 10, left: 12, right: 12 }}>
-                                  <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', lineHeight: 1.25, textShadow: '0 1px 6px rgba(0,0,0,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
-                                    {project.name}
-                                  </div>
-                                </div>
-                              )}
-                              {/* Progress bar */}
-                              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3 }}>
-                                <div style={{ height: '100%', width: `${progress}%`, background: stageColor, opacity: 0.8 }} />
-                              </div>
-                            </div>
-                            {/* Card body */}
-                            <div style={{ padding: '11px 14px' }}>
-                              {!project.cover_url && (
-                                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
-                                  {project.name}
-                                </div>
-                              )}
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
-                                <User size={11} color="#8e8e93" />
-                                <span style={{ fontSize: 11.5, color: project.cliente_nome ? '#6b6b6b' : '#c7c7cc', fontStyle: project.cliente_nome ? 'normal' : 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
-                                  {project.cliente_nome ?? 'Sem cliente vinculado'}
-                                </span>
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: 10, color: 'var(--text-3)' }}>{dateStr} · {project.type}</span>
-                                <ArrowRight size={12} color="var(--accent)" />
-                              </div>
-                            </div>
+                        <div key={stage} style={{ cursor: 'pointer' }} onClick={() => router.push('/arquiteto/projetos')}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                            <span style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: count > 0 ? 600 : 400 }}>{stage}</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: count > 0 ? color : 'var(--text-3)' }}>{count}</span>
+                          </div>
+                          <div style={{ height: 6, background: 'var(--bg)', borderRadius: 3, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 3, opacity: count > 0 ? 1 : 0.15, transition: 'width .4s ease' }} />
                           </div>
                         </div>
                       )
                     })}
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* ── Leads table — hidden for operacional ── */}
-            {nivelRank >= 3 && <div style={card}>
-              <div style={sectionHeader}>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Leads Recentes</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>Últimos contatos recebidos pelo perfil público</div>
                 </div>
-                <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{leads.length} contato{leads.length !== 1 ? 's' : ''}</span>
-              </div>
-              {leads.length === 0 ? (
-                <div style={{ padding: '48px 22px', textAlign: 'center' }}>
-                  <Phone size={32} color="#8e8e93" style={{ marginBottom: 12 }} />
-                  <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 4 }}>Nenhum lead ainda</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
-                    Quando alguém preencher o formulário do seu perfil público, aparecerá aqui
+
+                {/* Insights */}
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14 }}>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Lightbulb size={14} color="#f59e0b" />
+                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Insights</span>
+                  </div>
+                  <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {insights.length === 0 ? (
+                      <div style={{ padding: '28px 0', textAlign: 'center', color: 'var(--text-3)', fontSize: 12 }}>Tudo em ordem!</div>
+                    ) : insights.slice(0, 5).map((ins, i) => (
+                      <div key={i} onClick={() => router.push(ins.href)}
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 10px', borderRadius: 8, cursor: 'pointer' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: ins.color, marginTop: 5, flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.45 }}>{ins.text}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ) : (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                        {['Nome', 'Email', 'Telefone', 'Mensagem', 'Data'].map(h => (
-                          <th key={h} style={{ padding: '10px 22px', textAlign: 'left', fontSize: 10, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
-                            {h.toUpperCase()}
-                          </th>
+              </div>
+
+              {/* Revenue chart + Performance */}
+              <div className="d2r-wide">
+                {/* 12-month revenue */}
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14 }}>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Receita Mensal</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>Últimos 12 meses</div>
+                    </div>
+                    <Link href="/arquiteto/financeiro" style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none' }}>Detalhes →</Link>
+                  </div>
+                  <div style={{ padding: '20px 20px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 90 }}>
+                      {months12.map((m, idx) => {
+                        const v = revenueByMonth[m] ?? 0
+                        const h = Math.max(3, Math.round((v / maxMonthRev) * 90))
+                        const isCur = m === mesMes
+                        const lbl = new Date(m + '-02').toLocaleDateString('pt-BR', { month: 'short' })
+                        return (
+                          <div key={m} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'default' }} title={`${lbl}: ${fmtBRL(v)}`}>
+                            <div style={{ width: '100%', height: h, borderRadius: '3px 3px 0 0', background: isCur ? '#007AFF' : 'var(--border)', transition: 'height .3s' }} />
+                            {(idx === 0 || idx === 5 || idx === 11 || isCur) && (
+                              <span style={{ fontSize: 8, color: isCur ? 'var(--accent)' : 'var(--text-3)', fontWeight: isCur ? 700 : 400 }}>{lbl}</span>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div style={{ display: 'flex', gap: 20, marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
+                      <div>
+                        <div style={{ fontSize: 10, color: 'var(--text-3)' }}>Este mês</div>
+                        <div style={{ fontSize: 17, fontWeight: 700, color: '#007AFF' }}>{fmtBRL(receitaMes)}</div>
+                      </div>
+                      {receitaAnt > 0 && (
+                        <div>
+                          <div style={{ fontSize: 10, color: 'var(--text-3)' }}>Mês anterior</div>
+                          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-2)' }}>{fmtBRL(receitaAnt)}</div>
+                        </div>
+                      )}
+                      {receitaDelta !== null && (
+                        <div>
+                          <div style={{ fontSize: 10, color: 'var(--text-3)' }}>Variação</div>
+                          <div style={{ fontSize: 17, fontWeight: 700, color: receitaDelta >= 0 ? '#10b981' : '#ef4444' }}>
+                            {receitaDelta >= 0 ? '↑' : '↓'} {Math.abs(receitaDelta)}%
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Performance */}
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14 }}>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Performance por Etapa</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>Tempo médio (dias) · verde ≤7 · amarelo ≤14 · vermelho &gt;14</div>
+                  </div>
+                  <div style={{ padding: '14px 16px' }}>
+                    {Object.keys(stageAvg).length === 0 ? (
+                      <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-3)', fontSize: 12 }}>Dados insuficientes — conclua projetos para ver médias</div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {PIPELINE_STAGES.filter(s => stageAvg[s] !== undefined).map(s => {
+                          const avg = stageAvg[s]
+                          const pct = Math.round((avg / maxAvg) * 100)
+                          const color = avg <= 7 ? '#10b981' : avg <= 14 ? '#f59e0b' : '#ef4444'
+                          return (
+                            <div key={s}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 3 }}>
+                                <span style={{ color: 'var(--text-2)' }}>{s}</span>
+                                <span style={{ fontWeight: 700, color }}>{avg}d</span>
+                              </div>
+                              <div style={{ height: 5, background: 'var(--bg)', borderRadius: 3, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 3, transition: 'width .4s' }} />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Team + Leads */}
+              {(membros.length > 0 || leads.length > 0) && (
+                <div className="dg2">
+                  {membros.length > 0 && (
+                    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14 }}>
+                      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Equipe</div>
+                        <Link href="/arquiteto/equipe" style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none' }}>Gerenciar →</Link>
+                      </div>
+                      <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {membros.slice(0, 6).map(m => {
+                          const initials = (m.nome ?? '?').split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
+                          const projCount = membroProjetosMap[m.id] ?? 0
+                          const nivelLbl: Record<string, string> = { owner: 'Dono', admin: 'Admin', pleno: 'Pleno', operacional: 'Operacional', gestor: 'Gestor' }
+                          return (
+                            <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8 }}
+                              onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg)')}
+                              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                              <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>{initials}</div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nome}</div>
+                                <div style={{ fontSize: 10, color: 'var(--text-3)' }}>
+                                  {m.cargo ?? nivelLbl[m.nivel_permissao ?? ''] ?? m.nivel_permissao}
+                                  {projCount > 0 && ` · ${projCount} projeto${projCount !== 1 ? 's' : ''}`}
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {leads.length > 0 && (
+                    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14 }}>
+                      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Leads Recentes</div>
+                        <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{leads.length} contato{leads.length !== 1 ? 's' : ''}</span>
+                      </div>
+                      <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {leads.slice(0, 7).map(l => (
+                          <div key={l.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', borderRadius: 8 }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{l.nome}</span>
+                            <span style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{new Date(l.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</span>
+                          </div>
                         ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {leads.map((lead, i) => (
-                        <tr key={lead.id} style={{ borderBottom: i < leads.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}
-                          onMouseEnter={e => ((e.currentTarget as HTMLTableRowElement).style.background = '#f9f9fb')}
-                          onMouseLeave={e => ((e.currentTarget as HTMLTableRowElement).style.background = 'transparent')}>
-                          <td style={{ padding: '13px 22px', fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
-                            {lead.nome}
-                          </td>
-                          <td style={{ padding: '13px 22px', fontSize: 12, color: 'var(--text-2)' }}>
-                            <a href={`mailto:${lead.email}`} style={{ color: 'var(--accent)', textDecoration: 'none' }}>{lead.email}</a>
-                          </td>
-                          <td style={{ padding: '13px 22px', fontSize: 12, color: 'var(--text-2)', whiteSpace: 'nowrap' }}>
-                            {lead.telefone ?? '—'}
-                          </td>
-                          <td style={{ padding: '13px 22px', fontSize: 12, color: 'var(--text-2)', maxWidth: 240 }}>
-                            <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                              {lead.mensagem ?? '—'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '13px 22px', fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
-                            {new Date(lead.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' })}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>}
-          </div>
+            </section>
 
-          {/* ─── Right column — Agenda + Performance ─── */}
-          {nivelRank >= 3 && <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* Performance card */}
-            {Object.keys(tempoMedioEtapa).length > 0 && (
-              <div style={{ ...card, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>Performance por Etapa</div>
-                  <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 2 }}>Tempo médio (dias)</div>
+          ) : (
+            /* ══ OPERACIONAL VIEW ══ */
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="dg3">
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 20px' }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 8 }}>Projetos Atribuídos</div>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)' }}>{projetos.length}</div>
                 </div>
-                <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {Object.entries(tempoMedioEtapa).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([etapa, avg]) => {
-                    const maxVal = Math.max(...Object.values(tempoMedioEtapa))
-                    const pct = Math.round((avg / maxVal) * 100)
-                    const color = avg <= 7 ? '#10b981' : avg <= 14 ? '#f59e0b' : '#ef4444'
-                    return (
-                      <div key={etapa}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 3 }}>
-                          <span style={{ color: 'var(--text-2)' }}>{etapa}</span>
-                          <span style={{ fontWeight: 600, color }}>{avg}d</span>
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 20px' }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 8 }}>Tarefas Pendentes</div>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)' }}>{subtarefas.length}</div>
+                </div>
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 20px' }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 8 }}>Tarefas Vencidas</div>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: tarefasVencidas.length > 0 ? '#ef4444' : 'var(--text)' }}>{tarefasVencidas.length}</div>
+                </div>
+              </div>
+
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14 }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Meus Projetos</div>
+                </div>
+                {projetos.length === 0 ? (
+                  <div style={{ padding: '48px 20px', textAlign: 'center' }}>
+                    <FolderOpen size={32} color="#8e8e93" style={{ marginBottom: 12 }} />
+                    <div style={{ fontSize: 13, color: 'var(--text-2)' }}>Nenhum projeto atribuído ainda</div>
+                  </div>
+                ) : (
+                  <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {projetos.slice(0, 8).map(p => {
+                      const etapa = normalizeEtapa(p.etapa_atual)
+                      const idx = PIPELINE_STAGES.indexOf(etapa)
+                      const color = STAGE_COLORS[idx >= 0 ? idx : 0]
+                      return (
+                        <div key={p.id} onClick={() => router.push(`/arquiteto/projetos/${p.id}`)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 8, cursor: 'pointer' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nome}</div>
+                            {p.cliente_id && clienteMap[p.cliente_id] && (
+                              <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{clienteMap[p.cliente_id]}</div>
+                            )}
+                          </div>
+                          <span style={{ fontSize: 10.5, fontWeight: 600, color, background: color + '18', padding: '2px 8px', borderRadius: 10, flexShrink: 0 }}>{etapa}</span>
+                          <ArrowRight size={12} color="var(--text-3)" />
                         </div>
-                        <div style={{ height: 4, background: 'var(--bg)', borderRadius: 2, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2, transition: 'width 0.4s' }} />
-                        </div>
+                      )
+                    })}
+                    {projetos.length > 8 && (
+                      <div style={{ textAlign: 'center', padding: '8px 0' }}>
+                        <Link href="/arquiteto/projetos" style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none' }}>Ver todos ({projetos.length}) →</Link>
                       </div>
-                    )
-                  })}
-                </div>
-                <div style={{ padding: '8px 14px', borderTop: '1px solid var(--border-subtle)' }}>
-                  <Link href="/arquiteto/projetos?view=kanban" style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none' }}>
-                    Ver Kanban →
-                  </Link>
-                </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-            <div style={{ ...card, position: 'sticky', top: 90, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-              <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--border)' }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Agenda do Dia</div>
-                <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 3, textTransform: 'capitalize' }}>
-                  {todayLabel}
-                </div>
-              </div>
-              <div style={{ padding: '32px 20px', textAlign: 'center' }}>
-                <CalendarDays size={32} color="#8e8e93" style={{ marginBottom: 12 }} />
-                <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 4 }}>Nenhum compromisso hoje</div>
-                <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
-                  Acesse o calendário para adicionar eventos
-                </div>
-              </div>
-              <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border-subtle)' }}>
-                <Link href="/arquiteto/calendario" style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: '100%', padding: '9px',
-                  background: 'rgba(0,122,255,0.07)', border: '1px solid rgba(0,122,255,0.18)',
-                  borderRadius: 8, color: 'var(--accent)', fontSize: 12, fontWeight: 400,
-                  letterSpacing: '0.03em', textDecoration: 'none',
-                }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.12)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,122,255,0.07)')}>
-                  Ver Calendário
-                </Link>
-              </div>
-            </div>
-          </div>}
+            </section>
+          )}
         </div>
-      </div>
+      )}
 
-      {/* ═══════ NOVO PROJETO MODAL ═══════ */}
+      {/* ══ NEW PROJECT MODAL ══ */}
       {novoOpen && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 200,
-          background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
-        }} onClick={() => setNovoOpen(false)}>
-          <div style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16,
-            padding: 32, width: '100%', maxWidth: 560, position: 'relative',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-          }} onClick={e => e.stopPropagation()}>
-            <button onClick={() => setNovoOpen(false)} style={{
-              position: 'absolute', top: 16, right: 16,
-              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4,
-            }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={() => setNovoOpen(false)}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 32, width: '100%', maxWidth: 480, position: 'relative', boxShadow: '0 4px 16px rgba(0,0,0,.1)' }}
+            onClick={e => e.stopPropagation()}>
+            <button onClick={() => setNovoOpen(false)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}>
               <X size={18} />
             </button>
-
             <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Novo Projeto</h2>
-            <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 24 }}>Adicione um novo projeto ao seu pipeline</p>
-
+            <p style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 24 }}>Adicione ao pipeline</p>
             <form onSubmit={handleCriarProjeto} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
-                  Nome do projeto
-                </label>
-                <input value={novoForm.nome} onChange={e => setNovoForm(p => ({ ...p, nome: e.target.value }))}
-                  placeholder="Ex: Residência Costa" required style={{
-                    width: '100%', padding: '10px 14px', background: 'var(--bg)',
-                    border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5,
-                    outline: 'none', boxSizing: 'border-box', borderRadius: 10,
-                  }}
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6 }}>Nome do projeto *</label>
+                <input value={novoForm.nome} onChange={e => setNovoForm(p => ({ ...p, nome: e.target.value }))} placeholder="Ex: Residência Costa" required
+                  style={{ width: '100%', padding: '10px 14px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10 }}
                   onFocus={e => (e.target.style.borderColor = '#007AFF')}
-                  onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                  onBlur={e => (e.target.style.borderColor = 'var(--border)')} />
               </div>
-
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
-                  Tipo
-                </label>
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6 }}>Tipo</label>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {['residencial', 'comercial', 'institucional'].map(t => (
                     <button key={t} type="button" onClick={() => setNovoForm(p => ({ ...p, tipo: t }))} style={{
-                      flex: 1, padding: '9px 4px', fontSize: 12, fontWeight: 400,
-                      borderRadius: 8, cursor: 'pointer', transition: 'all 0.15s',
-                      background: novoForm.tipo === t ? 'rgba(0,122,255,0.1)' : '#f2f2f7',
-                      border: `1px solid ${novoForm.tipo === t ? '#007AFF' : 'rgba(0,0,0,0.08)'}`,
-                      color: novoForm.tipo === t ? '#007AFF' : '#6b6b6b', textTransform: 'capitalize',
-                    }}>
-                      {t}
-                    </button>
+                      flex: 1, padding: '9px 4px', fontSize: 12, borderRadius: 8, cursor: 'pointer',
+                      background: novoForm.tipo === t ? 'rgba(0,122,255,.1)' : 'var(--bg)',
+                      border: `1px solid ${novoForm.tipo === t ? '#007AFF' : 'var(--border)'}`,
+                      color: novoForm.tipo === t ? '#007AFF' : 'var(--text-2)', textTransform: 'capitalize',
+                    }}>{t}</button>
                   ))}
                 </div>
               </div>
-
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
-                  Descrição (opcional)
-                </label>
-                <textarea value={novoForm.descricao} onChange={e => setNovoForm(p => ({ ...p, descricao: e.target.value }))}
-                  placeholder="Breve descrição do projeto..." rows={3} style={{
-                    width: '100%', padding: '10px 14px', background: 'var(--bg)',
-                    border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5,
-                    outline: 'none', boxSizing: 'border-box', borderRadius: 10, resize: 'none',
-                  }}
+                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6 }}>Descrição (opcional)</label>
+                <textarea value={novoForm.descricao} onChange={e => setNovoForm(p => ({ ...p, descricao: e.target.value }))} rows={3}
+                  style={{ width: '100%', padding: '10px 14px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10, resize: 'none' }}
                   onFocus={e => (e.target.style.borderColor = '#007AFF')}
-                  onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
+                  onBlur={e => (e.target.style.borderColor = 'var(--border)')} />
               </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
-                    Metragem (m²) — opcional
-                  </label>
-                  <input type="number" min="0" value={novoForm.metragem} onChange={e => setNovoForm(p => ({ ...p, metragem: e.target.value }))}
-                    placeholder="Ex: 120" style={{ width: '100%', padding: '10px 14px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10 }}
-                    onFocus={e => (e.target.style.borderColor = '#007AFF')}
-                    onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
-                    Tipo de contrato — opcional
-                  </label>
-                  <select value={novoForm.tipo_contrato} onChange={e => setNovoForm(p => ({ ...p, tipo_contrato: e.target.value }))}
-                    style={{ width: '100%', padding: '10px 14px', background: 'var(--bg)', border: '1px solid var(--border)', color: novoForm.tipo_contrato ? '#1a1a1a' : '#8e8e93', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10, fontFamily: 'inherit' }}>
-                    <option value="">Selecionar...</option>
-                    <option value="execucao">Execução</option>
-                    <option value="somente_projeto">Somente Projeto</option>
-                    <option value="acompanhamento">Acompanhamento de Obra</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
-                  Endereço da obra — opcional
-                </label>
-                <input value={novoForm.endereco} onChange={e => setNovoForm(p => ({ ...p, endereco: e.target.value }))}
-                  placeholder="Rua, número, bairro..." style={{ width: '100%', padding: '10px 14px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10 }}
-                  onFocus={e => (e.target.style.borderColor = '#007AFF')}
-                  onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.04em', fontWeight: 400 }}>
-                  Email do cliente — opcional
-                </label>
-                <input type="email" value={novoForm.email_cliente} onChange={e => setNovoForm(p => ({ ...p, email_cliente: e.target.value }))}
-                  placeholder="cliente@email.com" style={{ width: '100%', padding: '10px 14px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13.5, outline: 'none', boxSizing: 'border-box', borderRadius: 10 }}
-                  onFocus={e => (e.target.style.borderColor = '#007AFF')}
-                  onBlur={e => (e.target.style.borderColor = 'rgba(0,0,0,0.08)')} />
-                <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 4 }}>Quando o cliente criar conta com este email, será vinculado automaticamente.</div>
-              </div>
-
-              {!escritorioId && !loadingProjects && (
-                <p style={{ fontSize: 12, color: '#f97316', padding: '10px 14px', background: 'rgba(249,115,22,0.06)', borderRadius: 8, border: '1px solid rgba(249,115,22,0.15)' }}>
-                  Configure seu perfil em &quot;Meu Perfil&quot; antes de criar projetos.
-                </p>
-              )}
-
+              {!escritorioId && <p style={{ fontSize: 12, color: '#f97316', padding: '10px 14px', background: 'rgba(249,115,22,.06)', borderRadius: 8 }}>Configure seu perfil antes de criar projetos.</p>}
               <button type="submit" disabled={novoSaving || !escritorioId || !novoForm.nome} style={{
-                width: '100%', padding: '12px', background: novoSaving ? 'rgba(0,122,255,0.4)' : '#007AFF',
-                color: '#ffffff', border: 'none', borderRadius: 10,
-                fontSize: 13, fontWeight: 400, letterSpacing: '0.04em',
-                cursor: novoSaving || !escritorioId || !novoForm.nome ? 'not-allowed' : 'pointer', marginTop: 4,
+                width: '100%', padding: '12px', background: novoSaving || !escritorioId || !novoForm.nome ? 'rgba(0,122,255,.4)' : '#007AFF',
+                color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                cursor: novoSaving || !escritorioId || !novoForm.nome ? 'not-allowed' : 'pointer',
               }}>
                 {novoSaving ? 'Criando...' : 'Criar Projeto'}
               </button>
