@@ -32,7 +32,9 @@ export default function RecuperarSenhaPage() {
     setLoading(true)
 
     const supabase = createClient()
-    const { error: authError } = await supabase.auth.resetPasswordForEmail(email)
+    const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://www.usearc.com.br/auth/confirm?next=recovery',
+    })
 
     if (authError) {
       setError('Não foi possível enviar o email. Verifique o endereço e tente novamente.')
