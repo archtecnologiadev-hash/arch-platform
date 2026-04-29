@@ -183,12 +183,26 @@ export default function AdminSuportePage() {
     const txt = (content ?? text).trim()
     if (!txt || !selected || sending) return
     setSending(true)
-    await supabase.from('suporte_mensagens').insert({
-      conversa_id: selected.id,
-      conteudo: txt,
-      is_admin: true,
-      lida: false,
+    setText('')
+
+    const tempId = `temp-${Date.now()}`
+    const tempMsg: Msg = { id: tempId, conteudo: txt, is_admin: true, lida: false, created_at: new Date().toISOString(), remetente_id: null }
+    setMsgs(prev => [...prev, tempMsg])
+
+    const { data } = await supabase
+      .from('suporte_mensagens')
+      .insert({ conversa_id: selected.id, conteudo: txt, is_admin: true, lida: false })
+      .select('id, conteudo, is_admin, lida, created_at, remetente_id')
+      .single()
+
+    setMsgs(prev => {
+      if (data) {
+        const hasReal = prev.some(m => m.id === data.id)
+        return hasReal ? prev.filter(m => m.id !== tempId) : prev.map(m => m.id === tempId ? data : m)
+      }
+      return prev.filter(m => m.id !== tempId)
     })
+
     await supabase.from('suporte_conversas').update({
       ultima_mensagem_em: new Date().toISOString(),
       status: selected.status === 'aberto' ? 'em_andamento' : selected.status,
@@ -197,7 +211,6 @@ export default function AdminSuportePage() {
       setSelected(prev => prev ? { ...prev, status: 'em_andamento' } : prev)
       setConvs(prev => prev.map(c => c.id === selected.id ? { ...c, status: 'em_andamento' } : c))
     }
-    setText('')
     setSending(false)
   }
 

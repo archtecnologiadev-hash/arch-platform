@@ -181,11 +181,27 @@ export default function SuporteWidget() {
       return
     }
     setSending(true)
-    await supabase.from('suporte_mensagens').insert({
-      conversa_id: conv.id, remetente_id: userId, conteudo: txt, is_admin: false, lida: false,
-    })
-    await supabase.from('suporte_conversas').update({ ultima_mensagem_em: new Date().toISOString() }).eq('id', conv.id)
     setText('')
+
+    const tempId = `temp-${Date.now()}`
+    const tempMsg: Msg = { id: tempId, conteudo: txt, is_admin: false, lida: false, created_at: new Date().toISOString() }
+    setMsgs(prev => [...prev, tempMsg])
+
+    const { data } = await supabase
+      .from('suporte_mensagens')
+      .insert({ conversa_id: conv.id, remetente_id: userId, conteudo: txt, is_admin: false, lida: false })
+      .select('id, conteudo, is_admin, lida, created_at')
+      .single()
+
+    setMsgs(prev => {
+      if (data) {
+        const hasReal = prev.some(m => m.id === data.id)
+        return hasReal ? prev.filter(m => m.id !== tempId) : prev.map(m => m.id === tempId ? data : m)
+      }
+      return prev.filter(m => m.id !== tempId)
+    })
+
+    await supabase.from('suporte_conversas').update({ ultima_mensagem_em: new Date().toISOString() }).eq('id', conv.id)
     setSending(false)
     inputRef.current?.focus()
   }

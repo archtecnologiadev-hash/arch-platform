@@ -319,8 +319,26 @@ function ChatInner({ userType }: { userType: UserType }) {
     setSending(true)
     const t = texto.trim()
     setTexto('')
+
+    const tempId = `temp-${Date.now()}`
+    const tempMsg: Mensagem = { id: tempId, remetente_id: userId, texto: t, created_at: new Date().toISOString(), lida: false }
+    setMensagens(prev => [...prev, tempMsg])
+
     const supabase = createClient()
-    await supabase.from('mensagens').insert({ conversa_id: selectedId, remetente_id: userId, texto: t })
+    const { data } = await supabase
+      .from('mensagens')
+      .insert({ conversa_id: selectedId, remetente_id: userId, texto: t })
+      .select()
+      .single()
+
+    setMensagens(prev => {
+      if (data) {
+        const hasReal = prev.some(m => m.id === data.id)
+        return hasReal ? prev.filter(m => m.id !== tempId) : prev.map(m => m.id === tempId ? data : m)
+      }
+      return prev.filter(m => m.id !== tempId)
+    })
+
     fetch('/api/notifications/mensagem', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
