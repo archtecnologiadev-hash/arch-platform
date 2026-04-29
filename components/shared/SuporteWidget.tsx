@@ -40,7 +40,8 @@ export default function SuporteWidget() {
   const [showSubject, setShowSubject] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef  = useRef<HTMLTextAreaElement>(null)
-  const supabase  = createClient()
+  // Stable client — must not be recreated on every render or channel cleanup breaks
+  const supabase  = useRef(createClient()).current
 
   // Load user
   useEffect(() => {
@@ -111,12 +112,14 @@ export default function SuporteWidget() {
   // Realtime subscription
   useEffect(() => {
     if (!open || !conv) return
+    console.log('[suporte-widget] subscribing conv:', conv.id)
     const channel = supabase
-      .channel(`suporte_msgs_${conv.id}`)
+      .channel(`suporte-widget-${conv.id}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'suporte_mensagens', filter: `conversa_id=eq.${conv.id}` },
         async (payload) => {
+          console.log('[suporte-widget] msg recebida:', payload.new)
           const newMsg = payload.new as Msg
           setMsgs(prev => {
             if (prev.find(m => m.id === newMsg.id)) return prev
@@ -127,8 +130,14 @@ export default function SuporteWidget() {
           }
         }
       )
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
+      .subscribe((status) => {
+        console.log('[suporte-widget] status canal:', status)
+      })
+    return () => {
+      console.log('[suporte-widget] removendo canal')
+      supabase.removeChannel(channel)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, conv?.id])
 
   // Scroll to bottom on new msgs
@@ -180,6 +189,7 @@ export default function SuporteWidget() {
       await createConvAndSend(txt)
       return
     }
+    console.log('[suporte-widget] enviando mensagem')
     setSending(true)
     setText('')
 

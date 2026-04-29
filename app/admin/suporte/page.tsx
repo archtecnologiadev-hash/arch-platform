@@ -74,7 +74,8 @@ export default function AdminSuportePage() {
   const [loadingMsgs, setLoadingMsgs] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>('todos')
   const bottomRef = useRef<HTMLDivElement>(null)
-  const supabase = createClient()
+  // Stable client — must not be recreated on every render or channel cleanup breaks
+  const supabase = useRef(createClient()).current
 
   const loadConvs = useCallback(async () => {
     setLoadingConvs(true)
@@ -152,12 +153,14 @@ export default function AdminSuportePage() {
   // Realtime for messages in selected conv
   useEffect(() => {
     if (!selected) return
+    console.log('[admin-suporte] subscribing conv:', selected.id)
     const channel = supabase
-      .channel(`admin_msgs_${selected.id}`)
+      .channel(`admin-suporte-msgs-${selected.id}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'suporte_mensagens', filter: `conversa_id=eq.${selected.id}` },
         async (payload) => {
+          console.log('[admin-suporte] msg recebida:', payload.new)
           const newMsg = payload.new as Msg
           setMsgs(prev => prev.find(m => m.id === newMsg.id) ? prev : [...prev, newMsg])
           if (!newMsg.is_admin) {
@@ -165,8 +168,14 @@ export default function AdminSuportePage() {
           }
         }
       )
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
+      .subscribe((status) => {
+        console.log('[admin-suporte] status canal:', status)
+      })
+    return () => {
+      console.log('[admin-suporte] removendo canal')
+      supabase.removeChannel(channel)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected?.id])
 
   useEffect(() => {
@@ -182,6 +191,7 @@ export default function AdminSuportePage() {
   async function sendMsg(content?: string) {
     const txt = (content ?? text).trim()
     if (!txt || !selected || sending) return
+    console.log('[admin-suporte] enviando mensagem')
     setSending(true)
     setText('')
 
