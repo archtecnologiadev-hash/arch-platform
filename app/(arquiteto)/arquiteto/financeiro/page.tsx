@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import {
   Plus, Download, TrendingUp, TrendingDown, Wallet, Clock,
   X, Check, Edit2, Trash2, FileCheck, Receipt, Settings,
-  Layers, RefreshCcw,
+  Layers, RefreshCcw, AlertCircle, ChevronRight, ChevronDown,
+  XCircle, CheckCircle2, Loader2,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -145,7 +146,29 @@ export default function FinanceiroPage() {
   // NF modal
   const [nfModal, setNfModal] = useState<{ id: string; numero: string } | null>(null)
 
+  // toast
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
+  const toastRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // grouped rows
+  const [expandedPais, setExpandedPais] = useState<Set<string>>(new Set())
+
   const canEdit = nivelRank >= 1
+
+  function showToast(msg: string, ok = true) {
+    if (toastRef.current) clearTimeout(toastRef.current)
+    setToast({ msg, ok })
+    toastRef.current = setTimeout(() => setToast(null), 4000)
+  }
+
+  function toggleExpand(paiId: string) {
+    setExpandedPais(prev => {
+      const next = new Set(prev)
+      if (next.has(paiId)) next.delete(paiId)
+      else next.add(paiId)
+      return next
+    })
+  }
 
   const load = useCallback(async () => {
     const supabase = createClient()
@@ -206,6 +229,21 @@ export default function FinanceiroPage() {
       const d = t.data_vencimento ?? t.data_pagamento ?? t.created_at
       if (d.slice(0, 7) !== filterMes) return false
     }
+    return true
+  })
+
+  // Pre-compute parent IDs (rows that have children pointing to them)
+  const paiIds = new Set<string>()
+  transacoes.forEach(t => {
+    if (t.movimentacao_pai_id && t.movimentacao_pai_id !== t.id) {
+      paiIds.add(t.movimentacao_pai_id)
+    }
+  })
+
+  // For table display: hide child rows unless their parent is expanded
+  const filteredForDisplay = filtered.filter(t => {
+    const isChild = t.movimentacao_pai_id != null && t.movimentacao_pai_id !== t.id
+    if (isChild) return expandedPais.has(t.movimentacao_pai_id!)
     return true
   })
 
@@ -347,7 +385,11 @@ export default function FinanceiroPage() {
     const supabase = createClient()
 
     const valorTotal = parseFloat(form.valor.replace(',', '.'))
-    if (isNaN(valorTotal)) { setSaving(false); return }
+    if (isNaN(valorTotal) || valorTotal <= 0) {
+      showToast('Valor inválido', false)
+      setSaving(false)
+      return
+    }
 
     const basePayload = {
       escritorio_id: escritorioId,
@@ -365,58 +407,97 @@ export default function FinanceiroPage() {
     }
 
     if (editingId) {
-      await supabase.from('transacoes_financeiras').update({
+      const { error } = await supabase.from('transacoes_financeiras').update({
         ...basePayload,
         descricao: form.descricao,
         valor: valorTotal,
       }).eq('id', editingId)
+      if (error) {
+        console.error('[financeiro] update error:', error)
+        showToast(`Erro ao salvar: ${error.message}`, false)
+        setSaving(false)
+        return
+      }
+      showToast('Transação atualizada')
     } else if (form.parcelar && parseInt(form.num_parcelas) >= 2) {
       const n = Math.min(60, Math.max(2, parseInt(form.num_parcelas)))
       const valorParcela = Math.round((valorTotal / n) * 100) / 100
 
-      // Insert parent first to get its ID
-      const { data: pai } = await supabase.from('transacoes_financeiras').insert({
-        ...basePayload,
-        descricao: `${form.descricao} (1/${n})`,
-        valor: valorParcela,
-        data_vencimento: form.primeira_parcela || null,
-        parcela_atual: 1,
-        total_parcelas: n,
-        recorrente: false,
-      }).select('id').single()
-
-      if (pai) {
-        const parcelas = Array.from({ length: n - 1 }, (_, i) => ({
+      // Insert parent row
+      const { data: pai, error: errPai } = await supabase
+        .from('transacoes_financeiras')
+        .insert({
           ...basePayload,
-          descricao: `${form.descricao} (${i + 2}/${n})`,
+          descricao: `${form.descricao} (1/${n})`,
           valor: valorParcela,
-          data_vencimento: form.primeira_parcela ? addMonths(form.primeira_parcela, i + 1) : null,
-          parcela_atual: i + 2,
+          data_vencimento: form.primeira_parcela || null,
+          parcela_atual: 1,
           total_parcelas: n,
-          movimentacao_pai_id: pai.id,
           recorrente: false,
-        }))
-        await supabase.from('transacoes_financeiras').insert(parcelas)
+        })
+        .select('id')
+        .single()
+
+      if (errPai || !pai) {
+        console.error('[financeiro] insert pai error:', errPai)
+        showToast(`Erro ao criar parcela 1: ${errPai?.message ?? 'resposta vazia. Verifique se as colunas de parcelamento existem no banco.'}`, false)
+        setSaving(false)
+        return
       }
+
+      // Self-reference so pai is identifiable without child lookup
+      await supabase
+        .from('transacoes_financeiras')
+        .update({ movimentacao_pai_id: pai.id })
+        .eq('id', pai.id)
+
+      // Insert remaining parcelas
+      const parcelas = Array.from({ length: n - 1 }, (_, i) => ({
+        ...basePayload,
+        descricao: `${form.descricao} (${i + 2}/${n})`,
+        valor: valorParcela,
+        data_vencimento: form.primeira_parcela ? addMonths(form.primeira_parcela, i + 1) : null,
+        parcela_atual: i + 2,
+        total_parcelas: n,
+        movimentacao_pai_id: pai.id,
+        recorrente: false,
+      }))
+
+      const { error: errFilhos } = await supabase.from('transacoes_financeiras').insert(parcelas)
+      if (errFilhos) {
+        console.error('[financeiro] insert parcelas error:', errFilhos)
+        showToast(`Erro ao criar parcelas 2–${n}: ${errFilhos.message}`, false)
+        setSaving(false)
+        return
+      }
+      showToast(`${n} parcelas criadas com sucesso!`)
     } else {
-      await supabase.from('transacoes_financeiras').insert({
+      const { error } = await supabase.from('transacoes_financeiras').insert({
         ...basePayload,
         descricao: form.descricao,
         valor: valorTotal,
       })
+      if (error) {
+        console.error('[financeiro] insert error:', error)
+        showToast(`Erro ao criar: ${error.message}`, false)
+        setSaving(false)
+        return
+      }
+      showToast('Transação criada')
     }
 
     setSaving(false)
     setModalOpen(false)
+    router.refresh()
     await load()
   }
 
   async function handleDelete(t: Transacao) {
-    const isPai = transacoes.some(x => x.movimentacao_pai_id === t.id)
-    const isFilho = !!t.movimentacao_pai_id
+    const isPai = paiIds.has(t.id)
+    const isFilho = !!t.movimentacao_pai_id && t.movimentacao_pai_id !== t.id
 
     let msg = 'Excluir esta transação?'
-    if (isPai) msg = 'Esta é a primeira parcela de uma série. Excluir todas as parcelas desta série?'
+    if (isPai) msg = 'Esta é a primeira parcela de uma série. Excluir TODAS as parcelas desta série?'
     if (isFilho) msg = 'Excluir esta parcela?'
 
     if (!confirm(msg)) return
@@ -428,6 +509,34 @@ export default function FinanceiroPage() {
     } else {
       setTransacoes(prev => prev.filter(x => x.id !== t.id))
     }
+    showToast('Excluído')
+    router.refresh()
+  }
+
+  async function handleCancelarParcelas(t: Transacao) {
+    const paiId = paiIds.has(t.id) ? t.id : (t.movimentacao_pai_id ?? t.id)
+    const pendentes = transacoes.filter(x =>
+      (x.id === paiId || x.movimentacao_pai_id === paiId) &&
+      ['pendente', 'atrasado'].includes(x.status)
+    )
+    if (pendentes.length === 0) {
+      showToast('Nenhuma parcela pendente para cancelar', false)
+      return
+    }
+    if (!confirm(`Cancelar ${pendentes.length} parcela(s) pendente(s)?`)) return
+    const supabase = createClient()
+    const ids = pendentes.map(x => x.id)
+    const { error } = await supabase
+      .from('transacoes_financeiras')
+      .update({ status: 'cancelado' })
+      .in('id', ids)
+    if (error) {
+      showToast(`Erro: ${error.message}`, false)
+      return
+    }
+    showToast(`${ids.length} parcela(s) cancelada(s)`)
+    router.refresh()
+    await load()
   }
 
   async function toggleStatus(t: Transacao) {
@@ -438,6 +547,7 @@ export default function FinanceiroPage() {
       data_pagamento: next === 'pago' ? new Date().toISOString().slice(0, 10) : null,
     }).eq('id', t.id)
     setTransacoes(prev => prev.map(x => x.id === t.id ? { ...x, status: next as Transacao['status'], data_pagamento: next === 'pago' ? new Date().toISOString().slice(0, 10) : null } : x))
+    router.refresh()
   }
 
   async function saveNF(id: string, numero: string) {
@@ -445,32 +555,37 @@ export default function FinanceiroPage() {
     await supabase.from('transacoes_financeiras').update({ nota_fiscal_emitida: true, numero_nota_fiscal: numero || null }).eq('id', id)
     setTransacoes(prev => prev.map(x => x.id === id ? { ...x, nota_fiscal_emitida: true, numero_nota_fiscal: numero || null } : x))
     setNfModal(null)
+    showToast('NF registrada')
   }
 
   async function handleEditParcelasRestantes() {
     if (!editParcelasModal) return
     const novoValor = parseFloat(editParcelasModal.novoValor.replace(',', '.'))
-    if (isNaN(novoValor)) return
+    if (isNaN(novoValor) || novoValor <= 0) { showToast('Valor inválido', false); return }
     setSavingParcelas(true)
     const supabase = createClient()
 
-    // Update all future pending parcelas with same paiId
-    const filhos = transacoes.filter(t =>
-      t.movimentacao_pai_id === editParcelasModal.paiId &&
+    const paiId = editParcelasModal.paiId
+    const pendentes = transacoes.filter(t =>
+      (t.id === paiId || t.movimentacao_pai_id === paiId) &&
       ['pendente', 'atrasado'].includes(t.status)
     )
-    if (filhos.length > 0) {
-      const ids = filhos.map(t => t.id)
-      await supabase.from('transacoes_financeiras').update({ valor: novoValor }).in('id', ids)
-    }
-    // Also update the pai if still pending
-    const pai = transacoes.find(t => t.id === editParcelasModal.paiId && ['pendente', 'atrasado'].includes(t.status))
-    if (pai) {
-      await supabase.from('transacoes_financeiras').update({ valor: novoValor }).eq('id', editParcelasModal.paiId)
+    if (pendentes.length > 0) {
+      const { error } = await supabase
+        .from('transacoes_financeiras')
+        .update({ valor: novoValor })
+        .in('id', pendentes.map(t => t.id))
+      if (error) {
+        showToast(`Erro: ${error.message}`, false)
+        setSavingParcelas(false)
+        return
+      }
     }
 
     setSavingParcelas(false)
     setEditParcelasModal(null)
+    showToast('Parcelas atualizadas')
+    router.refresh()
     await load()
   }
 
@@ -499,8 +614,28 @@ export default function FinanceiroPage() {
         .fin-table tr:hover td { background: var(--bg-hover); }
         .fin-action-btn { opacity: 0; transition: opacity 0.15s; }
         .fin-table tr:hover .fin-action-btn { opacity: 1; }
+        .fin-child-row td { background: var(--bg) !important; }
         @media (max-width: 768px) { .fin-action-btn { opacity: 1; } }
       `}</style>
+
+      {/* ── Toast ───────────────────────────────────────────────────────────── */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: 20, right: 20, zIndex: 9999,
+          background: toast.ok ? '#10b981' : '#ef4444',
+          color: '#fff', borderRadius: 10, padding: '12px 18px',
+          display: 'flex', alignItems: 'center', gap: 10,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+          animation: 'slideIn 0.2s ease',
+          maxWidth: 380, fontSize: 13, fontWeight: 500,
+        }}>
+          {toast.ok ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+          {toast.msg}
+          <button onClick={() => setToast(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#fff', marginLeft: 4, padding: 0, display: 'flex' }}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="sticky-page-header" style={{
@@ -641,35 +776,79 @@ export default function FinanceiroPage() {
 
             {/* Table */}
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
-              {filtered.length === 0 ? (
+              {filteredForDisplay.length === 0 ? (
                 <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-3)', fontSize: 14 }}>Nenhuma transação encontrada.</div>
               ) : (
                 <div style={{ overflowX: 'auto' }}>
                   <table className="fin-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                        {['Tipo', 'Descrição', 'Valor', 'Status', 'Vencimento', 'Pagamento', 'Método', 'Projeto', 'NF', ''].map(h => (
-                          <th key={h} style={{ padding: '12px 14px', textAlign: 'left', fontWeight: 600, fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.05em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                        {['', 'Tipo', 'Descrição', 'Valor', 'Status', 'Vencimento', 'Pagamento', 'Método', 'Projeto', 'NF', ''].map((h, i) => (
+                          <th key={i} style={{ padding: '12px 10px', textAlign: 'left', fontWeight: 600, fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.05em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {filtered.map(t => {
-                        const sb  = statusBadge(t.status)
-                        const isPai = transacoes.some(x => x.movimentacao_pai_id === t.id)
+                      {filteredForDisplay.map(t => {
+                        const sb       = statusBadge(t.status)
+                        const isPai    = paiIds.has(t.id)
+                        const isChild  = t.movimentacao_pai_id != null && t.movimentacao_pai_id !== t.id
+                        const isExpanded = expandedPais.has(t.id)
+
+                        // Group stats for parent rows
+                        const groupChildren = isPai
+                          ? transacoes.filter(x => x.movimentacao_pai_id === t.id)
+                          : []
+                        const groupTotal = isPai
+                          ? [t, ...groupChildren].reduce((s, x) => s + x.valor, 0)
+                          : t.valor
+                        const groupPagas = isPai
+                          ? [t, ...groupChildren].filter(x => x.status === 'pago').length
+                          : 0
+
                         return (
-                          <tr key={t.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                            <td style={{ padding: '12px 14px' }}>
+                          <tr
+                            key={t.id}
+                            className={isChild ? 'fin-child-row' : ''}
+                            style={{
+                              borderBottom: '1px solid var(--border-subtle)',
+                              background: isChild ? 'var(--bg)' : 'transparent',
+                            }}
+                          >
+                            {/* Expand column */}
+                            <td style={{ padding: '8px 4px 8px 10px', width: 28 }}>
+                              {isPai && (
+                                <button
+                                  onClick={() => toggleExpand(t.id)}
+                                  title={isExpanded ? 'Recolher parcelas' : 'Expandir parcelas'}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6366f1', padding: 2, display: 'flex', alignItems: 'center' }}
+                                >
+                                  {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                </button>
+                              )}
+                              {isChild && (
+                                <div style={{ width: 14, height: 1, background: 'var(--border)', marginLeft: 8 }} />
+                              )}
+                            </td>
+
+                            <td style={{ padding: '12px 10px' }}>
                               <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: t.tipo === 'entrada' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', color: t.tipo === 'entrada' ? '#10b981' : '#ef4444' }}>
                                 {t.tipo === 'entrada' ? '+ Entrada' : '− Saída'}
                               </span>
                             </td>
-                            <td style={{ padding: '12px 14px', maxWidth: 220 }}>
+                            <td style={{ padding: '12px 10px', maxWidth: 220 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <span style={{ fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.descricao}</span>
+                                <span style={{ fontWeight: isChild ? 400 : 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                                  {t.descricao}
+                                </span>
                                 {t.total_parcelas && (
                                   <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 10, background: 'rgba(99,102,241,0.12)', color: '#6366f1', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>
                                     {t.parcela_atual}/{t.total_parcelas}
+                                  </span>
+                                )}
+                                {isPai && !isExpanded && (
+                                  <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 10, background: 'rgba(99,102,241,0.08)', color: '#6366f1', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                    {groupPagas}/{groupChildren.length + 1} pagas
                                   </span>
                                 )}
                                 {t.recorrente && (
@@ -680,22 +859,22 @@ export default function FinanceiroPage() {
                               </div>
                               {t.categoria && <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{t.categoria}</div>}
                             </td>
-                            <td style={{ padding: '12px 14px', fontWeight: 700, color: t.tipo === 'entrada' ? '#10b981' : '#ef4444', whiteSpace: 'nowrap' }}>
-                              {t.tipo === 'entrada' ? '+' : '−'} {fmtBRL(t.valor)}
+                            <td style={{ padding: '12px 10px', fontWeight: 700, color: t.tipo === 'entrada' ? '#10b981' : '#ef4444', whiteSpace: 'nowrap' }}>
+                              {t.tipo === 'entrada' ? '+' : '−'} {isPai && !isExpanded ? fmtBRL(groupTotal) : fmtBRL(t.valor)}
                             </td>
-                            <td style={{ padding: '12px 14px' }}>
+                            <td style={{ padding: '12px 10px' }}>
                               <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 20, background: `${sb.color}18`, color: sb.color }}>{sb.label}</span>
                             </td>
-                            <td style={{ padding: '12px 14px', color: 'var(--text-2)', whiteSpace: 'nowrap' }}>{fmtDate(t.data_vencimento)}</td>
-                            <td style={{ padding: '12px 14px', color: 'var(--text-2)', whiteSpace: 'nowrap' }}>{fmtDate(t.data_pagamento)}</td>
-                            <td style={{ padding: '12px 14px', color: 'var(--text-2)', whiteSpace: 'nowrap' }}>{metodoLabel(t.metodo_pagamento)}</td>
-                            <td style={{ padding: '12px 14px', color: 'var(--text-2)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.projeto_nome ?? '—'}</td>
-                            <td style={{ padding: '12px 14px' }}>
+                            <td style={{ padding: '12px 10px', color: 'var(--text-2)', whiteSpace: 'nowrap' }}>{fmtDate(t.data_vencimento)}</td>
+                            <td style={{ padding: '12px 10px', color: 'var(--text-2)', whiteSpace: 'nowrap' }}>{fmtDate(t.data_pagamento)}</td>
+                            <td style={{ padding: '12px 10px', color: 'var(--text-2)', whiteSpace: 'nowrap' }}>{metodoLabel(t.metodo_pagamento)}</td>
+                            <td style={{ padding: '12px 10px', color: 'var(--text-2)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.projeto_nome ?? '—'}</td>
+                            <td style={{ padding: '12px 10px' }}>
                               {t.nota_fiscal_emitida
                                 ? <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#10b981', fontSize: 12, fontWeight: 600 }}><FileCheck size={13} /> {t.numero_nota_fiscal ? `#${t.numero_nota_fiscal}` : 'Emitida'}</span>
                                 : <span style={{ color: 'var(--text-3)', fontSize: 12 }}>—</span>}
                             </td>
-                            <td style={{ padding: '12px 14px' }}>
+                            <td style={{ padding: '12px 10px' }}>
                               <div className="fin-action-btn" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                 {canEdit && (
                                   <>
@@ -710,10 +889,16 @@ export default function FinanceiroPage() {
                                       </button>
                                     )}
                                     {isPai && (
-                                      <button title="Editar parcelas restantes" onClick={() => setEditParcelasModal({ paiId: t.id, novoValor: String(t.valor) })}
-                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6366f1', padding: 4, display: 'flex', alignItems: 'center' }}>
-                                        <Layers size={14} />
-                                      </button>
+                                      <>
+                                        <button title="Editar parcelas restantes" onClick={() => setEditParcelasModal({ paiId: t.id, novoValor: String(t.valor) })}
+                                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6366f1', padding: 4, display: 'flex', alignItems: 'center' }}>
+                                          <Layers size={14} />
+                                        </button>
+                                        <button title="Cancelar parcelas pendentes" onClick={() => handleCancelarParcelas(t)}
+                                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#f59e0b', padding: 4, display: 'flex', alignItems: 'center' }}>
+                                          <XCircle size={14} />
+                                        </button>
+                                      </>
                                     )}
                                     <button title="Editar" onClick={() => openEdit(t)}
                                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4, display: 'flex', alignItems: 'center' }}>
@@ -976,7 +1161,8 @@ export default function FinanceiroPage() {
                 Cancelar
               </button>
               <button onClick={handleSave} disabled={saving || !form.descricao || !form.valor}
-                style={{ padding: '9px 20px', background: 'var(--btn-bg)', color: 'var(--btn-text)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: saving || !form.descricao || !form.valor ? 0.5 : 1 }}>
+                style={{ padding: '9px 20px', background: 'var(--btn-bg)', color: 'var(--btn-text)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: saving || !form.descricao || !form.valor ? 'default' : 'pointer', opacity: saving || !form.descricao || !form.valor ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                {saving && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
                 {saving ? 'Salvando...' : editingId ? 'Salvar alterações' : form.parcelar ? `Criar ${form.num_parcelas} parcelas` : 'Criar transação'}
               </button>
             </div>
@@ -1009,7 +1195,8 @@ export default function FinanceiroPage() {
                 Cancelar
               </button>
               <button onClick={handleEditParcelasRestantes} disabled={savingParcelas}
-                style={{ padding: '9px 20px', background: 'var(--btn-bg)', color: 'var(--btn-text)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: savingParcelas ? 0.6 : 1 }}>
+                style={{ padding: '9px 20px', background: 'var(--btn-bg)', color: 'var(--btn-text)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: savingParcelas ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                {savingParcelas && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
                 {savingParcelas ? 'Salvando...' : 'Atualizar parcelas'}
               </button>
             </div>
@@ -1035,6 +1222,11 @@ export default function FinanceiroPage() {
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px) } to { opacity: 1; transform: translateX(0) } }
+      `}</style>
     </div>
   )
 }
