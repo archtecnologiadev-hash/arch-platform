@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  Bell, ChevronDown, FolderOpen, TrendingUp, Clock,
+  Bell, ChevronDown, FolderOpen, TrendingUp, TrendingDown, Clock, Wallet,
   LogOut, Settings, User, ArrowRight, Plus, X, ShieldCheck,
   DollarSign, CheckSquare, Users, Download, Lightbulb,
   type LucideIcon,
@@ -366,17 +366,30 @@ export default function ArquitetoDashboardPage() {
   const months12 = last12Months()
 
   const revenueByMonth: Record<string, number> = {}
+  const expenseByMonth: Record<string, number> = {}
   for (const tx of transacoes) {
-    if (tx.tipo === 'entrada' && tx.status === 'pago' && tx.data_pagamento) {
-      const mk = tx.data_pagamento.slice(0, 7)
-      revenueByMonth[mk] = (revenueByMonth[mk] ?? 0) + Number(tx.valor)
+    // Fallback: data_pagamento → data_vencimento → epoch (transactions with no dates stay out of current month)
+    const mk = (tx.data_pagamento ?? tx.data_vencimento ?? '1900-01').slice(0, 7)
+    if (tx.status === 'pago') {
+      if (tx.tipo === 'entrada') revenueByMonth[mk] = (revenueByMonth[mk] ?? 0) + Number(tx.valor)
+      else if (tx.tipo === 'saida') expenseByMonth[mk] = (expenseByMonth[mk] ?? 0) + Number(tx.valor)
     }
   }
   const receitaMes = revenueByMonth[mesMes] ?? 0
   const receitaAnt = revenueByMonth[mesAnt] ?? 0
   const receitaDelta = receitaAnt > 0 ? Math.round(((receitaMes - receitaAnt) / receitaAnt) * 100) : null
   const sparkReceita = months12.slice(6).map(m => revenueByMonth[m] ?? 0)
-  const pendente = transacoes.filter(t => t.tipo === 'entrada' && t.status === 'pendente').reduce((s, t) => s + Number(t.valor), 0)
+
+  const despesasMes = expenseByMonth[mesMes] ?? 0
+  const despesasAnt = expenseByMonth[mesAnt] ?? 0
+  const despesasDelta = despesasAnt > 0 ? Math.round(((despesasMes - despesasAnt) / despesasAnt) * 100) : null
+  const sparkDespesas = months12.slice(6).map(m => expenseByMonth[m] ?? 0)
+  const saldoMes = receitaMes - despesasMes
+
+  const pendenteEntradas = transacoes.filter(t => t.tipo === 'entrada' && t.status === 'pendente')
+  const totalPendenteEntrada = pendenteEntradas.reduce((s, t) => s + Number(t.valor), 0)
+  const pendentesVencidos = transacoes.filter(t => t.status === 'pendente' && t.data_vencimento && t.data_vencimento < hoje).length
+  const pendente = totalPendenteEntrada
 
   const projAtivos = projetos.filter(p => p.status !== 'concluido')
   const projNovosMes = projetos.filter(p => p.created_at.slice(0, 7) === mesMes).length
@@ -434,6 +447,22 @@ export default function ArquitetoDashboardPage() {
     return subs.length > 0 && subs.every(() => false) // placeholder: all tasks done check needs concluida field
   })
   void projPronto // suppress unused
+
+  // Financial insights
+  if (receitaDelta !== null && receitaMes > 0) {
+    const dir = receitaDelta >= 0 ? `${receitaDelta}% acima` : `${Math.abs(receitaDelta)}% abaixo`
+    insights.push({ text: `Receita do mês: ${fmtBRL(receitaMes)} — ${dir} do mês anterior`, href: '/arquiteto/financeiro', color: '#10b981' })
+  }
+  if (pendenteEntradas.length > 0) {
+    insights.push({ text: `${pendenteEntradas.length} recebimento${pendenteEntradas.length !== 1 ? 's' : ''} pendente${pendenteEntradas.length !== 1 ? 's' : ''} — ${fmtBRL(totalPendenteEntrada)} a receber`, href: '/arquiteto/financeiro', color: '#f59e0b' })
+  }
+  const proxParcela = transacoes
+    .filter(t => t.status === 'pendente' && t.data_vencimento && t.data_vencimento >= hoje)
+    .sort((a, b) => (a.data_vencimento ?? '').localeCompare(b.data_vencimento ?? ''))[0]
+  if (proxParcela?.data_vencimento) {
+    const dtFmt = new Date(proxParcela.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR')
+    insights.push({ text: `Próxima cobrança: "${proxParcela.descricao}" — ${fmtBRL(Number(proxParcela.valor))} vence em ${dtFmt}`, href: '/arquiteto/financeiro', color: '#4f9cf9' })
+  }
 
   const etapaLenta = Object.entries(stageAvg).filter(([, v]) => v > 14).sort((a, b) => b[1] - a[1])[0]
   if (etapaLenta) insights.push({ text: `Etapa "${etapaLenta[0]}" demora em média ${etapaLenta[1]} dias (acima do ideal)`, href: '/arquiteto/projetos', color: '#f59e0b' })
@@ -648,16 +677,30 @@ export default function ArquitetoDashboardPage() {
               <div className="dg4">
                 <ExecCard label="Receita do Mês" value={fmtBRL(receitaMes)} delta={receitaDelta}
                   sparkline={sparkReceita} color="#10b981" icon={DollarSign}
-                  subLabel={`Pendente: ${fmtBRL(pendente)}`} />
-                <ExecCard label="Projetos Ativos" value={String(projAtivos.length)} delta={projetosDelta}
-                  sparkline={[]} color="#4f9cf9" icon={FolderOpen}
-                  subLabel={`${projNovosMes} novo${projNovosMes !== 1 ? 's' : ''} este mês`} />
-                <ExecCard label="m² em Desenvolvimento" value={totalM2 > 0 ? `${totalM2.toLocaleString('pt-BR')} m²` : '—'}
-                  delta={null} sparkline={[]} color="#8b5cf6" icon={TrendingUp}
-                  subLabel={`${projAtivos.length} projeto${projAtivos.length !== 1 ? 's' : ''} em andamento`} />
-                <ExecCard label="Clientes Ativos" value={String(clientesAtivos)} delta={clientesDelta}
-                  sparkline={[]} color="#f59e0b" icon={Users}
-                  subLabel={`${clientesMes} novo${clientesMes !== 1 ? 's' : ''} este mês`} />
+                  subLabel={`A receber: ${fmtBRL(totalPendenteEntrada)}`} />
+                <ExecCard label="Despesas do Mês" value={fmtBRL(despesasMes)} delta={null}
+                  sparkline={sparkDespesas} color="#ef4444" icon={TrendingDown}
+                  subLabel={despesasDelta !== null ? `${despesasDelta >= 0 ? '↑' : '↓'}${Math.abs(despesasDelta)}% vs mês ant.` : `Mês ant.: ${fmtBRL(despesasAnt)}`} />
+                <ExecCard label="Saldo do Mês" value={fmtBRL(saldoMes)} delta={null}
+                  sparkline={[]} color={saldoMes >= 0 ? '#007AFF' : '#ef4444'} icon={Wallet}
+                  subLabel={saldoMes >= 0 ? 'Resultado positivo' : 'Resultado negativo'} />
+                <ExecCard label="Pendências" value={fmtBRL(totalPendenteEntrada)} delta={null}
+                  sparkline={[]} color="#f59e0b" icon={Clock}
+                  subLabel={`${pendentesVencidos} vencida${pendentesVencidos !== 1 ? 's' : ''} · ${pendenteEntradas.length} total`} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 12 }}>
+                {[
+                  { label: 'Projetos Ativos', value: String(projAtivos.length), sub: `${projNovosMes} novo${projNovosMes !== 1 ? 's' : ''} este mês` },
+                  { label: 'm² em Desenvolvimento', value: totalM2 > 0 ? `${totalM2.toLocaleString('pt-BR')} m²` : '—', sub: `${projAtivos.length} projeto${projAtivos.length !== 1 ? 's' : ''} em andamento` },
+                  { label: 'Clientes Ativos', value: String(clientesAtivos), sub: `${clientesMes} novo${clientesMes !== 1 ? 's' : ''} este mês` },
+                  { label: 'Leads Recentes', value: String(leadsRecentes.length), sub: 'últimos 7 dias' },
+                ].map(({ label, value, sub }) => (
+                  <div key={label} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 16px' }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 4 }}>{label}</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)' }}>{value}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{sub}</div>
+                  </div>
+                ))}
               </div>
             </section>
           )}
@@ -774,18 +817,20 @@ export default function ArquitetoDashboardPage() {
                     </div>
                     <div style={{ display: 'flex', gap: 20, marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
                       <div>
-                        <div style={{ fontSize: 10, color: 'var(--text-3)' }}>Este mês</div>
-                        <div style={{ fontSize: 17, fontWeight: 700, color: '#007AFF' }}>{fmtBRL(receitaMes)}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-3)' }}>Receita</div>
+                        <div style={{ fontSize: 17, fontWeight: 700, color: '#10b981' }}>{fmtBRL(receitaMes)}</div>
                       </div>
-                      {receitaAnt > 0 && (
-                        <div>
-                          <div style={{ fontSize: 10, color: 'var(--text-3)' }}>Mês anterior</div>
-                          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-2)' }}>{fmtBRL(receitaAnt)}</div>
-                        </div>
-                      )}
+                      <div>
+                        <div style={{ fontSize: 10, color: 'var(--text-3)' }}>Despesas</div>
+                        <div style={{ fontSize: 17, fontWeight: 700, color: '#ef4444' }}>{fmtBRL(despesasMes)}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, color: 'var(--text-3)' }}>Saldo</div>
+                        <div style={{ fontSize: 17, fontWeight: 700, color: saldoMes >= 0 ? '#007AFF' : '#ef4444' }}>{fmtBRL(saldoMes)}</div>
+                      </div>
                       {receitaDelta !== null && (
                         <div>
-                          <div style={{ fontSize: 10, color: 'var(--text-3)' }}>Variação</div>
+                          <div style={{ fontSize: 10, color: 'var(--text-3)' }}>Var. receita</div>
                           <div style={{ fontSize: 17, fontWeight: 700, color: receitaDelta >= 0 ? '#10b981' : '#ef4444' }}>
                             {receitaDelta >= 0 ? '↑' : '↓'} {Math.abs(receitaDelta)}%
                           </div>
