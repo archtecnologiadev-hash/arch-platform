@@ -8,7 +8,7 @@ import {
   Mail, Calendar, Plus, Package, DollarSign, Check, Pencil,
   Star, ExternalLink, Send, X, CheckCircle2, MapPin, Loader2,
   Download, AlertCircle, Heart, ChevronLeft, ChevronDown, UserPlus, Search, History,
-  ScrollText, Eye,
+  Trash2,
   type LucideIcon,
 } from 'lucide-react'
 import ProjetoArquivos from '@/components/shared/ProjetoArquivos'
@@ -146,109 +146,176 @@ const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
 
 // ─── ContratosProjeto Component ──────────────────────────────────────────────
 
-const STATUS_CT: Record<string, { label: string; color: string; bg: string }> = {
-  rascunho:    { label: 'Rascunho',    color: '#8e8e93', bg: 'rgba(142,142,147,0.12)' },
-  enviado:     { label: 'Enviado',     color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
-  visualizado: { label: 'Visualizado', color: '#007AFF', bg: 'rgba(0,122,255,0.12)' },
-  assinado:    { label: 'Assinado',    color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
-  cancelado:   { label: 'Cancelado',   color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
+interface ContratoFile {
+  name: string
+  id: string
+  updated_at: string
+  created_at: string
+  metadata: { size?: number; mimetype?: string } | null
 }
 
-function ContratosProjeto({ projectId, canEdit }: { projectId: string; canEdit: boolean }) {
-  const [contratos, setContratos] = useState<Array<{ id: string; titulo: string; status: string; valor: number | null; assinado_em: string | null; created_at: string; cliente_nome?: string | null }>>([])
+function ContratosProjeto({ projectId, escritorioId, canEdit }: { projectId: string; escritorioId: string | null; canEdit: boolean }) {
+  const [arquivos, setArquivos] = useState<ContratoFile[]>([])
   const [loading, setLoading] = useState(true)
-  const [viewing, setViewing] = useState<{ titulo: string; conteudo_final: string; status: string; assinatura_cliente: string | null; assinatura_arquiteto: string | null; assinado_em: string | null; cliente_nome?: string | null } | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [deletingName, setDeletingName] = useState<string | null>(null)
+  const [dragOver, setDragOver] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
+  const folderPath = escritorioId ? `${escritorioId}/${projectId}` : projectId
+
+  async function loadFiles() {
+    setLoading(true)
     const supabase = createClient()
-    supabase.from('contratos')
-      .select('id, titulo, status, valor, assinado_em, created_at, assinatura_cliente, assinatura_arquiteto, conteudo_final, users!contratos_cliente_id_fkey(nome)')
-      .eq('projeto_id', projectId)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        if (data) setContratos(data.map((c: Record<string, unknown>) => ({
-          ...c,
-          cliente_nome: (c['users!contratos_cliente_id_fkey'] as { nome: string } | null)?.nome ?? null,
-        })) as typeof contratos)
-        setLoading(false)
-      })
-  }, [projectId])
+    const { data } = await supabase.storage.from('contratos').list(folderPath, { sortBy: { column: 'created_at', order: 'desc' } })
+    setArquivos(((data ?? []).filter(f => f.id != null)) as unknown as ContratoFile[])
+    setLoading(false)
+  }
 
-  const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-  const fmtDt  = (d: string) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  useEffect(() => { loadFiles() }, [projectId, escritorioId])
+
+  function getUrl(name: string): string {
+    const supabase = createClient()
+    const { data } = supabase.storage.from('contratos').getPublicUrl(`${folderPath}/${name}`)
+    return data.publicUrl
+  }
+
+  function fmtSize(n: number | null | undefined): string {
+    if (!n) return ''
+    if (n < 1024) return `${n} B`
+    if (n < 1048576) return `${(n / 1024).toFixed(1)} KB`
+    return `${(n / 1048576).toFixed(1)} MB`
+  }
+
+  function fmtDate(d: string): string {
+    return new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  }
+
+  function displayName(name: string): string {
+    return name.replace(/^\d+_/, '')
+  }
+
+  function fileColor(name: string): string {
+    const ext = name.split('.').pop()?.toLowerCase() ?? ''
+    if (ext === 'pdf') return '#ef4444'
+    if (['doc', 'docx'].includes(ext)) return '#007AFF'
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return '#10b981'
+    return '#8e8e93'
+  }
+
+  async function handleFiles(files: FileList | null) {
+    if (!files?.length || !canEdit) return
+    setUploading(true)
+    setUploadError(null)
+    const supabase = createClient()
+    for (const file of Array.from(files)) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._\- ]/g, '_')
+      const path = `${folderPath}/${Date.now()}_${safeName}`
+      const { error } = await supabase.storage.from('contratos').upload(path, file, { upsert: false })
+      if (error) { setUploadError(error.message); break }
+    }
+    await loadFiles()
+    setUploading(false)
+  }
+
+  async function deleteFile(name: string) {
+    setDeletingName(name)
+    const supabase = createClient()
+    await supabase.storage.from('contratos').remove([`${folderPath}/${name}`])
+    setArquivos(prev => prev.filter(f => f.name !== name))
+    setDeletingName(null)
+  }
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>Carregando...</div>
 
   return (
     <div>
-      <style>{`.ct-preview h2{font-size:16px;font-weight:700;margin:16px 0 6px;} .ct-preview h3{font-size:13px;font-weight:700;margin:14px 0 4px;} .ct-preview p{margin:0 0 10px;} .ct-preview ul,.ct-preview ol{margin:6px 0 10px;padding-left:20px;} .ct-preview li{margin-bottom:3px;}`}</style>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontSize: 13, color: 'var(--text-3)', fontWeight: 600 }}>{contratos.length} contrato{contratos.length !== 1 ? 's' : ''}</div>
-        {canEdit && (
-          <a href="/arquiteto/contratos" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)', borderRadius: 8, fontSize: 12, color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
-            <Plus size={12} /> Gerenciar contratos
-          </a>
-        )}
-      </div>
-      {contratos.length === 0 ? (
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '48px 24px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-          <ScrollText size={32} color="#c7c7cc" style={{ margin: '0 auto 12px' }} />
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Nenhum contrato vinculado</div>
-          <div style={{ fontSize: 12, color: 'var(--text-3)' }}>Crie um contrato no módulo de contratos e vincule a este projeto.</div>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {contratos.map(c => {
-            const sm = STATUS_CT[c.status] ?? STATUS_CT.rascunho
-            return (
-              <div key={c.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: sm.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <ScrollText size={14} color={sm.color} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.titulo}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
-                    {c.valor ? fmtBRL(c.valor) + ' · ' : ''}{fmtDt(c.created_at)}
-                  </div>
-                </div>
-                <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: sm.bg, color: sm.color, whiteSpace: 'nowrap' }}>{sm.label}</span>
-                <button
-                  onClick={() => setViewing(c as unknown as typeof viewing)}
-                  style={{ padding: '6px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 7, cursor: 'pointer', color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }}
-                >
-                  <Eye size={13} /> Ver
-                </button>
-              </div>
-            )
-          })}
+      {canEdit && (
+        <div style={{ marginBottom: 20 }}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp"
+            style={{ display: 'none' }}
+            onChange={e => { handleFiles(e.target.files); e.target.value = '' }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'var(--accent-soft)', border: '1px solid var(--accent-soft-border)', borderRadius: 10, padding: '10px 18px', color: 'var(--accent)', cursor: uploading ? 'default' : 'pointer', fontSize: 13, fontWeight: 600, opacity: uploading ? 0.7 : 1 }}
+          >
+            {uploading ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={15} />}
+            {uploading ? 'Enviando...' : 'Enviar contrato'}
+          </button>
+          {uploadError && (
+            <div style={{ marginTop: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#ef4444', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <AlertCircle size={13} /> {uploadError}
+            </div>
+          )}
         </div>
       )}
 
-      {/* View modal */}
-      {viewing && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 300, display: 'flex', padding: 16, backdropFilter: 'blur(4px)' }} onClick={e => { if (e.target === e.currentTarget) setViewing(null) }}>
-          <div style={{ background: 'var(--bg-card)', borderRadius: 16, width: '100%', maxWidth: 760, margin: 'auto', maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{viewing.titulo}</div>
-              <button onClick={() => setViewing(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}><X size={18} /></button>
-            </div>
-            <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
-              <div className="ct-preview" style={{ fontSize: 13.5, lineHeight: 1.7, color: 'var(--text)' }} dangerouslySetInnerHTML={{ __html: viewing.conteudo_final }} />
-              {viewing.assinatura_cliente && (
-                <div style={{ marginTop: 40, paddingTop: 20, borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                  <div><div style={{ borderTop: '2px solid var(--text)', paddingTop: 8 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{viewing.assinatura_arquiteto ?? '—'}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>Contratada</div>
-                  </div></div>
-                  <div><div style={{ borderTop: '2px solid var(--text)', paddingTop: 8 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{viewing.assinatura_cliente}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>Contratante · {viewing.assinado_em ? new Date(viewing.assinado_em).toLocaleDateString('pt-BR') : '—'}</div>
-                  </div></div>
-                </div>
-              )}
-            </div>
+      {arquivos.length === 0 ? (
+        <div
+          onDragOver={canEdit ? e => { e.preventDefault(); setDragOver(true) } : undefined}
+          onDragLeave={canEdit ? () => setDragOver(false) : undefined}
+          onDrop={canEdit ? e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files) } : undefined}
+          onClick={canEdit ? () => fileInputRef.current?.click() : undefined}
+          style={{ border: `2px dashed ${dragOver ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 12, padding: '48px 24px', textAlign: 'center', cursor: canEdit ? 'pointer' : 'default', background: dragOver ? 'var(--accent-soft)' : 'transparent', transition: 'border-color 0.2s, background 0.2s' }}
+        >
+          <Upload size={28} color="var(--text-3)" style={{ margin: '0 auto 12px' }} />
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>
+            {canEdit ? 'Arraste ou clique para enviar' : 'Nenhum contrato enviado'}
           </div>
+          <div style={{ fontSize: 12, color: 'var(--text-3)' }}>PDF, Word, imagens e outros documentos</div>
         </div>
+      ) : (
+        <>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {arquivos.map(f => {
+              const dname = displayName(f.name)
+              const url = getUrl(f.name)
+              return (
+                <div key={f.name} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--bg)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <File size={18} color={fileColor(f.name)} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dname}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
+                      {fmtSize(f.metadata?.size)}{f.metadata?.size ? ' · ' : ''}{fmtDate(f.created_at)}
+                    </div>
+                  </div>
+                  <a href={url} download={dname} target="_blank" rel="noopener noreferrer"
+                    style={{ padding: '7px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 7, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, textDecoration: 'none', fontWeight: 500, flexShrink: 0 }}>
+                    <Download size={13} /> Baixar
+                  </a>
+                  {canEdit && (
+                    <button
+                      onClick={() => deleteFile(f.name)}
+                      disabled={deletingName === f.name}
+                      style={{ padding: '7px 10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 7, color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                    >
+                      {deletingName === f.name ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Trash2 size={13} />}
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {canEdit && (
+            <div
+              onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files) }}
+              style={{ marginTop: 16, border: `2px dashed ${dragOver ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 10, padding: '14px', textAlign: 'center', cursor: 'default', background: dragOver ? 'var(--accent-soft)' : 'transparent', transition: 'border-color 0.15s, background 0.15s', fontSize: 12, color: 'var(--text-3)' }}>
+              Arraste arquivos aqui para adicionar
+            </div>
+          )}
+        </>
       )}
     </div>
   )
@@ -1567,7 +1634,7 @@ export default function ProjetoDetailPage() {
 
           {/* ── Contratos Tab ── */}
           {activeTab === 'contratos' && (
-            <ContratosProjeto projectId={projectId} canEdit={nivelRank >= 3} />
+            <ContratosProjeto projectId={projectId} escritorioId={projeto?.escritorio_id ?? null} canEdit={nivelRank >= 3} />
           )}
         </div>
 
