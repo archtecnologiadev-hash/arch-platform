@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  Bell, ChevronDown, FolderOpen, TrendingUp, TrendingDown, Clock, Wallet,
+  Bell, ChevronDown, FolderOpen, TrendingDown, Clock, Wallet,
   LogOut, Settings, User, ArrowRight, Plus, X, ShieldCheck,
-  DollarSign, CheckSquare, Users, Download, Lightbulb,
+  DollarSign, CheckSquare, Download, Lightbulb,
   type LucideIcon,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
@@ -389,19 +389,14 @@ export default function ArquitetoDashboardPage() {
   const pendenteEntradas = transacoes.filter(t => t.tipo === 'entrada' && t.status === 'pendente')
   const totalPendenteEntrada = pendenteEntradas.reduce((s, t) => s + Number(t.valor), 0)
   const pendentesVencidos = transacoes.filter(t => t.status === 'pendente' && t.data_vencimento && t.data_vencimento < hoje).length
-  const pendente = totalPendenteEntrada
 
   const projAtivos = projetos.filter(p => p.status !== 'concluido')
   const projNovosMes = projetos.filter(p => p.created_at.slice(0, 7) === mesMes).length
-  const projNovosAnt = projetos.filter(p => p.created_at.slice(0, 7) === mesAnt).length
-  const projetosDelta = projNovosAnt > 0 ? Math.round(((projNovosMes - projNovosAnt) / projNovosAnt) * 100) : null
 
   const totalM2 = projAtivos.reduce((s, p) => s + (p.metragem ?? 0), 0)
 
   const clientesAtivos = new Set(projAtivos.filter(p => p.cliente_id).map(p => p.cliente_id as string)).size
   const clientesMes = new Set(projetos.filter(p => p.created_at.slice(0, 7) === mesMes && p.cliente_id).map(p => p.cliente_id as string)).size
-  const clientesAnt = new Set(projetos.filter(p => p.created_at.slice(0, 7) === mesAnt && p.cliente_id).map(p => p.cliente_id as string)).size
-  const clientesDelta = clientesAnt > 0 ? Math.round(((clientesMes - clientesAnt) / clientesAnt) * 100) : null
 
   const limite15 = Date.now() - 15 * 86400000
   const projParados = etapasAbertas.filter(et => {
