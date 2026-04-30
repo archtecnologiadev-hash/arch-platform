@@ -776,7 +776,7 @@ function Pricing() {
                     ARC PRO
                   </p>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                    <span style={{ fontSize: 56, fontWeight: 300, color: '#0a0a0a', letterSpacing: '-0.04em' }}>R$149</span>
+                    <span style={{ fontSize: 56, fontWeight: 300, color: '#0a0a0a', letterSpacing: '-0.04em' }}>R$297</span>
                     <span style={{ fontSize: 14, fontWeight: 300, color: 'rgba(0,0,0,0.38)' }}>/mês</span>
                   </div>
                 </div>

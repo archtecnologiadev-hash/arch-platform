@@ -102,7 +102,7 @@ export default function ArquitetoPlanos() {
 
   const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 })
   const anualMensal = plano?.valor_anual ? plano.valor_anual / 12 : 124
-  const priceMonthly = ciclo === 'anual' ? anualMensal : (plano?.valor_mensal ?? 149)
+  const priceMonthly = ciclo === 'anual' ? anualMensal : (plano?.valor_mensal ?? 297)
   const discount = plano?.valor_anual
     ? Math.round(100 - (plano.valor_anual / ((plano.valor_mensal) * 12)) * 100)
     : 17

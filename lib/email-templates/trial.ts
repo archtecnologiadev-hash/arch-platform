@@ -29,7 +29,7 @@ export function trialEmail(p: TrialEmailProps): string {
     ${divider()}
 
     <p style="margin:0;font-size:12px;color:#8e8e93;">
-      Após o trial, você será cobrado R$149/mês no plano ARC Pro. Cancele quando quiser antes do fim do período.
+      Após o trial, você será cobrado R$297/mês no plano ARC Pro. Cancele quando quiser antes do fim do período.
     </p>
   `)
 }

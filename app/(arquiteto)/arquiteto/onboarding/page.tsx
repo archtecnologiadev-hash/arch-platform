@@ -528,7 +528,7 @@ function Step4({ userId, onNext }: { userId: string; onNext: () => void }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
         <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Ativar trial de 14 dias</h2>
-        <p style={{ fontSize: 14, color: 'var(--text-3)', fontWeight: 300 }}>R$149/mês após 14 dias grátis · Cancele quando quiser.</p>
+        <p style={{ fontSize: 14, color: 'var(--text-3)', fontWeight: 300 }}>R$297/mês após 14 dias grátis · Cancele quando quiser.</p>
       </div>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
