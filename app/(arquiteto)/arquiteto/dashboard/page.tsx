@@ -31,6 +31,7 @@ interface Transacao {
   data_pagamento: string | null
   data_vencimento: string | null
   descricao: string
+  created_at: string
 }
 
 interface EtapaTempo {
@@ -283,7 +284,7 @@ export default function ArquitetoDashboardPage() {
 
       const [txRes, abertoRes, fechadoRes, subRes, membrosRes, leadsRes, cltRes, mpRes] = await Promise.all([
         supabase.from('transacoes_financeiras')
-          .select('tipo,valor,status,data_pagamento,data_vencimento,descricao')
+          .select('tipo,valor,status,data_pagamento,data_vencimento,descricao,created_at')
           .eq('escritorio_id', escId).gte('created_at', yearAgo.toISOString()),
         projIds.length > 0
           ? supabase.from('projeto_etapa_tempo').select('projeto_id,etapa,iniciado_em,dias_na_etapa').in('projeto_id', projIds).is('finalizado_em', null)
@@ -368,8 +369,8 @@ export default function ArquitetoDashboardPage() {
   const revenueByMonth: Record<string, number> = {}
   const expenseByMonth: Record<string, number> = {}
   for (const tx of transacoes) {
-    // Fallback: data_pagamento → data_vencimento → epoch (transactions with no dates stay out of current month)
-    const mk = (tx.data_pagamento ?? tx.data_vencimento ?? '1900-01').slice(0, 7)
+    // Fallback: data_pagamento → data_vencimento → created_at
+    const mk = (tx.data_pagamento ?? tx.data_vencimento ?? tx.created_at).slice(0, 7)
     // Include pago + pendente + atrasado (exclude only cancelado)
     if (tx.status !== 'cancelado') {
       if (tx.tipo === 'entrada') revenueByMonth[mk] = (revenueByMonth[mk] ?? 0) + Number(tx.valor)
