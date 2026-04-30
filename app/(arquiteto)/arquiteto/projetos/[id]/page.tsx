@@ -32,6 +32,7 @@ interface ProjetoReal {
   endereco: string | null
   email_cliente: string | null
   tipo_contrato: string | null
+  escritorio_id: string | null
 }
 
 interface HistoricoItem {
@@ -271,6 +272,7 @@ export default function ProjetoDetailPage() {
   const [orcSaving, setOrcSaving] = useState(false)
   const [orcModal, setOrcModal] = useState(false)
   const [orcEditItem, setOrcEditItem] = useState<OrcItem | null>(null)
+  const [orcError, setOrcError] = useState<string | null>(null)
   const [orcExpandedCats, setOrcExpandedCats] = useState<Set<string>>(new Set(['Projeto', 'Execução', 'Marcenaria', 'Decoração', 'Elétrica', 'Hidráulica', 'Pintura', 'Outros']))
   const [currentUser, setCurrentUser] = useState<{ id: string; nome: string } | null>(null)
   const [nivelRank, setNivelRank] = useState(5) // default owner
@@ -1312,28 +1314,44 @@ export default function ProjetoDetailPage() {
               if (isNaN(val) || val <= 0) return
               const qty = Math.max(1, parseInt(orcForm.quantidade) || 1)
               setOrcSaving(true)
+              setOrcError(null)
               const supabase = createClient()
               if (orcEditItem) {
                 const { data, error } = await supabase
                   .from('orcamento_itens')
                   .update({ categoria: orcForm.categoria, descricao: orcForm.descricao.trim(), valor: val, quantidade: qty, observacao: orcForm.observacao || null })
                   .eq('id', orcEditItem.id).select('*').single()
-                if (!error && data) {
+                if (error) {
+                  console.error('[orcamento] update error:', error)
+                  setOrcError(error.message ?? 'Erro ao salvar. Tente novamente.')
+                } else if (data) {
                   setOrcItems(prev => prev.map(it => it.id === orcEditItem.id ? data as OrcItem : it))
                   setOrcEditItem(null)
                   setOrcModal(false)
+                  setOrcForm({ categoria: 'Projeto', descricao: '', valor: '', quantidade: '1', observacao: '' })
                 }
               } else {
                 const { data, error } = await supabase
                   .from('orcamento_itens')
-                  .insert({ projeto_id: projeto.id, categoria: orcForm.categoria, descricao: orcForm.descricao.trim(), valor: val, quantidade: qty, observacao: orcForm.observacao || null })
+                  .insert({
+                    projeto_id: projeto.id,
+                    escritorio_id: projeto.escritorio_id,
+                    categoria: orcForm.categoria,
+                    descricao: orcForm.descricao.trim(),
+                    valor: val,
+                    quantidade: qty,
+                    observacao: orcForm.observacao || null,
+                  })
                   .select('*').single()
-                if (!error && data) {
+                if (error) {
+                  console.error('[orcamento] insert error:', error)
+                  setOrcError(error.message ?? 'Erro ao criar item. Tente novamente.')
+                } else if (data) {
                   setOrcItems(prev => [...prev, data as OrcItem])
                   setOrcModal(false)
+                  setOrcForm({ categoria: 'Projeto', descricao: '', valor: '', quantidade: '1', observacao: '' })
                 }
               }
-              setOrcForm({ categoria: 'Projeto', descricao: '', valor: '', quantidade: '1', observacao: '' })
               setOrcSaving(false)
             }
 
@@ -1346,12 +1364,14 @@ export default function ProjetoDetailPage() {
             function openEdit(it: OrcItem) {
               setOrcEditItem(it)
               setOrcForm({ categoria: it.categoria, descricao: it.descricao, valor: String(it.valor), quantidade: String(it.quantidade || 1), observacao: it.observacao || '' })
+              setOrcError(null)
               setOrcModal(true)
             }
 
             function openNew() {
               setOrcEditItem(null)
               setOrcForm({ categoria: 'Projeto', descricao: '', valor: '', quantidade: '1', observacao: '' })
+              setOrcError(null)
               setOrcModal(true)
             }
 
@@ -1420,6 +1440,11 @@ export default function ProjetoDetailPage() {
                           <label style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-2)', display: 'block', marginBottom: 6 }}>Observação (opcional)</label>
                           <textarea value={orcForm.observacao} onChange={e => setOrcForm(f => ({ ...f, observacao: e.target.value }))} placeholder="Detalhes adicionais..." rows={2} style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', resize: 'none' }} />
                         </div>
+                        {orcError && (
+                          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, padding: '10px 14px', fontSize: 12.5, color: '#ef4444', fontWeight: 500 }}>
+                            {orcError}
+                          </div>
+                        )}
                         <button onClick={saveOrcItem} disabled={orcSaving || !orcForm.descricao.trim() || !orcForm.valor} style={{ width: '100%', padding: '12px', borderRadius: 10, background: 'var(--btn-bg)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: orcSaving || !orcForm.descricao.trim() || !orcForm.valor ? 0.5 : 1 }}>
                           {orcSaving && <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />}
                           {orcEditItem ? 'Salvar Alterações' : 'Adicionar Item'}

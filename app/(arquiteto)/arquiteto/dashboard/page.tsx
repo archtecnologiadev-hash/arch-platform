@@ -370,7 +370,8 @@ export default function ArquitetoDashboardPage() {
   for (const tx of transacoes) {
     // Fallback: data_pagamento → data_vencimento → epoch (transactions with no dates stay out of current month)
     const mk = (tx.data_pagamento ?? tx.data_vencimento ?? '1900-01').slice(0, 7)
-    if (tx.status === 'pago') {
+    // Include pago + pendente + atrasado (exclude only cancelado)
+    if (tx.status !== 'cancelado') {
       if (tx.tipo === 'entrada') revenueByMonth[mk] = (revenueByMonth[mk] ?? 0) + Number(tx.valor)
       else if (tx.tipo === 'saida') expenseByMonth[mk] = (expenseByMonth[mk] ?? 0) + Number(tx.valor)
     }
