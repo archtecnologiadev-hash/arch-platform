@@ -6,9 +6,45 @@ import {
   ZoomIn, ZoomOut, Maximize2, ChevronRight, AlertTriangle, Sparkles,
   FileText, Download, Settings2,
 } from 'lucide-react'
+import { Upload as TusUpload } from 'tus-js-client'
 import { createClient } from '@/lib/supabase'
 import { parseCollada, type ParsedComponent, type ParsedComodo } from '@/lib/collada-parser-browser'
 import { renderPrancha } from '@/lib/detalhamento/render-prancha'
+
+const TUS_THRESHOLD = 6 * 1024 * 1024 // 6 MB — use TUS for larger files
+
+function tusUploadFile(
+  file: File,
+  path: string,
+  accessToken: string,
+  onProgress: (pct: number) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const upload = new TusUpload(file, {
+      endpoint: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/upload/resumable`,
+      retryDelays: [0, 3000, 5000, 10000, 20000],
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        'x-upsert': 'true',
+      },
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+      metadata: {
+        bucketName: 'detalhamento',
+        objectName: path,
+        contentType: 'model/vnd.collada+xml',
+        cacheControl: '3600',
+      },
+      chunkSize: 6 * 1024 * 1024,
+      onError: reject,
+      onProgress: (bytesUploaded, bytesTotal) => {
+        onProgress(Math.round((bytesUploaded / bytesTotal) * 100))
+      },
+      onSuccess: () => resolve(),
+    })
+    upload.start()
+  })
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -775,6 +811,7 @@ export default function DetalhamentoProjeto({ projectId, escritorioId, canEdit, 
   const [parsedComps, setParsedComps] = useState<ParsedComponent[]>([])
   const [parsedComodos, setParsedComodos] = useState<ParsedComodo[]>([])
   const [parsedUpAxis, setParsedUpAxis] = useState<string>('Y_UP')
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -848,14 +885,21 @@ export default function DetalhamentoProjeto({ projectId, escritorioId, canEdit, 
       setStatus('error')
       return
     }
-    setStatus('uploading'); setErrorMsg('')
+    setStatus('uploading'); setErrorMsg(''); setUploadProgress(0)
     try {
       const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { setErrorMsg('Sessão expirada — faça login novamente'); setStatus('error'); return }
       const safeName = file.name.replace(/[^a-zA-Z0-9._\-]/g, '_')
       const path = `${escritorioId}/${projectId}/${Date.now()}_${safeName}`
-      console.log('[handleSave] storage upload path:', path, '| comps:', parsedComps.length, '| comodos:', parsedComodos.length)
-      const { error: upErr } = await supabase.storage.from('detalhamento').upload(path, file, { upsert: true })
-      if (upErr) { setErrorMsg(`Erro no upload: ${upErr.message}`); setStatus('error'); return }
+      console.log('[handleSave] upload path:', path, '| size:', file.size, '| comps:', parsedComps.length, '| comodos:', parsedComodos.length)
+      if (file.size >= TUS_THRESHOLD) {
+        console.log('[handleSave] usando TUS (arquivo ≥ 6 MB)')
+        await tusUploadFile(file, path, session.access_token, pct => setUploadProgress(pct))
+      } else {
+        const { error: upErr } = await supabase.storage.from('detalhamento').upload(path, file, { upsert: true })
+        if (upErr) { setErrorMsg(`Erro no upload: ${upErr.message}`); setStatus('error'); return }
+      }
       setStatus('saving')
       const payload = JSON.stringify({ projeto_id: projectId, escritorio_id: escritorioId, file_path: path, file_name: file.name, componentes: parsedComps, comodos: parsedComodos, up_axis: parsedUpAxis })
       console.log('[handleSave] POST payload size:', payload.length, 'bytes')
@@ -1153,9 +1197,17 @@ export default function DetalhamentoProjeto({ projectId, escritorioId, canEdit, 
       {(status === 'reading' || status === 'parsing' || status === 'uploading' || status === 'saving') && (
         <div style={{ padding: '20px 24px', textAlign: 'center', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10 }}>
           <Loader2 size={20} color="#007AFF" style={{ margin: '0 auto 8px', animation: 'spin 1s linear infinite' }} />
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>
-            {status === 'reading' ? 'Lendo arquivo...' : status === 'parsing' ? 'Processando geometria COLLADA...' : status === 'uploading' ? `Enviando ${file ? fmtSize(file.size) : ''}...` : 'Salvando...'}
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: status === 'uploading' && file && file.size >= TUS_THRESHOLD ? 10 : 0 }}>
+            {status === 'reading' ? 'Lendo arquivo...' : status === 'parsing' ? 'Processando geometria COLLADA...' : status === 'uploading' ? `Enviando ${file ? fmtSize(file.size) : ''}...` : 'Salvando no banco...'}
           </div>
+          {status === 'uploading' && file && file.size >= TUS_THRESHOLD && (
+            <div style={{ maxWidth: 280, margin: '0 auto' }}>
+              <div style={{ height: 6, borderRadius: 3, background: 'var(--border)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 3, background: '#007AFF', width: `${uploadProgress}%`, transition: 'width 0.3s ease' }} />
+              </div>
+              <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-3)' }}>{uploadProgress}%</div>
+            </div>
+          )}
         </div>
       )}
 
