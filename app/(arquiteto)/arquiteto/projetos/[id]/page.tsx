@@ -15,6 +15,7 @@ import ProjetoArquivos from '@/components/shared/ProjetoArquivos'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import CalendarioObra, { CalendarioEvent, EVENT_META, EventType, getMeta } from '@/components/shared/CalendarioObra'
 import { createClient } from '@/lib/supabase'
+import DetalhamentoProjeto from './detalhamento'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -135,13 +136,14 @@ const panel = { background: 'var(--bg-card)', border: '1px solid var(--border)',
 const panelHeader = { padding: '13px 16px', borderBottom: '1px solid var(--border)', fontSize: 11, color: 'var(--text-3)', fontWeight: 600 as const, letterSpacing: '0.07em', textTransform: 'uppercase' as const }
 const iconBox = (color = '#6b6b6b') => ({ width: 28, height: 28, borderRadius: 7, background: 'var(--bg)', border: '1px solid var(--border)', display: 'flex' as const, alignItems: 'center' as const, justifyContent: 'center' as const, flexShrink: 0 as const, color })
 
-type TabId = 'arquivos' | 'anotacoes' | 'fornecedores' | 'calendario' | 'orcamento' | 'contratos'
+type TabId = 'arquivos' | 'anotacoes' | 'fornecedores' | 'calendario' | 'orcamento' | 'contratos' | 'detalhamento'
 const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
-  { id: 'arquivos',    label: 'Arquivos',    icon: File },
-  { id: 'anotacoes',  label: 'Anotações',   icon: Pencil },
-  { id: 'calendario', label: 'Calendário',  icon: Calendar },
-  { id: 'orcamento',  label: 'Orçamento',   icon: DollarSign },
-  { id: 'contratos',  label: 'Contratos',   icon: Send },
+  { id: 'arquivos',      label: 'Arquivos',       icon: File },
+  { id: 'anotacoes',    label: 'Anotações',      icon: Pencil },
+  { id: 'calendario',   label: 'Calendário',     icon: Calendar },
+  { id: 'orcamento',    label: 'Orçamento',      icon: DollarSign },
+  { id: 'contratos',    label: 'Contratos',      icon: Send },
+  { id: 'detalhamento', label: 'Detalhamento',   icon: Package },
 ]
 
 // ─── ContratosProjeto Component ──────────────────────────────────────────────
@@ -1138,6 +1140,15 @@ export default function ProjetoDetailPage() {
             {TABS.map(tab => {
               const Icon = tab.icon
               const active = activeTab === tab.id
+              if (tab.id === 'detalhamento') {
+                return (
+                  <Link key={tab.id} href={`/arquiteto/projetos/${projectId}/detalhamento`} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 18px', background: 'transparent', borderBottom: '2px solid transparent', color: '#8e8e93', fontSize: 13, fontWeight: 400, cursor: 'pointer', marginBottom: -1, transition: 'color 0.15s', textDecoration: 'none' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#6b6b6b' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#8e8e93' }}>
+                    <Icon size={13} />{tab.label}
+                  </Link>
+                )
+              }
               return (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 18px', background: 'transparent', border: 'none', borderBottom: `2px solid ${active ? '#007AFF' : 'transparent'}`, color: active ? '#007AFF' : '#8e8e93', fontSize: 13, fontWeight: active ? 600 : 400, cursor: 'pointer', marginBottom: -1, transition: 'color 0.15s' }}
                   onMouseEnter={e => { if (!active) e.currentTarget.style.color = '#6b6b6b' }}
@@ -1635,6 +1646,11 @@ export default function ProjetoDetailPage() {
           {/* ── Contratos Tab ── */}
           {activeTab === 'contratos' && (
             <ContratosProjeto projectId={projectId} escritorioId={projeto?.escritorio_id ?? null} canEdit={nivelRank >= 3} />
+          )}
+
+          {/* ── Detalhamento Tab ── */}
+          {activeTab === 'detalhamento' && (
+            <DetalhamentoProjeto projectId={projectId} escritorioId={projeto?.escritorio_id ?? null} canEdit={nivelRank >= 1} nomeProjeto={projeto?.nome} />
           )}
         </div>
 
