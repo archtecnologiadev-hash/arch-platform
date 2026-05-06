@@ -77,7 +77,20 @@ const ROOM_KEYWORDS = ['sala','quarto','cozinha','banheiro','lavabo','corredor',
 
 const ARCH_KEYWORDS = ['parede','wall','laje','teto','piso','floor','ceiling','viga','beam','escada','stair','rampa','ramp','fundacao','fundação']
 
-const KNOWN_BRANDS = ['ikea','deca','duratex','portobello','roca','kohler','tramontina','samsung','lg','sony','brastemp','electrolux','consul','whirlpool','apple','dell','hp','philco','arco','etna','franke','teca','ormiston','nespresso','bosch','siemens','miele','smeg','colormaq','mondial']
+const KNOWN_BRANDS = ['ikea','deca','duratex','portobello','roca','kohler','tramontina','samsung','lg','sony','brastemp','electrolux','consul','whirlpool','apple','dell','hp','philco','arco','etna','franke','teca','ormiston','nespresso','bosch','siemens','miele','smeg','colormaq','mundial']
+
+// Small hardware/electronic parts to skip (volume AND name conditions)
+const HARDWARE_KEYWORDS = [
+  'parafuso','screw','bolt','porca','nut','arruela','washer','pino','pin','rebite','rivet',
+  'grampo','clip','bracket','dobradiça','dobradica','hinge','ferragem',
+  'molex','pcb','dip','chip','capacitor','resistor','connector','header','socket',
+  'gtx','rtx','rx','gpu','cpu','corsair','rgb','cooler','fan_',
+]
+
+function isHardware(name: string): boolean {
+  const low = name.toLowerCase()
+  return HARDWARE_KEYWORDS.some(k => low.includes(k))
+}
 
 function inferType(name: string): string {
   const low = name.toLowerCase()
@@ -365,6 +378,12 @@ function extractFromTree(
         if (bboxValid(bbox)) {
           const [cx, cy, cz] = bboxCenter(bbox)
           const [dx, dy, dz] = bboxDims(bbox)
+          const vol = dx * dy * dz * scale * scale * scale
+          // Skip tiny hardware: volume < 0.005 m³ AND name matches hardware keywords
+          if (vol < 0.005 && isHardware(compName)) {
+            if (children.length > 0) extractFromTree(children, geomMap, libraryNodes, scale, upAxis, components, rooms)
+            continue
+          }
           components.push({
             nome_skp: compName,
             tipo_inferido: inferType(compName),
@@ -413,7 +432,7 @@ function extractFromTree(
       if (bboxValid(bbox)) {
         const [dx, dy, dz] = bboxDims(bbox)
         const vol = dx * dy * dz * scale * scale * scale
-        if (vol < 50) { // heuristic: < 50 m³ → furniture-scale object
+        if (vol > 0.00001 && vol < 50) { // must be > 1 cm³ and < 50 m³
           const [cx, cy, cz] = bboxCenter(bbox)
           components.push({
             nome_skp: name,
@@ -533,8 +552,23 @@ export function parseCollada(xmlText: string): ParseResult {
     if (!existing || r.area_m2 > existing.area_m2) roomMap.set(r.nome, r)
   }
 
+  // Fallback: if no rooms detected (typical flat SketchUp exports), derive one from component extents
+  if (roomMap.size === 0 && componentes.length > 0) {
+    const fb = emptyBBox()
+    for (const c of componentes) {
+      const hx = c.dimensao_x / 2; const hy = c.dimensao_y / 2; const hz = c.dimensao_z / 2
+      expandBBox(fb, c.posicao_x - hx, c.posicao_y - hy, c.posicao_z - hz)
+      expandBBox(fb, c.posicao_x + hx, c.posicao_y + hy, c.posicao_z + hz)
+    }
+    if (bboxValid(fb)) {
+      const [fdx, fdy, fdz] = bboxDims(fb)
+      const { area, height, polygon } = computeRoomMetrics(fb, fdx, fdy, fdz, 1, upAxis)
+      if (area > 0.5) roomMap.set('Ambiente', { nome: 'Ambiente', polygon, area_m2: round(area), pe_direito_m: round(height) })
+    }
+  }
+
   return {
-    componentes: componentes.slice(0, 2000), // cap for safety
+    componentes: componentes.slice(0, 2000),
     comodos: Array.from(roomMap.values()),
     unit_scale: scale,
     up_axis: upAxis,

@@ -15,6 +15,7 @@ import { renderPrancha } from '@/lib/detalhamento/render-prancha'
 interface DetalhamentoDB {
   id: string
   dae_file_name: string | null
+  dae_file_path: string
   dae_uploaded_at: string
   status: string
   up_axis: string | null
@@ -743,6 +744,7 @@ export default function DetalhamentoProjeto({ projectId, escritorioId, canEdit, 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [identificando, setIdentificando] = useState(false)
   const [iaResult, setIaResult] = useState<{ atualizados: number; chamadas_api: number } | null>(null)
+  const [reprocessando, setReprocessando] = useState(false)
 
   const loadPontos = useCallback(async (detId: string) => {
     const res = await fetch(`/api/projetos/detalhamento/${detId}/pontos`)
@@ -942,6 +944,50 @@ export default function DetalhamentoProjeto({ projectId, escritorioId, canEdit, 
     })
   }
 
+  // ── Reprocessar: re-download existing DAE and re-run full pipeline ──
+  async function handleReprocessar() {
+    if (!dbDet || !escritorioId) return
+    setReprocessando(true); setStatus('reading'); setErrorMsg('')
+    try {
+      const supabase = createClient()
+      const { data: urlData } = await supabase.storage.from('detalhamento').createSignedUrl(dbDet.dae_file_path, 120)
+      if (!urlData?.signedUrl) throw new Error('Não foi possível obter URL do arquivo .dae')
+
+      const resp = await fetch(urlData.signedUrl)
+      if (!resp.ok) throw new Error('Falha ao baixar arquivo .dae')
+      const text = await resp.text()
+
+      setStatus('parsing')
+      await nextFrame()
+      const result = parseCollada(text)
+
+      setStatus('saving')
+      const res = await fetch('/api/projetos/detalhamento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projeto_id: projectId,
+          escritorio_id: escritorioId,
+          file_path: dbDet.dae_file_path,
+          file_name: dbDet.dae_file_name,
+          componentes: result.componentes,
+          comodos: result.comodos,
+          up_axis: result.up_axis,
+        }),
+      })
+      if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao salvar') }
+      const saved = await res.json()
+      setStatus('done')
+      await loadDb()
+      if (saved.id) triggerIdentificar(saved.id)
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : 'Erro ao reprocessar')
+      setStatus('error')
+    } finally {
+      setReprocessando(false)
+    }
+  }
+
   // ── Derived ──
   const showParsed = status === 'ready' || status === 'uploading' || status === 'saving'
   const activeComps = (showParsed ? parsedComps : dbComps) as (ComponenteDB | ParsedComponent)[]
@@ -987,10 +1033,19 @@ export default function DetalhamentoProjeto({ projectId, escritorioId, canEdit, 
                 <strong>{dbDet.dae_file_name}</strong>
                 {' · '}{dbComps.length} comp. ({unidentified.length} não identif.{pendingValidation.length > 0 ? `, ${pendingValidation.length} pend.` : ''}) · {dbComodos.length} cômodos
               </span>
-              <button onClick={() => fileInputRef.current?.click()}
-                style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, padding: '4px 10px', borderRadius: 5, background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-2)', cursor: 'pointer' }}>
-                <RefreshCw size={10} /> Reimportar
-              </button>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                <button
+                  onClick={handleReprocessar}
+                  disabled={reprocessando}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, padding: '4px 10px', borderRadius: 5, background: '#007AFF', border: 'none', color: '#fff', cursor: reprocessando ? 'not-allowed' : 'pointer', opacity: reprocessando ? 0.7 : 1 }}>
+                  {reprocessando ? <Loader2 size={10} style={{ animation: 'spin 1s linear infinite' }} /> : <RefreshCw size={10} />}
+                  Reprocessar
+                </button>
+                <button onClick={() => fileInputRef.current?.click()}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, padding: '4px 10px', borderRadius: 5, background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-2)', cursor: 'pointer' }}>
+                  <Upload size={10} /> Novo arquivo
+                </button>
+              </div>
             </div>
           ) : !showParsed ? (
             <div
