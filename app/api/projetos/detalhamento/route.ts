@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
   const [{ data: componentes }, { data: comodos }, { data: catalogo }] = await Promise.all([
     supabase.from('detalhamento_componentes').select('*').eq('detalhamento_id', det.id).order('nome_skp'),
     supabase.from('detalhamento_comodos').select('*').eq('detalhamento_id', det.id).order('area_m2', { ascending: false }),
-    supabase.from('catalogo_fabricantes').select('id,nome,categoria,tipo_componente,fabricante').order('categoria').order('nome'),
+    supabase.from('catalogo_fabricantes').select('id,nome,categoria,tipo_componente,fabricante,palavras_chave').order('categoria').order('nome'),
   ])
 
   return NextResponse.json({
@@ -74,13 +74,18 @@ export async function POST(req: NextRequest) {
   }
 
   // Load catalog and learned hashes in parallel
-  const [{ data: catalog }, { data: aprendidos }] = await Promise.all([
+  const [{ data: catalog, error: catalogErr }, { data: aprendidos }] = await Promise.all([
     supabase.from('catalogo_fabricantes').select('*'),
     supabase
       .from('componentes_aprendidos')
       .select('geometria_hash, tipo_componente')
       .eq('escritorio_id', escritorio_id),
   ])
+
+  if (catalogErr) {
+    console.error('[detalhamento POST] catalog query failed — RLS or network issue:', catalogErr.message, catalogErr.code)
+  }
+  console.log(`[detalhamento POST] catalog loaded: ${catalog?.length ?? 0} entries`)
 
   const catalogEntries: CatalogEntry[] = catalog ?? []
   const aprendidosMap = new Map<string, string>(

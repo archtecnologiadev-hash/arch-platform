@@ -54,6 +54,7 @@ interface CatalogEntry {
   categoria: string
   tipo_componente: string
   fabricante: string | null
+  palavras_chave?: string[]
 }
 
 interface PontoRow {
@@ -490,6 +491,7 @@ function ComponentDetail({
 }) {
   const [draftTipo, setDraftTipo] = useState(comp.tipo_componente ?? '')
   const [saving, setSaving] = useState(false)
+  const [showDebug, setShowDebug] = useState(false)
 
   async function handleSave() {
     setSaving(true)
@@ -572,6 +574,43 @@ function ComponentDetail({
         {saving ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} /> : null}
         Confirmar e aprender
       </button>
+
+      {/* Debug: catalog match trace */}
+      {!comp.tipo_componente && (
+        <button
+          onClick={() => setShowDebug(v => !v)}
+          style={{ marginTop: 8, width: '100%', fontSize: 10, padding: '4px', borderRadius: 6, background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', cursor: 'pointer' }}
+        >
+          {showDebug ? '▲ Ocultar debug' : '▼ Debug: por que não bateu?'}
+        </button>
+      )}
+      {showDebug && !comp.tipo_componente && (() => {
+        const low = comp.nome_skp.toLowerCase()
+        const scored = catalogo.map(e => ({
+          nome: e.nome,
+          tipo: e.tipo_componente,
+          kws: Array.isArray(e.palavras_chave) ? e.palavras_chave : [],
+          matched: Array.isArray(e.palavras_chave) ? e.palavras_chave.filter(kw => kw && low.includes(kw.toLowerCase())) : [],
+        })).sort((a, b) => b.matched.length - a.matched.length).slice(0, 6)
+        return (
+          <div style={{ marginTop: 6, fontSize: 10, background: '#1a1a2e', color: '#a0aec0', borderRadius: 6, padding: '8px 10px', lineHeight: 1.6 }}>
+            <div style={{ color: '#e2e8f0', fontWeight: 700, marginBottom: 4 }}>nome_skp: &quot;{comp.nome_skp}&quot;</div>
+            <div style={{ color: '#718096', marginBottom: 6 }}>testado contra {catalogo.length} entradas do catálogo</div>
+            {scored.map((s, i) => (
+              <div key={i} style={{ marginBottom: 3, borderBottom: '1px solid #2d3748', paddingBottom: 3 }}>
+                <span style={{ color: s.matched.length > 0 ? '#68d391' : '#fc8181', fontWeight: 600 }}>
+                  {s.matched.length > 0 ? '✓' : '✗'} {s.nome}
+                </span>
+                <span style={{ color: '#718096' }}> [{s.tipo}]</span>
+                {s.matched.length > 0
+                  ? <div style={{ paddingLeft: 10, color: '#68d391' }}>match: {s.matched.join(', ')}</div>
+                  : <div style={{ paddingLeft: 10, color: '#4a5568' }}>kws: {s.kws.slice(0, 6).join(', ') || '—'}</div>
+                }
+              </div>
+            ))}
+          </div>
+        )
+      })()}
     </div>
   )
 }
@@ -824,6 +863,23 @@ export default function DetalhamentoProjeto({ projectId, escritorioId, canEdit, 
     if (saved.id) triggerIdentificar(saved.id)
   }
 
+  async function handleReMatchCatalog() {
+    if (!dbDet) return
+    setIdentificando(true); setIaResult(null)
+    try {
+      const res = await fetch(`/api/projetos/detalhamento/${dbDet.id}/re-match`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) {
+        alert(`Re-match falhou: ${data.error}`)
+        return
+      }
+      alert(`Re-match concluído: ${data.matched_catalogo} catálogo, ${data.matched_heuristica} heurística, ${data.still_unknown} sem identificação`)
+      await loadDb()
+    } finally {
+      setIdentificando(false)
+    }
+  }
+
   async function triggerIdentificar(detalhamentoId: string) {
     setIdentificando(true); setIaResult(null)
     try {
@@ -1035,8 +1091,17 @@ export default function DetalhamentoProjeto({ projectId, escritorioId, canEdit, 
               </span>
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
                 <button
+                  onClick={handleReMatchCatalog}
+                  disabled={identificando}
+                  title="Re-aplica catálogo e heurísticas nos componentes não-identificados (sem re-parsear o arquivo)"
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, padding: '4px 10px', borderRadius: 5, background: '#059669', border: 'none', color: '#fff', cursor: identificando ? 'not-allowed' : 'pointer', opacity: identificando ? 0.7 : 1 }}>
+                  {identificando ? <Loader2 size={10} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={10} />}
+                  Re-match
+                </button>
+                <button
                   onClick={handleReprocessar}
                   disabled={reprocessando}
+                  title="Baixa o DAE do servidor e re-processa do zero"
                   style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, padding: '4px 10px', borderRadius: 5, background: '#007AFF', border: 'none', color: '#fff', cursor: reprocessando ? 'not-allowed' : 'pointer', opacity: reprocessando ? 0.7 : 1 }}>
                   {reprocessando ? <Loader2 size={10} style={{ animation: 'spin 1s linear infinite' }} /> : <RefreshCw size={10} />}
                   Reprocessar
