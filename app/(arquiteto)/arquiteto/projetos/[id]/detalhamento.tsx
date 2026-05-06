@@ -880,6 +880,10 @@ export default function DetalhamentoProjeto({ projectId, escritorioId, canEdit, 
   // ── Save ──
   async function handleSave() {
     if (!file) return
+    // Diagnostic logs — always run before any guard
+    console.log('[handleSave] file size:', file.size, 'bytes', '/', (file.size / 1024 / 1024).toFixed(1), 'MB')
+    console.log('[handleSave] threshold TUS:', TUS_THRESHOLD)
+    console.log('[handleSave] vai usar TUS?', file.size >= TUS_THRESHOLD)
     if (!escritorioId) {
       setErrorMsg('Erro: escritório não carregado — recarregue a página e tente novamente')
       setStatus('error')
