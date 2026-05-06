@@ -479,13 +479,11 @@ function FloorPlanSVG({ comodos, componentes, upAxis, filterCat, selectedId, onS
 function ComponentDetail({
   comp,
   catalogo,
-  escritorioId,
   onClose,
   onSave,
 }: {
   comp: ComponenteDB
   catalogo: CatalogEntry[]
-  escritorioId: string | null
   onClose: () => void
   onSave: (id: string, tipo: string) => void
 }) {
@@ -579,7 +577,7 @@ function ComponentDetail({
 
 // ─── PranchaCard ─────────────────────────────────────────────────────────────
 
-function PranchaCard({ prancha, escritorioId }: { prancha: PranchaRow; escritorioId: string | null }) {
+function PranchaCard({ prancha }: { prancha: PranchaRow }) {
   const [downloading, setDownloading] = useState(false)
   const discLabel: Record<string, string> = {
     mobiliario: 'Mobiliário', hidraulica: 'Hidráulica', gas: 'Gás', eletrica: 'Elétrica',
@@ -1159,7 +1157,6 @@ export default function DetalhamentoProjeto({ projectId, escritorioId, canEdit, 
               <ComponentDetail
                 comp={selectedComp}
                 catalogo={catalogo}
-                escritorioId={escritorioId}
                 onClose={() => setSelectedId(null)}
                 onSave={handleSaveTipo}
               />
@@ -1241,7 +1238,7 @@ export default function DetalhamentoProjeto({ projectId, escritorioId, canEdit, 
           {pranchas.length > 0 && (
             <div style={{ padding: '14px 16px', display: 'flex', gap: 10, flexWrap: 'wrap', borderBottom: pontos.length > 0 ? '1px solid var(--border)' : 'none' }}>
               {pranchas.map(p => (
-                <PranchaCard key={p.id} prancha={p} escritorioId={escritorioId} />
+                <PranchaCard key={p.id} prancha={p} />
               ))}
             </div>
           )}

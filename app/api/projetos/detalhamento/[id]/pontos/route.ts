@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 }
 
 // PATCH /api/projetos/detalhamento/[id]/pontos  — body: { ponto_id, ...fields }
-export async function PATCH(req: NextRequest, { params: _ }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
