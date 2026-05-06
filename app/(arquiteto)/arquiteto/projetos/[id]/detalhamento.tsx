@@ -842,25 +842,46 @@ export default function DetalhamentoProjeto({ projectId, escritorioId, canEdit, 
 
   // ── Save ──
   async function handleSave() {
-    if (!file || !escritorioId) return
+    if (!file) return
+    if (!escritorioId) {
+      setErrorMsg('Erro: escritório não carregado — recarregue a página e tente novamente')
+      setStatus('error')
+      return
+    }
     setStatus('uploading'); setErrorMsg('')
-    const supabase = createClient()
-    const safeName = file.name.replace(/[^a-zA-Z0-9._\-]/g, '_')
-    const path = `${escritorioId}/${projectId}/${Date.now()}_${safeName}`
-    const { error: upErr } = await supabase.storage.from('detalhamento').upload(path, file, { upsert: true })
-    if (upErr) { setErrorMsg(`Erro no upload: ${upErr.message}`); setStatus('error'); return }
-    setStatus('saving')
-    const res = await fetch('/api/projetos/detalhamento', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projeto_id: projectId, escritorio_id: escritorioId, file_path: path, file_name: file.name, componentes: parsedComps, comodos: parsedComodos, up_axis: parsedUpAxis }),
-    })
-    if (!res.ok) { const err = await res.json(); setErrorMsg(err.error || 'Erro ao salvar'); setStatus('error'); return }
-    const saved = await res.json()
-    setStatus('done'); setFile(null); setParsedComps([]); setParsedComodos([])
-    await loadDb()
-    // Trigger Vision AI identification for remaining unknowns
-    if (saved.id) triggerIdentificar(saved.id)
+    try {
+      const supabase = createClient()
+      const safeName = file.name.replace(/[^a-zA-Z0-9._\-]/g, '_')
+      const path = `${escritorioId}/${projectId}/${Date.now()}_${safeName}`
+      console.log('[handleSave] storage upload path:', path, '| comps:', parsedComps.length, '| comodos:', parsedComodos.length)
+      const { error: upErr } = await supabase.storage.from('detalhamento').upload(path, file, { upsert: true })
+      if (upErr) { setErrorMsg(`Erro no upload: ${upErr.message}`); setStatus('error'); return }
+      setStatus('saving')
+      const payload = JSON.stringify({ projeto_id: projectId, escritorio_id: escritorioId, file_path: path, file_name: file.name, componentes: parsedComps, comodos: parsedComodos, up_axis: parsedUpAxis })
+      console.log('[handleSave] POST payload size:', payload.length, 'bytes')
+      const res = await fetch('/api/projetos/detalhamento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+      })
+      console.log('[handleSave] POST response status:', res.status)
+      if (!res.ok) {
+        let errMsg = `HTTP ${res.status}`
+        try { const err = await res.json(); errMsg = err.error || errMsg } catch { /* ignore */ }
+        setErrorMsg(`Erro ao salvar: ${errMsg}`)
+        setStatus('error')
+        return
+      }
+      const saved = await res.json()
+      console.log('[handleSave] saved OK, id:', saved.id, '| comps:', saved.componentes, '| comodos:', saved.comodos)
+      setStatus('done'); setFile(null); setParsedComps([]); setParsedComodos([])
+      await loadDb()
+      if (saved.id) triggerIdentificar(saved.id)
+    } catch (e) {
+      console.error('[handleSave] exception:', e)
+      setErrorMsg(e instanceof Error ? e.message : 'Erro inesperado ao salvar')
+      setStatus('error')
+    }
   }
 
   async function handleReMatchCatalog() {

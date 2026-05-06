@@ -64,12 +64,18 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+  if (!user) {
+    console.error('[detalhamento POST] auth failed — no user')
+    return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+  }
 
   const body = await req.json()
   const { projeto_id, escritorio_id, file_path, file_name, componentes = [], comodos = [], up_axis = 'Y_UP' } = body
 
+  console.log(`[detalhamento POST] user=${user.id} projeto=${projeto_id} escritorio=${escritorio_id} comps=${componentes.length} comodos=${comodos.length} up_axis=${up_axis}`)
+
   if (!projeto_id || !escritorio_id || !file_path) {
+    console.error('[detalhamento POST] missing required fields', { projeto_id, escritorio_id, file_path })
     return NextResponse.json({ error: 'projeto_id, escritorio_id e file_path são obrigatórios' }, { status: 400 })
   }
 
@@ -83,7 +89,7 @@ export async function POST(req: NextRequest) {
   ])
 
   if (catalogErr) {
-    console.error('[detalhamento POST] catalog query failed — RLS or network issue:', catalogErr.message, catalogErr.code)
+    console.error('[detalhamento POST] catalog query failed:', catalogErr.message, catalogErr.code)
   }
   console.log(`[detalhamento POST] catalog loaded: ${catalog?.length ?? 0} entries`)
 
@@ -93,8 +99,10 @@ export async function POST(req: NextRequest) {
   )
 
   // Remove previous detalhamento
-  await supabase.from('detalhamento_projetos').delete().eq('projeto_id', projeto_id)
+  const { error: delErr } = await supabase.from('detalhamento_projetos').delete().eq('projeto_id', projeto_id)
+  if (delErr) console.warn('[detalhamento POST] delete anterior falhou (pode não existir):', delErr.message)
 
+  console.log('[detalhamento POST] inserindo detalhamento_projetos...')
   const { data: det, error: detErr } = await supabase
     .from('detalhamento_projetos')
     .insert({ projeto_id, escritorio_id, dae_file_path: file_path, dae_file_name: file_name, status: 'done', up_axis })
@@ -102,12 +110,15 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (detErr || !det) {
+    console.error('[detalhamento POST] FALHA ao inserir detalhamento_projetos:', detErr?.message, detErr?.code, detErr?.details)
     return NextResponse.json({ error: detErr?.message || 'Erro ao criar detalhamento' }, { status: 500 })
   }
 
+  console.log(`[detalhamento POST] detalhamento_projetos inserido id=${det.id}`)
   const detId = det.id
 
   // Insert components: catalog → aprendizado → heuristica → null
+  let compInsertErrors = 0
   if (componentes.length > 0) {
     const rows = (componentes as Record<string, unknown>[]).map(c => {
       const dx = Number(c.dimensao_x) || 0
@@ -160,7 +171,6 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // Step 4: unidentified — Vision AI will handle later
       return {
         ...c,
         detalhamento_id: detId,
@@ -171,19 +181,26 @@ export async function POST(req: NextRequest) {
       }
     })
 
+    console.log(`[detalhamento POST] inserindo ${rows.length} componentes em lotes de 500...`)
     for (let i = 0; i < rows.length; i += 500) {
       const { error } = await supabase.from('detalhamento_componentes').insert(rows.slice(i, i + 500))
-      if (error) console.error('Erro ao inserir componentes:', error.message)
+      if (error) {
+        compInsertErrors++
+        console.error(`[detalhamento POST] FALHA lote ${i}-${i+500}:`, error.message, error.code, error.details)
+      }
     }
+    console.log(`[detalhamento POST] componentes inseridos (erros: ${compInsertErrors}/${Math.ceil(rows.length/500)} lotes)`)
   }
 
   // Insert rooms
   if (comodos.length > 0) {
     const rows = (comodos as Record<string, unknown>[]).map(c => ({ ...c, detalhamento_id: detId }))
     const { error } = await supabase.from('detalhamento_comodos').insert(rows)
-    if (error) console.error('Erro ao inserir cômodos:', error.message)
+    if (error) console.error('[detalhamento POST] FALHA ao inserir cômodos:', error.message, error.code)
+    else console.log(`[detalhamento POST] ${rows.length} cômodos inseridos`)
   }
 
+  console.log(`[detalhamento POST] CONCLUÍDO id=${detId} comps=${componentes.length} comodos=${comodos.length} compErros=${compInsertErrors}`)
   return NextResponse.json({ id: detId, componentes: componentes.length, comodos: comodos.length })
 }
 
