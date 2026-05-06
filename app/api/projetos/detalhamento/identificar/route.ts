@@ -3,6 +3,10 @@ import { createClient } from '@/lib/supabase-server'
 import { buildClassifyPrompt } from '@/lib/component-identifier'
 import Anthropic from '@anthropic-ai/sdk'
 
+// claude-sonnet-4-6 pricing (USD per token, as of 2025)
+const COST_PER_INPUT_TOKEN  = 3  / 1_000_000   // $3/MTok
+const COST_PER_OUTPUT_TOKEN = 15 / 1_000_000   // $15/MTok
+
 const MAX_CALLS = 50
 
 interface CompRow {
@@ -25,7 +29,16 @@ export async function POST(req: NextRequest) {
   const { detalhamento_id } = await req.json()
   if (!detalhamento_id) return NextResponse.json({ error: 'detalhamento_id obrigatório' }, { status: 400 })
 
-  // Fetch up_axis for the detalhamento
+  // Verify ANTHROPIC_API_KEY is configured — fail fast, not silently
+  const anthropicKey = process.env.ANTHROPIC_API_KEY
+  if (!anthropicKey) {
+    console.error('[identificar] ANTHROPIC_API_KEY não configurada no ambiente do servidor')
+    return NextResponse.json(
+      { error: 'ANTHROPIC_API_KEY não configurada. Configure a variável de ambiente no Vercel antes de usar a identificação por IA.' },
+      { status: 503 }
+    )
+  }
+
   const { data: det } = await supabase
     .from('detalhamento_projetos')
     .select('id, up_axis')
@@ -36,7 +49,6 @@ export async function POST(req: NextRequest) {
 
   const upAxis: string = det.up_axis ?? 'Y_UP'
 
-  // Fetch components with no tipo_componente
   const { data: comps, error: compErr } = await supabase
     .from('detalhamento_componentes')
     .select('id, nome_skp, posicao_x, posicao_y, posicao_z, dimensao_x, dimensao_y, dimensao_z')
@@ -46,20 +58,18 @@ export async function POST(req: NextRequest) {
   if (compErr) return NextResponse.json({ error: compErr.message }, { status: 500 })
 
   const pendentes: CompRow[] = comps ?? []
+  console.log(`[identificar] detalhamento=${detalhamento_id} pendentes=${pendentes.length} upAxis=${upAxis}`)
+
   if (pendentes.length === 0) {
     return NextResponse.json({ processados: 0, atualizados: 0, chamadas_api: 0 })
   }
 
-  const anthropicKey = process.env.ANTHROPIC_API_KEY
-  if (!anthropicKey) {
-    return NextResponse.json({ error: 'ANTHROPIC_API_KEY não configurada' }, { status: 503 })
-  }
-
   const client = new Anthropic({ apiKey: anthropicKey })
 
-  let chamadas = 0
+  let chamadas   = 0
   let atualizados = 0
-  let duvidosos = 0
+  let duvidosos  = 0
+  let totalCustoUsd = 0
 
   const toCall = pendentes.slice(0, MAX_CALLS)
 
@@ -69,6 +79,11 @@ export async function POST(req: NextRequest) {
     let tipo: string | null = null
     let confianca = 0
     let raciocinio = ''
+    let tokensInput = 0
+    let tokensOutput = 0
+    let custoUsd = 0
+    let respostaRaw = ''
+    let erroMsg: string | null = null
 
     try {
       const msg = await client.messages.create({
@@ -78,21 +93,43 @@ export async function POST(req: NextRequest) {
       })
       chamadas++
 
-      const text = msg.content[0]?.type === 'text' ? msg.content[0].text.trim() : ''
-      // Extract JSON from response (may have markdown fences)
-      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      tokensInput  = msg.usage?.input_tokens  ?? 0
+      tokensOutput = msg.usage?.output_tokens ?? 0
+      custoUsd = tokensInput * COST_PER_INPUT_TOKEN + tokensOutput * COST_PER_OUTPUT_TOKEN
+      totalCustoUsd += custoUsd
+
+      respostaRaw = msg.content[0]?.type === 'text' ? msg.content[0].text.trim() : ''
+
+      console.log(
+        `[identificar] comp=${comp.id} nome="${comp.nome_skp}" ` +
+        `tokens=${tokensInput}in/${tokensOutput}out custo=$${custoUsd.toFixed(6)} ` +
+        `resposta=${respostaRaw.slice(0, 120)}`
+      )
+
+      const jsonMatch = respostaRaw.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0])
-        tipo = parsed.tipo ?? null
+        tipo      = parsed.tipo      ?? null
         confianca = typeof parsed.confianca === 'number' ? parsed.confianca : 0
         raciocinio = parsed.raciocinio ?? ''
       }
     } catch (e) {
-      console.error('Vision AI error for', comp.id, e)
-      continue
+      erroMsg = e instanceof Error ? e.message : String(e)
+      console.error(`[identificar] ERRO comp=${comp.id} nome="${comp.nome_skp}":`, erroMsg)
     }
 
-    if (!tipo) continue
+    // Log every call (success or error) to vision_ai_logs
+    await supabase.from('vision_ai_logs').insert({
+      detalhamento_id,
+      componente_id:  comp.id,
+      tokens_input:   tokensInput  || null,
+      tokens_output:  tokensOutput || null,
+      custo_usd:      custoUsd > 0 ? custoUsd : null,
+      resposta_raw:   respostaRaw  || null,
+      erro:           erroMsg,
+    })
+
+    if (!tipo || erroMsg) continue
 
     const statusId = confianca >= 0.6 ? 'vision_ai' : 'duvidoso'
     if (statusId === 'duvidoso') duvidosos++
@@ -100,28 +137,35 @@ export async function POST(req: NextRequest) {
     const { error: updErr } = await supabase
       .from('detalhamento_componentes')
       .update({
-        tipo_componente: tipo,
+        tipo_componente:      tipo,
         status_identificacao: statusId,
         confianca,
-        raciocinio_ia: raciocinio,
+        raciocinio_ia:        raciocinio,
       })
       .eq('id', comp.id)
 
     if (!updErr) atualizados++
   }
 
-  // Log this run
+  console.log(
+    `[identificar] CONCLUÍDO detalhamento=${detalhamento_id} ` +
+    `chamadas=${chamadas} atualizados=${atualizados} duvidosos=${duvidosos} ` +
+    `custo_total=$${totalCustoUsd.toFixed(6)}`
+  )
+
+  // Summary log (aggregate per run)
   await supabase.from('detalhamento_ia_log').insert({
     detalhamento_id,
     chamadas,
-    componentes_ok: atualizados - duvidosos,
+    componentes_ok:    atualizados - duvidosos,
     componentes_duvida: duvidosos,
   })
 
   return NextResponse.json({
-    processados: toCall.length,
+    processados:  toCall.length,
     atualizados,
     chamadas_api: chamadas,
     duvidosos,
+    custo_usd:    totalCustoUsd,
   })
 }
